@@ -2,23 +2,23 @@
 
 
 [[projects]]
-  digest = "1:198af4ad42013a3779477b597458f860a6a99e57e1674fa4f61eb04b8b5b768f"
-  name = "github.com/klauspost/cpuid"
+  branch = "master"
+  digest = "1:e26f97664fe650ee3d6fda4b9dcbb71d68ebd31730b8403663a19507fccfe2b3"
+  name = "github.com/intel-go/cpuid"
   packages = ["."]
   pruneopts = ""
-  revision = "e7e905edc00ea8827e58662220139109efea09db"
-  version = "v1.2.0"
+  revision = "1a4a6f06a1c643c8fbd339bd61d980960627d09e"
 
 [[projects]]
   branch = "master"
-  digest = "1:6e31aa1a9642e3f2538b29fab83ff31395d6ae07a6778ebb86626dbf27ed33cf"
+  digest = "1:1b519e44bd757fb43766a6150cb488a0bcbf1144ffb1dc33c7f2f7cafac9ad4a"
   name = "golang.org/x/net"
   packages = [
     "idna",
     "publicsuffix",
   ]
   pruneopts = ""
-  revision = "fe579d43d83210096a79b46dcca0e3721058393a"
+  revision = "63eda1eb0650888965ead1296efd04d0b2b61128"
 
 [[projects]]
   digest = "1:5acd3512b047305d49e8763eef7ba423901e85d5dd2fd1e71778a0ea8de10bd4"
@@ -44,18 +44,18 @@
   version = "v0.3.0"
 
 [[projects]]
-  digest = "1:ecbf853ae69b7b38a5039077c10892c9798bd5345c73902026622a65a94ea501"
+  digest = "1:218d6d3952eb109dd9001ef0249e2e5f7881e5b06b5700a072f9649dc6df2778"
   name = "gopkg.in/resty.v1"
   packages = ["."]
   pruneopts = ""
-  revision = "03c09fa32a21b7b27b8dbb3877826c1ab3d2daa2"
-  version = "v1.11.0"
+  revision = "fa5875c0caa5c260ab78acec5a244215a730247f"
+  version = "v1.12.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/klauspost/cpuid",
+    "github.com/intel-go/cpuid",
     "gopkg.in/resty.v1",
   ]
   solver-name = "gps-cdcl"

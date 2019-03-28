@@ -26,5 +26,5 @@
   version = "1.11.0"
 
 [[constraint]]
-  name = "github.com/klauspost/cpuid"
-  version = "1.2.0"
+  name = "github.com/intel-go/cpuid"
+  revision = "1a4a6f06a1c643c8fbd339bd61d980960627d09e"

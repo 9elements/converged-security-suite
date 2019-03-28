@@ -4,8 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/klauspost/cpuid"
-	"gopkg.in/resty.v1"
+	resty "gopkg.in/resty.v1"
 )
 
 const (
@@ -24,7 +23,7 @@ type intelData struct {
 
 // ArchitectureTXTSupport
 func ArchitectureTXTSupport() (bool, error) {
-	cpuName := strings.Split(cpuid.CPU.BrandName, " ")[2]
+	cpuName := strings.Split(ProcessorBrandName(), " ")[2]
 	resp, err := resty.R().Get(arkIntelURL + cpuName + arkIntelFormat)
 	if err != nil || resp.StatusCode() != 200 {
 		return false, err
