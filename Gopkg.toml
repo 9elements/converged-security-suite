@@ -28,3 +28,7 @@
 [[constraint]]
   name = "github.com/intel-go/cpuid"
   revision = "1a4a6f06a1c643c8fbd339bd61d980960627d09e"
+
+[[constraint]]
+  name = "github.com/fearful-symmetry/gomsr"
+  version = "v0.0.1"

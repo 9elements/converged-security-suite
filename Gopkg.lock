@@ -2,7 +2,14 @@
 
 
 [[projects]]
-  branch = "master"
+  digest = "1:618764ef43473ef8285b12cb20df4cfedef3ace18bcab287576df8cb09677839"
+  name = "github.com/fearful-symmetry/gomsr"
+  packages = ["."]
+  pruneopts = ""
+  revision = "be352f4f0713931b4735174c2e7c8c685dee97bd"
+  version = "v0.0.1"
+
+[[projects]]
   digest = "1:e26f97664fe650ee3d6fda4b9dcbb71d68ebd31730b8403663a19507fccfe2b3"
   name = "github.com/intel-go/cpuid"
   packages = ["."]
@@ -55,6 +62,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/fearful-symmetry/gomsr",
     "github.com/intel-go/cpuid",
     "gopkg.in/resty.v1",
   ]
