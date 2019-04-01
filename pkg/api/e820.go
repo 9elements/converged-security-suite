@@ -6,10 +6,10 @@ import (
 	"strconv"
 )
 
-const ReservedKeyword = "Reserved\n"
+const reservedKeyword = "Reserved\n"
 
 // Reads the e820 table exported via /sys/firmware/memmap and checks whether
-// the range [start; end] is marked as reserved. Returns if it is reserved,
+// the range [start; end] is marked as reserved. Returns true if it is reserved,
 // false if not.
 func IsReservedInE810(start uint64, end uint64) (bool, error) {
 	if start > end {
@@ -36,13 +36,13 @@ func IsReservedInE810(start uint64, end uint64) (bool, error) {
 				continue
 			}
 
-			var type_buf [len(ReservedKeyword) + 1]byte
+			var type_buf [len(reservedKeyword) + 1]byte
 			l, err := f.Read(type_buf[:])
-			if l != len(ReservedKeyword) {
+			if l != len(reservedKeyword) {
 				continue
 			}
 
-			if string(type_buf[:len(ReservedKeyword)]) == ReservedKeyword {
+			if string(type_buf[:len(reservedKeyword)]) == reservedKeyword {
 				path := fmt.Sprintf("/sys/firmware/memmap/%s/start", subdir.Name())
 				this_start, err := readHexInteger(path)
 				if err != nil {
