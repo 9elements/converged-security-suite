@@ -17,6 +17,14 @@
   revision = "1a4a6f06a1c643c8fbd339bd61d980960627d09e"
 
 [[projects]]
+  digest = "1:07df882152f6f086fcdca2498535c53d524ee7b2034a5e9e91a15de8f74eebba"
+  name = "github.com/u-root/u-root"
+  packages = ["pkg/ubinary"]
+  pruneopts = ""
+  revision = "8b001e68c2bf8d45ccfe2818f324acbea9321c5b"
+  version = "v4.0.0"
+
+[[projects]]
   branch = "master"
   digest = "1:1b519e44bd757fb43766a6150cb488a0bcbf1144ffb1dc33c7f2f7cafac9ad4a"
   name = "golang.org/x/net"
@@ -64,6 +72,7 @@
   input-imports = [
     "github.com/fearful-symmetry/gomsr",
     "github.com/intel-go/cpuid",
+    "github.com/u-root/u-root/pkg/ubinary",
     "gopkg.in/resty.v1",
   ]
   solver-name = "gps-cdcl"
