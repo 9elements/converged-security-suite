@@ -11,5 +11,5 @@ func TestTXT(t *testing.T) {
 		t.Errorf("ReadTXTRegs() failed: %v", err)
 	}
 
-	t.Logf("TXT: %v", got)
+	t.Logf("TXT: %+v", got)
 }
