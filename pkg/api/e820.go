@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 )
@@ -30,19 +31,12 @@ func IsReservedInE810(start uint64, end uint64) (bool, error) {
 		if subdir.IsDir() {
 
 			path := fmt.Sprintf("/sys/firmware/memmap/%s/type", subdir.Name())
-
-			f, err := os.Open(path)
+			buf, err := ioutil.ReadFile(path)
 			if err != nil {
 				continue
 			}
 
-			var type_buf [len(reservedKeyword) + 1]byte
-			l, err := f.Read(type_buf[:])
-			if l != len(reservedKeyword) {
-				continue
-			}
-
-			if string(type_buf[:len(reservedKeyword)]) == reservedKeyword {
+			if string(buf) == reservedKeyword {
 				path := fmt.Sprintf("/sys/firmware/memmap/%s/start", subdir.Name())
 				this_start, err := readHexInteger(path)
 				if err != nil {
@@ -65,24 +59,16 @@ func IsReservedInE810(start uint64, end uint64) (bool, error) {
 	return false, nil
 }
 
-const hexStringLength = 12 // 32 bit hex string with 0x prefix plus newline, plus one
-
 func readHexInteger(path string) (uint64, error) {
-	f, err := os.Open(path)
+	buf, err := ioutil.ReadFile(path)
 	if err != nil {
 		return 0, err
 	}
 
-	var start_buf [hexStringLength]byte
-	l, err := f.Read(start_buf[:])
-	if l == hexStringLength {
-		return 0, err
-	}
-
-	this_start, err := strconv.ParseUint(string(start_buf[:l-1]), 0, 64)
+	ret, err := strconv.ParseUint(string(buf), 0, 64)
 	if err != nil {
 		return 0, err
 	} else {
-		return this_start, nil
+		return ret, nil
 	}
 }
