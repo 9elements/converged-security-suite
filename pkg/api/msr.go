@@ -11,12 +11,12 @@ func HasSMRR() (bool, error) {
 		return false, fmt.Errorf("Cannot access MSR IA32_MTRRCAP: %s", err)
 	}
 
-	return (1>>11)&mtrrcap != 0, nil
+	return (mtrrcap>>11)&1 != 0, nil
 }
 
 // MTRR for the SMM code.
 type SMRR struct {
-	valid     bool
+	active     bool
 	phys_base uint64
 	phys_mask uint64
 }
@@ -35,7 +35,7 @@ func GetSMRRInfo() (SMRR, error) {
 		return ret, fmt.Errorf("Cannot access MSR IA32_SMRR_PHYSMASK: %s", err)
 	}
 
-	ret.valid = (1>>11)&smrr_physmask != 0
+	ret.active = (smrr_physmask>>11)&1 != 0
 	ret.phys_base = (smrr_physbase >> 12) & 0xfffff
 	ret.phys_mask = (smrr_physmask >> 12) & 0xfffff
 
@@ -57,6 +57,6 @@ func AllowsVMXInSMX() (bool, error) {
 		return false, fmt.Errorf("Cannot access MSR IA32_FEATURE_CONTROL: %s", err)
 	}
 
-	var mask uint64 = (1 >> 1) & (1 >> 5) & (1 >> 6)
+	var mask uint64 = (1 << 1) & (1 << 5) & (1 << 6)
 	return (mask & feat_ctrl) == mask, nil
 }
