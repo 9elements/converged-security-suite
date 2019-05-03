@@ -18,7 +18,7 @@ func TPMPresent(tpmPath string) bool {
 		}
 	}()
 	//Retrieve information with GetCapability
-	recInterf, moreData, err := tpm2.GetCapability(rwc,tpm2.CapabilityTPMProperties,1,uint32(tpm2.PTManufacturer))
+	recInterf, _, err := tpm2.GetCapability(rwc,tpm2.CapabilityTPMProperties,1,uint32(tpm2.PTManufacturer))
 
 	if err != nil {
 		fmt.Println("%v", err)
