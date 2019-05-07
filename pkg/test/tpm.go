@@ -1,34 +1,74 @@
 package test
 
 import (
-		"fmt"
-		"github.com/google/go-tpm/tpm2"
-	)
-//	Test if TPM-Module is responding or not.
-func TPMPresent(tpmPath string) bool {
-	//connect to TPM
-	rwc, err := tpm2.OpenTPM(tpmPath)
+	"fmt"
+	"io"
+
+	"github.com/google/go-tpm/tpm2"
+)
+
+var tpmcon io.ReadWriteCloser
+var err error
+
+//ConnectTpm connects to a TPM-Device (virtual or real), just give path
+func ConnectTpm(tpmPath string) {
+	tpmcon, err = tpm2.OpenTPM(tpmPath)
 	if err != nil {
 		fmt.Println("Can't open TPM %q: %v", tpmPath, err)
+	}
+}
+
+//CloseTpm close a existing connection
+func CloseTpm() bool {
+	if err := tpmcon.Close(); err != nil {
+		fmt.Println("Can't close TPM: %v", err)
 		return false
 	}
-	defer func() {
-		if err := rwc.Close(); err != nil {
-			fmt.Println("Can't close TPM %q: %v", tpmPath, err)
+	return true
+}
+
+//TPMPresent checks if a TPM is present and answers to a booty-call
+func TPMPresent() bool {
+	state := false
+	if tpmcon != nil {
+		recInterf, _, _ := tpm2.GetCapability(tpmcon, tpm2.CapabilityTPMProperties, 1, uint32(tpm2.PTManufacturer))
+		if recInterf != nil {
+			if recInterf[0].(tpm2.TaggedProperty).Value != 0 {
+				state = true
+			}
+
 		}
-	}()
-	//Retrieve information with GetCapability
-	recInterf, moreData, err := tpm2.GetCapability(rwc,tpm2.CapabilityTPMProperties,1,uint32(tpm2.PTManufacturer))
-
-	if err != nil {
-		fmt.Println("%v", err)
-		return false
 	}
+	return state
+}
 
-	if recInterf != nil {
-		fmt.Println("Interfaces vorhanden")
-		fmt.Printf("%x\n", recInterf[0].(tpm2.TaggedProperty).Value)
-		return true
+//TPMReadPCR0 reads if PCR0-Registers have been written
+func TPMReadPCR0() bool {
+	state := false
+	tpm2.Startup(tpmcon, tpm2.StartupClear)
+	if tpmcon != nil {
+		recInterf, _, err := tpm2.GetCapability(tpmcon, tpm2.CapabilityPCRs, 1, 0)
+		if recInterf == nil {
+			fmt.Printf("%s", err)
+			return state
+		}
+
+		for i := 0; i < 4; i++ {
+			pcr, _ := tpm2.ReadPCRs(tpmcon, recInterf[i].(tpm2.PCRSelection))
+			for j := 0; j < len(pcr[0]); j++ {
+				if pcr[0][j] != 0 {
+					state = true
+				}
+			}
+		}
 	}
-	return false
+	return state
+}
+
+//RunTests just for debugging purposes
+func RunTests() {
+	ConnectTpm("/dev/tpm2")
+	fmt.Printf("%+v", TPMPresent())
+	fmt.Printf("%+v", TPMReadPCR0())
+	CloseTpm()
 }
