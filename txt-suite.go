@@ -7,5 +7,5 @@ import (
 
 func main() {
 	api.ArchitectureTXTSupport()
-	test.TPMPresent("/dev/tpm2")
+	test.RunTests()
 }
