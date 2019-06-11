@@ -180,7 +180,7 @@ func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
 	return &acm, &chipsets, &processors, &tpms, nil
 }
 
-func LookupSize(header []byte) (uint, error) {
+func LookupSize(header []byte) (int64, error) {
 	var acmSize uint32
 
 	buf := bytes.NewReader(header[:32])
@@ -190,7 +190,7 @@ func LookupSize(header []byte) (uint, error) {
 		return 0, err
 	}
 
-	return uint(acmSize), nil
+	return int64(acmSize * 4), nil
 }
 
 func (a *ACM) PrettyPrint() {
