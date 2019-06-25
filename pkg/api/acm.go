@@ -303,34 +303,34 @@ func (t *TPMs) PrettyPrint() {
 	for _, algo := range t.AlgID {
 		switch algo {
 		case TPMAlgoNULL:
-			log.Println("\t\tHash: NULL")
+			log.Println("\t\tNULL")
 			break
 		case TPMAlgoSHA1:
-			log.Println("\t\tHash: SHA-1")
+			log.Println("\t\tSHA-1")
 			break
 		case TPMAlgoSHA256:
-			log.Println("\t\tHash: SHA-256")
+			log.Println("\t\tSHA-256")
 			break
 		case TPMAlgoSHA384:
-			log.Println("\t\tHash: SHA-384")
+			log.Println("\t\tSHA-384")
 			break
 		case TPMAlgoSHA512:
-			log.Println("\t\tHash: SHA-512")
+			log.Println("\t\tSHA-512")
 			break
 		case TPMAlgoSM3_256:
-			log.Println("\t\tHash: SM3-256")
+			log.Println("\t\tSM3-256")
 			break
 		case TPMAlgoRSASSA:
-			log.Println("\t\tHash: RSA-SSA")
+			log.Println("\t\tRSA-SSA")
 			break
 		case TPMAlgoECDSA:
-			log.Println("\t\tHash: EC-DSA")
+			log.Println("\t\tEC-DSA")
 			break
 		case TPMAlgoSM2:
-			log.Println("\t\tHash: SM2")
+			log.Println("\t\tSM2")
 			break
 		default:
-			log.Println("\t\tHash: Unknown")
+			log.Println("\t\tUnknown")
 		}
 	}
 }
