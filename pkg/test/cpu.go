@@ -51,7 +51,7 @@ func Test05TXTRegisterSpaceAccessible() (bool, error) {
 		return false, err
 	}
 
-	return regs.Vid == 8086, nil
+	return regs.Vid == 0x8086, nil
 }
 
 // Check if CPU supports SMX
