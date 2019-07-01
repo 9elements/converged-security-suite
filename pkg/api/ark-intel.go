@@ -23,7 +23,7 @@ type intelData struct {
 
 // ArchitectureTXTSupport
 func ArchitectureTXTSupport() (bool, error) {
-	cpuName := strings.Split(ProcessorBrandName(), " ")[2]
+	cpuName := strings.Split(ProcessorBrandName(), " ")[3]
 	resp, err := resty.R().Get(arkIntelURL + cpuName + arkIntelFormat)
 	if err != nil || resp.StatusCode() != 200 {
 		return false, err
