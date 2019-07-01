@@ -98,7 +98,7 @@ func RunCPUTests() (bool, error) {
 	fmt.Printf("Intel CPU: ")
 	rc, err := Test01CheckForIntelCPU()
 	if err != nil {
-		fmt.Println("ERROR\n\t%s", err)
+		fmt.Printf("ERROR\n\t%s\n", err)
 		return false, nil
 	}
 	if rc {
@@ -111,7 +111,7 @@ func RunCPUTests() (bool, error) {
 	fmt.Printf("Weybridge or later: ")
 	rc, err = Test02WeybridgeOrLater()
 	if err != nil {
-		fmt.Println("ERROR\n\t%s", err)
+		fmt.Printf("ERROR\n\t%s\n", err)
 		return false, nil
 	}
 	if rc {
@@ -124,7 +124,7 @@ func RunCPUTests() (bool, error) {
 	fmt.Printf("CPU supports TXT: ")
 	rc, err = Test03CPUSupportsTXT()
 	if err != nil {
-		fmt.Println("ERROR\n\t%s", err)
+		fmt.Printf("ERROR\n\t%s\n", err)
 		return false, nil
 	}
 	if rc {
@@ -137,7 +137,7 @@ func RunCPUTests() (bool, error) {
 	fmt.Printf("Chipset supports TXT: ")
 	rc, err = Test04ChipsetSupportsTXT()
 	if err != nil {
-		fmt.Println("ERROR\n\t%s", err)
+		fmt.Printf("ERROR\n\t%s\n", err)
 		return false, nil
 	}
 	if rc {
@@ -150,7 +150,7 @@ func RunCPUTests() (bool, error) {
 	fmt.Printf("TXT register space accessible: ")
 	rc, err = Test05TXTRegisterSpaceAccessible()
 	if err != nil {
-		fmt.Println("ERROR\n\t%s", err)
+		fmt.Printf("ERROR\n\t%s\n", err)
 		return false, nil
 	}
 	if rc {
@@ -163,7 +163,7 @@ func RunCPUTests() (bool, error) {
 	fmt.Printf("CPU supports SMX: ")
 	rc, err = Test06SupportsSMX()
 	if err != nil {
-		fmt.Println("ERROR\n\t%s", err)
+		fmt.Printf("ERROR\n\t%s\n", err)
 		return false, nil
 	}
 	if rc {
@@ -176,7 +176,7 @@ func RunCPUTests() (bool, error) {
 	fmt.Printf("CUP supports VMX: ")
 	rc, err = Test07SupportVMX()
 	if err != nil {
-		fmt.Println("ERROR\n\t%s", err)
+		fmt.Printf("ERROR\n\t%s\n", err)
 		return false, nil
 	}
 	if rc {
@@ -189,7 +189,7 @@ func RunCPUTests() (bool, error) {
 	fmt.Printf("IA32_FEATURE_CONTROL: ")
 	rc, err = Test08Ia32FeatureCtrl()
 	if err != nil {
-		fmt.Println("ERROR\n\t%s", err)
+		fmt.Printf("ERROR\n\t%s\n", err)
 		return false, nil
 	}
 	if rc {
@@ -202,7 +202,7 @@ func RunCPUTests() (bool, error) {
 	fmt.Printf("SMX enabled: ")
 	rc, err = Test09SMXIsEnabled()
 	if err != nil {
-		fmt.Println("ERROR\n\t%s", err)
+		fmt.Printf("ERROR\n\t%s\n", err)
 		return false, nil
 	}
 	if rc {
@@ -215,7 +215,7 @@ func RunCPUTests() (bool, error) {
 	fmt.Printf("No ACM BIOS error: ")
 	rc, err = Test10NoBIOSACMErrors()
 	if err != nil {
-		fmt.Println("ERROR\n\t%s", err)
+		fmt.Printf("ERROR\n\t%s\n", err)
 		return false, nil
 	}
 	if rc {
