@@ -4,12 +4,24 @@ import (
 	"github.com/intel-go/cpuid"
 )
 
-func VersionString() string {
-	return cpuid.VendorIdentificatorString
+// #include <stdint.h>
+//
+// uint64_t readCR4(void) {
+//   uint64_t ret;
+//
+//   asm("movq %%cr4, %0\n" :"=r"(ret));
+//   return ret;
+// }
+import "C"
+
+func SMXIsEnabled() bool {
+	cr4 := C.readCR4()
+
+	return cr4&1<<13 != 0
 }
 
-func WeybridgeOrLater() bool {
-	return cpuid.DisplayFamily == 6
+func VersionString() string {
+	return cpuid.VendorIdentificatorString
 }
 
 func HasSMX() bool {

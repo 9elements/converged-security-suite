@@ -10,6 +10,18 @@
   version = "v0.0.1"
 
 [[projects]]
+  digest = "1:d36d6775f326fc565c19d655e00ace216e1d9a7f5aeb7e5f399132a1f624ae35"
+  name = "github.com/google/go-tpm"
+  packages = [
+    "tpm2",
+    "tpmutil",
+    "tpmutil/tbs",
+  ]
+  pruneopts = ""
+  revision = "ed7874b59abd5749750978becf34e4b094126de2"
+  version = "v0.1.1"
+
+[[projects]]
   digest = "1:e26f97664fe650ee3d6fda4b9dcbb71d68ebd31730b8403663a19507fccfe2b3"
   name = "github.com/intel-go/cpuid"
   packages = ["."]
@@ -26,23 +38,25 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1b519e44bd757fb43766a6150cb488a0bcbf1144ffb1dc33c7f2f7cafac9ad4a"
+  digest = "1:5c6b8395efd72ad4250b7747e2b1a0683c3edb7b0346a938ff45240c7ec53691"
   name = "golang.org/x/net"
   packages = [
     "idna",
     "publicsuffix",
   ]
   pruneopts = ""
-  revision = "63eda1eb0650888965ead1296efd04d0b2b61128"
+  revision = "3b0461eec859c4b73bb64fdc8285971fd33e3938"
 
 [[projects]]
-  digest = "1:5acd3512b047305d49e8763eef7ba423901e85d5dd2fd1e71778a0ea8de10bd4"
+  digest = "1:740b51a55815493a8d0f2b1e0d0ae48fe48953bf7eaf3fcc4198823bf67768c0"
   name = "golang.org/x/text"
   packages = [
     "collate",
     "collate/build",
     "internal/colltab",
     "internal/gen",
+    "internal/language",
+    "internal/language/compact",
     "internal/tag",
     "internal/triegen",
     "internal/ucd",
@@ -55,8 +69,8 @@
     "unicode/rangetable",
   ]
   pruneopts = ""
-  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
-  version = "v0.3.0"
+  revision = "342b2e1fbaa52c93f31447ad2c6abc048c63e475"
+  version = "v0.3.2"
 
 [[projects]]
   digest = "1:218d6d3952eb109dd9001ef0249e2e5f7881e5b06b5700a072f9649dc6df2778"
@@ -71,6 +85,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/fearful-symmetry/gomsr",
+    "github.com/google/go-tpm/tpm2",
     "github.com/intel-go/cpuid",
     "github.com/u-root/u-root/pkg/ubinary",
     "gopkg.in/resty.v1",
