@@ -134,18 +134,18 @@ func RunCPUTests() (bool, error) {
 		return false, nil
 	}
 
-	fmt.Printf("Chipset supports TXT: ")
-	rc, err = Test04ChipsetSupportsTXT()
-	if err != nil {
-		fmt.Printf("ERROR\n\t%s\n", err)
-		return false, nil
-	}
-	if rc {
-		fmt.Println("OK")
-	} else {
-		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
-		return false, nil
-	}
+	//fmt.Printf("Chipset supports TXT: ")
+	//rc, err = Test04ChipsetSupportsTXT()
+	//if err != nil {
+	//	fmt.Printf("ERROR\n\t%s\n", err)
+	//	return false, nil
+	//}
+	//if rc {
+	//	fmt.Println("OK")
+	//} else {
+	//	fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
+	//	return false, nil
+	//}
 
 	fmt.Printf("TXT register space accessible: ")
 	rc, err = Test05TXTRegisterSpaceAccessible()
