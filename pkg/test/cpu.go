@@ -41,7 +41,7 @@ func Test03CPUSupportsTXT() (bool, error) {
 
 // Check whether chipset supports TXT
 func Test04ChipsetSupportsTXT() (bool, error) {
-	return false, fmt.Errorf("Unimplemented")
+	return api.ChipsetHasTXT(), nil
 }
 
 // Check if the TXT register space is accessible
@@ -80,12 +80,43 @@ func Test08Ia32FeatureCtrl() (bool, error) {
 }
 
 // Check CR4 wherther SMXE is set
-func Test09SMXIsEnabled() (bool, error) {
-	return api.SMXIsEnabled(), nil
+//func Test09SMXIsEnabled() (bool, error) {
+//	return api.SMXIsEnabled(), nil
+//}
+
+// Check for needed GETSEC leaves
+func Test10HasGetSecLeaves() (bool, error) {
+	return api.HasTXTLeaves(), nil
+}
+
+// Check TXT_DISABLED bit in TXT_ACM_STATUS
+func Test11TXTNotDisabled() (bool, error) {
+	return api.TXTLeavesAreEnabled()
+}
+
+// Verify that the IBB has been measured
+func Test12IBBMeasured() (bool, error) {
+	st, err := api.ReadACMStatus()
+
+	if err != nil {
+		return false, err
+	}
+
+	return st.Valid && st.ACMStarted, nil
+}
+
+// Check that the IBB was deemed trusted
+func Test13IBBIsTrusted() (bool, error) {
+	return false, fmt.Errorf("Unimplemented")
+}
+
+// Verify that the TXT register space is locked
+func Test14TXTRegistersLocked() (bool, error) {
+	return false, fmt.Errorf("Unimplemented")
 }
 
 // Check that the BIOS ACM has no startup error
-func Test10NoBIOSACMErrors() (bool, error) {
+func Test15NoBIOSACMErrors() (bool, error) {
 	regs, err := getTxtRegisters()
 	if err != nil {
 		return false, err
@@ -134,18 +165,18 @@ func RunCPUTests() (bool, error) {
 		return false, nil
 	}
 
-	//fmt.Printf("Chipset supports TXT: ")
-	//rc, err = Test04ChipsetSupportsTXT()
-	//if err != nil {
-	//	fmt.Printf("ERROR\n\t%s\n", err)
-	//	return false, nil
-	//}
-	//if rc {
-	//	fmt.Println("OK")
-	//} else {
-	//	fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
-	//	return false, nil
-	//}
+	fmt.Printf("Chipset supports TXT: ")
+	rc, err = Test04ChipsetSupportsTXT()
+	if err != nil {
+		fmt.Printf("ERROR\n\t%s\n", err)
+		return false, nil
+	}
+	if rc {
+		fmt.Println("OK")
+	} else {
+		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
+		return false, nil
+	}
 
 	fmt.Printf("TXT register space accessible: ")
 	rc, err = Test05TXTRegisterSpaceAccessible()
@@ -213,7 +244,7 @@ func RunCPUTests() (bool, error) {
 	//}
 
 	fmt.Printf("No ACM BIOS error: ")
-	rc, err = Test10NoBIOSACMErrors()
+	rc, err = Test10HasGetSecLeaves()
 	if err != nil {
 		fmt.Printf("ERROR\n\t%s\n", err)
 		return false, nil
