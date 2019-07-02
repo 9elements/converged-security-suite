@@ -53,6 +53,15 @@ type TXTRegisterSpace struct {
 	E2Sts     uint64            // TXT.E2STS
 }
 
+type ACMStatus struct {
+	Valid          bool
+	MinorErrorCode uint16
+	ACMStarted     bool
+	MajorErrorCode uint8
+	ClassCode      uint8
+	ModuleType     uint8
+}
+
 func ReadTXTRegs() (TXTRegisterSpace, error) {
 	var regSpace TXTRegisterSpace
 	var err error
@@ -215,6 +224,25 @@ func readDMAProtectedRange() (DMAProtectedRange, error) {
 	ret.Lock = u32&1 != 0
 	ret.Size = uint8((u32 >> 4) & 0xff)   // 11:4
 	ret.Top = uint16((u32 >> 20) & 0xfff) // 31:20
+
+	return ret, nil
+}
+
+func ReadACMStatus() (ACMStatus, error) {
+	var ret ACMStatus
+	var u32 Uint32
+	err := ReadPhys(txtPublicSpace+0x328, &u32)
+
+	if err != nil {
+		return ret, err
+	}
+
+	ret.ModuleType = uint8(u32 & 0xF)
+	ret.ClassCode = uint8((u32 >> 4) & 0x3f)
+	ret.MajorErrorCode = uint8((u32 >> 10) & 0x1f)
+	ret.ACMStarted = (u32>>15)&1 == 1
+	ret.MinorErrorCode = uint16((u32 >> 16) & 0xfff)
+	ret.Valid = (u32>>31)&1 == 1
 
 	return ret, nil
 }
