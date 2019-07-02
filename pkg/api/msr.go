@@ -16,7 +16,7 @@ func HasSMRR() (bool, error) {
 
 // MTRR for the SMM code.
 type SMRR struct {
-	active     bool
+	active    bool
 	phys_base uint64
 	phys_mask uint64
 }
@@ -59,4 +59,13 @@ func AllowsVMXInSMX() (bool, error) {
 
 	var mask uint64 = (1 << 1) & (1 << 5) & (1 << 6)
 	return (mask & feat_ctrl) == mask, nil
+}
+
+func TXTLeavesAreEnabled() (bool, error) {
+	feat_ctrl, err := gomsr.ReadMSR(0, 0x3a)
+	if err != nil {
+		return false, fmt.Errorf("Cannot access MSR IA32_FEATURE_CONTROL: %s", err)
+	}
+
+	return (feat_ctrl>>8)&0x1ff == 0x1ff, nil
 }
