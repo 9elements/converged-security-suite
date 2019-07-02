@@ -256,5 +256,57 @@ func RunCPUTests() (bool, error) {
 		return false, nil
 	}
 
+	fmt.Printf("Intel TXT no disabled by BIOS: ")
+	rc, err = Test11TXTNotDisabled()
+	if err != nil {
+		fmt.Printf("ERROR\n\t%s\n", err)
+		return false, nil
+	}
+	if rc {
+		fmt.Println("OK")
+	} else {
+		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
+		return false, nil
+	}
+
+	fmt.Printf("BIOS ACM has run: ")
+	rc, err = Test12IBBMeasured()
+	if err != nil {
+		fmt.Printf("ERROR\n\t%s\n", err)
+		return false, nil
+	}
+	if rc {
+		fmt.Println("OK")
+	} else {
+		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
+		return false, nil
+	}
+
+	fmt.Printf("Initial Bootblock is trusted: ")
+	rc, err = Test13IBBIsTrusted()
+	if err != nil {
+		fmt.Printf("ERROR\n\t%s\n", err)
+		return false, nil
+	}
+	if rc {
+		fmt.Println("OK")
+	} else {
+		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
+		return false, nil
+	}
+
+	fmt.Printf("Intel TXT registers are locked: ")
+	rc, err = Test14TXTRegistersLocked()
+	if err != nil {
+		fmt.Printf("ERROR\n\t%s\n", err)
+		return false, nil
+	}
+	if rc {
+		fmt.Println("OK")
+	} else {
+		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
+		return false, nil
+	}
+
 	return true, nil
 }
