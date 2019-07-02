@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	resty "gopkg.in/resty.v1"
@@ -35,5 +36,9 @@ func ArchitectureTXTSupport() (bool, error) {
 		return false, err
 	}
 
-	return response.Data[0].TXT, nil
+	if len(response.Data) == 0 {
+		return false, fmt.Errorf("No data\n")
+	} else {
+		return response.Data[0].TXT, nil
+	}
 }
