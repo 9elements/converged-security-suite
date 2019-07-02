@@ -5,6 +5,8 @@ import (
 )
 
 func main() {
+	// tests 1-15
 	test.RunCPUTests()
-	//test.RunTPMTests()
+	// tests 16-20
+	test.RunTPMTests()
 }

@@ -4,71 +4,173 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/9elements/txt-suite/pkg/api"
 	"github.com/google/go-tpm/tpm2"
 )
 
-var tpmcon io.ReadWriteCloser
-var err error
+const (
+	psIndex  = 0x80000001
+	auxIndex = 0x80000002
+)
 
-// ConnectTpm connects to a TPM-Device (virtual or real), just give path
-func ConnectTpm(tpmPath string) {
-	tpmcon, err = tpm2.OpenTPM(tpmPath)
+var tpmConnection *io.ReadWriteCloser
+
+// Connects to a TPM device (virtual or real) at the given path
+func connectTPM(tpmPath string) error {
+	conn, err := tpm2.OpenTPM(tpmPath)
 	if err != nil {
-		fmt.Println("Can't open TPM %q: %v", tpmPath, err)
+		return err
 	}
+
+	tpmConnection = &conn
+	return nil
 }
 
-// CloseTpm close a existing connection
-func CloseTpm() bool {
-	if err := tpmcon.Close(); err != nil {
-		fmt.Println("Can't close TPM: %v", err)
-		return false
+// Checks whether a TPM is present and answers to GetCapability
+func Test16TPMPresent() (bool, error) {
+	if tpmConnection == nil {
+		return false, fmt.Errorf("No TPM connection")
 	}
-	return true
+
+	ca, _, err := tpm2.GetCapability(*tpmConnection, tpm2.CapabilityTPMProperties, 1, uint32(tpm2.Manufacturer))
+
+	return ca != nil && err == nil, nil
 }
 
-// TPMPresent checks if a TPM is present and answers to a booty-call
-func TPMPresent() bool {
-	state := false
-	if tpmcon != nil {
-		recInterf, _, _ := tpm2.GetCapability(tpmcon, tpm2.CapabilityTPMProperties, 1, uint32(tpm2.Manufacturer))
-		if recInterf != nil {
-			if recInterf[0].(tpm2.TaggedProperty).Value != 0 {
-				state = true
+// TPM is not in manufacturing mode
+func Test17TPMIsLocked() (bool, error) {
+	return false, fmt.Errorf("Unimplmented")
+}
+
+// TPM NV ram has a valid PS index
+func Test18PSIndexIsSet() (bool, error) {
+	meta, err := tpm2.NVReadPublic(*tpmConnection, psIndex)
+	if err != nil {
+		return false, err
+	}
+
+	rc := true
+	rc = rc && meta.NVIndex == psIndex
+	rc = rc && (meta.Attributes&tpm2.KeyProp(tpm2.AttrWriteLocked) != 0)
+
+	return rc, nil
+}
+
+// TPM NV ram has a valid AUX index
+func Test19AUXIndexIsSet() (bool, error) {
+	meta, err := tpm2.NVReadPublic(*tpmConnection, auxIndex)
+	if err != nil {
+		return false, err
+	}
+
+	rc := true
+	rc = rc && meta.NVIndex == auxIndex
+
+	return rc, nil
+}
+
+// PS index contains a valid LCP policy
+func Test20LCPPolicyIsValid() (bool, error) {
+	data, err := tpm2.NVRead(*tpmConnection, psIndex)
+	if err != nil {
+		return false, err
+	}
+
+	lcp, err := api.ParsePolicy(data)
+	if err != nil {
+		return false, err
+	}
+
+	return lcp.Version == 0x100, nil
+}
+
+// Reads PCR-00 and checks whether if it's not the EmptyDigest
+func Test21PCR0IsSet() (bool, error) {
+	ca, _, err := tpm2.GetCapability(*tpmConnection, tpm2.CapabilityPCRs, 1, 0)
+	if ca == nil || err != nil {
+		return false, err
+	}
+
+	for i := 0; i < 4; i++ {
+		pcr, _ := tpm2.ReadPCRs(*tpmConnection, ca[i].(tpm2.PCRSelection))
+		for j := 0; j < len(pcr[0]); j++ {
+			if pcr[0][j] != 0 {
+				return false, nil
 			}
-
 		}
 	}
-	return state
-}
 
-// TPMReadPCR0 reads if PCR0-Registers have been written
-func TPMReadPCR0() bool {
-	state := false
-	tpm2.Startup(tpmcon, tpm2.StartupClear)
-	if tpmcon != nil {
-		recInterf, _, err := tpm2.GetCapability(tpmcon, tpm2.CapabilityPCRs, 1, 0)
-		if recInterf == nil {
-			fmt.Printf("%s", err)
-			return state
-		}
-
-		for i := 0; i < 4; i++ {
-			pcr, _ := tpm2.ReadPCRs(tpmcon, recInterf[i].(tpm2.PCRSelection))
-			for j := 0; j < len(pcr[0]); j++ {
-				if pcr[0][j] != 0 {
-					state = true
-				}
-			}
-		}
-	}
-	return state
+	return true, nil
 }
 
 // RunTests just for debugging purposes
-func RunTPMTests() {
-	ConnectTpm("/dev/tpm2")
-	fmt.Printf("%+v", TPMPresent())
-	fmt.Printf("%+v", TPMReadPCR0())
-	CloseTpm()
+func RunTPMTests() (bool, error) {
+	err := connectTPM("/dev/tpm0")
+	if err != nil {
+		return false, err
+	}
+
+	rc, err := Test16TPMPresent()
+	if err != nil {
+		fmt.Printf("ERROR\n\t%s\n", err)
+		return false, nil
+	}
+	if rc {
+		fmt.Println("OK")
+	} else {
+		fmt.Println("FAIL\n\tNo TPM found")
+		return false, nil
+	}
+
+	rc, err = Test17TPMIsLocked()
+	if err != nil {
+		fmt.Printf("ERROR\n\t%s\n", err)
+		return false, nil
+	}
+	if rc {
+		fmt.Println("OK")
+	} else {
+		fmt.Println("FAIL\n\tTPM is in manufacturing mode")
+		return false, nil
+	}
+
+	rc, err = Test18PSIndexIsSet()
+	if err != nil {
+		fmt.Printf("ERROR\n\t%s\n", err)
+		return false, nil
+	}
+	if rc {
+		fmt.Println("OK")
+	} else {
+		fmt.Println("FAIL\n\tTPM is in manufacturing mode")
+		return false, nil
+	}
+
+	rc, err = Test19AUXIndexIsSet()
+	if err != nil {
+		fmt.Printf("ERROR\n\t%s\n", err)
+		return false, nil
+	}
+	if rc {
+		fmt.Println("OK")
+	} else {
+		fmt.Println("FAIL\n\tTPM is in manufacturing mode")
+		return false, nil
+	}
+
+	rc, err = Test20LCPPolicyIsValid()
+	if err != nil {
+		fmt.Printf("ERROR\n\t%s\n", err)
+		return false, nil
+	}
+	if rc {
+		fmt.Println("OK")
+	} else {
+		fmt.Println("FAIL\n\tTPM is in manufacturing mode")
+		return false, nil
+	}
+
+	tpmConnection = nil
+
+	return true, nil
 }
