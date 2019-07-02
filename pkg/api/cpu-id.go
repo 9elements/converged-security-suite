@@ -6,14 +6,14 @@ import (
 
 // #include <stdint.h>
 //
-// uint32_t getSecCapability(void) {
-//   uint32_t ret;
+// uint64_t getSecCapability(void) {
+//   uint64_t ret;
 //
-//   asm(
-//		"movl $0, %%eax\n"
+//   asm volatile(
+//		"movq $0, %%rax\n"
 //		"getsec\n"
-//		"movl %%ebx, %0\n"
-//    :"=r"(ret));
+//		"movq %%rbx, %0\n"
+//    :"=r"(ret) : : "rax", "rbx" );
 //   return ret;
 // }
 import "C"
@@ -27,7 +27,7 @@ func HasTXTLeaves() bool {
 	exitAc := 1 << 2
 	senter := 1 << 3
 	sexit := 1 << 4
-	leaves := C.uint(enterAccs | exitAc | senter | sexit)
+	leaves := C.uint64_t(enterAccs | exitAc | senter | sexit)
 
 	return C.getSecCapability()&leaves == leaves
 }
