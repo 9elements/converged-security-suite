@@ -67,5 +67,6 @@ func TXTLeavesAreEnabled() (bool, error) {
 		return false, fmt.Errorf("Cannot access MSR IA32_FEATURE_CONTROL: %s", err)
 	}
 
-	return (feat_ctrl>>8)&0x1ff == 0x1ff, nil
+	txt_bits := (feat_ctrl >> 8) & 0x1ff
+	return (txt_bits&0xff == 0xff) || (txt_bits&0x100 == 0x100), nil
 }
