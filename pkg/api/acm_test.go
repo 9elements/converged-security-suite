@@ -4,8 +4,6 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
-
-	"github.com/9elements/txt-suite/pkg/api"
 )
 
 func TestACMParser(t *testing.T) {
@@ -14,7 +12,7 @@ func TestACMParser(t *testing.T) {
 		t.Errorf("ACMParser() failed: %v", err)
 	}
 
-	acm, chipsets, processors, tpms, err := api.ParseACM(file)
+	acm, chipsets, processors, tpms, err := ParseACM(file)
 	if err != nil {
 		t.Errorf("ACMParser() failed: %v", err)
 	}
@@ -30,7 +28,7 @@ func TestACMSize(t *testing.T) {
 	if err != nil {
 		t.Errorf("ACMSize() failed: %v", err)
 	}
-	size, err := api.LookupSize(file)
+	size, err := LookupSize(file)
 	if err != nil {
 		t.Errorf("ACMSize() failed: %v", err)
 	}
@@ -50,7 +48,7 @@ func TestACMParser2(t *testing.T) {
 		t.Errorf("ACMParser() failed: %v", err)
 	}
 
-	acm, chipsets, processors, tpms, err := api.ParseACM(file)
+	acm, chipsets, processors, tpms, err := ParseACM(file)
 	if err != nil {
 		t.Errorf("ACMParser() failed: %v", err)
 	}
@@ -66,7 +64,7 @@ func TestACMSize2(t *testing.T) {
 	if err != nil {
 		t.Errorf("ACMSize() failed: %v", err)
 	}
-	size, err := api.LookupSize(file)
+	size, err := LookupSize(file)
 	if err != nil {
 		t.Errorf("ACMSize() failed: %v", err)
 	}
