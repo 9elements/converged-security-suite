@@ -13,10 +13,39 @@ const (
 	auxIndex = 0x80000002
 )
 
-var tpmConnection *io.ReadWriteCloser
+var (
+	tpmConnection *io.ReadWriteCloser = nil
+	TestsTPM                          = [...]Test{
+		Test{
+			name:     "TPM 1.2 present",
+			required: true,
+			function: Test16TPMPresent,
+		},
+		Test{
+			name:     "TPM in production mode",
+			function: Test17TPMIsLocked,
+			required: true,
+		},
+		Test{
+			name:     "PS index is set in NVRAM",
+			function: Test18PSIndexIsSet,
+			required: true,
+		},
+		Test{
+			name:     "AUX index is set in NVRAM",
+			function: Test19AUXIndexIsSet,
+			required: true,
+		},
+		Test{
+			name:     "PS index contains a valid LCP Policy",
+			function: Test20LCPPolicyIsValid,
+			required: true,
+		},
+	}
+)
 
 // Connects to a TPM device (virtual or real) at the given path
-func connectTPM(tpmPath string) error {
+func ConnectTPM(tpmPath string) error {
 	conn, err := tpm2.OpenTPM(tpmPath)
 	if err != nil {
 		return err
