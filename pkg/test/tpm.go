@@ -44,6 +44,9 @@ func Test17TPMIsLocked() (bool, error) {
 
 // TPM NV ram has a valid PS index
 func Test18PSIndexIsSet() (bool, error) {
+	if tpmConnection == nil {
+		return false, fmt.Errorf("Not connected to TPM")
+	}
 	meta, err := tpm2.NVReadPublic(*tpmConnection, psIndex)
 	if err != nil {
 		return false, err
@@ -58,6 +61,9 @@ func Test18PSIndexIsSet() (bool, error) {
 
 // TPM NV ram has a valid AUX index
 func Test19AUXIndexIsSet() (bool, error) {
+	if tpmConnection == nil {
+		return false, fmt.Errorf("Not connected to TPM")
+	}
 	meta, err := tpm2.NVReadPublic(*tpmConnection, auxIndex)
 	if err != nil {
 		return false, err
@@ -71,6 +77,9 @@ func Test19AUXIndexIsSet() (bool, error) {
 
 // PS index contains a valid LCP policy
 func Test20LCPPolicyIsValid() (bool, error) {
+	if tpmConnection == nil {
+		return false, fmt.Errorf("Not connected to TPM")
+	}
 	data, err := tpm2.NVRead(*tpmConnection, psIndex)
 	if err != nil {
 		return false, err
@@ -86,6 +95,9 @@ func Test20LCPPolicyIsValid() (bool, error) {
 
 // Reads PCR-00 and checks whether if it's not the EmptyDigest
 func Test21PCR0IsSet() (bool, error) {
+	if tpmConnection == nil {
+		return false, fmt.Errorf("Not connected to TPM")
+	}
 	ca, _, err := tpm2.GetCapability(*tpmConnection, tpm2.CapabilityPCRs, 1, 0)
 	if ca == nil || err != nil {
 		return false, err
