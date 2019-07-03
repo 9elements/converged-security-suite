@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"golang.org/x/exp/mmap"
+	"log"
 )
 
 type fitEntryType uint16
@@ -31,6 +32,11 @@ const (
 	// 0x71 - 0x7E	: IntelReserved
 )
 
+const (
+	fitPointer     int64  = 0xFFFFFFC0
+	type0MagicWord uint64 = 0x5F4649545F202020
+)
+
 // FitEntry defines the structure of FitEntries in the Firmware Interface Table
 type FitEntry struct {
 	Address  uint64
@@ -41,10 +47,22 @@ type FitEntry struct {
 	CheckSum uint8
 }
 
-const (
-	fitPointer     int64 = 0xFFFFFFC0
-	type0MagicWord int64 = 0x5F4649545F202020
-)
+// FancyPrint does fancy things
+func (fit *FitEntry) FancyPrint() {
+	log.Println("Fit Table PrintOut")
+	if fit.Address == type0MagicWord {
+		log.Println("FitEntry 0")
+		log.Printf("Fit Size: %v\n Entries", fit.Size)
+		log.Printf("Version: %v\n", fit.Version)
+		log.Printf("Checksum indicator: %b\n", fit.CVType)
+	} else {
+		log.Printf("Component Address: %v\n", fit.Address)
+		log.Printf("Component size: %v\n", fit.Size)
+		log.Printf("Version: %v\n", fit.Version)
+		log.Printf("C_V & Type: %b\n", fit.CVType)
+		log.Printf("Checksum: %v\n", fit.CheckSum)
+	}
+}
 
 // getFitPointer returns the ROM-Address of FitPointer
 func getFitPointer(path string) ([]byte, error) {
