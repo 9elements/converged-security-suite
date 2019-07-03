@@ -9,6 +9,73 @@ import (
 
 var (
 	txtRegisterValues *api.TXTRegisterSpace = nil
+	TestsCPU                                = [...]Test{
+		Test{
+			name:     "Intel CPU",
+			required: true,
+			function: Test01CheckForIntelCPU,
+		},
+		Test{
+			name:     "Weybridge or later",
+			function: Test02WeybridgeOrLater,
+			required: true,
+		},
+		Test{
+			name:     "CPU supports TXT",
+			function: Test03CPUSupportsTXT,
+			required: true,
+		},
+		Test{
+			name:     "Chipset supports TXT",
+			function: Test04ChipsetSupportsTXT,
+			required: true,
+		},
+		Test{
+			name:     "TXT register space accessible",
+			function: Test05TXTRegisterSpaceAccessible,
+			required: true,
+		},
+		Test{
+			name:     "CPU supports SMX",
+			function: Test06SupportsSMX,
+			required: true,
+		},
+		Test{
+			name:     "CPU supports VMX",
+			function: Test07SupportVMX,
+			required: true,
+		},
+		Test{
+			name:     "IA32_FEATURE_CONTROL",
+			function: Test08Ia32FeatureCtrl,
+			required: true,
+		},
+		Test{
+			name:     "No ACM BIOS error",
+			function: Test10HasGetSecLeaves,
+			required: true,
+		},
+		Test{
+			name:     "Intel TXT no disabled by BIOS",
+			function: Test11TXTNotDisabled,
+			required: true,
+		},
+		Test{
+			name:     "BIOS ACM has run",
+			function: Test12IBBMeasured,
+			required: true,
+		},
+		Test{
+			name:     "Initial Bootblock is trusted",
+			function: Test13IBBIsTrusted,
+			required: true,
+		},
+		Test{
+			name:     "Intel TXT registers are locked",
+			function: Test14TXTRegistersLocked,
+			required: true,
+		},
+	}
 )
 
 func getTxtRegisters() (*api.TXTRegisterSpace, error) {
@@ -129,190 +196,4 @@ func Test15NoBIOSACMErrors() (bool, error) {
 	}
 
 	return !regs.ErrorCode.ValidInvalid, nil
-}
-
-func RunCPUTests() (bool, error) {
-	fmt.Printf("Intel CPU: ")
-	rc, err := Test01CheckForIntelCPU()
-	if err != nil {
-		fmt.Printf("ERROR\n\t%s\n", err)
-		return false, nil
-	}
-	if rc {
-		fmt.Println("OK")
-	} else {
-		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
-		return false, nil
-	}
-
-	fmt.Printf("Weybridge or later: ")
-	rc, err = Test02WeybridgeOrLater()
-	if err != nil {
-		fmt.Printf("ERROR\n\t%s\n", err)
-		return false, nil
-	}
-	if rc {
-		fmt.Println("OK")
-	} else {
-		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
-		return false, nil
-	}
-
-	fmt.Printf("CPU supports TXT: ")
-	rc, err = Test03CPUSupportsTXT()
-	if err != nil {
-		fmt.Printf("ERROR\n\t%s\n", err)
-		return false, nil
-	}
-	if rc {
-		fmt.Println("OK")
-	} else {
-		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
-		return false, nil
-	}
-
-	fmt.Printf("Chipset supports TXT: ")
-	rc, err = Test04ChipsetSupportsTXT()
-	if err != nil {
-		fmt.Printf("ERROR\n\t%s\n", err)
-		return false, nil
-	}
-	if rc {
-		fmt.Println("OK")
-	} else {
-		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
-		return false, nil
-	}
-
-	fmt.Printf("TXT register space accessible: ")
-	rc, err = Test05TXTRegisterSpaceAccessible()
-	if err != nil {
-		fmt.Printf("ERROR\n\t%s\n", err)
-		return false, nil
-	}
-	if rc {
-		fmt.Println("OK")
-	} else {
-		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
-		return false, nil
-	}
-
-	fmt.Printf("CPU supports SMX: ")
-	rc, err = Test06SupportsSMX()
-	if err != nil {
-		fmt.Printf("ERROR\n\t%s\n", err)
-		return false, nil
-	}
-	if rc {
-		fmt.Println("OK")
-	} else {
-		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
-		return false, nil
-	}
-
-	fmt.Printf("CUP supports VMX: ")
-	rc, err = Test07SupportVMX()
-	if err != nil {
-		fmt.Printf("ERROR\n\t%s\n", err)
-		return false, nil
-	}
-	if rc {
-		fmt.Println("OK")
-	} else {
-		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
-		return false, nil
-	}
-
-	fmt.Printf("IA32_FEATURE_CONTROL: ")
-	rc, err = Test08Ia32FeatureCtrl()
-	if err != nil {
-		fmt.Printf("ERROR\n\t%s\n", err)
-		return false, nil
-	}
-	if rc {
-		fmt.Println("OK")
-	} else {
-		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
-		return false, nil
-	}
-
-	//fmt.Printf("SMX enabled: ")
-	//rc, err = Test09SMXIsEnabled()
-	//if err != nil {
-	//	fmt.Printf("ERROR\n\t%s\n", err)
-	//	return false, nil
-	//}
-	//if rc {
-	//	fmt.Println("OK")
-	//} else {
-	//	fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
-	//	return false, nil
-	//}
-
-	fmt.Printf("No ACM BIOS error: ")
-	rc, err = Test10HasGetSecLeaves()
-	if err != nil {
-		fmt.Printf("ERROR\n\t%s\n", err)
-		return false, nil
-	}
-	if rc {
-		fmt.Println("OK")
-	} else {
-		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
-		return false, nil
-	}
-
-	fmt.Printf("Intel TXT no disabled by BIOS: ")
-	rc, err = Test11TXTNotDisabled()
-	if err != nil {
-		fmt.Printf("ERROR\n\t%s\n", err)
-		return false, nil
-	}
-	if rc {
-		fmt.Println("OK")
-	} else {
-		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
-		return false, nil
-	}
-
-	fmt.Printf("BIOS ACM has run: ")
-	rc, err = Test12IBBMeasured()
-	if err != nil {
-		fmt.Printf("ERROR\n\t%s\n", err)
-		return false, nil
-	}
-	if rc {
-		fmt.Println("OK")
-	} else {
-		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
-		return false, nil
-	}
-
-	fmt.Printf("Initial Bootblock is trusted: ")
-	rc, err = Test13IBBIsTrusted()
-	if err != nil {
-		fmt.Printf("ERROR\n\t%s\n", err)
-		return false, nil
-	}
-	if rc {
-		fmt.Println("OK")
-	} else {
-		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
-		return false, nil
-	}
-
-	fmt.Printf("Intel TXT registers are locked: ")
-	rc, err = Test14TXTRegistersLocked()
-	if err != nil {
-		fmt.Printf("ERROR\n\t%s\n", err)
-		return false, nil
-	}
-	if rc {
-		fmt.Println("OK")
-	} else {
-		fmt.Println("FAIL\n\tTXT only works on Intel CPUs")
-		return false, nil
-	}
-
-	return true, nil
 }
