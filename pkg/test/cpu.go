@@ -41,7 +41,7 @@ func Test03CPUSupportsTXT() (bool, error) {
 
 // Check whether chipset supports TXT
 func Test04ChipsetSupportsTXT() (bool, error) {
-	return api.ChipsetHasTXT(), nil
+	return false, fmt.Errorf("Unimplemented: Linux disables GETSEC by clearing CR4.SMXE")
 }
 
 // Check if the TXT register space is accessible
@@ -86,7 +86,7 @@ func Test08Ia32FeatureCtrl() (bool, error) {
 
 // Check for needed GETSEC leaves
 func Test10HasGetSecLeaves() (bool, error) {
-	return api.HasTXTLeaves(), nil
+	return false, fmt.Errorf("Unimplemented: Linux disables GETSEC by clearing CR4.SMXE")
 }
 
 // Check TXT_DISABLED bit in TXT_ACM_STATUS
