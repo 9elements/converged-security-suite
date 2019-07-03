@@ -107,7 +107,13 @@ func Test12IBBMeasured() (bool, error) {
 
 // Check that the IBB was deemed trusted
 func Test13IBBIsTrusted() (bool, error) {
-	return false, fmt.Errorf("Unimplemented")
+	regs, err := getTxtRegisters()
+
+	if err != nil {
+		return false, err
+	}
+
+	return regs.Sts.SenterDone, nil
 }
 
 // Verify that the TXT register space is locked
