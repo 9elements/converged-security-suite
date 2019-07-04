@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"encoding/binary"
-	"golang.org/x/exp/mmap"
 	"log"
 )
 
@@ -65,47 +64,38 @@ func (fit *FitEntry) FancyPrint() {
 }
 
 // getFitPointer returns the ROM-Address of FitPointer
-func getFitPointer(path string) ([]byte, error) {
-	file, err := mmap.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	fitAddress := file.Len() - 0x40
+func getFitPointer(data []byte) ([]byte, error) {
+	fitAddress := len(data) - 0x40
 	var fitPointer [16]byte
-	file.ReadAt(fitPointer[:], int64(fitAddress))
+
+	buf := bytes.NewReader(data)
+	buf.ReadAt(fitPointer[:], int64(fitAddress))
 	var fitPointerTMP []byte
 	for _, item := range fitPointer {
 		fitPointerTMP = append(fitPointerTMP, item)
 	}
-	file.Close()
 	return fitPointerTMP, nil
 }
 
 // convToRomAddress converts RAM-Address in FitPointer in RomAddress
-func convToROMAddress(path string, fitPointer []byte) (int64, error) {
-	file, err := mmap.Open(path)
+func convToROMAddress(data []byte, fitPointer []byte) (int64, error) {
+	buf := bytes.NewReader(fitPointer)
+	var fitType0inRAMAddress int64
+	err := binary.Read(buf, binary.LittleEndian, &fitType0inRAMAddress)
 	if err != nil {
 		return 0, err
 	}
-	buf := bytes.NewReader(fitPointer)
-	var fitType0inRAMAddress int64
-	err = binary.Read(buf, binary.LittleEndian, &fitType0inRAMAddress)
-
-	var fitAddressinROMAddress = (fitType0inRAMAddress - 0x100000000) + int64(file.Len())
-	file.Close()
+	var fitAddressinROMAddress = (fitType0inRAMAddress - 0x100000000) + int64(len(data))
 	return fitAddressinROMAddress, nil
 }
 
-func readFit(path string, fitsize uint32, fitromaddress int64) ([]FitEntry, error) {
-	file, err := mmap.Open(path)
-	if err != nil {
-		return nil, err
-	}
+func readFit(data []byte, fitsize uint32, fitromaddress int64) ([]FitEntry, error) {
 	fitTableBytes := make([]byte, fitsize*16)
-	file.ReadAt(fitTableBytes[:], fitromaddress)
+	buf := bytes.NewReader(data)
+	buf.ReadAt(fitTableBytes[:], fitromaddress)
 	var fitTable []FitEntry
-	buf := bytes.NewReader(fitTableBytes)
-	err = binary.Read(buf, binary.LittleEndian, &fitTable)
+	buf = bytes.NewReader(fitTableBytes)
+	err := binary.Read(buf, binary.LittleEndian, &fitTable)
 	if err != nil {
 		return nil, err
 	}
@@ -114,21 +104,20 @@ func readFit(path string, fitsize uint32, fitromaddress int64) ([]FitEntry, erro
 }
 
 // ExtractFit Gets the bios file blob and extracts the FIT-Part
-func ExtractFit(path string) ([]FitEntry, error) {
-	fitPointer, err := getFitPointer(path)
+func ExtractFit(data []byte) ([]FitEntry, error) {
+	fitPointer, err := getFitPointer(data)
 	if err != nil {
 		return nil, err
 	}
 
-	fitRomAddress, err := convToROMAddress(path, fitPointer)
+	fitRomAddress, err := convToROMAddress(data, fitPointer)
 	if err != nil {
 		return nil, err
 	}
 	// Read in 16 byte chunk at given address of file to get type0 Entry!!!
 	var Entry0Bytes [16]byte
-	file, err := mmap.Open(path)
-	file.ReadAt(Entry0Bytes[:], fitRomAddress)
-	file.Close()
+	buf := bytes.NewReader(data)
+	buf.ReadAt(Entry0Bytes[:], fitRomAddress)
 	//Convert again
 	var type0EntryTMP []byte
 	for _, item := range Entry0Bytes {
@@ -136,12 +125,12 @@ func ExtractFit(path string) ([]FitEntry, error) {
 	}
 	// Decode the actual Entry0
 	var type0Entry FitEntry
-	buf := bytes.NewReader(type0EntryTMP)
+	buf = bytes.NewReader(type0EntryTMP)
 	err = binary.Read(buf, binary.BigEndian, &type0Entry)
 
 	fitSize := getFitSize(type0Entry)
 
-	fitTable, err := readFit(path, fitSize, fitRomAddress)
+	fitTable, err := readFit(data, fitSize, fitRomAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -158,11 +147,4 @@ func getFitSize(entry FitEntry) uint32 {
 		}
 	}
 	return tmpsize / 16
-}
-
-// ParseFit gets a byte-blop of data and searches for the FIT, extracts and returns it
-func ParseFit(data []byte) ([]FitEntry, error) {
-
-	return nil, nil
-
 }
