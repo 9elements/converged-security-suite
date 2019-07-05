@@ -147,6 +147,20 @@ func ReadPhys(addr int64, data UintN) error {
 	return pathRead(memPath, addr, data)
 }
 
+func ReadPhysBuf(addr int64, buf []byte) error {
+	var b Uint8
+
+	for i := 0; i < len(buf); i += 1 {
+		err := ReadPhys(int64(i)+addr, &b)
+		if err != nil {
+			return err
+		}
+		buf[i] = byte(b)
+	}
+
+	return nil
+}
+
 func pathWrite(path string, addr int64, data UintN) error {
 	f, err := os.OpenFile(path, os.O_WRONLY, 0)
 	if err != nil {
