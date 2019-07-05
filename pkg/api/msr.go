@@ -51,6 +51,15 @@ func IA32FeatureControlIsLocked() (bool, error) {
 	return feat_ctrl&1 != 0, nil
 }
 
+func IA32PlatformID() (uint64, error) {
+	plt_id, err := gomsr.ReadMSR(0, 0x17)
+	if err != nil {
+		return 0, fmt.Errorf("Cannot access MSR IA32_PLATFORM_ID: %s", err)
+	}
+
+	return plt_id, nil
+}
+
 func AllowsVMXInSMX() (bool, error) {
 	feat_ctrl, err := gomsr.ReadMSR(0, 0x3a)
 	if err != nil {

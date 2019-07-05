@@ -23,3 +23,11 @@ func HasMTRR() bool {
 func ProcessorBrandName() string {
 	return cpuid.ProcessorBrandString
 }
+
+func FamilyModelStepping() uint32 {
+	f := cpuid.DisplayFamily << 8
+	m := cpuid.DisplayModel << 4
+	s := cpuid.SteppingId
+
+	return f | m | s
+}
