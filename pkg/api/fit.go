@@ -6,23 +6,23 @@ import (
 	"log"
 )
 
-type fitEntryType uint16
+type FitEntryType uint16
 
 // FitEntryTypes for distiction of Entries
 const (
-	FitHeader           fitEntryType = 0x00
-	MCUpdate            fitEntryType = 0x01
-	StartUpACMod        fitEntryType = 0x02
-	BIOSStartUpMod      fitEntryType = 0x07
-	TPMPolicyRec        fitEntryType = 0x08
-	BIOSPolicyRec       fitEntryType = 0x09
-	TXTPolicyRec        fitEntryType = 0x0A
-	KeyManifestRec      fitEntryType = 0x0B
-	BootPolicyManifest  fitEntryType = 0x0C
-	CSESecBoot          fitEntryType = 0x10
-	FeaturePolicyDelRec fitEntryType = 0x2D
-	JumpDebugPol        fitEntryType = 0x2F
-	UnusedEntry         fitEntryType = 0x7F
+	FitHeader           FitEntryType = 0x00
+	MCUpdate            FitEntryType = 0x01
+	StartUpACMod        FitEntryType = 0x02
+	BIOSStartUpMod      FitEntryType = 0x07
+	TPMPolicyRec        FitEntryType = 0x08
+	BIOSPolicyRec       FitEntryType = 0x09
+	TXTPolicyRec        FitEntryType = 0x0A
+	KeyManifestRec      FitEntryType = 0x0B
+	BootPolicyManifest  FitEntryType = 0x0C
+	CSESecBoot          FitEntryType = 0x10
+	FeaturePolicyDelRec FitEntryType = 0x2D
+	JumpDebugPol        FitEntryType = 0x2F
+	UnusedEntry         FitEntryType = 0x7F
 	// 0x03 - 0x06 	: Intel reserved
 	// 0x0D - 0x0D 	: Intel reserved
 	// 0x11 - 0x2C 	: Intel reserved
