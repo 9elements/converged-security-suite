@@ -63,6 +63,14 @@ func (fit *FitEntry) FancyPrint() {
 	}
 }
 
+func (fit *FitEntry) CheckSumValid() bool {
+	return fit.CVType&0x80 != 0
+}
+
+func (fit *FitEntry) Type() FitEntryType {
+	return FitEntryType(fit.CVType & 0x7f)
+}
+
 // getFitPointer returns the ROM-Address of FitPointer
 func getFitPointer(data []byte) ([]byte, error) {
 	fitAddress := len(data) - 0x40
