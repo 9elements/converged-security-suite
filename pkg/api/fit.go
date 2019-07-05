@@ -39,7 +39,7 @@ const (
 // FitEntry defines the structure of FitEntries in the Firmware Interface Table
 type FitEntry struct {
 	Address  uint64
-	Size     [3]uint8
+	OrigSize [3]uint8
 	_        uint8
 	Version  uint16
 	CVType   uint8
@@ -51,12 +51,12 @@ func (fit *FitEntry) FancyPrint() {
 	log.Println("Fit Table PrintOut")
 	if fit.Address == type0MagicWord {
 		log.Println("FitEntry 0")
-		log.Printf("Fit Size: %v\n Entries", fit.Size)
+		log.Printf("Fit Size: %v\n Entries", fit.Size())
 		log.Printf("Version: %v\n", fit.Version)
 		log.Printf("Checksum indicator: %b\n", fit.CVType)
 	} else {
 		log.Printf("Component Address: %v\n", fit.Address)
-		log.Printf("Component size: %v\n", fit.Size)
+		log.Printf("Component size: %v\n", fit.Size())
 		log.Printf("Version: %v\n", fit.Version)
 		log.Printf("C_V & Type: %b\n", fit.CVType)
 		log.Printf("Checksum: %v\n", fit.CheckSum)
@@ -128,7 +128,7 @@ func ExtractFit(data []byte) ([]FitEntry, error) {
 	buf = bytes.NewReader(type0EntryTMP)
 	err = binary.Read(buf, binary.BigEndian, &type0Entry)
 
-	fitSize := getFitSize(type0Entry)
+	fitSize := type0Entry.Size()
 
 	fitTable, err := readFit(data, fitSize, fitRomAddress)
 	if err != nil {
@@ -138,9 +138,9 @@ func ExtractFit(data []byte) ([]FitEntry, error) {
 
 }
 
-func getFitSize(entry FitEntry) uint32 {
+func (entry *FitEntry) Size() uint32 {
 	var tmpsize uint32
-	for count, item := range entry.Size {
+	for count, item := range entry.OrigSize {
 		tmpsize += uint32(item)
 		if count < 2 {
 			tmpsize = tmpsize << 4
