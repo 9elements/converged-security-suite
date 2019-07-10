@@ -16,9 +16,9 @@ func HasSMRR() (bool, error) {
 
 // MTRR for the SMM code.
 type SMRR struct {
-	active    bool
-	phys_base uint64
-	phys_mask uint64
+	Active   bool
+	PhysBase uint64
+	PhysMask uint64
 }
 
 // Returns SMRR config of the platform
@@ -35,9 +35,9 @@ func GetSMRRInfo() (SMRR, error) {
 		return ret, fmt.Errorf("Cannot access MSR IA32_SMRR_PHYSMASK: %s", err)
 	}
 
-	ret.active = (smrr_physmask>>11)&1 != 0
-	ret.phys_base = (smrr_physbase >> 12) & 0xfffff
-	ret.phys_mask = (smrr_physmask >> 12) & 0xfffff
+	ret.Active = (smrr_physmask>>11)&1 != 0
+	ret.PhysBase = (smrr_physbase >> 12) & 0xfffff
+	ret.PhysMask = (smrr_physmask >> 12) & 0xfffff
 
 	return ret, nil
 }
