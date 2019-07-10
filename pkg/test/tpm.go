@@ -27,7 +27,7 @@ var (
 		Test{
 			Name:     "TPM in production mode",
 			function: Test17TPMIsLocked,
-			Required: true,
+			Required: false,
 		},
 		Test{
 			Name:     "PS index is set in NVRAM",
@@ -80,12 +80,12 @@ func Test16TPMPresent() (bool, error) {
 	}
 }
 
-// TPM is not in manufacturing mode
+// TPM NVRAM is locked
 func Test17TPMIsLocked() (bool, error) {
-	return false, fmt.Errorf("Unimplmented")
+	return false, fmt.Errorf("Unimplemented: Read TPM_PERMANENT_FLAGS.nvLocked")
 }
 
-// TPM NV ram has a valid PS index
+// TPM NVRAM has a valid PS index
 func Test18PSIndexIsSet() (bool, error) {
 	if tpm12Connection != nil {
 		magic, err := tpm1.NVReadValue(*tpm12Connection, psIndex, 0, 32, [20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
@@ -107,7 +107,7 @@ func Test18PSIndexIsSet() (bool, error) {
 	}
 }
 
-// TPM NV ram has a valid AUX index
+// TPM NVRAM has a valid AUX index
 func Test19AUXIndexIsSet() (bool, error) {
 	if tpm12Connection != nil {
 		buf, err := tpm1.NVReadValue(*tpm12Connection, psIndex, 0, 1, [20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
