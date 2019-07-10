@@ -28,7 +28,7 @@ var (
 		Test{
 			Name:     "Chipset supports TXT",
 			function: Test04ChipsetSupportsTXT,
-			Required: true,
+			Required: false,
 		},
 		Test{
 			Name:     "TXT register space accessible",
