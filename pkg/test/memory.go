@@ -262,7 +262,7 @@ func Test46ValidSMRR() (bool, error) {
 		return false, err
 	}
 
-	return smrr.PhysBase > 0 && smrr.PhysBase <= 0xffffffff  && smrr.PhysMask = 0, nil
+	return smrr.PhysBase > 0 && smrr.PhysBase <= 0xffffffff && smrr.PhysMask != 0, nil
 }
 
 func Test47ActiveSMRR() (bool, error) {
