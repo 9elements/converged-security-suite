@@ -148,17 +148,16 @@ func ReadPhys(addr int64, data UintN) error {
 }
 
 func ReadPhysBuf(addr int64, buf []byte) error {
-	var b Uint8
-
-	for i := 0; i < len(buf); i += 1 {
-		err := ReadPhys(int64(i)+addr, &b)
-		if err != nil {
-			return err
-		}
-		buf[i] = byte(b)
+	f, err := os.OpenFile(memPath, os.O_RDONLY, 0)
+	if err != nil {
+		return err
 	}
+	defer f.Close()
 
-	return nil
+	if _, err := f.Seek(addr, io.SeekCurrent); err != nil {
+		return err
+	}
+	return binary.Read(f, ubinary.NativeEndian, buf)
 }
 
 func pathWrite(path string, addr int64, data UintN) error {

@@ -64,28 +64,8 @@ var (
 )
 
 func LoadFITFromMemory() error {
-	var b8 api.Uint8
-	var b64 api.Uint64
-
-	for i := int64(0); i < FITSize; {
-		var err error
-
-		if FITSize-i >= 8 {
-			err = api.ReadPhys(FourGiB-FITSize+i, &b64)
-			i += 8
-			fitImage = append(fitImage, byte(b64))
-		} else {
-			err = api.ReadPhys(FourGiB-FITSize+i, &b8)
-			i += 1
-			fitImage = append(fitImage, byte(b8))
-		}
-
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	fitImage = make([]byte, FITSize)
+	return api.ReadPhysBuf(FourGiB-FITSize, fitImage)
 }
 
 func LoadFITFromFile(path string) error {
