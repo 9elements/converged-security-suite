@@ -179,7 +179,7 @@ func Test13IBBIsTrusted() (bool, error) {
 		return false, err
 	}
 
-	return regs.Sts.SenterDone, nil
+	return regs.AcmStatus&(1<<59) != 0, nil
 }
 
 // Verify that the TXT register space is locked
