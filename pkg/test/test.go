@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+
+	a "github.com/logrusorgru/aurora"
 )
 
 type Test struct {
@@ -20,15 +22,15 @@ func (self *Test) Run() bool {
 
 	rc, err := self.function()
 	if err != nil {
-		fmt.Printf("ERROR\n\t%s\n", err)
+		fmt.Printf("%s\n%s\n", a.Bold(a.Red("ERROR")), a.Bold(err))
 		f.Flush()
 		return false
 	}
 
 	if rc {
-		fmt.Println("OK")
+		fmt.Println(a.Green("OK"))
 	} else {
-		fmt.Println("FAIL\n\t%s", "TODO")
+		fmt.Println(a.Red("FAIL"))
 	}
 	f.Flush()
 
