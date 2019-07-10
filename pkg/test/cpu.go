@@ -68,7 +68,7 @@ var (
 		Test{
 			Name:     "Initial Bootblock is trusted",
 			function: Test13IBBIsTrusted,
-			Required: true,
+			Required: false,
 		},
 		Test{
 			Name:     "Intel TXT registers are locked",
@@ -168,10 +168,11 @@ func Test12IBBMeasured() (bool, error) {
 		return false, err
 	}
 
-	return regs.AcmStatus&(1<<62) != 0, nil
+	return regs.AcmStatus&(1<<62) == 0, nil
 }
 
 // Check that the IBB was deemed trusted
+// Only set in Signed Policy mode
 func Test13IBBIsTrusted() (bool, error) {
 	regs, err := getTxtRegisters()
 
@@ -179,7 +180,7 @@ func Test13IBBIsTrusted() (bool, error) {
 		return false, err
 	}
 
-	return regs.AcmStatus&(1<<59) != 0, nil
+	return regs.AcmStatus&(1<<59) != 0 && regs.AcmStatus&(1<<63) != 0, nil
 }
 
 // Verify that the TXT register space is locked
