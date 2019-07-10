@@ -16,9 +16,10 @@ const (
 )
 
 var (
-	tpm12Connection *io.ReadWriteCloser = nil
-	tpm20Connection *io.ReadWriteCloser = nil
-	TestsTPM                            = [...]Test{
+	wellKnownOwnerAuth                     = [20]byte{'k', 'e', 'i', 'n', 's', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	tpm12Connection    *io.ReadWriteCloser = nil
+	tpm20Connection    *io.ReadWriteCloser = nil
+	TestsTPM                               = [...]Test{
 		Test{
 			Name:     "TPM 1.2 present",
 			Required: true,
@@ -88,7 +89,7 @@ func Test17TPMIsLocked() (bool, error) {
 // TPM NVRAM has a valid PS index
 func Test18PSIndexIsSet() (bool, error) {
 	if tpm12Connection != nil {
-		magic, err := tpm1.NVReadValue(*tpm12Connection, psIndex, 0, 32, [20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+		magic, err := tpm1.NVReadValue(*tpm12Connection, psIndex, 0, 32, wellKnownOwnerAuth)
 
 		return err != nil && bytes.Equal(magic, []byte(api.LCPDataFileSignature)), nil
 	} else if tpm20Connection != nil {
@@ -110,7 +111,7 @@ func Test18PSIndexIsSet() (bool, error) {
 // TPM NVRAM has a valid AUX index
 func Test19AUXIndexIsSet() (bool, error) {
 	if tpm12Connection != nil {
-		buf, err := tpm1.NVReadValue(*tpm12Connection, psIndex, 0, 1, [20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+		buf, err := tpm1.NVReadValue(*tpm12Connection, psIndex, 0, 1, wellKnownOwnerAuth)
 
 		return len(buf) == 1 && err != nil, nil
 	} else if tpm20Connection != nil {
@@ -134,7 +135,7 @@ func Test20LCPPolicyIsValid() (bool, error) {
 	var err error
 
 	if tpm12Connection != nil {
-		data = api.NVReadAll(*tpm12Connection, psIndex, [20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+		data = api.NVReadAll(*tpm12Connection, psIndex, wellKnownOwnerAuth)
 
 		if len(data) == 0 {
 			return false, fmt.Errorf("LCP policy file is empty")
