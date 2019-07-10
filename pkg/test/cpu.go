@@ -51,9 +51,9 @@ var (
 			Required: true,
 		},
 		Test{
-			Name:     "No ACM BIOS error",
+			Name:     "GETSEC leaves are enabled",
 			function: Test10HasGetSecLeaves,
-			Required: true,
+			Required: false,
 		},
 		Test{
 			Name:     "Intel TXT no disabled by BIOS",
