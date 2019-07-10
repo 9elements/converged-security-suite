@@ -168,7 +168,7 @@ func Test12IBBMeasured() (bool, error) {
 		return false, err
 	}
 
-	return regs.AcmStatus&(1<<62) == 0, nil
+	return regs.AcmStatus&(1<<62) == 0 && regs.AcmStatus&(1<<63) != 0, nil
 }
 
 // Check that the IBB was deemed trusted
