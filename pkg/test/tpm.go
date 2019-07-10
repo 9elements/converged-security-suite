@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	psIndex  = 0x80000001
-	auxIndex = 0x80000002
+	psIndex  = 0x50000001
+	auxIndex = 0x50000003
 )
 
 var (
