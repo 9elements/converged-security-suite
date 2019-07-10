@@ -20,29 +20,29 @@ var (
 	tpm20Connection *io.ReadWriteCloser = nil
 	TestsTPM                            = [...]Test{
 		Test{
-			name:     "TPM 1.2 present",
-			required: true,
+			Name:     "TPM 1.2 present",
+			Required: true,
 			function: Test16TPMPresent,
 		},
 		Test{
-			name:     "TPM in production mode",
+			Name:     "TPM in production mode",
 			function: Test17TPMIsLocked,
-			required: true,
+			Required: true,
 		},
 		Test{
-			name:     "PS index is set in NVRAM",
+			Name:     "PS index is set in NVRAM",
 			function: Test18PSIndexIsSet,
-			required: true,
+			Required: true,
 		},
 		Test{
-			name:     "AUX index is set in NVRAM",
+			Name:     "AUX index is set in NVRAM",
 			function: Test19AUXIndexIsSet,
-			required: true,
+			Required: true,
 		},
 		Test{
-			name:     "PS index contains a valid LCP Policy",
+			Name:     "PS index contains a valid LCP Policy",
 			function: Test20LCPPolicyIsValid,
-			required: true,
+			Required: true,
 		},
 	}
 )

@@ -16,48 +16,48 @@ var (
 	fitImage []byte
 	TestsFIT = [...]Test{
 		Test{
-			name:     "Has FIT",
-			required: true,
+			Name:     "Has FIT",
+			Required: true,
 			function: Test22HasFIT,
 		},
 		Test{
-			name:     "FIT has an BIOS ACM entry",
-			required: true,
+			Name:     "FIT has an BIOS ACM entry",
+			Required: true,
 			function: Test23HasBIOSACM,
 		},
 		Test{
-			name:     "FIT has a initial bootblock entry",
-			required: true,
+			Name:     "FIT has a initial bootblock entry",
+			Required: true,
 			function: Test24HasIBB,
 		},
 		Test{
-			name:     "FIT has a LCP Policy entry",
-			required: true,
+			Name:     "FIT has a LCP Policy entry",
+			Required: true,
 			function: Test25HasBIOSPolicy,
 		},
 		Test{
-			name:     "Initial bootblock covers reset vector",
-			required: true,
+			Name:     "Initial bootblock covers reset vector",
+			Required: true,
 			function: Test26IBBCoversResetVector,
 		},
 		Test{
-			name:     "Initial bootblock does not overlap",
-			required: true,
+			Name:     "Initial bootblock does not overlap",
+			Required: true,
 			function: Test27NoIBBOverlap,
 		},
 		Test{
-			name:     "BIOS ACM does not overlap",
-			required: true,
+			Name:     "BIOS ACM does not overlap",
+			Required: true,
 			function: Test28NoBIOSACMOverlap,
 		},
 		Test{
-			name:     "Initial bootblock and BIOS ACM is below 4GiB",
-			required: true,
+			Name:     "Initial bootblock and BIOS ACM is below 4GiB",
+			Required: true,
 			function: Test29BIOSACMIsBelow4G,
 		},
 		Test{
-			name:     "LCP Policy does not disable Intel TXT",
-			required: true,
+			Name:     "LCP Policy does not disable Intel TXT",
+			Required: true,
 			function: Test30PolicyAllowsTXT,
 		},
 	}

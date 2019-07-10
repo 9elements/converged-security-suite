@@ -9,15 +9,15 @@ import (
 )
 
 type Test struct {
-	name     string
-	required bool
+	Name     string
+	Required bool
 	function func() (bool, error)
 }
 
 func (self *Test) Run() bool {
 	f := bufio.NewWriter(os.Stdout)
 
-	fmt.Printf("%s: ", self.name)
+	fmt.Printf("%s: ", self.Name)
 	f.Flush()
 
 	rc, err := self.function()
