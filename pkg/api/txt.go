@@ -1,5 +1,11 @@
 package api
 
+import (
+	"bytes"
+	"encoding/binary"
+	"fmt"
+)
+
 const txtPublicSpace = 0xFED30000
 
 type TXTStatus struct {
@@ -61,6 +67,23 @@ type ACMStatus struct {
 	MajorErrorCode uint8
 	ClassCode      uint8
 	ModuleType     uint8
+}
+
+type TXTBiosData struct {
+	Version       uint32
+	BiosSinitSize uint32
+	Reserved1     uint64
+	Reserved2     uint64
+	NumLogProcs   uint32
+	SinitFlags    *uint32
+	MleFlags      *TXTBiosMLEFlags
+}
+
+type TXTBiosMLEFlags struct {
+	SupportsACPIPPI bool
+	IsLegacyState   bool
+	IsServerState   bool
+	IsClientState   bool
 }
 
 func ReadTXTRegs() (TXTRegisterSpace, error) {
@@ -171,6 +194,72 @@ func ReadTXTRegs() (TXTRegisterSpace, error) {
 	regSpace.E2Sts = uint64(u64)
 
 	return regSpace, nil
+}
+
+func ParseBIOSDataRegion(heap []byte) (TXTBiosData, error) {
+	var ret TXTBiosData
+
+	buf := bytes.NewReader(heap)
+	err := binary.Read(buf, binary.LittleEndian, &ret.Version)
+	if err != nil {
+		return ret, err
+	}
+
+	if ret.Version < 2 {
+		return ret, fmt.Errorf("BIOS DATA regions version < 2 are not supperted")
+	}
+
+	err = binary.Read(buf, binary.LittleEndian, &ret.BiosSinitSize)
+	if err != nil {
+		return ret, err
+	}
+
+	if ret.BiosSinitSize < 8+16 {
+		return ret, fmt.Errorf("BIOS DATA region is too small")
+	}
+
+	err = binary.Read(buf, binary.LittleEndian, &ret.Reserved1)
+	if err != nil {
+		return ret, err
+	}
+
+	err = binary.Read(buf, binary.LittleEndian, &ret.Reserved2)
+	if err != nil {
+		return ret, err
+	}
+
+	err = binary.Read(buf, binary.LittleEndian, &ret.NumLogProcs)
+	if err != nil {
+		return ret, err
+	}
+
+	if ret.NumLogProcs == 0 {
+		return ret, fmt.Errorf("BIOS DATA region corrupted")
+	}
+
+	if ret.Version >= 3 && ret.Version < 5 {
+		err = binary.Read(buf, binary.LittleEndian, &ret.SinitFlags)
+		if err != nil {
+			return ret, err
+		}
+	}
+
+	if ret.Version >= 5 {
+		var mleFlags uint32
+		var flags TXTBiosMLEFlags
+
+		err = binary.Read(buf, binary.LittleEndian, &mleFlags)
+		if err != nil {
+			return ret, err
+		}
+
+		flags.SupportsACPIPPI = mleFlags&1 != 0
+		flags.IsClientState = mleFlags&6 == 2
+		flags.IsServerState = mleFlags&6 == 4
+		ret.MleFlags = &flags
+	}
+
+	return ret, nil
 }
 
 func readTXTStatus() (TXTStatus, error) {
