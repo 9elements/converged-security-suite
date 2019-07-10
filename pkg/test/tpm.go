@@ -1,10 +1,12 @@
 package test
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 
 	"github.com/9elements/txt-suite/pkg/api"
+	tpm1 "github.com/google/go-tpm/tpm"
 	"github.com/google/go-tpm/tpm2"
 )
 
@@ -14,8 +16,9 @@ const (
 )
 
 var (
-	tpmConnection *io.ReadWriteCloser = nil
-	TestsTPM                          = [...]Test{
+	tpm12Connection *io.ReadWriteCloser = nil
+	tpm20Connection *io.ReadWriteCloser = nil
+	TestsTPM                            = [...]Test{
 		Test{
 			name:     "TPM 1.2 present",
 			required: true,
@@ -48,22 +51,33 @@ var (
 func ConnectTPM(tpmPath string) error {
 	conn, err := tpm2.OpenTPM(tpmPath)
 	if err != nil {
-		return err
+		conn, err = tpm1.OpenTPM(tpmPath)
+
+		if err != nil {
+			return err
+		}
+
+		tpm12Connection = &conn
+		return nil
 	}
 
-	tpmConnection = &conn
+	tpm20Connection = &conn
 	return nil
 }
 
 // Checks whether a TPM is present and answers to GetCapability
 func Test16TPMPresent() (bool, error) {
-	if tpmConnection == nil {
+	if tpm12Connection != nil {
+		vid, err := tpm1.GetManufacturer(*tpm12Connection)
+
+		return vid != nil && err == nil, nil
+	} else if tpm20Connection != nil {
+		ca, _, err := tpm2.GetCapability(*tpm20Connection, tpm2.CapabilityTPMProperties, 1, uint32(tpm2.Manufacturer))
+
+		return ca != nil && err == nil, nil
+	} else {
 		return false, fmt.Errorf("No TPM connection")
 	}
-
-	ca, _, err := tpm2.GetCapability(*tpmConnection, tpm2.CapabilityTPMProperties, 1, uint32(tpm2.Manufacturer))
-
-	return ca != nil && err == nil, nil
 }
 
 // TPM is not in manufacturing mode
@@ -73,45 +87,66 @@ func Test17TPMIsLocked() (bool, error) {
 
 // TPM NV ram has a valid PS index
 func Test18PSIndexIsSet() (bool, error) {
-	if tpmConnection == nil {
+	if tpm12Connection != nil {
+		magic, err := tpm1.NVReadValue(*tpm12Connection, psIndex, 0, 32, [20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+
+		return err != nil && bytes.Equal(magic, []byte(api.LCPDataFileSignature)), nil
+	} else if tpm20Connection != nil {
+		meta, err := tpm2.NVReadPublic(*tpm20Connection, psIndex)
+		if err != nil {
+			return false, err
+		}
+
+		rc := true
+		rc = rc && meta.NVIndex == psIndex
+		rc = rc && (meta.Attributes&tpm2.KeyProp(tpm2.AttrWriteLocked) != 0)
+
+		return rc, nil
+	} else {
 		return false, fmt.Errorf("Not connected to TPM")
 	}
-	meta, err := tpm2.NVReadPublic(*tpmConnection, psIndex)
-	if err != nil {
-		return false, err
-	}
-
-	rc := true
-	rc = rc && meta.NVIndex == psIndex
-	rc = rc && (meta.Attributes&tpm2.KeyProp(tpm2.AttrWriteLocked) != 0)
-
-	return rc, nil
 }
 
 // TPM NV ram has a valid AUX index
 func Test19AUXIndexIsSet() (bool, error) {
-	if tpmConnection == nil {
+	if tpm12Connection != nil {
+		buf, err := tpm1.NVReadValue(*tpm12Connection, psIndex, 0, 1, [20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+
+		return len(buf) == 1 && err != nil, nil
+	} else if tpm20Connection != nil {
+		meta, err := tpm2.NVReadPublic(*tpm20Connection, auxIndex)
+		if err != nil {
+			return false, err
+		}
+
+		rc := true
+		rc = rc && meta.NVIndex == auxIndex
+
+		return rc, nil
+	} else {
 		return false, fmt.Errorf("Not connected to TPM")
 	}
-	meta, err := tpm2.NVReadPublic(*tpmConnection, auxIndex)
-	if err != nil {
-		return false, err
-	}
-
-	rc := true
-	rc = rc && meta.NVIndex == auxIndex
-
-	return rc, nil
 }
 
 // PS index contains a valid LCP policy
 func Test20LCPPolicyIsValid() (bool, error) {
-	if tpmConnection == nil {
+	var data []byte
+	var err error
+
+	if tpm12Connection != nil {
+		data = api.NVReadAll(*tpm12Connection, psIndex, [20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+
+		if len(data) == 0 {
+			return false, fmt.Errorf("LCP policy file is empty")
+		}
+	} else if tpm20Connection != nil {
+		data, err = tpm2.NVRead(*tpm20Connection, psIndex)
+
+		if err != nil {
+			return false, err
+		}
+	} else {
 		return false, fmt.Errorf("Not connected to TPM")
-	}
-	data, err := tpm2.NVRead(*tpmConnection, psIndex)
-	if err != nil {
-		return false, err
 	}
 
 	lcp, err := api.ParsePolicy(data)
@@ -124,22 +159,26 @@ func Test20LCPPolicyIsValid() (bool, error) {
 
 // Reads PCR-00 and checks whether if it's not the EmptyDigest
 func Test21PCR0IsSet() (bool, error) {
-	if tpmConnection == nil {
-		return false, fmt.Errorf("Not connected to TPM")
-	}
-	ca, _, err := tpm2.GetCapability(*tpmConnection, tpm2.CapabilityPCRs, 1, 0)
-	if ca == nil || err != nil {
-		return false, err
-	}
+	if tpm12Connection != nil {
+		pcr, err := tpm1.ReadPCR(*tpm12Connection, 0)
 
-	for i := 0; i < 4; i++ {
-		pcr, _ := tpm2.ReadPCRs(*tpmConnection, ca[i].(tpm2.PCRSelection))
-		for j := 0; j < len(pcr[0]); j++ {
-			if pcr[0][j] != 0 {
-				return false, nil
+		return bytes.Equal(pcr, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}) && err == nil, err
+	} else if tpm20Connection != nil {
+		ca, _, err := tpm2.GetCapability(*tpm20Connection, tpm2.CapabilityPCRs, 1, 0)
+		if ca == nil || err != nil {
+			return false, err
+		}
+
+		for i := 0; i < 4; i++ {
+			pcr, _ := tpm2.ReadPCRs(*tpm20Connection, ca[i].(tpm2.PCRSelection))
+			for j := 0; j < len(pcr[0]); j++ {
+				if pcr[0][j] != 0 {
+					return false, nil
+				}
 			}
 		}
+		return true, nil
+	} else {
+		return false, fmt.Errorf("Not connected to TPM")
 	}
-
-	return true, nil
 }
