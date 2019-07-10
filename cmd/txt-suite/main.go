@@ -8,19 +8,27 @@ import (
 
 func run() {
 	for _, t := range test.TestsCPU {
-		t.Run()
+		if !t.Run() {
+			return
+		}
 	}
 
 	for _, t := range test.TestsTPM {
-		t.Run()
+		if !t.Run() {
+			return
+		}
 	}
 
 	for _, t := range test.TestsFIT {
-		t.Run()
+		if !t.Run() {
+			return
+		}
 	}
 
 	for _, t := range test.TestsMemory {
-		t.Run()
+		if !t.Run() {
+			return
+		}
 	}
 }
 
