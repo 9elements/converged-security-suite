@@ -185,7 +185,12 @@ func Test13IBBIsTrusted() (bool, error) {
 
 // Verify that the TXT register space is locked
 func Test14TXTRegistersLocked() (bool, error) {
-	return false, fmt.Errorf("Unimplemented")
+	regs, err := getTxtRegisters()
+	if err != nil {
+		return false, err
+	}
+
+	return regs.Sts.PrivateOpen, nil
 }
 
 // Check that the BIOS ACM has no startup error
