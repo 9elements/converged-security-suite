@@ -163,13 +163,12 @@ func Test11TXTNotDisabled() (bool, error) {
 
 // Verify that the IBB has been measured
 func Test12IBBMeasured() (bool, error) {
-	st, err := api.ReadACMStatus()
-
+	regs, err := getTxtRegisters()
 	if err != nil {
 		return false, err
 	}
 
-	return st.Valid && st.ACMStarted, nil
+	return regs.AcmStatus&(1<<62) != 0, nil
 }
 
 // Check that the IBB was deemed trusted

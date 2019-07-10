@@ -44,6 +44,7 @@ type TXTRegisterSpace struct {
 	TxtReset     bool         // TXT.ESTS (0x8)
 	ErrorCode    TXTErrorCode // TXT.ERRORCODE
 	ErrorCodeRaw uint32
+	AcmStatus    uint64            // TXT.ACMSTATUS
 	FsbIf        uint32            // TXT.VER.FSBIF
 	Vid          uint16            // TXT.DIDVID.VID
 	Did          uint16            // TXT.DIDVID.DID
@@ -117,6 +118,13 @@ func ReadTXTRegs() (TXTRegisterSpace, error) {
 		return regSpace, err
 	}
 	regSpace.TxtReset = u8&1 != 0
+
+	// TXT.ACMSTATUS (0xa0)
+	err = ReadPhys(txtPublicSpace+0xa0, &u64)
+	if err != nil {
+		return regSpace, err
+	}
+	regSpace.AcmStatus = uint64(u64)
 
 	// TXT.VER.FSBIF
 	err = ReadPhys(txtPublicSpace+0x100, &u32)
@@ -320,19 +328,19 @@ func readDMAProtectedRange() (DMAProtectedRange, error) {
 
 func ReadACMStatus() (ACMStatus, error) {
 	var ret ACMStatus
-	var u32 Uint32
-	err := ReadPhys(txtPublicSpace+0x328, &u32)
+	var u64 Uint64
+	err := ReadPhys(txtPublicSpace+0x328, &u64)
 
 	if err != nil {
 		return ret, err
 	}
 
-	ret.ModuleType = uint8(u32 & 0xF)
-	ret.ClassCode = uint8((u32 >> 4) & 0x3f)
-	ret.MajorErrorCode = uint8((u32 >> 10) & 0x1f)
-	ret.ACMStarted = (u32>>15)&1 == 1
-	ret.MinorErrorCode = uint16((u32 >> 16) & 0xfff)
-	ret.Valid = (u32>>31)&1 == 1
+	ret.ModuleType = uint8(u64 & 0xF)
+	ret.ClassCode = uint8((u64 >> 4) & 0x3f)
+	ret.MajorErrorCode = uint8((u64 >> 10) & 0x1f)
+	ret.ACMStarted = (u64>>15)&1 == 1
+	ret.MinorErrorCode = uint16((u64 >> 16) & 0xfff)
+	ret.Valid = (u64>>31)&1 == 1
 
 	return ret, nil
 }
