@@ -34,23 +34,24 @@ type DMAProtectedRange struct {
 }
 
 type TXTRegisterSpace struct {
-	Sts       TXTStatus         // TXT.STS (0x0)
-	TxtReset  bool              // TXT.ESTS (0x8)
-	ErrorCode TXTErrorCode      // TXT.ERRORCODE
-	FsbIf     uint32            // TXT.VER.FSBIF
-	Vid       uint16            // TXT.DIDVID.VID
-	Did       uint16            // TXT.DIDVID.DID
-	Rid       uint16            // TXT.DIDVID.RID
-	IdExt     uint16            // TXT.DIDVID.ID-EXT
-	QpiIf     uint32            // TXT.VER.QPIIF
-	SinitBase uint32            // TXT.SINIT.BASE
-	SinitSize uint32            // TXT.SINIT.SIZE
-	MleJoin   uint32            // TXT.MLE.JOIN
-	HeapBase  uint32            // TXT.HEAP.BASE
-	HeapSize  uint32            // TXT.HEAP.SIZE
-	Dpr       DMAProtectedRange // TXT.DPR
-	PublicKey [4]uint64         // TXT.PUBLIC.KEY
-	E2Sts     uint64            // TXT.E2STS
+	Sts          TXTStatus    // TXT.STS (0x0)
+	TxtReset     bool         // TXT.ESTS (0x8)
+	ErrorCode    TXTErrorCode // TXT.ERRORCODE
+	ErrorCodeRaw uint32
+	FsbIf        uint32            // TXT.VER.FSBIF
+	Vid          uint16            // TXT.DIDVID.VID
+	Did          uint16            // TXT.DIDVID.DID
+	Rid          uint16            // TXT.DIDVID.RID
+	IdExt        uint16            // TXT.DIDVID.ID-EXT
+	QpiIf        uint32            // TXT.VER.QPIIF
+	SinitBase    uint32            // TXT.SINIT.BASE
+	SinitSize    uint32            // TXT.SINIT.SIZE
+	MleJoin      uint32            // TXT.MLE.JOIN
+	HeapBase     uint32            // TXT.HEAP.BASE
+	HeapSize     uint32            // TXT.HEAP.SIZE
+	Dpr          DMAProtectedRange // TXT.DPR
+	PublicKey    [4]uint64         // TXT.PUBLIC.KEY
+	E2Sts        uint64            // TXT.E2STS
 }
 
 type ACMStatus struct {
@@ -75,7 +76,7 @@ func ReadTXTRegs() (TXTRegisterSpace, error) {
 
 	}
 
-	regSpace.ErrorCode, err = readTXTErrorCode()
+	regSpace.ErrorCode, regSpace.ErrorCodeRaw, err = readTXTErrorCode()
 	if err != nil {
 		return regSpace, err
 
@@ -191,13 +192,13 @@ func readTXTStatus() (TXTStatus, error) {
 	return ret, nil
 }
 
-func readTXTErrorCode() (TXTErrorCode, error) {
+func readTXTErrorCode() (TXTErrorCode, uint32, error) {
 	var ret TXTErrorCode
 	var u32 Uint32
 	err := ReadPhys(txtPublicSpace+0x30, &u32)
 
 	if err != nil {
-		return ret, err
+		return ret, 0, err
 	}
 
 	ret.ModuleType = uint8((u32 >> 0) & 0x7)           // 3:0
@@ -209,7 +210,7 @@ func readTXTErrorCode() (TXTErrorCode, error) {
 	ret.ProcessorSoftware = (u32>>30)&0x1 != 0         // 30
 	ret.ValidInvalid = (u32>>31)&0x1 != 0              // 31
 
-	return ret, nil
+	return ret, uint32(u32), nil
 }
 
 func readDMAProtectedRange() (DMAProtectedRange, error) {
