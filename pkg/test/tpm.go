@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"io"
 
+	tpm1 "github.com/9elements/go-tpm/tpm"
+	"github.com/9elements/go-tpm/tpm2"
+
 	"github.com/9elements/txt-suite/pkg/api"
-	tpm1 "github.com/google/go-tpm/tpm"
-	"github.com/google/go-tpm/tpm2"
 )
 
 const (
@@ -83,7 +84,15 @@ func Test16TPMPresent() (bool, error) {
 
 // TPM NVRAM is locked
 func Test17TPMIsLocked() (bool, error) {
-	return false, fmt.Errorf("Unimplemented: Read TPM_PERMANENT_FLAGS.nvLocked")
+	if tpm12Connection != nil {
+		flags, err := tpm1.GetPermanentFlags(*tpm12Connection)
+
+		return flags.NvLocked, err
+	} else if tpm20Connection != nil {
+		return false, fmt.Errorf("Unimplemented: TPM 2.0")
+	} else {
+		return false, fmt.Errorf("No TPM connection")
+	}
 }
 
 // TPM NVRAM has a valid PS index
