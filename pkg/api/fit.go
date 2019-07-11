@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+	"io"
 	"bytes"
 	"encoding/binary"
 	"log"
@@ -33,7 +35,7 @@ const (
 
 const (
 	fitPointer     int64  = 0xFFFFFFC0
-	type0MagicWord uint64 = 0x5F4649545F202020
+	type0MagicWord uint64 = 0x2020205f5449465f
 )
 
 // FitEntry defines the structure of FitEntries in the Firmware Interface Table
@@ -72,78 +74,69 @@ func (fit *FitEntry) Type() FitEntryType {
 }
 
 // getFitPointer returns the ROM-Address of FitPointer
-func getFitPointer(data []byte) ([]byte, error) {
-	fitAddress := len(data) - 0x40
-	var fitPointer [16]byte
+func getFitPointer(data []byte) (int64, error) {
+	var fitPointer uint32
 
-	buf := bytes.NewReader(data)
-	buf.ReadAt(fitPointer[:], int64(fitAddress))
-	var fitPointerTMP []byte
-	for _, item := range fitPointer {
-		fitPointerTMP = append(fitPointerTMP, item)
-	}
-	return fitPointerTMP, nil
-}
-
-// convToRomAddress converts RAM-Address in FitPointer in RomAddress
-func convToROMAddress(data []byte, fitPointer []byte) (int64, error) {
-	buf := bytes.NewReader(fitPointer)
-	var fitType0inRAMAddress int64
-	err := binary.Read(buf, binary.LittleEndian, &fitType0inRAMAddress)
+	fitPtrAddress := len(data) - 0x40
+	buf := bytes.NewReader(data[fitPtrAddress:])
+	err := binary.Read(buf, binary.LittleEndian, &fitPointer)
 	if err != nil {
 		return 0, err
 	}
-	var fitAddressinROMAddress = (fitType0inRAMAddress - 0x100000000) + int64(len(data))
-	return fitAddressinROMAddress, nil
+
+	return int64(fitPointer), nil
 }
 
-func readFit(data []byte, fitsize uint32, fitromaddress int64) ([]FitEntry, error) {
-	fitTableBytes := make([]byte, fitsize*16)
-	buf := bytes.NewReader(data)
-	buf.ReadAt(fitTableBytes[:], fitromaddress)
-	var fitTable []FitEntry
-	buf = bytes.NewReader(fitTableBytes)
-	err := binary.Read(buf, binary.LittleEndian, &fitTable)
-	if err != nil {
-		return nil, err
+func readFit(fit io.Reader, fitSize uint32) ([]FitEntry, error) {
+	var ret []FitEntry
+
+	for i := uint32(16); i < fitSize; i+=16{
+		ent := FitEntry{}
+		err := binary.Read(fit, binary.LittleEndian, &ent)
+		if err != nil {
+			return nil, err
+		}
+
+		ret = append(ret, ent)
 	}
 
-	return fitTable, nil
+	return ret, nil
 }
 
 // ExtractFit Gets the bios file blob and extracts the FIT-Part
 func ExtractFit(data []byte) ([]FitEntry, error) {
+	// get FIT pointer
 	fitPointer, err := getFitPointer(data)
 	if err != nil {
 		return nil, err
 	}
 
-	fitRomAddress, err := convToROMAddress(data, fitPointer)
+	// follow FIT pointer to FIT
+	fitAddress := (fitPointer - 0x100000000) + int64(len(data))
+	fit := bytes.NewReader(data[fitAddress:])
+
+	// read FIT header
+	hdr := FitEntry{}
+	err = binary.Read(fit, binary.LittleEndian, &hdr)
 	if err != nil {
 		return nil, err
 	}
-	// Read in 16 byte chunk at given address of file to get type0 Entry!!!
-	var Entry0Bytes [16]byte
-	buf := bytes.NewReader(data)
-	buf.ReadAt(Entry0Bytes[:], fitRomAddress)
-	//Convert again
-	var type0EntryTMP []byte
-	for _, item := range Entry0Bytes {
-		type0EntryTMP = append(type0EntryTMP, item)
+
+	if hdr.Address != type0MagicWord {
+		return nil, fmt.Errorf("No FIT: magic word wrong")
 	}
-	// Decode the actual Entry0
-	var type0Entry FitEntry
-	buf = bytes.NewReader(type0EntryTMP)
-	err = binary.Read(buf, binary.BigEndian, &type0Entry)
 
-	fitSize := type0Entry.Size()
+	if hdr.Type() != 0 {
+	return nil, fmt.Errorf("No FIT: first entry not of type 0")
+	}
 
-	fitTable, err := readFit(data, fitSize, fitRomAddress)
+	// read rest of the FIT
+	fitTable, err := readFit(fit, hdr.Size())
 	if err != nil {
 		return nil, err
 	}
+
 	return fitTable, nil
-
 }
 
 func (entry *FitEntry) Size() uint32 {
