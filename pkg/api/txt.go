@@ -206,9 +206,17 @@ func ReadTXTRegs() (TXTRegisterSpace, error) {
 
 func ParseBIOSDataRegion(heap []byte) (TXTBiosData, error) {
 	var ret TXTBiosData
+	var biosDataSize uint64
 
 	buf := bytes.NewReader(heap)
-	err := binary.Read(buf, binary.LittleEndian, &ret.Version)
+	// TXT Heap Bios Data size
+	err := binary.Read(buf, binary.LittleEndian, &biosDataSize)
+	if err != nil {
+		return ret, err
+	}
+
+	// Bios Data
+	err = binary.Read(buf, binary.LittleEndian, &ret.Version)
 	if err != nil {
 		return ret, err
 	}
@@ -222,7 +230,7 @@ func ParseBIOSDataRegion(heap []byte) (TXTBiosData, error) {
 		return ret, err
 	}
 
-	if ret.BiosSinitSize < 8+16 {
+	if ret.BiosSinitSize < 8 {
 		return ret, fmt.Errorf("BIOS DATA region is too small")
 	}
 
