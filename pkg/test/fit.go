@@ -149,13 +149,14 @@ func Test25HasBIOSPolicy() (bool, error) {
 		return false, err
 	}
 
+	count := 0
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSPolicyRec {
-			return true, nil
+			count+=1
 		}
 	}
 
-	return false, nil
+	return count == 1, nil
 }
 
 func Test26IBBCoversResetVector() (bool, error) {
