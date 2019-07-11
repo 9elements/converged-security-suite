@@ -4,6 +4,24 @@ import (
 	"github.com/intel-go/cpuid"
 )
 
+// #include <stdint.h>
+//
+// uint32_t cpuid_leaf1_eax(void) {
+//   uint32_t ret = 0;
+//
+//   asm volatile(
+//     "movl $1, %%eax\n"
+//     "movl $0, %%ecx\n"
+//     "cpuid\n"
+//     "movl %%eax, %0\n"
+//     : "=m"(ret)
+//     :
+//     : "eax", "ebx", "ecx", "edx");
+//
+//   return ret;
+// }
+import "C"
+
 func VersionString() string {
 	return cpuid.VendorIdentificatorString
 }
@@ -24,10 +42,6 @@ func ProcessorBrandName() string {
 	return cpuid.ProcessorBrandString
 }
 
-func FamilyModelStepping() uint32 {
-	f := cpuid.DisplayFamily << 8
-	m := cpuid.DisplayModel << 4
-	s := cpuid.SteppingId
-
-	return f | m | s
+func CPUSignature() uint32 {
+	return uint32(C.cpuid_leaf1_eax())
 }

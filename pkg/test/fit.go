@@ -405,7 +405,7 @@ func Test35BIOSACMMatchesCPU() (bool, error) {
 		return false, err
 	}
 
-	fms := api.FamilyModelStepping()
+	fms := api.CPUSignature()
 
 	for _, cpu := range cpus.IDList {
 		a := fms&cpu.FMSMask == cpu.FMS
