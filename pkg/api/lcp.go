@@ -119,19 +119,18 @@ type LCPList struct {
 }
 
 type LCPPolicy struct {
-	Version                uint16
-	HashAlg                uint16
+	Version                uint16 // < 0x0300
+	HashAlg                uint8
 	PolicyType             uint8
 	SINITMinVersion        uint8
+	Reserved1              uint8
 	DataRevocationCounters [LCPMaxLists]uint16
 	PolicyControl          uint32
-	MaxSINITMinVersion     uint8
-	MaxBIOSACMinVersion    uint8
-	LCPHashAlgMask         uint16
-	LCPSignaturAlgMask     uint32
-	AUXHashAlgMask         uint16
+	MaxSINITMinVersion     uint8 // v2.0
+	MaxBIOSACMinVersion    uint8 // v2.0
 	Reserved2              uint16
-	//PolicyHash             LCPPolicyHash
+	Reserved3              uint32
+	PolicyHash             [20]byte
 }
 
 type LCPPolicyData struct {
