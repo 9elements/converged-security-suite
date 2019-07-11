@@ -91,7 +91,7 @@ func Test18PSIndexIsSet() (bool, error) {
 	if tpm12Connection != nil {
 		magic, err := tpm1.NVReadValue(*tpm12Connection, psIndex, 0, 32, wellKnownOwnerAuth)
 
-		return err != nil && bytes.Equal(magic, []byte(api.LCPDataFileSignature)), nil
+		return bytes.Equal(magic, []byte(api.LCPDataFileSignature)), err
 	} else if tpm20Connection != nil {
 		meta, err := tpm2.NVReadPublic(*tpm20Connection, psIndex)
 		if err != nil {
@@ -111,19 +111,16 @@ func Test18PSIndexIsSet() (bool, error) {
 // TPM NVRAM has a valid AUX index
 func Test19AUXIndexIsSet() (bool, error) {
 	if tpm12Connection != nil {
-		buf, err := tpm1.NVReadValue(*tpm12Connection, psIndex, 0, 1, wellKnownOwnerAuth)
+		buf, err := tpm1.NVReadValue(*tpm12Connection, auxIndex, 0, 1, wellKnownOwnerAuth)
 
-		return len(buf) == 1 && err != nil, nil
+		return len(buf) == 1, err
 	} else if tpm20Connection != nil {
 		meta, err := tpm2.NVReadPublic(*tpm20Connection, auxIndex)
 		if err != nil {
 			return false, err
 		}
 
-		rc := true
-		rc = rc && meta.NVIndex == auxIndex
-
-		return rc, nil
+		return meta.NVIndex == auxIndex, nil
 	} else {
 		return false, fmt.Errorf("Not connected to TPM")
 	}
