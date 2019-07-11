@@ -65,7 +65,7 @@ func readHexInteger(path string) (uint64, error) {
 		return 0, err
 	}
 
-	ret, err := strconv.ParseUint(string(buf), 0, 64)
+	ret, err := strconv.ParseUint(string(buf[:len(buf)-1]), 0, 64)
 	if err != nil {
 		return 0, err
 	} else {
