@@ -35,7 +35,7 @@ func HasVMX() bool {
 }
 
 func HasMTRR() bool {
-	return cpuid.HasFeature(cpuid.MTRR) && cpuid.HasExtraFeature(cpuid.MTRR_2)
+	return cpuid.HasFeature(cpuid.MTRR) || cpuid.HasExtraFeature(cpuid.MTRR_2)
 }
 
 func ProcessorBrandName() string {
