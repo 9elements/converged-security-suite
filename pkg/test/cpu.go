@@ -66,7 +66,7 @@ var (
 			Required: true,
 		},
 		Test{
-			Name:     "Initial Bootblock is trusted",
+			Name:     "Initial Bootblock is trusted. Only necessary in signed policy",
 			function: Test13IBBIsTrusted,
 			Required: false,
 		},

@@ -31,8 +31,8 @@ var (
 			function: Test24HasIBB,
 		},
 		Test{
-			Name:     "FIT has a LCP Policy entry",
-			Required: true,
+			Name:     "FIT has a LCP Policy entry. Not mandatory, LCP_POLICY_DATA file may be supplied by GRUB to TBOOT",
+			Required: false,
 			function: Test25HasBIOSPolicy,
 		},
 		Test{
