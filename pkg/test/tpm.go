@@ -97,9 +97,12 @@ func Test17TPMIsLocked() (bool, error) {
 // TPM NVRAM has a valid PS index
 func Test18PSIndexIsSet() (bool, error) {
 	if tpm12Connection != nil {
-		magic, err := tpm1.NVReadValueNoAuth(*tpm12Connection, psIndex, 0, 32)
+		data, err := tpm1.NVReadValueNoAuth(*tpm12Connection, psIndex, 0, 54)
+		if err != nil {
+			return false, err
+		}
 
-		return bytes.Equal(magic, []byte(api.LCPDataFileSignature)), err
+		return len(data) == 54, err
 	} else if tpm20Connection != nil {
 		meta, err := tpm2.NVReadPublic(*tpm20Connection, psIndex)
 		if err != nil {
@@ -140,10 +143,10 @@ func Test20LCPPolicyIsValid() (bool, error) {
 	var err error
 
 	if tpm12Connection != nil {
-		data = api.NVReadAll(*tpm12Connection, psIndex)
+		data, err = tpm1.NVReadValueNoAuth(*tpm12Connection, psIndex, 0, 54)
 
-		if len(data) == 0 {
-			return false, fmt.Errorf("LCP policy file is empty")
+		if err != nil {
+			return false, err
 		}
 	} else if tpm20Connection != nil {
 		data, err = tpm2.NVRead(*tpm20Connection, psIndex)
@@ -160,7 +163,7 @@ func Test20LCPPolicyIsValid() (bool, error) {
 		return false, err
 	}
 
-	return lcp.Version == 0x100, nil
+	return lcp.Version < 0x300, nil
 }
 
 // Reads PCR-00 and checks whether if it's not the EmptyDigest
