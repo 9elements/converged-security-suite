@@ -19,7 +19,7 @@ var (
 		},
 		Test{
 			Name:     "CPU DMA protected range equals hostbridge DPR",
-			Required: true,
+			Required: false,
 			function: Test38HostbridgeDPRCorrect,
 		},
 		Test{
@@ -39,7 +39,7 @@ var (
 		},
 		Test{
 			Name:     "SINIT ACM had no startup errors",
-			Required: true,
+			Required: false,
 			function: Test42NoSINITErrors,
 		},
 		Test{
@@ -69,22 +69,22 @@ var (
 		},
 		Test{
 			Name:     "IOMMU/VT-d is active",
-			Required: true,
+			Required: false,
 			function: Test48ActiveIOMMU,
 		},
 		Test{
 			Name:     "TBOOT hypervisor active",
-			Required: true,
+			Required: false,
 			function: Test49ActiveTBOOT,
 		},
 		Test{
 			Name:     "Intel TXT server mode enabled",
-			Required: true,
+			Required: false,
 			function: Test50ServerModeTXT,
 		},
 		Test{
 			Name:     "FSB interface is release fused",
-			Required: true,
+			Required: false,
 			function: Test51ReleaseFusedFSBI,
 		},
 	}
