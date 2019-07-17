@@ -275,7 +275,12 @@ func Test47ActiveSMRR() (bool, error) {
 }
 
 func Test48ActiveIOMMU() (bool, error) {
-	return false, fmt.Errorf("Unimplemented")
+	smrr, err := api.GetSMRRInfo()
+	if err != nil {
+		return false, err
+	}
+
+	return api.AddressRangesIsDMAProtected(smrr.PhysBase, smrr.PhysBase|^smrr.PhysMask)
 }
 
 func Test49ActiveTBOOT() (bool, error) {
