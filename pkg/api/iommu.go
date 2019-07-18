@@ -109,32 +109,30 @@ func readVTdRegs() (VTdRegisters, error) {
 	}
 
 	for _, subdir := range subdirs {
-		if subdir.IsDir() {
-			path := fmt.Sprintf("/sys/class/iommu/%s/intel-iommu/address", subdir.Name())
-			addrBuf, err := ioutil.ReadFile(path)
-			if err != nil {
-				continue
-			}
-
-			addr, err := strconv.ParseUint(string(addrBuf[:len(addrBuf)-1]), 0, 64)
-			if err != nil {
-				continue
-			}
-
-			buf := make([]byte, unsafe.Sizeof(regs))
-			err = ReadPhysBuf(int64(addr), buf)
-			if err != nil {
-				continue
-			}
-
-			reader := bytes.NewReader(buf)
-			err = binary.Read(reader, binary.LittleEndian, &reader)
-			if err != nil {
-				continue
-			}
-
-			return regs, nil
+		path := fmt.Sprintf("/sys/class/iommu/%s/intel-iommu/address", subdir.Name())
+		addrBuf, err := ioutil.ReadFile(path)
+		if err != nil {
+			continue
 		}
+
+		addr, err := strconv.ParseUint(string(addrBuf[:len(addrBuf)-1]), 16, 64)
+		if err != nil {
+			continue
+		}
+
+		buf := make([]byte, unsafe.Sizeof(regs))
+		err = ReadPhysBuf(int64(addr), buf)
+		if err != nil {
+			continue
+		}
+
+		reader := bytes.NewReader(buf)
+		err = binary.Read(reader, binary.LittleEndian, &regs)
+		if err != nil {
+			continue
+		}
+
+		return regs, nil
 	}
 
 	return regs, fmt.Errorf("No IOMMU found: %s", err)
