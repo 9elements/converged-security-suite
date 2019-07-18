@@ -135,7 +135,7 @@ func readVTdRegs() (VTdRegisters, error) {
 		return regs, nil
 	}
 
-	return regs, fmt.Errorf("No IOMMU found: %s", err)
+	return regs, fmt.Errorf("No IOMMU found")
 }
 
 func LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, error) {
@@ -303,16 +303,16 @@ func AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
 		return false, err
 	}
 
-	loDMAprotection := regs.Capabilities&1<<5 != 0
-	hiDMAprotection := regs.Capabilities&1<<6 != 0
+	loDMAprotection := regs.Capabilities&(1<<5) != 0
+	hiDMAprotection := regs.Capabilities&(1<<6) != 0
 	enableDMAprotection := regs.Capabilities&1 != 0
-	enable2DMAprotection := regs.Capabilities&1<<31 != 0
+	enable2DMAprotection := regs.Capabilities&(1<<31) != 0
 
 	if enableDMAprotection && enable2DMAprotection && loDMAprotection && uint64(regs.ProtectedLowMemoryBase) <= first && uint64(regs.ProtectedLowMemoryLimit) >= end {
 		return true, err
 	}
 
-	if enableDMAprotection && enable2DMAprotection && hiDMAprotection && regs.ProtectedHighMemoryBase <= first && regs.ProtectedHighMemoryBase >= end {
+	if enableDMAprotection && enable2DMAprotection && hiDMAprotection && regs.ProtectedHighMemoryBase <= first && regs.ProtectedHighMemoryLimit >= end {
 		return true, err
 	}
 
