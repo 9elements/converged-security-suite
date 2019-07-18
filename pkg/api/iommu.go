@@ -140,6 +140,165 @@ func readVTdRegs() (VTdRegisters, error) {
 	return regs, fmt.Errorf("No IOMMU found: %s", err)
 }
 
+func LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, error) {
+	rootTblAddr := (regs.RootTableAddress >> 12) & 0xffffffffffff
+	ttm := (regs.RootTableAddress >> 10) & 3
+
+	if ttm == 0 {
+		return lookupIOLegacy(addr, rootTblAddr)
+	} else if ttm == 1 {
+		return lookupIOScalable(addr, rootTblAddr)
+	} else {
+		return []uint64{}, fmt.Errorf("unsupported IOMMU Translation Table Mode")
+	}
+}
+
+func lookupIOLegacy(addr, rootTblAddr uint64) ([]uint64, error) {
+	ret := []uint64{}
+
+	for bus := int64(0); bus < 256; bus += 1 {
+		// read root table entries
+		var rootTblEnt Uint64
+		err := ReadPhys(int64(rootTblAddr)+bus*16+8, &rootTblEnt)
+		if err != nil {
+			return []uint64{}, err
+		}
+
+		if rootTblEnt&1 == 0 {
+			continue
+		}
+
+		// we assume 48 bit physical addresses
+		ctxTblAddr := (rootTblEnt >> 12) & 0xffffffffffff
+
+		// read ctx entry
+		var ctxTblEntHi Uint64
+		var ctxTblEntLo Uint64
+
+		for devfn := int64(0); devfn < 32*8; devfn += 1 {
+			err = ReadPhys(int64(ctxTblAddr)+devfn*16+8, &ctxTblEntLo)
+			if err != nil {
+				return []uint64{}, err
+			}
+
+			if ctxTblEntLo&1 == 0 {
+				continue
+			}
+
+			err = ReadPhys(int64(ctxTblAddr)+devfn*16, &ctxTblEntHi)
+			if err != nil {
+				return []uint64{}, err
+			}
+
+			tt := (ctxTblEntLo >> 2) & 3
+			aw := (ctxTblEntHi >> 2) & 7
+			pml5Addr := (ctxTblEntLo >> 12) & 0xffffffffffff
+
+			if tt == 2 {
+				ret = append(ret, addr)
+				continue
+			}
+
+			var pdptAddr Uint64
+			var canRead bool
+
+			if aw == 3 || aw == 2 {
+				// Page map level 5
+				var l5ent Uint64
+				err = ReadPhys(int64(pml5Addr)+(int64(addr>>48)&0x1ff)*8, &l5ent)
+				if err != nil {
+					return []uint64{}, err
+				}
+
+				pml4Addr := (l5ent >> 12) & 0xffffffffffff
+				canRead = l5ent&1 != 0
+
+				if !canRead {
+					continue
+				}
+
+				if aw == 2 {
+					// Page map level 4
+					var l4ent Uint64
+					err = ReadPhys(int64(pml4Addr)+(int64(addr>>39)&0x1ff)*8, &l4ent)
+					if err != nil {
+						return []uint64{}, err
+					}
+
+					pdptAddr = (l4ent >> 12) & 0xffffffffffff
+					canRead = l4ent&1 != 0
+
+					if !canRead {
+						continue
+					}
+				} else {
+					pdptAddr = pml4Addr
+				}
+			} else {
+				pdptAddr = pml5Addr
+			}
+
+			// Page directory pointer table
+			var l3ent Uint64
+			err = ReadPhys(int64(pdptAddr)+(int64(addr>>30)&0x1ff)*8, &l3ent)
+			if err != nil {
+				return []uint64{}, err
+			}
+
+			pdAddr := (l3ent >> 12) & 0xffffffffffff
+			canRead = l3ent&1 != 0
+
+			if !canRead {
+				continue
+			}
+
+			// Page directory
+			var l2ent Uint64
+			err = ReadPhys(int64(pdAddr)+(int64(addr>>21)&0x1ff)*8, &l2ent)
+			if err != nil {
+				return []uint64{}, err
+			}
+
+			ptAddr := (l3ent >> 12) & 0xffffffffffff
+			canRead = l3ent&1 != 0
+
+			if !canRead {
+				continue
+			}
+
+			// Page table
+			var l1ent Uint64
+			err = ReadPhys(int64(ptAddr)+(int64(addr>>12)&0x1ff)*8, &l1ent)
+			if err != nil {
+				return []uint64{}, err
+			}
+
+			pageAddr := (l3ent >> 12) & 0xffffffffffff
+			canRead = l3ent&1 != 0
+
+			if !canRead {
+				continue
+			}
+
+			ret = append(ret, uint64(pageAddr)+(addr&0xffff))
+		}
+	}
+
+	return ret, nil
+}
+
+func lookupIOScalable(addr, rootTblAddr uint64) ([]uint64, error) {
+	panic("Scalable IOMMU not implemented")
+	return []uint64{}, nil
+	// read root table entry
+
+	// read ctx entry
+	// get page table depth
+
+	// read req-w/o-PASID directory pointer (5 level)
+	// make sure 2-pass translation isnt on
+}
+
 func AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
 	regs, err := readVTdRegs()
 	if err != nil {
@@ -159,5 +318,16 @@ func AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
 		return true, err
 	}
 
-	return false, fmt.Errorf("Unimplemented")
+	for addr := first & 0xffffffffffff0000; addr < end; addr += 4096 {
+		vas, err := LookupIOAddress(addr, regs)
+		if err != nil {
+			return false, nil
+		}
+
+		if len(vas) < 0 {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
