@@ -139,7 +139,7 @@ func readVTdRegs() (VTdRegisters, error) {
 }
 
 func LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, error) {
-	rootTblAddr := (regs.RootTableAddress >> 12) & 0xffffffffffff
+	rootTblAddr := regs.RootTableAddress & 0xffffffffffff000
 	ttm := (regs.RootTableAddress >> 10) & 3
 
 	if ttm == 0 {
@@ -167,7 +167,7 @@ func lookupIOLegacy(addr, rootTblAddr uint64) ([]uint64, error) {
 		}
 
 		// we assume 48 bit physical addresses
-		ctxTblAddr := (rootTblEnt >> 12) & 0xffffffffffff
+		ctxTblAddr := rootTblEnt & 0xffffffffffff000
 
 		// read ctx entry
 		var ctxTblEntHi Uint64
@@ -190,7 +190,7 @@ func lookupIOLegacy(addr, rootTblAddr uint64) ([]uint64, error) {
 
 			tt := (ctxTblEntLo >> 2) & 3
 			aw := (ctxTblEntHi >> 2) & 7
-			pml5Addr := (ctxTblEntLo >> 12) & 0xffffffffffff
+			pml5Addr := ctxTblEntLo & 0xffffffffffff000
 
 			if tt == 2 {
 				ret = append(ret, addr)
@@ -208,7 +208,7 @@ func lookupIOLegacy(addr, rootTblAddr uint64) ([]uint64, error) {
 					return []uint64{}, err
 				}
 
-				pml4Addr := (l5ent >> 12) & 0xffffffffffff
+				pml4Addr := l5ent & 0xffffffffffff000
 				canRead = l5ent&1 != 0
 
 				if !canRead {
@@ -223,7 +223,7 @@ func lookupIOLegacy(addr, rootTblAddr uint64) ([]uint64, error) {
 						return []uint64{}, err
 					}
 
-					pdptAddr = (l4ent >> 12) & 0xffffffffffff
+					pdptAddr = l4ent & 0xffffffffffff000
 					canRead = l4ent&1 != 0
 
 					if !canRead {
@@ -243,7 +243,7 @@ func lookupIOLegacy(addr, rootTblAddr uint64) ([]uint64, error) {
 				return []uint64{}, err
 			}
 
-			pdAddr := (l3ent >> 12) & 0xffffffffffff
+			pdAddr := l3ent & 0xffffffffffff000
 			canRead = l3ent&1 != 0
 
 			if !canRead {
@@ -257,8 +257,8 @@ func lookupIOLegacy(addr, rootTblAddr uint64) ([]uint64, error) {
 				return []uint64{}, err
 			}
 
-			ptAddr := (l3ent >> 12) & 0xffffffffffff
-			canRead = l3ent&1 != 0
+			ptAddr := l2ent & 0xffffffffffff000
+			canRead = l2ent&1 != 0
 
 			if !canRead {
 				continue
@@ -271,8 +271,8 @@ func lookupIOLegacy(addr, rootTblAddr uint64) ([]uint64, error) {
 				return []uint64{}, err
 			}
 
-			pageAddr := (l3ent >> 12) & 0xffffffffffff
-			canRead = l3ent&1 != 0
+			pageAddr := l1ent & 0xffffffffffff000
+			canRead = l1ent&1 != 0
 
 			if !canRead {
 				continue
