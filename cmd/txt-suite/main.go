@@ -9,21 +9,26 @@ import (
 
 var (
 	testnos []int
+	testerg bool
 )
 
 func run() {
 	if len(testnos) != 0 {
 		for _, item := range testnos {
 			if item <= len(test.TestsCPU) {
-				test.TestsCPU[item-1].Run()
+				testerg = test.TestsCPU[item-1].Run()
 			} else if item <= len(test.TestsCPU)+len(test.TestsTPM) {
-				test.TestsTPM[item-len(test.TestsCPU)-1].Run()
+				testerg = test.TestsTPM[item-len(test.TestsCPU)-1].Run()
 			} else if item <= len(test.TestsCPU)+len(test.TestsTPM)+len(test.TestsFIT) {
-				test.TestsCPU[item-len(test.TestsCPU)-len(test.TestsTPM)-1].Run()
+				testerg = test.TestsCPU[item-len(test.TestsCPU)-len(test.TestsTPM)-1].Run()
 			} else if item <= len(test.TestsCPU)+len(test.TestsTPM)+len(test.TestsFIT)+len(test.TestsMemory) {
-				test.TestsMemory[item-len(test.TestsCPU)-len(test.TestsTPM)-len(test.TestsFIT)-1].Run()
+				testerg = test.TestsMemory[item-len(test.TestsCPU)-len(test.TestsTPM)-len(test.TestsFIT)-1].Run()
 			} else {
-				fmt.Printf("Das ist sowas von haesslich!!!!11111!!!11\n")
+				fmt.Printf("Testnumber not valid. Pick from 1 up to 51.\n")
+			}
+			if testerg == false && stayAlive() == false {
+				fmt.Println("Abord testing due to error occurrence")
+				return
 			}
 		}
 	} else {
@@ -62,17 +67,27 @@ func main() {
 		testnos, _ = deconstructFlag()
 	}
 
-	err := test.ConnectTPM("/dev/tpm0")
-	if err != nil {
-		fmt.Printf("Cannot connect to TPM: %s\n", err)
-		return
+	if !*help && !*listtests {
+		err := test.ConnectTPM("/dev/tpm0")
+		if err != nil {
+			fmt.Printf("Cannot connect to TPM: %s\n", err)
+			return
+		}
+
+		err = test.LoadFITFromMemory()
+		if err != nil {
+			fmt.Printf("Cannot load FIT from memory: %s\n", err)
+			return
+		}
+
+		run()
+	} else {
+		if *listtests == true {
+			listTests()
+		}
+		if *help == true {
+			showHelp()
+		}
 	}
 
-	err = test.LoadFITFromMemory()
-	if err != nil {
-		fmt.Printf("Cannot load FIT from memory: %s\n", err)
-		return
-	}
-
-	run()
 }
