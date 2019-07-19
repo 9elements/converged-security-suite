@@ -16,57 +16,57 @@ var (
 	fitImage []byte
 
 	test22hasfit = Test{
-		Name:         "Has FIT",
-		Required:     true,
-		function:     Test22HasFIT,
+		Name:     "Has FIT",
+		Required: true,
+		function: Test22HasFIT,
 	}
 	test23hasbiosacm = Test{
 		Name:         "FIT has an BIOS ACM entry",
 		Required:     true,
 		function:     Test23HasBIOSACM,
-		dependencies: []*Test{&test22hasfit,},
+		dependencies: []*Test{&test22hasfit},
 	}
 	test24hasibb = Test{
-		Name:     "FIT has a initial bootblock entry",
-		Required: true,
-		function: Test24HasIBB,
-		dependencies: []*Test{&test22hasfit,},
+		Name:         "FIT has a initial bootblock entry",
+		Required:     true,
+		function:     Test24HasIBB,
+		dependencies: []*Test{&test22hasfit},
 	}
 	test25haslcpTest = Test{
-		Name:     "FIT has a LCP Policy entry. Not mandatory, LCP_POLICY_DATA file may be supplied by GRUB to TBOOT",
-		Required: false,
-		function: Test25HasBIOSPolicy,
-		dependencies: []*Test{&test22hasfit,},
+		Name:         "FIT has a LCP Policy entry. Not mandatory, LCP_POLICY_DATA file may be supplied by GRUB to TBOOT",
+		Required:     false,
+		function:     Test25HasBIOSPolicy,
+		dependencies: []*Test{&test22hasfit},
 	}
 	test26ibbcoversresetvector = Test{
-		Name:     "Initial bootblock covers reset vector",
-		Required: true,
-		function: Test26IBBCoversResetVector,
+		Name:         "Initial bootblock covers reset vector",
+		Required:     true,
+		function:     Test26IBBCoversResetVector,
 		dependencies: []*Test{&test22hasfit, &test24hasibb},
 	}
 	test27noibboverlap = Test{
-		Name:     "Initial bootblock does not overlap",
-		Required: true,
-		function: Test27NoIBBOverlap,
-		dependencies: []*Test{&test22hasfit, &test24hasibb,},
+		Name:         "Initial bootblock does not overlap",
+		Required:     true,
+		function:     Test27NoIBBOverlap,
+		dependencies: []*Test{&test22hasfit, &test24hasibb},
 	}
 	test28nobiosacmoverlap = Test{
-		Name:     "BIOS ACM does not overlap",
-		Required: true,
-		function: Test28NoBIOSACMOverlap,
-		dependencies: []*Test{&test22hasfit, &test23hasbiosacm,},
+		Name:         "BIOS ACM does not overlap",
+		Required:     true,
+		function:     Test28NoBIOSACMOverlap,
+		dependencies: []*Test{&test22hasfit, &test23hasbiosacm},
 	}
 	test29nobiosacmisbelow4g = Test{
-		Name:     "Initial bootblock and BIOS ACM is below 4GiB",
-		Required: true,
-		function: Test29BIOSACMIsBelow4G,
-		dependencies: []*Test{&test22hasfit, &test23hasbiosacm,},
+		Name:         "Initial bootblock and BIOS ACM is below 4GiB",
+		Required:     true,
+		function:     Test29BIOSACMIsBelow4G,
+		dependencies: []*Test{&test22hasfit, &test23hasbiosacm},
 	}
 	test30policyallowstxt = Test{
-		Name:     "LCP Policy does not disable Intel TXT",
-		Required: true,
-		function: Test30PolicyAllowsTXT,
-		dependencies: []*Test{&test22hasfit,},
+		Name:         "LCP Policy does not disable Intel TXT",
+		Required:     true,
+		function:     Test30PolicyAllowsTXT,
+		dependencies: []*Test{&test22hasfit},
 	}
 	TestsFIT = [...]*Test{
 		&test22hasfit,
@@ -170,7 +170,7 @@ func Test25HasBIOSPolicy() (bool, error) {
 	count := 0
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSPolicyRec {
-			count+=1
+			count += 1
 		}
 	}
 
