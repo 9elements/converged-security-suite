@@ -45,6 +45,11 @@ var (
 			function: Test20LCPPolicyIsValid,
 			Required: true,
 		},
+		Test{
+			Name:     "",
+			Required: false,
+			function: Test21PCR0IsSet,
+		},
 	}
 )
 

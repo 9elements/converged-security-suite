@@ -60,6 +60,31 @@ var (
 			Required: true,
 			function: Test30PolicyAllowsTXT,
 		},
+		Test{
+			Name:     "BIOSACM header is valid",
+			Required: false,
+			function: Test31BIOSACMValid,
+		},
+		Test{
+			Name:     "BIOSACM size check",
+			Required: false,
+			function: Test32BIOSACMSizeCorrect,
+		},
+		Test{
+			Name:     "BIOSACM alignment check",
+			Required: false,
+			function: Test33BIOSACMAlignmentCorrect,
+		},
+		Test{
+			Name:     "BIOSACM matches chipset",
+			Required: false,
+			function: Test34BIOSACMMatchesChipset,
+		},
+		Test{
+			Name:     "BIOSACM matches processor",
+			Required: false,
+			function: Test35BIOSACMMatchesCPU,
+		},
 	}
 )
 
@@ -152,7 +177,7 @@ func Test25HasBIOSPolicy() (bool, error) {
 	count := 0
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSPolicyRec {
-			count+=1
+			count += 1
 		}
 	}
 

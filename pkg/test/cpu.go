@@ -51,6 +51,11 @@ var (
 			Required: true,
 		},
 		Test{
+			Name:     "SMX is enabled",
+			function: Test09SMXIsEnabled,
+			Required: false,
+		},
+		Test{
 			Name:     "GETSEC leaves are enabled",
 			function: Test10HasGetSecLeaves,
 			Required: false,
@@ -74,6 +79,11 @@ var (
 			Name:     "Intel TXT registers are locked",
 			function: Test14TXTRegistersLocked,
 			Required: true,
+		},
+		Test{
+			Name:     "BIOSACM had no startup error",
+			function: Test15NoBIOSACMErrors,
+			Required: false,
 		},
 	}
 )
@@ -144,6 +154,10 @@ func Test08Ia32FeatureCtrl() (bool, error) {
 	}
 
 	return locked, nil
+}
+
+func Test09SMXIsEnabled() (bool, error) {
+	return false, fmt.Errorf("Unimplemented: no comment")
 }
 
 // Check CR4 wherther SMXE is set
