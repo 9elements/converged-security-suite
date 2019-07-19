@@ -11,6 +11,7 @@ import (
 
 var (
 	testnos []int
+	testerg bool
 )
 
 func run() bool {
@@ -72,16 +73,27 @@ func main() {
 		testnos, _ = deconstructFlag()
 	}
 
-	err := test.ConnectTPM("/dev/tpm0")
-	if err != nil {
-		fmt.Printf("Cannot connect to TPM: %s\n", err)
-		return
-	}
+	if !*help && !*listtests {
+		err := test.ConnectTPM("/dev/tpm0")
+		if err != nil {
+			fmt.Printf("Cannot connect to TPM: %s\n", err)
+			return
+		}
 
-	err = test.LoadFITFromMemory()
-	if err != nil {
-		fmt.Printf("Cannot load FIT from memory: %s\n", err)
-		return
+		err = test.LoadFITFromMemory()
+		if err != nil {
+			fmt.Printf("Cannot load FIT from memory: %s\n", err)
+			return
+		}
+
+		run()
+	} else {
+		if *listtests == true {
+			listTests()
+		}
+		if *help == true {
+			showHelp()
+		}
 	}
 
 	ret := run()
