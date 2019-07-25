@@ -10,6 +10,8 @@ import (
 var (
 	testnos []int
 	testerg bool
+	//Version shows what it says, duh!
+	Version = "Version 0.1"
 )
 
 func run() {
@@ -33,25 +35,25 @@ func run() {
 		}
 	} else {
 		for _, t := range test.TestsCPU {
-			if !t.Run() && t.Required {
+			if !t.Run() && t.Required && !stayAlive() {
 				return
 			}
 		}
 
 		for _, t := range test.TestsTPM {
-			if !t.Run() && t.Required {
+			if !t.Run() && t.Required && !stayAlive() {
 				return
 			}
 		}
 
 		for _, t := range test.TestsFIT {
-			if !t.Run() && t.Required {
+			if !t.Run() && t.Required && !stayAlive() {
 				return
 			}
 		}
 
 		for _, t := range test.TestsMemory {
-			if !t.Run() && t.Required {
+			if !t.Run() && t.Required && !stayAlive() {
 				return
 			}
 		}
@@ -67,7 +69,7 @@ func main() {
 		testnos, _ = deconstructFlag()
 	}
 
-	if !*help && !*listtests {
+	if !*help && !*listtests && !*version {
 		err := test.ConnectTPM("/dev/tpm0")
 		if err != nil {
 			fmt.Printf("Cannot connect to TPM: %s\n", err)
@@ -87,6 +89,9 @@ func main() {
 		}
 		if *help == true {
 			showHelp()
+		}
+		if *version == true {
+			showVersion()
 		}
 	}
 
