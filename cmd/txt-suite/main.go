@@ -23,7 +23,7 @@ func run() bool {
 			continue
 		}
 
-		if !test.TestsCPU[idx].Run() && test.TestsCPU[idx].Required {
+		if !test.TestsCPU[idx].Run() && test.TestsCPU[idx].Required && !stayAlive() {
 			result = true
 		}
 	}
@@ -35,7 +35,7 @@ func run() bool {
 			continue
 		}
 
-		if !test.TestsTPM[idx].Run() && test.TestsTPM[idx].Required {
+		if !test.TestsTPM[idx].Run() && test.TestsTPM[idx].Required && !stayAlive() {
 			result = true
 		}
 	}
@@ -47,7 +47,7 @@ func run() bool {
 			continue
 		}
 
-		if !test.TestsFIT[idx].Run() && test.TestsFIT[idx].Required {
+		if !test.TestsFIT[idx].Run() && test.TestsFIT[idx].Required && !stayAlive() {
 			result = true
 		}
 	}
@@ -59,7 +59,7 @@ func run() bool {
 			continue
 		}
 
-		if !test.TestsMemory[idx].Run() && test.TestsMemory[idx].Required {
+		if !test.TestsMemory[idx].Run() && test.TestsMemory[idx].Required && !stayAlive() {
 			result = true
 		}
 	}
@@ -73,7 +73,7 @@ func main() {
 		testnos, _ = deconstructFlag()
 	}
 
-	if !*help && !*listtests {
+	if !*help && !*listtests && !*version {
 		err := test.ConnectTPM("/dev/tpm0")
 		if err != nil {
 			fmt.Printf("Cannot connect to TPM: %s\n", err)
@@ -93,6 +93,9 @@ func main() {
 		}
 		if *help == true {
 			showHelp()
+		}
+		if *version == true {
+			showVersion()
 		}
 	}
 

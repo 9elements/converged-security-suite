@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -14,6 +16,7 @@ var testno = flag.String("t", "", "Select test number 1 - 50. e.g.: -t=1,2,3,4,.
 var keeprunning = flag.Bool("i", false, "Errors will not stop the testing. Tests will keep going.")
 var help = flag.Bool("h", false, "Shows help")
 var listtests = flag.Bool("l", false, "Lists all test")
+var version = flag.Bool("v", false, "Shows Version, Copywrite info and license")
 
 func flagUsed() bool {
 	return testno != nil
@@ -23,12 +26,31 @@ func stayAlive() bool {
 	return *keeprunning
 }
 
+func showVersion() {
+	file, err := os.Open("../../LICENSE")
+	if err != nil {
+		fmt.Println("Can't open license file")
+		os.Exit(1)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	for i := 0; i < 8; i++ {
+		scanner.Scan()
+		fmt.Println(scanner.Text())
+	}
+	fmt.Println("")
+	fmt.Println(Version)
+}
+
 func showHelp() {
 	fmt.Println("Help!")
 	fmt.Println("-t=1,...,51 : Pick test numbers to run specific tests. Numbers will be ordered!")
 	fmt.Println("-i : Errors will not stop testing")
 	fmt.Println("-h : Shows this help")
 	fmt.Println("-l : Lists all Tests with its Test number")
+	fmt.Println("-v : Shows Version, License and Copywrite")
 }
 
 func listTests() {
@@ -42,19 +64,41 @@ func listTests() {
 		fmt.Printf("Test No: %v, %v\n", count+len(test.TestsCPU)+len(test.TestsTPM)+1, item.Name)
 	}
 	for count, item := range test.TestsMemory {
-		fmt.Printf("Test No: %v, %v\n", count+len(test.TestsCPU)+len(test.TestsTPM)+len(test.TestsFIT), item.Name)
+		fmt.Printf("Test No: %v, %v\n", count+len(test.TestsCPU)+len(test.TestsTPM)+len(test.TestsFIT)+1, item.Name)
 	}
 }
 
 func deconstructFlag() ([]int, error) {
 	var testnos []int
-	tmpstrings := strings.Split(*testno, ",")
+	var tmpstrings []string
+	var testrange []string
+	var testmin int
+	var testmax int
+	var err error
+	tmpstrings = strings.Split(*testno, ",")
 	for _, item := range tmpstrings {
-		tmpno, err := strconv.Atoi(item)
-		if err != nil {
-			return nil, err
+		if strings.Contains(*testno, "-") {
+			testrange = strings.Split(*testno, "-")
+			testmin, err = strconv.Atoi(testrange[0])
+			if err != nil {
+				return nil, err
+			}
+			testmax, err = strconv.Atoi(testrange[1])
+			if err != nil {
+				return nil, err
+			}
+
+			for i := testmin; i < testmax; i++ {
+				testnos = append(testnos, i)
+			}
+
+		} else {
+			tmpno, err := strconv.Atoi(item)
+			if err != nil {
+				return nil, err
+			}
+			testnos = append(testnos, tmpno)
 		}
-		testnos = append(testnos, tmpno)
 	}
 	//Sort array
 	sort.Ints(testnos)
