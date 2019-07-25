@@ -46,7 +46,7 @@ var (
 			Required: true,
 		},
 		Test{
-			Name:     "",
+			Name:     "PCR0 is set: Not implemented",
 			Required: false,
 			function: Test21PCR0IsSet,
 		},
