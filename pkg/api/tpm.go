@@ -3,7 +3,7 @@ package api
 import (
 	"io"
 
-	tpm1 "github.com/google/go-tpm/tpm"
+	tpm1 "github.com/9elements/go-tpm/tpm"
 )
 
 func NVReadAll(conn io.ReadWriteCloser, index uint32) []byte {

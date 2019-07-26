@@ -29,6 +29,16 @@ Then, run the test suite as root.
 go run cmd/txt-suite/main.go
 ```
 
+Commandline arguments
+```bash
+-l : Lists all tests
+-i : Enforces testing, so they won\'t stop at the first error
+-t=\<n,m,o\> : Choose tests, seperated by comma
+-t=\<n-m\> or -t=\<n-m,o-p\> : Choose ranges of tests, can be seperated by comma
+-v : Gives information about Licence, Copyright \& Version
+-h : Shows this information
+```
+
 Tests
 -----
 
