@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 
-	tpm1 "github.com/google/go-tpm/tpm"
-	"github.com/google/go-tpm/tpm2"
+	tpm1 "github.com/9elements/go-tpm/tpm"
+	"github.com/9elements/go-tpm/tpm2"
 
 	"github.com/9elements/txt-suite/pkg/api"
 )
