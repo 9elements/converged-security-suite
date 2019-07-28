@@ -19,32 +19,43 @@ const (
 var (
 	tpm12Connection *io.ReadWriteCloser = nil
 	tpm20Connection *io.ReadWriteCloser = nil
-	TestsTPM                            = [...]Test{
-		Test{
-			Name:     "TPM 1.2 present",
-			Required: true,
-			function: Test16TPMPresent,
-		},
-		Test{
-			Name:     "TPM in production mode",
-			function: Test17TPMIsLocked,
-			Required: false,
-		},
-		Test{
-			Name:     "PS index is set in NVRAM",
-			function: Test18PSIndexIsSet,
-			Required: true,
-		},
-		Test{
-			Name:     "AUX index is set in NVRAM",
-			function: Test19AUXIndexIsSet,
-			Required: true,
-		},
-		Test{
-			Name:     "PS index contains a valid LCP Policy",
-			function: Test20LCPPolicyIsValid,
-			Required: true,
-		},
+	test16tpmispresent = Test{
+		Name:     "TPM 1.2 present",
+		Required: true,
+		function: Test16TPMPresent,
+	}
+	test17tpmislocked = Test{
+		Name:     "TPM in production mode",
+		function: Test17TPMIsLocked,
+		Required: false,
+		dependencies: []*Test{&test16tpmispresent,},
+
+	}
+	test18psindexisset = Test{
+		Name:     "PS index is set in NVRAM",
+		function: Test18PSIndexIsSet,
+		Required: true,
+		dependencies: []*Test{&test16tpmispresent,},
+	}
+	test19auxindexisset = Test{
+		Name:     "AUX index is set in NVRAM",
+		function: Test19AUXIndexIsSet,
+		Required: true,
+		dependencies: []*Test{&test16tpmispresent,},
+	}
+	test20lcppolicyisvalid = Test{
+		Name:     "PS index contains a valid LCP Policy",
+		function: Test20LCPPolicyIsValid,
+		Required: true,
+		dependencies: []*Test{&test16tpmispresent, &test18psindexisset,},
+	}
+
+	TestsTPM = [...]*Test{
+		&test16tpmispresent,
+		&test17tpmislocked,
+		&test18psindexisset,
+		&test19auxindexisset,
+		&test20lcppolicyisvalid,
 	}
 )
 

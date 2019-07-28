@@ -9,72 +9,96 @@ import (
 
 var (
 	txtRegisterValues *api.TXTRegisterSpace = nil
-	TestsCPU                                = [...]Test{
-		Test{
-			Name:     "Intel CPU",
-			Required: true,
-			function: Test01CheckForIntelCPU,
-		},
-		Test{
-			Name:     "Weybridge or later",
-			function: Test02WeybridgeOrLater,
-			Required: true,
-		},
-		Test{
-			Name:     "CPU supports TXT",
-			function: Test03CPUSupportsTXT,
-			Required: true,
-		},
-		Test{
-			Name:     "Chipset supports TXT",
-			function: Test04ChipsetSupportsTXT,
-			Required: false,
-		},
-		Test{
-			Name:     "TXT register space accessible",
-			function: Test05TXTRegisterSpaceAccessible,
-			Required: true,
-		},
-		Test{
-			Name:     "CPU supports SMX",
-			function: Test06SupportsSMX,
-			Required: true,
-		},
-		Test{
-			Name:     "CPU supports VMX",
-			function: Test07SupportVMX,
-			Required: true,
-		},
-		Test{
-			Name:     "IA32_FEATURE_CONTROL",
-			function: Test08Ia32FeatureCtrl,
-			Required: true,
-		},
-		Test{
-			Name:     "GETSEC leaves are enabled",
-			function: Test10HasGetSecLeaves,
-			Required: false,
-		},
-		Test{
-			Name:     "Intel TXT no disabled by BIOS",
-			function: Test11TXTNotDisabled,
-			Required: true,
-		},
-		Test{
-			Name:     "BIOS ACM has run",
-			function: Test12IBBMeasured,
-			Required: true,
-		},
-		Test{
-			Name:     "Initial Bootblock is trusted. Only necessary in signed policy",
-			function: Test13IBBIsTrusted,
-			Required: false,
-		},
-		Test{
-			Name:     "Intel TXT registers are locked",
-			function: Test14TXTRegistersLocked,
-			Required: true,
-		},
+	test01checkforintelcpu = Test{
+		Name:     "Intel CPU",
+		Required: true,
+		function: Test01CheckForIntelCPU,
+	}
+	test02waybridgeorlater = Test{
+		Name:     "Weybridge or later",
+		function: Test02WeybridgeOrLater,
+		Required: true,
+		dependencies: []*Test{&test01checkforintelcpu,},
+	}
+	test03cpusupportstxt = Test{
+		Name:     "CPU supports TXT",
+		function: Test03CPUSupportsTXT,
+		Required: true,
+		dependencies: []*Test{&test01checkforintelcpu,},
+	}
+	test04chipsetsupportstxt = Test{
+		Name:     "Chipset supports TXT",
+		function: Test04ChipsetSupportsTXT,
+		Required: false,
+		dependencies: []*Test{&test01checkforintelcpu,},
+	}
+	test05txtregisterspaceaccessible = Test{
+		Name:     "TXT register space accessible",
+		function: Test05TXTRegisterSpaceAccessible,
+		Required: true,
+		dependencies: []*Test{&test04chipsetsupportstxt,},
+	}
+	test06supportssmx = Test{
+		Name:     "CPU supports SMX",
+		function: Test06SupportsSMX,
+		Required: true,
+		dependencies: []*Test{&test01checkforintelcpu,},
+	}
+	test07supportvmx = Test{
+		Name:     "CPU supports VMX",
+		function: Test07SupportVMX,
+		Required: true,
+		dependencies: []*Test{&test01checkforintelcpu,},
+	}
+	test08ia32featurectrl = Test{
+		Name:     "IA32_FEATURE_CONTROL",
+		function: Test08Ia32FeatureCtrl,
+		Required: true,
+		dependencies: []*Test{&test01checkforintelcpu,},
+	}
+	test10hasgetsecleaves = Test{
+		Name:     "GETSEC leaves are enabled",
+		function: Test10HasGetSecLeaves,
+		Required: false,
+		dependencies: []*Test{&test08ia32featurectrl,},
+	}
+	test11txtnotdisabled = Test{
+		Name:     "Intel TXT no disabled by BIOS",
+		function: Test11TXTNotDisabled,
+		Required: true,
+	}
+	test12ibbmeasured = Test{
+		Name:     "BIOS ACM has run",
+		function: Test12IBBMeasured,
+		Required: true,
+		dependencies: []*Test{&test05txtregisterspaceaccessible,},
+	}
+	test13ibbistrusted = Test{
+		Name:     "Initial Bootblock is trusted. Only necessary in signed policy",
+		function: Test13IBBIsTrusted,
+		Required: false,
+		dependencies: []*Test{&test05txtregisterspaceaccessible,},
+	}
+	test14txtregisterslocked = Test{
+		Name:     "Intel TXT registers are locked",
+		function: Test14TXTRegistersLocked,
+		Required: true,
+		dependencies: []*Test{&test05txtregisterspaceaccessible,},
+	}
+	TestsCPU  = [...]*Test{
+		&test01checkforintelcpu,
+		&test02waybridgeorlater,
+		&test03cpusupportstxt,
+		&test04chipsetsupportstxt,
+		&test05txtregisterspaceaccessible,
+		&test06supportssmx,
+		&test07supportvmx,
+		&test08ia32featurectrl,
+		&test10hasgetsecleaves,
+		&test11txtnotdisabled,
+		&test12ibbmeasured,
+		&test13ibbistrusted,
+		&test14txtregisterslocked,
 	}
 )
 

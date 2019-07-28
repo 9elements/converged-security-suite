@@ -6,87 +6,109 @@ import (
 )
 
 var (
-	TestsMemory = [...]Test{
-		Test{
-			Name:     "Intel TXT memory is reserved in e820",
-			Required: true,
-			function: Test36TXTReservedInE820,
-		},
-		Test{
-			Name:     "Intel TXT memory is in a DMA protected range",
-			Required: true,
-			function: Test37TXTMemoryIsDPR,
-		},
-		Test{
-			Name:     "CPU DMA protected range equals hostbridge DPR",
-			Required: false,
-			function: Test38HostbridgeDPRCorrect,
-		},
-		Test{
-			Name:     "TXT region contains SINIT ACM",
-			Required: true,
-			function: Test39SINITInTXT,
-		},
-		Test{
-			Name:     "SINIT ACM matches chipset",
-			Required: true,
-			function: Test40SINITMatchesChipset,
-		},
-		Test{
-			Name:     "SINIT ACM matches CPU",
-			Required: true,
-			function: Test41SINITMatchesCPU,
-		},
-		Test{
-			Name:     "SINIT ACM had no startup errors",
-			Required: false,
-			function: Test42NoSINITErrors,
-		},
-		Test{
-			Name:     "BIOS DATA REGION is valid",
-			Required: true,
-			function: Test43BIOSDATAREGIONPresent,
-		},
-		Test{
-			Name:     "CPU supports memory type range registers",
-			Required: true,
-			function: Test44HasMTRR,
-		},
-		Test{
-			Name:     "CPU supports system management range registers",
-			Required: true,
-			function: Test45HasSMRR,
-		},
-		Test{
-			Name:     "SMRR covers SMM memory",
-			Required: true,
-			function: Test46ValidSMRR,
-		},
-		Test{
-			Name:     "SMRR protection is active",
-			Required: true,
-			function: Test47ActiveSMRR,
-		},
-		Test{
-			Name:     "IOMMU/VT-d is active",
-			Required: false,
-			function: Test48ActiveIOMMU,
-		},
-		Test{
-			Name:     "TBOOT hypervisor active",
-			Required: false,
-			function: Test49ActiveTBOOT,
-		},
-		Test{
-			Name:     "Intel TXT server mode enabled",
-			Required: false,
-			function: Test50ServerModeTXT,
-		},
-		Test{
-			Name:     "FSB interface is release fused",
-			Required: false,
-			function: Test51ReleaseFusedFSBI,
-		},
+	test36memoryisreserved = Test{
+		Name:     "Intel TXT memory is reserved in e820",
+		Required: true,
+		function: Test36TXTReservedInE820,
+	}
+	test37txtmemoryisdpr = Test{
+		Name:     "Intel TXT memory is in a DMA protected range",
+		Required: true,
+		function: Test37TXTMemoryIsDPR,
+	}
+	test38hostbridgeDPRcorrect = Test{
+		Name:     "CPU DMA protected range equals hostbridge DPR",
+		Required: false,
+		function: Test38HostbridgeDPRCorrect,
+	}
+	test39sinitintxt = Test{
+		Name:     "TXT region contains SINIT ACM",
+		Required: true,
+		function: Test39SINITInTXT,
+	}
+	test40sinitmatcheschipset = Test{
+		Name:     "SINIT ACM matches chipset",
+		Required: true,
+		function: Test40SINITMatchesChipset,
+		dependencies: []*Test{&test39sinitintxt,},
+	}
+	test41sinitmatchescpu = Test{
+		Name:     "SINIT ACM matches CPU",
+		Required: true,
+		function: Test41SINITMatchesCPU,
+		dependencies: []*Test{&test39sinitintxt,},
+	}
+	test42nosiniterrors = Test{
+		Name:     "SINIT ACM had no startup errors",
+		Required: false,
+		function: Test42NoSINITErrors,
+	}
+	test43biosdataregionpresent = Test{
+		Name:     "BIOS DATA REGION is valid",
+		Required: true,
+		function: Test43BIOSDATAREGIONPresent,
+	}
+	test44hasmtrr = Test{
+		Name:     "CPU supports memory type range registers",
+		Required: true,
+		function: Test44HasMTRR,
+	}
+	test45hassmrr = Test{
+		Name:     "CPU supports system management range registers",
+		Required: true,
+		function: Test45HasSMRR,
+		dependencies: []*Test{&test50servermodetext,},
+	}
+	test46validsmrr = Test{
+		Name:     "SMRR covers SMM memory",
+		Required: true,
+		function: Test46ValidSMRR,
+		dependencies: []*Test{&test45hassmrr,},
+	}
+	test47activesmrr = Test{
+		Name:     "SMRR protection is active",
+		Required: true,
+		function: Test47ActiveSMRR,
+		dependencies: []*Test{&test45hassmrr,},
+	}
+	test48activeiommi = Test{
+		Name:     "IOMMU/VT-d is active",
+		Required: false,
+		function: Test48ActiveIOMMU,
+	}
+	test49activetboot = Test{
+		Name:     "TBOOT hypervisor active",
+		Required: false,
+		function: Test49ActiveTBOOT,
+	}
+	test50servermodetext = Test{
+		Name:     "Intel TXT server mode enabled",
+		Required: false,
+		function: Test50ServerModeTXT,
+	}
+	test51releasefusedfsbi = Test{
+		Name:     "FSB interface is release fused",
+		Required: false,
+		function: Test51ReleaseFusedFSBI,
+	}
+
+	TestsMemory = [...]*Test{
+		&test36memoryisreserved,
+		&test37txtmemoryisdpr,
+		&test38hostbridgeDPRcorrect,
+		&test39sinitintxt,
+		&test40sinitmatcheschipset,
+		&test41sinitmatchescpu,
+		&test42nosiniterrors,
+		&test43biosdataregionpresent,
+		&test44hasmtrr,
+		&test45hassmrr,
+		&test46validsmrr,
+		&test47activesmrr,
+		&test48activeiommi,
+		&test49activetboot,
+		&test50servermodetext,
+		&test51releasefusedfsbi,
 	}
 )
 

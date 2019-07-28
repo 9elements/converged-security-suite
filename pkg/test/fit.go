@@ -14,52 +14,70 @@ const ResetVector = 0xFFFFFFF0
 
 var (
 	fitImage []byte
-	TestsFIT = [...]Test{
-		Test{
-			Name:     "Has FIT",
-			Required: true,
-			function: Test22HasFIT,
-		},
-		Test{
-			Name:     "FIT has an BIOS ACM entry",
-			Required: true,
-			function: Test23HasBIOSACM,
-		},
-		Test{
-			Name:     "FIT has a initial bootblock entry",
-			Required: true,
-			function: Test24HasIBB,
-		},
-		Test{
-			Name:     "FIT has a LCP Policy entry. Not mandatory, LCP_POLICY_DATA file may be supplied by GRUB to TBOOT",
-			Required: false,
-			function: Test25HasBIOSPolicy,
-		},
-		Test{
-			Name:     "Initial bootblock covers reset vector",
-			Required: true,
-			function: Test26IBBCoversResetVector,
-		},
-		Test{
-			Name:     "Initial bootblock does not overlap",
-			Required: true,
-			function: Test27NoIBBOverlap,
-		},
-		Test{
-			Name:     "BIOS ACM does not overlap",
-			Required: true,
-			function: Test28NoBIOSACMOverlap,
-		},
-		Test{
-			Name:     "Initial bootblock and BIOS ACM is below 4GiB",
-			Required: true,
-			function: Test29BIOSACMIsBelow4G,
-		},
-		Test{
-			Name:     "LCP Policy does not disable Intel TXT",
-			Required: true,
-			function: Test30PolicyAllowsTXT,
-		},
+
+	test22hasfit = Test{
+		Name:         "Has FIT",
+		Required:     true,
+		function:     Test22HasFIT,
+	}
+	test23hasbiosacm = Test{
+		Name:         "FIT has an BIOS ACM entry",
+		Required:     true,
+		function:     Test23HasBIOSACM,
+		dependencies: []*Test{&test22hasfit,},
+	}
+	test24hasibb = Test{
+		Name:     "FIT has a initial bootblock entry",
+		Required: true,
+		function: Test24HasIBB,
+		dependencies: []*Test{&test22hasfit,},
+	}
+	test25haslcpTest = Test{
+		Name:     "FIT has a LCP Policy entry. Not mandatory, LCP_POLICY_DATA file may be supplied by GRUB to TBOOT",
+		Required: false,
+		function: Test25HasBIOSPolicy,
+		dependencies: []*Test{&test22hasfit,},
+	}
+	test26ibbcoversresetvector = Test{
+		Name:     "Initial bootblock covers reset vector",
+		Required: true,
+		function: Test26IBBCoversResetVector,
+		dependencies: []*Test{&test22hasfit, &test24hasibb},
+	}
+	test27noibboverlap = Test{
+		Name:     "Initial bootblock does not overlap",
+		Required: true,
+		function: Test27NoIBBOverlap,
+		dependencies: []*Test{&test22hasfit, &test24hasibb,},
+	}
+	test28nobiosacmoverlap = Test{
+		Name:     "BIOS ACM does not overlap",
+		Required: true,
+		function: Test28NoBIOSACMOverlap,
+		dependencies: []*Test{&test22hasfit, &test23hasbiosacm,},
+	}
+	test29nobiosacmisbelow4g = Test{
+		Name:     "Initial bootblock and BIOS ACM is below 4GiB",
+		Required: true,
+		function: Test29BIOSACMIsBelow4G,
+		dependencies: []*Test{&test22hasfit, &test23hasbiosacm,},
+	}
+	test30policyallowstxt = Test{
+		Name:     "LCP Policy does not disable Intel TXT",
+		Required: true,
+		function: Test30PolicyAllowsTXT,
+		dependencies: []*Test{&test22hasfit,},
+	}
+	TestsFIT = [...]*Test{
+		&test22hasfit,
+		&test23hasbiosacm,
+		&test24hasibb,
+		&test25haslcpTest,
+		&test26ibbcoversresetvector,
+		&test27noibboverlap,
+		&test28nobiosacmoverlap,
+		&test29nobiosacmisbelow4g,
+		&test30policyallowstxt,
 	}
 )
 
