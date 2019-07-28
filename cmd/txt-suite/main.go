@@ -2,34 +2,37 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/9elements/txt-suite/pkg/test"
 )
 
-func run() {
-	for _, t := range test.TestsCPU {
-		if !t.Run() && t.Required {
-			return
+func run() bool {
+	var result = false
+	for idx, _ := range test.TestsCPU {
+		if !test.TestsCPU[idx].Run() && test.TestsCPU[idx].Required {
+			result = true
 		}
 	}
 
-	for _, t := range test.TestsTPM {
-		if !t.Run() && t.Required {
-			return
+	for idx, _ := range test.TestsTPM {
+		if !test.TestsTPM[idx].Run() && test.TestsTPM[idx].Required {
+			result = true
 		}
 	}
 
-	for _, t := range test.TestsFIT {
-		if !t.Run() && t.Required {
-			return
+	for idx, _ := range test.TestsFIT {
+		if !test.TestsFIT[idx].Run() && test.TestsFIT[idx].Required {
+			result = true
 		}
 	}
 
-	for _, t := range test.TestsMemory {
-		if !t.Run() && t.Required {
-			return
+	for idx, _ := range test.TestsMemory {
+		if !test.TestsMemory[idx].Run() && test.TestsMemory[idx].Required {
+			result = true
 		}
 	}
+	return result
 }
 
 func main() {
@@ -45,5 +48,10 @@ func main() {
 		return
 	}
 
-	run()
+	ret := run()
+	if (ret) {
+		os.Exit(1)
+	} else {
+		os.Exit(0)
+	}
 }
