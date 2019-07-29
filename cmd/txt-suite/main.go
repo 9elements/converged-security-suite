@@ -67,6 +67,8 @@ func run() bool {
 }
 
 func main() {
+	ret := false
+
 	flag.Parse()
 
 	if flagUsed() == true {
@@ -86,7 +88,7 @@ func main() {
 			return
 		}
 
-		run()
+		ret = run()
 	} else {
 		if *listtests == true {
 			listTests()
@@ -99,7 +101,6 @@ func main() {
 		}
 	}
 
-	ret := run()
 	if ret {
 		os.Exit(1)
 	} else {
