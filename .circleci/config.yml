@@ -14,18 +14,25 @@ jobs:
 
       # specify any bash command here prefixed with `run: `
       - run: go build -o txt-suite cmd/txt-suite/*.go
+      - run: mkdir out
+      - run: cp txt-suite out/
+
+      - persist_to_workspace:
+        root: ./out
+        paths:
+          - txt-suite
 
   publish-github-release:
     docker:
       - image: cibuilds/github:0.10
     steps:
       - attach_workspace:
-          at: ./
+          at: ./out
       - run:
           name: "Publish Release on GitHub"
           command: |
             VERSION=$(./txt-suite -v | grep -o v.*)
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} txt-suite
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./out/txt-suite
 
 workflows:
   version: 2
