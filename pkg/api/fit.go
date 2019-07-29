@@ -1,10 +1,9 @@
 package api
 
 import (
-	"fmt"
-	"io"
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"log"
 )
 
@@ -34,8 +33,9 @@ const (
 )
 
 const (
-	fitPointer     int64  = 0xFFFFFFC0
+	fitPointer     uint64 = 0xFFFFFFC0
 	type0MagicWord uint64 = 0x2020205f5449465f
+	FourGiB        uint64 = 0x100000000
 )
 
 // FitEntry defines the structure of FitEntries in the Firmware Interface Table
@@ -87,53 +87,98 @@ func GetFitPointer(data []byte) (uint64, error) {
 	return uint64(fitPointer), nil
 }
 
-func readFit(fit io.Reader, fitSize uint32) ([]FitEntry, error) {
+func readFit(data []byte, fitSize uint32) ([]FitEntry, error) {
 	var ret []FitEntry
+	dummy := FitEntry{}
 
-	for i := uint32(16); i < fitSize; i+=16{
+	fit := bytes.NewReader(data)
+
+	err := binary.Read(fit, binary.LittleEndian, &dummy)
+	if err != nil {
+		return nil, err
+	}
+	for i := 16; i < int(fitSize); i += 16 {
 		ent := FitEntry{}
 		err := binary.Read(fit, binary.LittleEndian, &ent)
 		if err != nil {
 			return nil, err
 		}
+		if ent.CheckSumValid() {
+			// Validate checksum
+			var cksum byte = 0
+			for j := 0; j < 16; j++ {
+				cksum += data[j+i]
+			}
 
+			if cksum != 0 {
+				return nil, fmt.Errorf("FIT: Checksum of entry is invalid")
+			}
+		}
 		ret = append(ret, ent)
 	}
 
 	return ret, nil
 }
 
-// ExtractFit Gets the bios file blob and extracts the FIT-Part
-func ExtractFit(data []byte) ([]FitEntry, error) {
-	// get FIT pointer
-	fitPointer, err := GetFitPointer(data)
-	if err != nil {
-		return nil, err
-	}
-
-	// follow FIT pointer to FIT
-	fitAddress := (fitPointer - 0x100000000) + uint64(len(data))
-	fit := bytes.NewReader(data[fitAddress:])
+func GetFitHeader(data []byte) (FitEntry, error) {
+	fit := bytes.NewReader(data)
 
 	// read FIT header
 	hdr := FitEntry{}
-	err = binary.Read(fit, binary.LittleEndian, &hdr)
+	err := binary.Read(fit, binary.LittleEndian, &hdr)
 	if err != nil {
-		return nil, err
+		return hdr, err
 	}
 
 	if hdr.Address != type0MagicWord {
-		return nil, fmt.Errorf("No FIT: magic word wrong")
+		return hdr, fmt.Errorf("FIT: magic word wrong")
 	}
 
 	if hdr.Type() != 0 {
-	return nil, fmt.Errorf("No FIT: first entry not of type 0")
+		return hdr, fmt.Errorf("FIT: first entry not of type 0")
+	}
+
+	if hdr.Size() == 0 {
+		return hdr, fmt.Errorf("FIT: Invalid size")
+	}
+
+	if hdr.CheckSumValid() {
+		// FIXME: this is correct, but out test platform is broken, fix testplatform first...
+		/*
+			var cksum byte = 0
+			for j := 0; j < 16; j++ {
+				cksum += data[j]
+			}
+
+			if cksum != 0 {
+				return hdr, fmt.Errorf("FIT: Checksum of header is invalid")
+			}
+		*/
+	}
+	return hdr, nil
+}
+
+// ExtractFit Gets the bios file blob and extracts the FIT-Part
+func ExtractFit(data []byte) ([]FitEntry, error) {
+
+	// read FIT header
+	hdr, err := GetFitHeader(data)
+	if err != nil {
+		return nil, err
 	}
 
 	// read rest of the FIT
-	fitTable, err := readFit(fit, hdr.Size())
+	fitTable, err := readFit(data, hdr.Size())
 	if err != nil {
 		return nil, err
+	}
+
+	var lasttype int = 0
+	for i, _ := range fitTable {
+		if int(fitTable[i].Type()) < lasttype {
+			return nil, fmt.Errorf("FIT: Entries aren't sorted")
+		}
+		lasttype = int(fitTable[i].Type())
 	}
 
 	return fitTable, nil

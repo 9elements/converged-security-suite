@@ -1,8 +1,9 @@
 package test
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
-	"os"
 
 	"github.com/9elements/txt-suite/pkg/api"
 )
@@ -15,11 +16,21 @@ const FITVector = 0xFFFFFFC0
 
 var (
 	fitImage []byte
+	// set by FITVectorIsSet
+	fitPointer uint32
+	// set by test22hasfit
+	fit []api.FitEntry
 
-	test22hasfit = Test{
-		Name:     "Has FIT",
+	testfitvectorisset = Test{
+		Name:     "Has valid FIT vector",
 		Required: true,
-		function: Test22HasFIT,
+		function: FITVectorIsSet,
+	}
+	test22hasfit = Test{
+		Name:         "Has valid FIT",
+		Required:     true,
+		function:     Test22HasFIT,
+		dependencies: []*Test{&testfitvectorisset},
 	}
 	test23hasbiosacm = Test{
 		Name:         "FIT has an BIOS ACM entry",
@@ -82,6 +93,7 @@ var (
 		dependencies: []*Test{&test22hasfit},
 	}
 	TestsFIT = [...]*Test{
+		&testfitvectorisset,
 		&test22hasfit,
 		&test23hasbiosacm,
 		&test24hasibb,
@@ -96,11 +108,7 @@ var (
 	}
 )
 
-func LoadFITFromMemory() error {
-	fitImage = make([]byte, FITSize)
-	return api.ReadPhysBuf(FourGiB-FITSize, fitImage)
-}
-
+/*
 func LoadFITFromFile(path string) error {
 	fd, err := os.Open(path)
 	if err != nil {
@@ -116,33 +124,60 @@ func LoadFITFromFile(path string) error {
 	}
 
 	return nil
+} */
+
+func FITVectorIsSet() (bool, error) {
+	fitvec := make([]byte, 4)
+	err := api.ReadPhysBuf(FourGiB-0x40, fitvec)
+
+	if err != nil {
+		return false, err
+	}
+
+	buf := bytes.NewReader(fitvec)
+	err = binary.Read(buf, binary.LittleEndian, &fitPointer)
+	if err != nil {
+		return false, err
+	}
+
+	if fitPointer < 0xff000000 || fitPointer >= 0xfffffff0 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func Test22HasFIT() (bool, error) {
-	if len(fitImage) == 0 {
-		return false, fmt.Errorf("No FIT image loaded")
-	}
-
-	fit, err := api.ExtractFit(fitImage)
+	fithdr := make([]byte, 16)
+	err := api.ReadPhysBuf(int64(fitPointer), fithdr)
 	if err != nil {
 		return false, err
 	}
 
-	// XXX: verify checksum
+	hdr, err := api.GetFitHeader(fithdr)
+	if err != nil {
+		return false, err
+	}
 
-	return len(fit) > 0, nil
+	if int64(fitPointer)+int64(hdr.Size()) > 0x100000000 {
+		return false, fmt.Errorf("FIT isn't part of 32bit address-space")
+	}
+
+	fitblob := make([]byte, hdr.Size())
+	err = api.ReadPhysBuf(int64(fitPointer), fitblob)
+
+	fit, err = api.ExtractFit(fitblob)
+	if err != nil {
+		return false, err
+	}
+
+	if fit == nil {
+		return false, nil
+	}
+	return true, nil
 }
 
 func Test23HasBIOSACM() (bool, error) {
-	if len(fitImage) == 0 {
-		return false, fmt.Errorf("No FIT image loaded")
-	}
-
-	fit, err := api.ExtractFit(fitImage)
-	if err != nil {
-		return false, err
-	}
-
 	count := 0
 	for _, ent := range fit {
 		if ent.Type() == api.StartUpACMod {
@@ -154,15 +189,6 @@ func Test23HasBIOSACM() (bool, error) {
 }
 
 func Test24HasIBB() (bool, error) {
-	if len(fitImage) == 0 {
-		return false, fmt.Errorf("No FIT image loaded")
-	}
-
-	fit, err := api.ExtractFit(fitImage)
-	if err != nil {
-		return false, err
-	}
-
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSStartUpMod {
 			return true, nil
@@ -173,15 +199,6 @@ func Test24HasIBB() (bool, error) {
 }
 
 func Test25HasBIOSPolicy() (bool, error) {
-	if len(fitImage) == 0 {
-		return false, fmt.Errorf("No FIT image loaded")
-	}
-
-	fit, err := api.ExtractFit(fitImage)
-	if err != nil {
-		return false, err
-	}
-
 	count := 0
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSPolicyRec {
@@ -193,15 +210,6 @@ func Test25HasBIOSPolicy() (bool, error) {
 }
 
 func Test26IBBCoversResetVector() (bool, error) {
-	if len(fitImage) == 0 {
-		return false, fmt.Errorf("No FIT image loaded")
-	}
-
-	fit, err := api.ExtractFit(fitImage)
-	if err != nil {
-		return false, err
-	}
-
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSStartUpMod {
 			coversRv := ent.Address <= ResetVector && ent.Address+uint64(ent.Size()) >= ResetVector+4
@@ -216,15 +224,6 @@ func Test26IBBCoversResetVector() (bool, error) {
 }
 
 func IBBCoversFITVector() (bool, error) {
-	if len(fitImage) == 0 {
-		return false, fmt.Errorf("No FIT image loaded")
-	}
-
-	fit, err := api.ExtractFit(fitImage)
-	if err != nil {
-		return false, err
-	}
-
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSStartUpMod {
 			coversRv := ent.Address <= FITVector && ent.Address+uint64(ent.Size()) >= FITVector+4
@@ -239,23 +238,9 @@ func IBBCoversFITVector() (bool, error) {
 }
 
 func IBBCoversFIT() (bool, error) {
-	if len(fitImage) == 0 {
-		return false, fmt.Errorf("No FIT image loaded")
-	}
-
-	fit, err := api.ExtractFit(fitImage)
-	if err != nil {
-		return false, err
-	}
-
-	fitPointer, err := api.GetFitPointer(fitImage)
-	if err != nil {
-		return false, err
-	}
-
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSStartUpMod {
-			coversRv := ent.Address <= fitPointer && ent.Address+uint64(ent.Size()) >= fitPointer+uint64(len(fit))*16
+			coversRv := ent.Address <= uint64(fitPointer) && ent.Address+uint64(ent.Size()) >= uint64(fitPointer+uint32(len(fit)*16))
 
 			if coversRv {
 				return true, nil
@@ -267,15 +252,6 @@ func IBBCoversFIT() (bool, error) {
 }
 
 func Test27NoIBBOverlap() (bool, error) {
-	if len(fitImage) == 0 {
-		return false, fmt.Errorf("No FIT image loaded")
-	}
-
-	fit, err := api.ExtractFit(fitImage)
-	if err != nil {
-		return false, err
-	}
-
 	for i, ent1 := range fit {
 		if ent1.Type() == api.BIOSStartUpMod {
 			for j, ent2 := range fit {
@@ -295,15 +271,6 @@ func Test27NoIBBOverlap() (bool, error) {
 }
 
 func Test28NoBIOSACMOverlap() (bool, error) {
-	if len(fitImage) == 0 {
-		return false, fmt.Errorf("No FIT image loaded")
-	}
-
-	fit, err := api.ExtractFit(fitImage)
-	if err != nil {
-		return false, err
-	}
-
 	for i, ent1 := range fit {
 		if ent1.Type() == api.BIOSStartUpMod {
 			for j, ent2 := range fit {
@@ -323,15 +290,6 @@ func Test28NoBIOSACMOverlap() (bool, error) {
 }
 
 func Test29BIOSACMIsBelow4G() (bool, error) {
-	if len(fitImage) == 0 {
-		return false, fmt.Errorf("No FIT image loaded")
-	}
-
-	fit, err := api.ExtractFit(fitImage)
-	if err != nil {
-		return false, err
-	}
-
 	for _, ent := range fit {
 		if ent.Type() == api.StartUpACMod {
 			if ent.Address+uint64(ent.Size()) > uint64(FourGiB) {
@@ -344,15 +302,6 @@ func Test29BIOSACMIsBelow4G() (bool, error) {
 }
 
 func Test30PolicyAllowsTXT() (bool, error) {
-	if len(fitImage) == 0 {
-		return false, fmt.Errorf("No FIT image loaded")
-	}
-
-	fit, err := api.ExtractFit(fitImage)
-	if err != nil {
-		return false, err
-	}
-
 	for _, ent := range fit {
 		if ent.Type() == api.TXTPolicyRec {
 			switch ent.Version {
@@ -361,7 +310,7 @@ func Test30PolicyAllowsTXT() (bool, error) {
 			case 1:
 				var b api.Uint8
 
-				err = api.ReadPhys(int64(ent.Address), &b)
+				err := api.ReadPhys(int64(ent.Address), &b)
 				if err != nil {
 					return false, err
 				}
@@ -378,30 +327,12 @@ func Test30PolicyAllowsTXT() (bool, error) {
 }
 
 func Test31BIOSACMValid() (bool, error) {
-	if len(fitImage) == 0 {
-		return false, fmt.Errorf("No FIT image loaded")
-	}
-
-	fit, err := api.ExtractFit(fitImage)
-	if err != nil {
-		return false, err
-	}
-
 	acm, _, _, _, err := biosACM(fit)
 
 	return acm != nil, err
 }
 
 func Test32BIOSACMSizeCorrect() (bool, error) {
-	if len(fitImage) == 0 {
-		return false, fmt.Errorf("No FIT image loaded")
-	}
-
-	fit, err := api.ExtractFit(fitImage)
-	if err != nil {
-		return false, err
-	}
-
 	acm, _, _, _, err := biosACM(fit)
 	if err != nil {
 		return false, err
@@ -411,15 +342,6 @@ func Test32BIOSACMSizeCorrect() (bool, error) {
 }
 
 func Test33BIOSACMAlignmentCorrect() (bool, error) {
-	if len(fitImage) == 0 {
-		return false, fmt.Errorf("No FIT image loaded")
-	}
-
-	fit, err := api.ExtractFit(fitImage)
-	if err != nil {
-		return false, err
-	}
-
 	for _, ent := range fit {
 		if ent.Type() == api.StartUpACMod {
 			return ent.Address%(128*1024) == 0, nil
@@ -430,15 +352,6 @@ func Test33BIOSACMAlignmentCorrect() (bool, error) {
 }
 
 func Test34BIOSACMMatchesChipset() (bool, error) {
-	if len(fitImage) == 0 {
-		return false, fmt.Errorf("No FIT image loaded")
-	}
-
-	fit, err := api.ExtractFit(fitImage)
-	if err != nil {
-		return false, err
-	}
-
 	acm, chp, _, _, err := biosACM(fit)
 	if err != nil {
 		return false, err
@@ -470,15 +383,6 @@ func Test34BIOSACMMatchesChipset() (bool, error) {
 }
 
 func Test35BIOSACMMatchesCPU() (bool, error) {
-	if len(fitImage) == 0 {
-		return false, fmt.Errorf("No FIT image loaded")
-	}
-
-	fit, err := api.ExtractFit(fitImage)
-	if err != nil {
-		return false, err
-	}
-
 	_, _, cpus, _, err := biosACM(fit)
 	if err != nil {
 		return false, err

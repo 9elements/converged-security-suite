@@ -82,12 +82,6 @@ func main() {
 			return
 		}
 
-		err = test.LoadFITFromMemory()
-		if err != nil {
-			fmt.Printf("Cannot load FIT from memory: %s\n", err)
-			return
-		}
-
 		ret = run()
 	} else {
 		if *listtests == true {
