@@ -39,7 +39,9 @@ workflows:
   version: 2
   main:
     jobs:
-      - build:{}
+      - build:
+          branches:
+            only: /.*/
       - publish-github-release:
           requires:
             - build
