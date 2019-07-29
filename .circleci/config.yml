@@ -42,7 +42,7 @@ workflows:
       - build:
           filters:
             branches:
-              ignore: /.*/
+              only: /.*/
       - publish-github-release:
           requires:
             - build
