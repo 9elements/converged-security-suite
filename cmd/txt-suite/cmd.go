@@ -31,12 +31,14 @@ func showVersion() {
 }
 
 func showHelp() {
-	fmt.Println("Help!")
-	fmt.Println("-t=1,...,51 : Pick test numbers to run specific tests. Numbers will be ordered!")
-	fmt.Println("-i : Errors will not stop testing")
-	fmt.Println("-h : Shows this help")
-	fmt.Println("-l : Lists all Tests with its Test number")
-	fmt.Println("-v : Shows Version, License and Copywrite")
+	fmt.Println("Intel TXT test suite.")
+	fmt.Println("Usage: txt-suite [-l] [-h] [-v] [-i] [-t TESTSPEC]")
+	fmt.Println("")
+	fmt.Println("\t-t TESTSPEC : Only run a subset of tests. TESTSPEC is a comma-separated list of integers or ranges (n-m).")
+	fmt.Println("\t-i : Ignore failing tests.")
+	fmt.Println("\t-h : Shows this help")
+	fmt.Println("\t-l : Lists all tests with their test number.")
+	fmt.Println("\t-v : Shows version, license and copyright.")
 }
 
 func listTests() {
