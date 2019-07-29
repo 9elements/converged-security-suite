@@ -19,7 +19,7 @@ func run() bool {
 	testOffset := 0
 
 	for idx, _ := range test.TestsCPU {
-		if sort.SearchInts(testnos, idx) <= len(testnos) {
+		if len(testnos) > 0 && sort.SearchInts(testnos, idx) <= len(testnos) {
 			continue
 		}
 
@@ -31,7 +31,7 @@ func run() bool {
 	testOffset += len(test.TestsCPU)
 
 	for idx, _ := range test.TestsTPM {
-		if sort.SearchInts(testnos, idx+testOffset) <= len(testnos) {
+		if len(testnos) > 0 && sort.SearchInts(testnos, idx+testOffset) <= len(testnos) {
 			continue
 		}
 
@@ -43,7 +43,7 @@ func run() bool {
 	testOffset += len(test.TestsTPM)
 
 	for idx, _ := range test.TestsFIT {
-		if sort.SearchInts(testnos, idx+testOffset) <= len(testnos) {
+		if len(testnos) > 0 && sort.SearchInts(testnos, idx+testOffset) <= len(testnos) {
 			continue
 		}
 
@@ -55,7 +55,7 @@ func run() bool {
 	testOffset += len(test.TestsFIT)
 
 	for idx, _ := range test.TestsMemory {
-		if sort.SearchInts(testnos, idx+testOffset) <= len(testnos) {
+		if len(testnos) > 0 && sort.SearchInts(testnos, idx+testOffset) <= len(testnos) {
 			continue
 		}
 
