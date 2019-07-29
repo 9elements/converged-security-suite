@@ -1,0 +1,73 @@
+version: 2
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - clean-code
+      - test:
+          requires:
+            - clean-code
+      - race:
+          requires:
+            - clean-code
+      - compile:
+          requires:
+            - clean-code
+
+jobs:
+  clean-code:
+    environment:
+      - GO11MODULES: ON
+    docker:
+      - image: circleci/golang:1.11
+    working_directory: ~/github.com/fearful-symmetry/gomsr
+    steps:
+      - checkout
+      - run:
+          name: Run go vet
+          command: go tool vet *.go
+      - run:
+          name: Run golint
+          command: |
+            go get -u github.com/golang/lint/golint
+            golint ./
+      - run:
+          name: gofmt
+          command: test -z $(gofmt -s -l \*.go)
+  test:
+    environment:
+      - GO11MODULES: ON
+    docker:
+      - image: circleci/golang:1.11
+    working_directory: ~/github.com/fearful-symmetry/gomsr
+    steps:
+      - checkout
+      - run:
+          name: Test all
+          command: go test -a
+      - run:
+          name: Test coverage
+          command: go test -cover
+  race:
+    environment:
+      - GO11MODULES: ON
+    docker:
+      - image: circleci/golang:1.11
+    working_directory: ~/github.com/fearful-symmetry/gomsr
+    steps:
+      - checkout
+      - run:
+          name: Race detector
+          command: go test -race
+  compile:
+    environment:
+      - GO11MODULES: ON
+    docker:
+      - image: circleci/golang:1.11
+    working_directory: ~/github.com/fearful-symmetry/gomsr
+    steps:
+      - checkout
+      - run:
+          name: build gomsr
+          command: |
+            go build -a
