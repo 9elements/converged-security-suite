@@ -31,8 +31,8 @@ jobs:
       - run:
           name: "Publish Release on GitHub"
           command: |
-            ls *
-            ls /tmp/*
+            ls ./
+            ls /tmp
             VERSION=$(/tmp/out/txt-suite -v | grep -o v.*)
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} /tmp/out/txt-suite
 
