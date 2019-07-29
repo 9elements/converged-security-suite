@@ -16,6 +16,23 @@ full physical memory. You may have to add the following to the kernel command li
 iomem=relaxed strict-devmem=0 mem.devmem=1
 ```
 
+Prepare the environment:
+
+Load the *msr* kernel module:
+```bash
+modprobe msr
+```
+
+If /dev/tpm0 doesn't exist, load the *TPM* kernel module:
+```bash
+modprobe tpm_tis
+```
+
+Stop the *tpm2-abrmd.service* if running:
+```bash
+systemctl stop tpm2-abrmd.service
+```
+
 The only dependency is a working Go toolchain and the  `dep` tool. After cloning
 the repository, fetch the dependencies:
 
