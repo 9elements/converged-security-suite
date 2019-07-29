@@ -11,6 +11,7 @@ import (
 const FITSize int64 = 16 * 1024 * 1024
 const FourGiB int64 = 0x100000000
 const ResetVector = 0xFFFFFFF0
+const FITVector = 0xFFFFFFC0
 
 var (
 	fitImage []byte
@@ -44,6 +45,18 @@ var (
 		function:     Test26IBBCoversResetVector,
 		dependencies: []*Test{&test22hasfit, &test24hasibb},
 	}
+	ibbcoversfitvector = Test{
+		Name:         "Initial bootblock covers FIT vector",
+		Required:     true,
+		function:     IBBCoversFITVector,
+		dependencies: []*Test{&test22hasfit, &test24hasibb},
+	}
+	ibbcoversfit = Test{
+		Name:         "Initial bootblock covers FIT",
+		Required:     true,
+		function:     IBBCoversFIT,
+		dependencies: []*Test{&test22hasfit, &test24hasibb},
+	}
 	test27noibboverlap = Test{
 		Name:         "Initial bootblock does not overlap",
 		Required:     true,
@@ -74,6 +87,8 @@ var (
 		&test24hasibb,
 		&test25haslcpTest,
 		&test26ibbcoversresetvector,
+		&ibbcoversfitvector,
+		&ibbcoversfit,
 		&test27noibboverlap,
 		&test28nobiosacmoverlap,
 		&test29nobiosacmisbelow4g,
@@ -190,6 +205,57 @@ func Test26IBBCoversResetVector() (bool, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSStartUpMod {
 			coversRv := ent.Address <= ResetVector && ent.Address+uint64(ent.Size()) >= ResetVector+4
+
+			if coversRv {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}
+
+func IBBCoversFITVector() (bool, error) {
+	if len(fitImage) == 0 {
+		return false, fmt.Errorf("No FIT image loaded")
+	}
+
+	fit, err := api.ExtractFit(fitImage)
+	if err != nil {
+		return false, err
+	}
+
+	for _, ent := range fit {
+		if ent.Type() == api.BIOSStartUpMod {
+			coversRv := ent.Address <= FITVector && ent.Address+uint64(ent.Size()) >= FITVector+4
+
+			if coversRv {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}
+
+func IBBCoversFIT() (bool, error) {
+	if len(fitImage) == 0 {
+		return false, fmt.Errorf("No FIT image loaded")
+	}
+
+	fit, err := api.ExtractFit(fitImage)
+	if err != nil {
+		return false, err
+	}
+
+	fitPointer, err := api.GetFitPointer(fitImage)
+	if err != nil {
+		return false, err
+	}
+
+	for _, ent := range fit {
+		if ent.Type() == api.BIOSStartUpMod {
+			coversRv := ent.Address <= fitPointer && ent.Address+uint64(ent.Size()) >= fitPointer+uint64(len(fit))*16
 
 			if coversRv {
 				return true, nil
