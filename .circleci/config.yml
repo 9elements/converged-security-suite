@@ -40,8 +40,9 @@ workflows:
   main:
     jobs:
       - build:
-          branches:
-            only: /.*/
+          filters:
+            branches:
+              ignore: /.*/
       - publish-github-release:
           requires:
             - build
