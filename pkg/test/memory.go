@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+
 	"github.com/9elements/txt-suite/pkg/api"
 )
 
@@ -16,6 +17,11 @@ var (
 		Required: true,
 		function: Test37TXTMemoryIsDPR,
 	}
+	testtxtdprislocked = Test{
+		Name:     "Intel TXT DPR register is locked",
+		Required: true,
+		function: TestTXTDPRisLock,
+	}
 	test38hostbridgeDPRcorrect = Test{
 		Name:     "CPU DMA protected range equals hostbridge DPR",
 		Required: false,
@@ -27,16 +33,16 @@ var (
 		function: Test39SINITInTXT,
 	}
 	test40sinitmatcheschipset = Test{
-		Name:     "SINIT ACM matches chipset",
-		Required: true,
-		function: Test40SINITMatchesChipset,
-		dependencies: []*Test{&test39sinitintxt,},
+		Name:         "SINIT ACM matches chipset",
+		Required:     true,
+		function:     Test40SINITMatchesChipset,
+		dependencies: []*Test{&test39sinitintxt},
 	}
 	test41sinitmatchescpu = Test{
-		Name:     "SINIT ACM matches CPU",
-		Required: true,
-		function: Test41SINITMatchesCPU,
-		dependencies: []*Test{&test39sinitintxt,},
+		Name:         "SINIT ACM matches CPU",
+		Required:     true,
+		function:     Test41SINITMatchesCPU,
+		dependencies: []*Test{&test39sinitintxt},
 	}
 	test42nosiniterrors = Test{
 		Name:     "SINIT ACM had no startup errors",
@@ -54,22 +60,22 @@ var (
 		function: Test44HasMTRR,
 	}
 	test45hassmrr = Test{
-		Name:     "CPU supports system management range registers",
-		Required: true,
-		function: Test45HasSMRR,
-		dependencies: []*Test{&test50servermodetext,},
+		Name:         "CPU supports system management range registers",
+		Required:     true,
+		function:     Test45HasSMRR,
+		dependencies: []*Test{&test50servermodetext},
 	}
 	test46validsmrr = Test{
-		Name:     "SMRR covers SMM memory",
-		Required: true,
-		function: Test46ValidSMRR,
-		dependencies: []*Test{&test45hassmrr,},
+		Name:         "SMRR covers SMM memory",
+		Required:     true,
+		function:     Test46ValidSMRR,
+		dependencies: []*Test{&test45hassmrr},
 	}
 	test47activesmrr = Test{
-		Name:     "SMRR protection is active",
-		Required: true,
-		function: Test47ActiveSMRR,
-		dependencies: []*Test{&test45hassmrr,},
+		Name:         "SMRR protection is active",
+		Required:     true,
+		function:     Test47ActiveSMRR,
+		dependencies: []*Test{&test45hassmrr},
 	}
 	test48activeiommi = Test{
 		Name:     "IOMMU/VT-d is active",
@@ -95,6 +101,7 @@ var (
 	TestsMemory = [...]*Test{
 		&test36memoryisreserved,
 		&test37txtmemoryisdpr,
+		&testtxtdprislocked,
 		&test38hostbridgeDPRcorrect,
 		&test39sinitintxt,
 		&test40sinitmatcheschipset,
@@ -140,6 +147,10 @@ func Test37TXTMemoryIsDPR() (bool, error) {
 	var memBase uint32
 	var memLimit uint32
 
+	var dprBase uint32
+	var dprSize uint32
+	var dprLimit uint32
+
 	if regs.HeapBase > regs.SinitBase {
 		memBase = regs.SinitBase
 	} else {
@@ -152,7 +163,27 @@ func Test37TXTMemoryIsDPR() (bool, error) {
 		memLimit = regs.SinitBase + regs.SinitSize
 	}
 
-	return memBase-memLimit >= uint32(regs.Dpr.Size)*1024*1024 && regs.Dpr.Lock, nil
+	dprSize = uint32(regs.Dpr.Size) * 1024 * 1024
+	dprLimit = uint32(regs.Dpr.Top+1) * 1024 * 1024
+	dprBase = dprLimit - dprSize
+
+	if memBase < dprBase {
+		return false, fmt.Errorf("DPR doesn't protect bottom of TXT memory")
+	}
+	if memLimit > dprLimit {
+		return false, fmt.Errorf("DPR doesn't protect top of TXT memory")
+	}
+
+	return true, nil
+}
+
+func TestTXTDPRisLock() (bool, error) {
+	regs, err := api.ReadTXTRegs()
+	if err != nil {
+		return false, err
+	}
+
+	return regs.Dpr.Lock, nil
 }
 
 func Test38HostbridgeDPRCorrect() (bool, error) {
