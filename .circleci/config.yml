@@ -31,6 +31,7 @@ jobs:
       - run:
           name: "Publish Release on GitHub"
           command: |
+            ls -la /tmp/out/txt-suite 
             /tmp/out/txt-suite -v
             VERSION=`/tmp/out/txt-suite -v | grep -o v.*`
             echo $VERSION
