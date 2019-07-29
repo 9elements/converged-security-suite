@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -16,7 +14,7 @@ var testno = flag.String("t", "", "Select test number 1 - 50. e.g.: -t=1,2,3,4,.
 var keeprunning = flag.Bool("i", false, "Errors will not stop the testing. Tests will keep going.")
 var help = flag.Bool("h", false, "Shows help")
 var listtests = flag.Bool("l", false, "Lists all test")
-var version = flag.Bool("v", false, "Shows Version, Copywrite info and license")
+var version = flag.Bool("v", false, "Shows Version, copyright info and license")
 
 func flagUsed() bool {
 	return testno != nil
@@ -27,21 +25,9 @@ func stayAlive() bool {
 }
 
 func showVersion() {
-	file, err := os.Open("../../LICENSE")
-	if err != nil {
-		fmt.Println("Can't open license file")
-		os.Exit(1)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	for i := 0; i < 8; i++ {
-		scanner.Scan()
-		fmt.Println(scanner.Text())
-	}
-	fmt.Println("")
-	fmt.Println(Version)
+	fmt.Println("TXT test suite version 1.0")
+	fmt.Println("Copyright (c) 2019, 9elements Agency GmbH.")
+	fmt.Println("This program is licensed under MIT.")
 }
 
 func showHelp() {
