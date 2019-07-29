@@ -18,9 +18,9 @@ jobs:
       - run: cp txt-suite out/
 
       - persist_to_workspace:
-        root: ./out
-        paths:
-          - txt-suite
+          root: ./out
+          paths:
+            - txt-suite
 
   publish-github-release:
     docker:
