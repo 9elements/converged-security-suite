@@ -3,26 +3,43 @@
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
 jobs:
-  - build:
-      docker:
-        # specify the version
-        - image: circleci/golang:1.9
+  build:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.9
 
-      working_directory: /go/src/github.com/9elements/txt-suite
-      steps:
-        - checkout
+    working_directory: /go/src/github.com/9elements/txt-suite
+    steps:
+      - checkout
 
-        # specify any bash command here prefixed with `run: `
-        - run: go build -o txt-suite cmd/txt-suite/*.go
+      # specify any bash command here prefixed with `run: `
+      - run: go build -o txt-suite cmd/txt-suite/*.go
 
-  - publish-github-release:
-        docker:
-          - image: cibuilds/github:0.10
-        steps:
-          - attach_workspace:
-              at: ./
-          - run:
-              name: "Publish Release on GitHub"
-              command: |
-                VERSION=$(./txt-suite -v | grep -o v.*)
-                ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} txt-suite
+  publish-github-release:
+    docker:
+      - image: cibuilds/github:0.10
+    steps:
+      - attach_workspace:
+          at: ./
+      - run:
+          name: "Publish Release on GitHub"
+          command: |
+            VERSION=$(./txt-suite -v | grep -o v.*)
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} txt-suite
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+$/
+      - publish-github-release:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^\d+\.\d+\.\d+$/
