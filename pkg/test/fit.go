@@ -128,7 +128,7 @@ func LoadFITFromFile(path string) error {
 
 func FITVectorIsSet() (bool, error) {
 	fitvec := make([]byte, 4)
-	err := api.ReadPhysBuf(FourGiB-0x40, fitvec)
+	err := api.ReadPhysBuf(FITVector, fitvec)
 
 	if err != nil {
 		return false, err
@@ -140,7 +140,7 @@ func FITVectorIsSet() (bool, error) {
 		return false, err
 	}
 
-	if fitPointer < 0xff000000 || fitPointer >= 0xfffffff0 {
+	if fitPointer < 0xff000000 || fitPointer >= ResetVector {
 		return false, nil
 	}
 
