@@ -315,7 +315,38 @@ func Test46ValidSMRR() (bool, error) {
 		return false, err
 	}
 
-	return smrr.PhysBase > 0 && smrr.PhysBase <= 0xffffffff && smrr.PhysMask != 0, nil
+	if smrr.PhysMask == 0 {
+		return false, fmt.Errorf("SMRR PhysMask isn't set")
+	}
+	if smrr.PhysBase == 0 {
+		return false, fmt.Errorf("SMRR PhysBase isn't set")
+	}
+
+	tsegbase, tseglimit, err := api.ReadHostBridgeTseg()
+	if err != nil {
+		return false, err
+	}
+	if tsegbase == 0 || tsegbase == 0xffffffff {
+		return false, fmt.Errorf("TSEG base register isn't valid")
+	}
+	if tseglimit == 0 || tseglimit == 0xffffffff {
+		return false, fmt.Errorf("TSEG limit register isn't valid")
+	}
+
+	if tsegbase&(^(uint32(smrr.PhysMask) << 12)) != 0 {
+		return false, fmt.Errorf("TSEG base isn't aligned to SMRR Physmask")
+	}
+	if tsegbase != (uint32(smrr.PhysBase) << 12) {
+		return false, fmt.Errorf("TSEG base doesn't start at SMRR PhysBase")
+	}
+	if tseglimit&(^(uint32(smrr.PhysMask) << 12)) != 0 {
+		return false, fmt.Errorf("TSEG limit isn't aligned to SMRR Physmask")
+	}
+	if ((tseglimit - 1) & (uint32(smrr.PhysMask) << 12)) != (uint32(smrr.PhysBase) << 12) {
+		return false, fmt.Errorf("SMRR Physmask doesn't cover whole TSEG")
+	}
+
+	return true, nil
 }
 
 func Test47ActiveSMRR() (bool, error) {
@@ -341,7 +372,13 @@ func Test49ActiveTBOOT() (bool, error) {
 }
 
 func Test50ServerModeTXT() (bool, error) {
-	return false, fmt.Errorf("Unimplemented")
+	// FIXME: Query GetSec[Parameters] ebx = 5
+	// Assume yes if dependencies are satisfied
+	val, err := api.HasSMRR()
+	if err != nil {
+		return false, err
+	}
+	return api.HasSMX() && api.HasVMX() && val, nil
 }
 
 func Test51ReleaseFusedFSBI() (bool, error) {
