@@ -83,10 +83,17 @@ func PCIReadDeviceID(bus int, device int, dev_fn int) (uint16, error) {
 }
 
 const (
+	// TSEG
 	// Since SandyBridge it's 0xb8
 	TSEG_PCI_REG_SANDY_AND_NEW = 0xb8
 	// BroadwellDE
 	TSEG_PCI_REG_BROADWELLDE = 0xa8
+
+	// DPR
+	// Since SandyBridge it's 0x5c
+	DPR_PCI_REG_SANDY_AND_NEW = 0x5c
+	// BroadwellDE
+	DPR_PCI_REG_BROADWELLDE = 0x290
 )
 
 var (
@@ -234,4 +241,56 @@ func ReadHostBridgeTseg() (uint32, uint32, error) {
 	fmt.Println(tseglimit)
 
 	return tsegbase, tseglimit, nil
+}
+
+func ReadHostBridgeDPR() (DMAProtectedRange, error) {
+	var dprOff int
+	var devicenum int
+	var ret DMAProtectedRange
+
+	vendorid, err := PCIReadVendorID(0, 0, 0)
+	if err != nil {
+		return ret, err
+	}
+	if vendorid != 0x8086 {
+		return ret, fmt.Errorf("Hostbridge is not made by Intel")
+	}
+	deviceid, err := PCIReadDeviceID(0, 0, 0)
+
+	var found bool = false
+	for _, id := range HostbridgeIDsSandyCompatible {
+		if id == deviceid {
+			found = true
+			dprOff = DPR_PCI_REG_SANDY_AND_NEW
+			devicenum = 0
+			break
+		}
+	}
+	if !found {
+		for _, id := range HostbridgeIDsBroadwellDE {
+			if id == deviceid {
+				found = true
+				dprOff = DPR_PCI_REG_BROADWELLDE
+				devicenum = 5
+				break
+			}
+		}
+	}
+
+	if !found {
+		return ret, fmt.Errorf("Hostbridge is unsupported")
+	}
+
+	var u32 uint32
+
+	u32, err = PCIReadConfig32(0, devicenum, 0, dprOff)
+	if err != nil {
+		return ret, err
+	}
+
+	ret.Lock = u32&1 != 0
+	ret.Size = uint8((u32 >> 4) & 0xff)   // 11:4
+	ret.Top = uint16((u32 >> 20) & 0xfff) // 31:20
+
+	return ret, nil
 }

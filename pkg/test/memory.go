@@ -27,6 +27,11 @@ var (
 		Required: false,
 		function: Test38HostbridgeDPRCorrect,
 	}
+	testhostbridgeDPRislocked = Test{
+		Name:     "CPU hostbridge DPR register is locked",
+		Required: true,
+		function: TestHostbridgeDPRisLocked,
+	}
 	test39sinitintxt = Test{
 		Name:     "TXT region contains SINIT ACM",
 		Required: true,
@@ -103,6 +108,7 @@ var (
 		&test37txtmemoryisdpr,
 		&testtxtdprislocked,
 		&test38hostbridgeDPRcorrect,
+		&testhostbridgeDPRislocked,
 		&test39sinitintxt,
 		&test40sinitmatcheschipset,
 		&test41sinitmatchescpu,
@@ -187,7 +193,41 @@ func TestTXTDPRisLock() (bool, error) {
 }
 
 func Test38HostbridgeDPRCorrect() (bool, error) {
-	return false, fmt.Errorf("Unimplemented")
+	regs, err := api.ReadTXTRegs()
+	if err != nil {
+		return false, err
+	}
+
+	hostbridgeDpr, err := api.ReadHostBridgeDPR()
+	if err != nil {
+		return false, err
+	}
+
+	// No need to validate hostbridge register, already done for TXT DPR
+	// Just make sure they match.
+
+	if hostbridgeDpr.Top != regs.Dpr.Top {
+		return false, fmt.Errorf("Hostbridge DPR Top doesn't match TXT DPR Top")
+	}
+
+	if hostbridgeDpr.Size != regs.Dpr.Size {
+		return false, fmt.Errorf("Hostbridge DPR Size doesn't match TXT DPR Size")
+	}
+
+	return true, nil
+}
+
+func TestHostbridgeDPRisLocked() (bool, error) {
+	hostbridgeDpr, err := api.ReadHostBridgeDPR()
+	if err != nil {
+		return false, err
+	}
+
+	if !hostbridgeDpr.Lock {
+		return false, fmt.Errorf("Hostbridge DPR isn't locked")
+	}
+
+	return true, nil
 }
 
 func Test39SINITInTXT() (bool, error) {
