@@ -237,9 +237,6 @@ func ReadHostBridgeTseg() (uint32, uint32, error) {
 		tseglimit += 1024 * 1024
 	}
 
-	fmt.Println(tsegbase)
-	fmt.Println(tseglimit)
-
 	return tsegbase, tseglimit, nil
 }
 
