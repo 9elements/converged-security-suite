@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"sort"
 
@@ -68,12 +67,6 @@ func main() {
 	}
 
 	if !*help && !*listtests && !*version {
-		err := test.ConnectTPM("/dev/tpm0")
-		if err != nil {
-			fmt.Printf("Cannot connect to TPM: %s\n", err)
-			return
-		}
-
 		ret = run()
 	} else {
 		if *listtests == true {

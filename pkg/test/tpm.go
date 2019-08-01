@@ -17,12 +17,18 @@ const (
 )
 
 var (
-	tpm12Connection    *io.ReadWriteCloser = nil
-	tpm20Connection    *io.ReadWriteCloser = nil
-	test16tpmispresent                     = Test{
-		Name:     "TPM 1.2 present",
+	tpm12Connection   *io.ReadWriteCloser = nil
+	tpm20Connection   *io.ReadWriteCloser = nil
+	testtpmconnection                     = Test{
+		Name:     "TPM connection",
 		Required: true,
-		function: Test16TPMPresent,
+		function: TestTPMConnect,
+	}
+	test16tpmispresent = Test{
+		Name:         "TPM 1.2 present",
+		Required:     true,
+		function:     Test16TPMPresent,
+		dependencies: []*Test{&testtpmconnection},
 	}
 	test17tpmislocked = Test{
 		Name:         "TPM in production mode",
@@ -50,6 +56,7 @@ var (
 	}
 
 	TestsTPM = [...]*Test{
+		&testtpmconnection,
 		&test16tpmispresent,
 		&test17tpmislocked,
 		&test18psindexisset,
@@ -59,21 +66,23 @@ var (
 )
 
 // Connects to a TPM device (virtual or real) at the given path
-func ConnectTPM(tpmPath string) error {
+func TestTPMConnect() (bool, error) {
+	tpmPath := "/dev/tpm0"
 	conn, err := tpm2.OpenTPM(tpmPath)
+
 	if err != nil {
 		conn, err = tpm1.OpenTPM(tpmPath)
 
 		if err != nil {
-			return err
+			return false, fmt.Errorf("Cannot connect to TPM: %s\n", err)
 		}
 
 		tpm12Connection = &conn
-		return nil
+		return true, nil
 	}
 
 	tpm20Connection = &conn
-	return nil
+	return true, nil
 }
 
 // Checks whether a TPM is present and answers to GetCapability
