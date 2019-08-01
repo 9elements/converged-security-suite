@@ -14,55 +14,47 @@ var (
 	testerg bool
 )
 
+func getTests() []*test.Test {
+	var tests []*test.Test
+	for i, _ := range test.TestsCPU {
+		tests = append(tests, test.TestsCPU[i])
+	}
+	for i, _ := range test.TestsTPM {
+		tests = append(tests, test.TestsTPM[i])
+	}
+	for i, _ := range test.TestsFIT {
+		tests = append(tests, test.TestsFIT[i])
+	}
+	for i, _ := range test.TestsMemory {
+		tests = append(tests, test.TestsMemory[i])
+	}
+	return tests
+}
+
 func run() bool {
 	var result = false
-	testOffset := 0
+	var tests []*test.Test
 
-	for idx, _ := range test.TestsCPU {
-		if len(testnos) > 0 && sort.SearchInts(testnos, idx) <= len(testnos) {
-			continue
+	tests = getTests()
+
+	for idx, _ := range tests {
+		if len(testnos) > 0 {
+			// SearchInt returns an index where to "insert" idx
+			i := sort.SearchInts(testnos, idx)
+			if i >= len(testnos) {
+				continue
+			}
+			// still here? i must be within testnos.
+			if testnos[i] != idx {
+				continue
+			}
 		}
 
-		if !test.TestsCPU[idx].Run() && test.TestsCPU[idx].Required && !stayAlive() {
+		if !tests[idx].Run() && tests[idx].Required && !stayAlive() {
 			result = true
 		}
 	}
 
-	testOffset += len(test.TestsCPU)
-
-	for idx, _ := range test.TestsTPM {
-		if len(testnos) > 0 && sort.SearchInts(testnos, idx+testOffset) <= len(testnos) {
-			continue
-		}
-
-		if !test.TestsTPM[idx].Run() && test.TestsTPM[idx].Required && !stayAlive() {
-			result = true
-		}
-	}
-
-	testOffset += len(test.TestsTPM)
-
-	for idx, _ := range test.TestsFIT {
-		if len(testnos) > 0 && sort.SearchInts(testnos, idx+testOffset) <= len(testnos) {
-			continue
-		}
-
-		if !test.TestsFIT[idx].Run() && test.TestsFIT[idx].Required && !stayAlive() {
-			result = true
-		}
-	}
-
-	testOffset += len(test.TestsFIT)
-
-	for idx, _ := range test.TestsMemory {
-		if len(testnos) > 0 && sort.SearchInts(testnos, idx+testOffset) <= len(testnos) {
-			continue
-		}
-
-		if !test.TestsMemory[idx].Run() && test.TestsMemory[idx].Required && !stayAlive() {
-			result = true
-		}
-	}
 	return result
 }
 
