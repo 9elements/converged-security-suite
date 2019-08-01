@@ -6,6 +6,10 @@ boot chain has been configured correctly.
 
 The suite is work in progress.
 
+Build Status
+-----------
+[![CircleCI](https://circleci.com/gh/9elements/txt-suite.svg?style=svg)](https://circleci.com/gh/9elements/txt-suite)
+
 Usage
 -----
 
