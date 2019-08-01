@@ -7,125 +7,125 @@ import (
 )
 
 var (
-	test36memoryisreserved = Test{
+	testmemoryisreserved = Test{
 		Name:     "Intel TXT memory is reserved in e820",
 		Required: true,
-		function: Test36TXTReservedInE820,
+		function: TestTXTReservedInE820,
 	}
-	test37txtmemoryisdpr = Test{
+	testtxtmemoryisdpr = Test{
 		Name:     "Intel TXT memory is in a DMA protected range",
 		Required: true,
-		function: Test37TXTMemoryIsDPR,
+		function: TestTXTMemoryIsDPR,
 	}
 	testtxtdprislocked = Test{
 		Name:     "Intel TXT DPR register is locked",
 		Required: true,
 		function: TestTXTDPRisLock,
 	}
-	test38hostbridgeDPRcorrect = Test{
+	testhostbridgeDPRcorrect = Test{
 		Name:     "CPU DMA protected range equals hostbridge DPR",
 		Required: false,
-		function: Test38HostbridgeDPRCorrect,
+		function: TestHostbridgeDPRCorrect,
 	}
 	testhostbridgeDPRislocked = Test{
 		Name:     "CPU hostbridge DPR register is locked",
 		Required: true,
 		function: TestHostbridgeDPRisLocked,
 	}
-	test39sinitintxt = Test{
+	testsinitintxt = Test{
 		Name:     "TXT region contains SINIT ACM",
 		Required: true,
-		function: Test39SINITInTXT,
+		function: TestSINITInTXT,
 	}
-	test40sinitmatcheschipset = Test{
+	testsinitmatcheschipset = Test{
 		Name:         "SINIT ACM matches chipset",
 		Required:     true,
-		function:     Test40SINITMatchesChipset,
-		dependencies: []*Test{&test39sinitintxt},
+		function:     TestSINITMatchesChipset,
+		dependencies: []*Test{&testsinitintxt},
 	}
-	test41sinitmatchescpu = Test{
+	testsinitmatchescpu = Test{
 		Name:         "SINIT ACM matches CPU",
 		Required:     true,
-		function:     Test41SINITMatchesCPU,
-		dependencies: []*Test{&test39sinitintxt},
+		function:     TestSINITMatchesCPU,
+		dependencies: []*Test{&testsinitintxt},
 	}
-	test42nosiniterrors = Test{
+	testnosiniterrors = Test{
 		Name:     "SINIT ACM had no startup errors",
 		Required: false,
-		function: Test42NoSINITErrors,
+		function: TestNoSINITErrors,
 	}
-	test43biosdataregionpresent = Test{
+	testbiosdataregionpresent = Test{
 		Name:     "BIOS DATA REGION is valid",
 		Required: true,
-		function: Test43BIOSDATAREGIONPresent,
+		function: TestBIOSDATAREGIONPresent,
 	}
-	test44hasmtrr = Test{
+	testhasmtrr = Test{
 		Name:     "CPU supports memory type range registers",
 		Required: true,
-		function: Test44HasMTRR,
+		function: TestHasMTRR,
 	}
-	test45hassmrr = Test{
+	testhassmrr = Test{
 		Name:         "CPU supports system management range registers",
 		Required:     true,
-		function:     Test45HasSMRR,
-		dependencies: []*Test{&test50servermodetext},
+		function:     TestHasSMRR,
+		dependencies: []*Test{&testservermodetext},
 	}
-	test46validsmrr = Test{
+	testvalidsmrr = Test{
 		Name:         "SMRR covers SMM memory",
 		Required:     true,
-		function:     Test46ValidSMRR,
-		dependencies: []*Test{&test45hassmrr},
+		function:     TestValidSMRR,
+		dependencies: []*Test{&testhassmrr},
 	}
-	test47activesmrr = Test{
+	testactivesmrr = Test{
 		Name:         "SMRR protection is active",
 		Required:     true,
-		function:     Test47ActiveSMRR,
-		dependencies: []*Test{&test45hassmrr},
+		function:     TestActiveSMRR,
+		dependencies: []*Test{&testhassmrr},
 	}
-	test48activeiommi = Test{
+	testactiveiommi = Test{
 		Name:     "IOMMU/VT-d is active",
 		Required: false,
-		function: Test48ActiveIOMMU,
+		function: TestActiveIOMMU,
 	}
-	test49activetboot = Test{
+	testactivetboot = Test{
 		Name:     "TBOOT hypervisor active",
 		Required: false,
-		function: Test49ActiveTBOOT,
+		function: TestActiveTBOOT,
 	}
-	test50servermodetext = Test{
+	testservermodetext = Test{
 		Name:     "Intel TXT server mode enabled",
 		Required: false,
-		function: Test50ServerModeTXT,
+		function: TestServerModeTXT,
 	}
-	test51releasefusedfsbi = Test{
+	testreleasefusedfsbi = Test{
 		Name:     "FSB interface is release fused",
 		Required: false,
-		function: Test51ReleaseFusedFSBI,
+		function: TestReleaseFusedFSBI,
 	}
 
 	TestsMemory = [...]*Test{
-		&test36memoryisreserved,
-		&test37txtmemoryisdpr,
+		&testmemoryisreserved,
+		&testtxtmemoryisdpr,
 		&testtxtdprislocked,
-		&test38hostbridgeDPRcorrect,
+		&testhostbridgeDPRcorrect,
 		&testhostbridgeDPRislocked,
-		&test39sinitintxt,
-		&test40sinitmatcheschipset,
-		&test41sinitmatchescpu,
-		&test42nosiniterrors,
-		&test43biosdataregionpresent,
-		&test44hasmtrr,
-		&test45hassmrr,
-		&test46validsmrr,
-		&test47activesmrr,
-		&test48activeiommi,
-		&test49activetboot,
-		&test50servermodetext,
-		&test51releasefusedfsbi,
+		&testsinitintxt,
+		&testsinitmatcheschipset,
+		&testsinitmatchescpu,
+		&testnosiniterrors,
+		&testbiosdataregionpresent,
+		&testhasmtrr,
+		&testhassmrr,
+		&testvalidsmrr,
+		&testactivesmrr,
+		&testactiveiommi,
+		&testactivetboot,
+		&testservermodetext,
+		&testreleasefusedfsbi,
 	}
 )
 
-func Test36TXTReservedInE820() (bool, error) {
+func TestTXTReservedInE820() (bool, error) {
 	regs, err := api.ReadTXTRegs()
 	if err != nil {
 		return false, err
@@ -144,7 +144,7 @@ func Test36TXTReservedInE820() (bool, error) {
 	return heapReserved && sinitReserved, nil
 }
 
-func Test37TXTMemoryIsDPR() (bool, error) {
+func TestTXTMemoryIsDPR() (bool, error) {
 	regs, err := api.ReadTXTRegs()
 	if err != nil {
 		return false, err
@@ -192,7 +192,7 @@ func TestTXTDPRisLock() (bool, error) {
 	return regs.Dpr.Lock, nil
 }
 
-func Test38HostbridgeDPRCorrect() (bool, error) {
+func TestHostbridgeDPRCorrect() (bool, error) {
 	regs, err := api.ReadTXTRegs()
 	if err != nil {
 		return false, err
@@ -230,7 +230,7 @@ func TestHostbridgeDPRisLocked() (bool, error) {
 	return true, nil
 }
 
-func Test39SINITInTXT() (bool, error) {
+func TestSINITInTXT() (bool, error) {
 	regs, err := api.ReadTXTRegs()
 	if err != nil {
 		return false, err
@@ -250,7 +250,7 @@ func Test39SINITInTXT() (bool, error) {
 	return acm.ModuleType == 2, nil
 }
 
-func Test40SINITMatchesChipset() (bool, error) {
+func TestSINITMatchesChipset() (bool, error) {
 	regs, err := api.ReadTXTRegs()
 	if err != nil {
 		return false, err
@@ -281,7 +281,7 @@ func Test40SINITMatchesChipset() (bool, error) {
 	return false, nil
 }
 
-func Test41SINITMatchesCPU() (bool, error) {
+func TestSINITMatchesCPU() (bool, error) {
 	regs, err := api.ReadTXTRegs()
 	if err != nil {
 		return false, err
@@ -312,7 +312,7 @@ func Test41SINITMatchesCPU() (bool, error) {
 	return false, nil
 }
 
-func Test42NoSINITErrors() (bool, error) {
+func TestNoSINITErrors() (bool, error) {
 	regs, err := api.ReadTXTRegs()
 	if err != nil {
 		return false, err
@@ -321,7 +321,7 @@ func Test42NoSINITErrors() (bool, error) {
 	return regs.ErrorCodeRaw == 0xc0000001, nil
 }
 
-func Test43BIOSDATAREGIONPresent() (bool, error) {
+func TestBIOSDATAREGIONPresent() (bool, error) {
 	regs, err := api.ReadTXTRegs()
 	if err != nil {
 		return false, err
@@ -341,15 +341,15 @@ func Test43BIOSDATAREGIONPresent() (bool, error) {
 	return true, nil
 }
 
-func Test44HasMTRR() (bool, error) {
+func TestHasMTRR() (bool, error) {
 	return api.HasMTRR(), nil
 }
 
-func Test45HasSMRR() (bool, error) {
+func TestHasSMRR() (bool, error) {
 	return api.HasSMRR()
 }
 
-func Test46ValidSMRR() (bool, error) {
+func TestValidSMRR() (bool, error) {
 	smrr, err := api.GetSMRRInfo()
 	if err != nil {
 		return false, err
@@ -389,7 +389,7 @@ func Test46ValidSMRR() (bool, error) {
 	return true, nil
 }
 
-func Test47ActiveSMRR() (bool, error) {
+func TestActiveSMRR() (bool, error) {
 	smrr, err := api.GetSMRRInfo()
 	if err != nil {
 		return false, err
@@ -398,7 +398,7 @@ func Test47ActiveSMRR() (bool, error) {
 	return smrr.Active, nil
 }
 
-func Test48ActiveIOMMU() (bool, error) {
+func TestActiveIOMMU() (bool, error) {
 	smrr, err := api.GetSMRRInfo()
 	if err != nil {
 		return false, err
@@ -407,11 +407,11 @@ func Test48ActiveIOMMU() (bool, error) {
 	return api.AddressRangesIsDMAProtected(smrr.PhysBase, smrr.PhysBase|^smrr.PhysMask)
 }
 
-func Test49ActiveTBOOT() (bool, error) {
+func TestActiveTBOOT() (bool, error) {
 	return false, fmt.Errorf("Unimplemented")
 }
 
-func Test50ServerModeTXT() (bool, error) {
+func TestServerModeTXT() (bool, error) {
 	// FIXME: Query GetSec[Parameters] ebx = 5
 	// Assume yes if dependencies are satisfied
 	val, err := api.HasSMRR()
@@ -421,7 +421,7 @@ func Test50ServerModeTXT() (bool, error) {
 	return api.HasSMX() && api.HasVMX() && val, nil
 }
 
-func Test51ReleaseFusedFSBI() (bool, error) {
+func TestReleaseFusedFSBI() (bool, error) {
 	return false, fmt.Errorf("Unimplemented")
 }
 

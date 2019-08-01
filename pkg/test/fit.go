@@ -18,7 +18,7 @@ var (
 	fitImage []byte
 	// set by FITVectorIsSet
 	fitPointer uint32
-	// set by test22hasfit
+	// set by testhasfit
 	fit []api.FitEntry
 
 	testfitvectorisset = Test{
@@ -26,85 +26,86 @@ var (
 		Required: true,
 		function: FITVectorIsSet,
 	}
-	test22hasfit = Test{
+	testhasfit = Test{
 		Name:         "Has valid FIT",
 		Required:     true,
-		function:     Test22HasFIT,
+		function:     TestHasFIT,
 		dependencies: []*Test{&testfitvectorisset},
 	}
-	test23hasbiosacm = Test{
+	testhasbiosacm = Test{
 		Name:         "FIT has an BIOS ACM entry",
 		Required:     true,
-		function:     Test23HasBIOSACM,
-		dependencies: []*Test{&test22hasfit},
+		function:     TestHasBIOSACM,
+		dependencies: []*Test{&testhasfit},
 	}
-	test24hasibb = Test{
+	testhasibb = Test{
 		Name:         "FIT has a initial bootblock entry",
 		Required:     true,
-		function:     Test24HasIBB,
-		dependencies: []*Test{&test22hasfit},
+		function:     TestHasIBB,
+		dependencies: []*Test{&testhasfit},
 	}
-	test25haslcpTest = Test{
-		Name:         "FIT has a LCP Policy entry. Not mandatory, LCP_POLICY_DATA file may be supplied by GRUB to TBOOT",
+	// Not mandatory, LCP_POLICY_DATA file may be supplied by GRUB to TBOOT
+	testhaslcpTest = Test{
+		Name:         "FIT has a LCP Policy entry",
 		Required:     false,
-		function:     Test25HasBIOSPolicy,
-		dependencies: []*Test{&test22hasfit},
+		function:     TestHasBIOSPolicy,
+		dependencies: []*Test{&testhasfit},
 	}
-	test26ibbcoversresetvector = Test{
+	testibbcoversresetvector = Test{
 		Name:         "Initial bootblock covers reset vector",
 		Required:     true,
-		function:     Test26IBBCoversResetVector,
-		dependencies: []*Test{&test22hasfit, &test24hasibb},
+		function:     TestIBBCoversResetVector,
+		dependencies: []*Test{&testhasfit, &testhasibb},
 	}
-	ibbcoversfitvector = Test{
+	testibbcoversfitvector = Test{
 		Name:         "Initial bootblock covers FIT vector",
 		Required:     true,
-		function:     IBBCoversFITVector,
-		dependencies: []*Test{&test22hasfit, &test24hasibb},
+		function:     TestIBBCoversFITVector,
+		dependencies: []*Test{&testhasfit, &testhasibb},
 	}
-	ibbcoversfit = Test{
+	testibbcoversfit = Test{
 		Name:         "Initial bootblock covers FIT",
 		Required:     true,
-		function:     IBBCoversFIT,
-		dependencies: []*Test{&test22hasfit, &test24hasibb},
+		function:     TestIBBCoversFIT,
+		dependencies: []*Test{&testhasfit, &testhasibb},
 	}
-	test27noibboverlap = Test{
+	testnoibboverlap = Test{
 		Name:         "Initial bootblock does not overlap",
 		Required:     true,
-		function:     Test27NoIBBOverlap,
-		dependencies: []*Test{&test22hasfit, &test24hasibb},
+		function:     TestNoIBBOverlap,
+		dependencies: []*Test{&testhasfit, &testhasibb},
 	}
-	test28nobiosacmoverlap = Test{
+	testnobiosacmoverlap = Test{
 		Name:         "BIOS ACM does not overlap",
 		Required:     true,
-		function:     Test28NoBIOSACMOverlap,
-		dependencies: []*Test{&test22hasfit, &test23hasbiosacm},
+		function:     TestNoBIOSACMOverlap,
+		dependencies: []*Test{&testhasfit, &testhasbiosacm},
 	}
-	test29nobiosacmisbelow4g = Test{
+	testnobiosacmisbelow4g = Test{
 		Name:         "Initial bootblock and BIOS ACM is below 4GiB",
 		Required:     true,
-		function:     Test29BIOSACMIsBelow4G,
-		dependencies: []*Test{&test22hasfit, &test23hasbiosacm},
+		function:     TestBIOSACMIsBelow4G,
+		dependencies: []*Test{&testhasfit, &testhasbiosacm},
 	}
-	test30policyallowstxt = Test{
+	testpolicyallowstxt = Test{
 		Name:         "LCP Policy does not disable Intel TXT",
 		Required:     true,
-		function:     Test30PolicyAllowsTXT,
-		dependencies: []*Test{&test22hasfit},
+		function:     TestPolicyAllowsTXT,
+		dependencies: []*Test{&testhasfit},
 	}
 	TestsFIT = [...]*Test{
 		&testfitvectorisset,
-		&test22hasfit,
-		&test23hasbiosacm,
-		&test24hasibb,
-		&test25haslcpTest,
-		&test26ibbcoversresetvector,
-		&ibbcoversfitvector,
-		&ibbcoversfit,
-		&test27noibboverlap,
-		&test28nobiosacmoverlap,
-		&test29nobiosacmisbelow4g,
-		&test30policyallowstxt,
+		&testhasfit,
+		&testhasbiosacm,
+		&testhasibb,
+		&testhaslcpTest,
+		&testibbcoversresetvector,
+		&testibbcoversfitvector,
+		&testibbcoversfit,
+		&testnoibboverlap,
+		&testnobiosacmoverlap,
+		&testnobiosacmisbelow4g,
+		&testpolicyallowstxt,
 	}
 )
 
@@ -147,7 +148,7 @@ func FITVectorIsSet() (bool, error) {
 	return true, nil
 }
 
-func Test22HasFIT() (bool, error) {
+func TestHasFIT() (bool, error) {
 	fithdr := make([]byte, 16)
 	err := api.ReadPhysBuf(int64(fitPointer), fithdr)
 	if err != nil {
@@ -177,7 +178,7 @@ func Test22HasFIT() (bool, error) {
 	return true, nil
 }
 
-func Test23HasBIOSACM() (bool, error) {
+func TestHasBIOSACM() (bool, error) {
 	count := 0
 	for _, ent := range fit {
 		if ent.Type() == api.StartUpACMod {
@@ -188,7 +189,7 @@ func Test23HasBIOSACM() (bool, error) {
 	return count == 1, nil
 }
 
-func Test24HasIBB() (bool, error) {
+func TestHasIBB() (bool, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSStartUpMod {
 			return true, nil
@@ -198,7 +199,7 @@ func Test24HasIBB() (bool, error) {
 	return false, nil
 }
 
-func Test25HasBIOSPolicy() (bool, error) {
+func TestHasBIOSPolicy() (bool, error) {
 	count := 0
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSPolicyRec {
@@ -209,7 +210,7 @@ func Test25HasBIOSPolicy() (bool, error) {
 	return count == 1, nil
 }
 
-func Test26IBBCoversResetVector() (bool, error) {
+func TestIBBCoversResetVector() (bool, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSStartUpMod {
 			coversRv := ent.Address <= ResetVector && ent.Address+uint64(ent.Size()) >= ResetVector+4
@@ -223,7 +224,7 @@ func Test26IBBCoversResetVector() (bool, error) {
 	return false, nil
 }
 
-func IBBCoversFITVector() (bool, error) {
+func TestIBBCoversFITVector() (bool, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSStartUpMod {
 			coversRv := ent.Address <= FITVector && ent.Address+uint64(ent.Size()) >= FITVector+4
@@ -237,7 +238,7 @@ func IBBCoversFITVector() (bool, error) {
 	return false, nil
 }
 
-func IBBCoversFIT() (bool, error) {
+func TestIBBCoversFIT() (bool, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSStartUpMod {
 			coversRv := ent.Address <= uint64(fitPointer) && ent.Address+uint64(ent.Size()) >= uint64(fitPointer+uint32(len(fit)*16))
@@ -251,7 +252,7 @@ func IBBCoversFIT() (bool, error) {
 	return false, nil
 }
 
-func Test27NoIBBOverlap() (bool, error) {
+func TestNoIBBOverlap() (bool, error) {
 	for i, ent1 := range fit {
 		if ent1.Type() == api.BIOSStartUpMod {
 			for j, ent2 := range fit {
@@ -270,7 +271,7 @@ func Test27NoIBBOverlap() (bool, error) {
 	return true, nil
 }
 
-func Test28NoBIOSACMOverlap() (bool, error) {
+func TestNoBIOSACMOverlap() (bool, error) {
 	for i, ent1 := range fit {
 		if ent1.Type() == api.BIOSStartUpMod {
 			for j, ent2 := range fit {
@@ -289,7 +290,7 @@ func Test28NoBIOSACMOverlap() (bool, error) {
 	return true, nil
 }
 
-func Test29BIOSACMIsBelow4G() (bool, error) {
+func TestBIOSACMIsBelow4G() (bool, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.StartUpACMod {
 			if ent.Address+uint64(ent.Size()) > uint64(FourGiB) {
@@ -301,7 +302,7 @@ func Test29BIOSACMIsBelow4G() (bool, error) {
 	return true, nil
 }
 
-func Test30PolicyAllowsTXT() (bool, error) {
+func TestPolicyAllowsTXT() (bool, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.TXTPolicyRec {
 			switch ent.Version {
@@ -326,13 +327,13 @@ func Test30PolicyAllowsTXT() (bool, error) {
 	return true, nil
 }
 
-func Test31BIOSACMValid() (bool, error) {
+func TestBIOSACMValid() (bool, error) {
 	acm, _, _, _, err := biosACM(fit)
 
 	return acm != nil, err
 }
 
-func Test32BIOSACMSizeCorrect() (bool, error) {
+func TestBIOSACMSizeCorrect() (bool, error) {
 	acm, _, _, _, err := biosACM(fit)
 	if err != nil {
 		return false, err
@@ -341,7 +342,7 @@ func Test32BIOSACMSizeCorrect() (bool, error) {
 	return acm.HeaderLen%64 == 0, nil
 }
 
-func Test33BIOSACMAlignmentCorrect() (bool, error) {
+func TestBIOSACMAlignmentCorrect() (bool, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.StartUpACMod {
 			return ent.Address%(128*1024) == 0, nil
@@ -351,7 +352,7 @@ func Test33BIOSACMAlignmentCorrect() (bool, error) {
 	return false, fmt.Errorf("no BIOS ACM in FIT")
 }
 
-func Test34BIOSACMMatchesChipset() (bool, error) {
+func TestBIOSACMMatchesChipset() (bool, error) {
 	acm, chp, _, _, err := biosACM(fit)
 	if err != nil {
 		return false, err
@@ -382,7 +383,7 @@ func Test34BIOSACMMatchesChipset() (bool, error) {
 	return false, nil
 }
 
-func Test35BIOSACMMatchesCPU() (bool, error) {
+func TestBIOSACMMatchesCPU() (bool, error) {
 	_, _, cpus, _, err := biosACM(fit)
 	if err != nil {
 		return false, err

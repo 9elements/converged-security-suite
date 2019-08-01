@@ -8,97 +8,97 @@ import (
 )
 
 var (
-	txtRegisterValues      *api.TXTRegisterSpace = nil
-	test01checkforintelcpu                       = Test{
+	txtRegisterValues    *api.TXTRegisterSpace = nil
+	testcheckforintelcpu                       = Test{
 		Name:     "Intel CPU",
 		Required: true,
-		function: Test01CheckForIntelCPU,
+		function: TestCheckForIntelCPU,
 	}
-	test02waybridgeorlater = Test{
+	testwaybridgeorlater = Test{
 		Name:         "Weybridge or later",
-		function:     Test02WeybridgeOrLater,
+		function:     TestWeybridgeOrLater,
 		Required:     true,
-		dependencies: []*Test{&test01checkforintelcpu},
+		dependencies: []*Test{&testcheckforintelcpu},
 	}
-	test03cpusupportstxt = Test{
+	testcpusupportstxt = Test{
 		Name:         "CPU supports TXT",
-		function:     Test03CPUSupportsTXT,
+		function:     TestCPUSupportsTXT,
 		Required:     true,
-		dependencies: []*Test{&test01checkforintelcpu},
+		dependencies: []*Test{&testcheckforintelcpu},
 	}
-	test04chipsetsupportstxt = Test{
+	testchipsetsupportstxt = Test{
 		Name:         "Chipset supports TXT",
-		function:     Test04ChipsetSupportsTXT,
+		function:     TestChipsetSupportsTXT,
 		Required:     false,
-		dependencies: []*Test{&test01checkforintelcpu},
+		dependencies: []*Test{&testcheckforintelcpu},
 	}
-	test05txtregisterspaceaccessible = Test{
+	testtxtregisterspaceaccessible = Test{
 		Name:         "TXT register space accessible",
-		function:     Test05TXTRegisterSpaceAccessible,
+		function:     TestTXTRegisterSpaceAccessible,
 		Required:     true,
-		dependencies: []*Test{&test04chipsetsupportstxt},
+		dependencies: []*Test{&testchipsetsupportstxt},
 	}
-	test06supportssmx = Test{
+	testsupportssmx = Test{
 		Name:         "CPU supports SMX",
-		function:     Test06SupportsSMX,
+		function:     TestSupportsSMX,
 		Required:     true,
-		dependencies: []*Test{&test01checkforintelcpu},
+		dependencies: []*Test{&testcheckforintelcpu},
 	}
-	test07supportvmx = Test{
+	testsupportvmx = Test{
 		Name:         "CPU supports VMX",
-		function:     Test07SupportVMX,
+		function:     TestSupportVMX,
 		Required:     true,
-		dependencies: []*Test{&test01checkforintelcpu},
+		dependencies: []*Test{&testcheckforintelcpu},
 	}
-	test08ia32featurectrl = Test{
+	testia32featurectrl = Test{
 		Name:         "IA32_FEATURE_CONTROL",
-		function:     Test08Ia32FeatureCtrl,
+		function:     TestIa32FeatureCtrl,
 		Required:     true,
-		dependencies: []*Test{&test01checkforintelcpu},
+		dependencies: []*Test{&testcheckforintelcpu},
 	}
-	test10hasgetsecleaves = Test{
+	testhasgetsecleaves = Test{
 		Name:         "GETSEC leaves are enabled",
-		function:     Test10HasGetSecLeaves,
+		function:     TestHasGetSecLeaves,
 		Required:     false,
-		dependencies: []*Test{&test08ia32featurectrl},
+		dependencies: []*Test{&testia32featurectrl},
 	}
-	test11txtnotdisabled = Test{
+	testtxtnotdisabled = Test{
 		Name:     "Intel TXT no disabled by BIOS",
-		function: Test11TXTNotDisabled,
+		function: TestTXTNotDisabled,
 		Required: true,
 	}
-	test12ibbmeasured = Test{
+	testibbmeasured = Test{
 		Name:         "BIOS ACM has run",
-		function:     Test12IBBMeasured,
+		function:     TestIBBMeasured,
 		Required:     true,
-		dependencies: []*Test{&test05txtregisterspaceaccessible},
+		dependencies: []*Test{&testtxtregisterspaceaccessible},
 	}
-	test13ibbistrusted = Test{
+	testibbistrusted = Test{
 		Name:         "Initial Bootblock is trusted. Only necessary in signed policy",
-		function:     Test13IBBIsTrusted,
+		function:     TestIBBIsTrusted,
 		Required:     false,
-		dependencies: []*Test{&test05txtregisterspaceaccessible},
+		dependencies: []*Test{&testtxtregisterspaceaccessible},
 	}
-	test14txtregisterslocked = Test{
+	testtxtregisterslocked = Test{
 		Name:         "Intel TXT registers are locked",
-		function:     Test14TXTRegistersLocked,
+		function:     TestTXTRegistersLocked,
 		Required:     true,
-		dependencies: []*Test{&test05txtregisterspaceaccessible},
+		dependencies: []*Test{&testtxtregisterspaceaccessible},
 	}
 	TestsCPU = [...]*Test{
-		&test01checkforintelcpu,
-		&test02waybridgeorlater,
-		&test03cpusupportstxt,
-		&test04chipsetsupportstxt,
-		&test05txtregisterspaceaccessible,
-		&test06supportssmx,
-		&test07supportvmx,
-		&test08ia32featurectrl,
-		&test10hasgetsecleaves,
-		&test11txtnotdisabled,
-		&test12ibbmeasured,
-		&test13ibbistrusted,
-		&test14txtregisterslocked,
+		&testcheckforintelcpu,
+		&testwaybridgeorlater,
+		&testcpusupportstxt,
+		&testchipsetsupportstxt,
+		&testtxtregisterspaceaccessible,
+		&testsupportssmx,
+		&testsupportvmx,
+		&testia32featurectrl,
+		&testhasgetsecleaves,
+		&testtxtnotdisabled,
+		&testibbmeasured,
+		&testibbistrusted,
+		&testtxtregisterslocked,
 	}
 )
 
@@ -116,27 +116,27 @@ func getTxtRegisters() (*api.TXTRegisterSpace, error) {
 }
 
 // Check we're running on a Intel CPU
-func Test01CheckForIntelCPU() (bool, error) {
+func TestCheckForIntelCPU() (bool, error) {
 	return api.VersionString() == "GenuineIntel", nil
 }
 
 // Check we're running on Weybridge
-func Test02WeybridgeOrLater() (bool, error) {
+func TestWeybridgeOrLater() (bool, error) {
 	return cpuid.DisplayFamily == 6, nil
 }
 
 // Check if the CPU supports TXT
-func Test03CPUSupportsTXT() (bool, error) {
+func TestCPUSupportsTXT() (bool, error) {
 	return api.ArchitectureTXTSupport()
 }
 
 // Check whether chipset supports TXT
-func Test04ChipsetSupportsTXT() (bool, error) {
+func TestChipsetSupportsTXT() (bool, error) {
 	return false, fmt.Errorf("Unimplemented: Linux disables GETSEC by clearing CR4.SMXE")
 }
 
 // Check if the TXT register space is accessible
-func Test05TXTRegisterSpaceAccessible() (bool, error) {
+func TestTXTRegisterSpaceAccessible() (bool, error) {
 	regs, err := getTxtRegisters()
 	if err != nil {
 		return false, err
@@ -146,17 +146,17 @@ func Test05TXTRegisterSpaceAccessible() (bool, error) {
 }
 
 // Check if CPU supports SMX
-func Test06SupportsSMX() (bool, error) {
+func TestSupportsSMX() (bool, error) {
 	return api.HasSMX(), nil
 }
 
 // Check if CPU supports VMX
-func Test07SupportVMX() (bool, error) {
+func TestSupportVMX() (bool, error) {
 	return api.HasVMX(), nil
 }
 
 // Check IA_32FEATURE_CONTROL
-func Test08Ia32FeatureCtrl() (bool, error) {
+func TestIa32FeatureCtrl() (bool, error) {
 	vmxInSmx, err := api.AllowsVMXInSMX()
 	if err != nil || !vmxInSmx {
 		return vmxInSmx, err
@@ -170,27 +170,27 @@ func Test08Ia32FeatureCtrl() (bool, error) {
 	return locked, nil
 }
 
-func Test09SMXIsEnabled() (bool, error) {
+func TestSMXIsEnabled() (bool, error) {
 	return false, fmt.Errorf("Unimplemented: no comment")
 }
 
 // Check CR4 wherther SMXE is set
-//func Test09SMXIsEnabled() (bool, error) {
+//func TestSMXIsEnabled() (bool, error) {
 //	return api.SMXIsEnabled(), nil
 //}
 
 // Check for needed GETSEC leaves
-func Test10HasGetSecLeaves() (bool, error) {
+func TestHasGetSecLeaves() (bool, error) {
 	return false, fmt.Errorf("Unimplemented: Linux disables GETSEC by clearing CR4.SMXE")
 }
 
 // Check TXT_DISABLED bit in TXT_ACM_STATUS
-func Test11TXTNotDisabled() (bool, error) {
+func TestTXTNotDisabled() (bool, error) {
 	return api.TXTLeavesAreEnabled()
 }
 
 // Verify that the IBB has been measured
-func Test12IBBMeasured() (bool, error) {
+func TestIBBMeasured() (bool, error) {
 	regs, err := getTxtRegisters()
 	if err != nil {
 		return false, err
@@ -201,7 +201,7 @@ func Test12IBBMeasured() (bool, error) {
 
 // Check that the IBB was deemed trusted
 // Only set in Signed Policy mode
-func Test13IBBIsTrusted() (bool, error) {
+func TestIBBIsTrusted() (bool, error) {
 	regs, err := getTxtRegisters()
 
 	if err != nil {
@@ -212,7 +212,7 @@ func Test13IBBIsTrusted() (bool, error) {
 }
 
 // Verify that the TXT register space is locked
-func Test14TXTRegistersLocked() (bool, error) {
+func TestTXTRegistersLocked() (bool, error) {
 	regs, err := getTxtRegisters()
 	if err != nil {
 		return false, err
@@ -222,7 +222,7 @@ func Test14TXTRegistersLocked() (bool, error) {
 }
 
 // Check that the BIOS ACM has no startup error
-func Test15NoBIOSACMErrors() (bool, error) {
+func TestNoBIOSACMErrors() (bool, error) {
 	regs, err := getTxtRegisters()
 	if err != nil {
 		return false, err

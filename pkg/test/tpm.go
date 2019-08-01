@@ -24,44 +24,44 @@ var (
 		Required: true,
 		function: TestTPMConnect,
 	}
-	test16tpmispresent = Test{
+	testtpmispresent = Test{
 		Name:         "TPM 1.2 present",
 		Required:     true,
-		function:     Test16TPMPresent,
+		function:     TestTPMPresent,
 		dependencies: []*Test{&testtpmconnection},
 	}
-	test17tpmislocked = Test{
+	testtpmislocked = Test{
 		Name:         "TPM in production mode",
-		function:     Test17TPMIsLocked,
+		function:     TestTPMIsLocked,
 		Required:     false,
-		dependencies: []*Test{&test16tpmispresent},
+		dependencies: []*Test{&testtpmispresent},
 	}
-	test18psindexisset = Test{
+	testpsindexisset = Test{
 		Name:         "PS index is set in NVRAM",
-		function:     Test18PSIndexIsSet,
+		function:     TestPSIndexIsSet,
 		Required:     true,
-		dependencies: []*Test{&test16tpmispresent},
+		dependencies: []*Test{&testtpmispresent},
 	}
-	test19auxindexisset = Test{
+	testauxindexisset = Test{
 		Name:         "AUX index is set in NVRAM",
-		function:     Test19AUXIndexIsSet,
+		function:     TestAUXIndexIsSet,
 		Required:     true,
-		dependencies: []*Test{&test16tpmispresent},
+		dependencies: []*Test{&testtpmispresent},
 	}
-	test20lcppolicyisvalid = Test{
+	testlcppolicyisvalid = Test{
 		Name:         "PS index contains a valid LCP Policy",
-		function:     Test20LCPPolicyIsValid,
+		function:     TestLCPPolicyIsValid,
 		Required:     true,
-		dependencies: []*Test{&test16tpmispresent, &test18psindexisset},
+		dependencies: []*Test{&testtpmispresent, &testpsindexisset},
 	}
 
 	TestsTPM = [...]*Test{
 		&testtpmconnection,
-		&test16tpmispresent,
-		&test17tpmislocked,
-		&test18psindexisset,
-		&test19auxindexisset,
-		&test20lcppolicyisvalid,
+		&testtpmispresent,
+		&testtpmislocked,
+		&testpsindexisset,
+		&testauxindexisset,
+		&testlcppolicyisvalid,
 	}
 )
 
@@ -86,7 +86,7 @@ func TestTPMConnect() (bool, error) {
 }
 
 // Checks whether a TPM is present and answers to GetCapability
-func Test16TPMPresent() (bool, error) {
+func TestTPMPresent() (bool, error) {
 	if tpm12Connection != nil {
 		vid, err := tpm1.GetManufacturer(*tpm12Connection)
 
@@ -101,7 +101,7 @@ func Test16TPMPresent() (bool, error) {
 }
 
 // TPM NVRAM is locked
-func Test17TPMIsLocked() (bool, error) {
+func TestTPMIsLocked() (bool, error) {
 	if tpm12Connection != nil {
 		flags, err := tpm1.GetPermanentFlags(*tpm12Connection)
 
@@ -114,7 +114,7 @@ func Test17TPMIsLocked() (bool, error) {
 }
 
 // TPM NVRAM has a valid PS index
-func Test18PSIndexIsSet() (bool, error) {
+func TestPSIndexIsSet() (bool, error) {
 	if tpm12Connection != nil {
 		data, err := tpm1.NVReadValueNoAuth(*tpm12Connection, psIndex, 0, 54)
 		if err != nil {
@@ -139,7 +139,7 @@ func Test18PSIndexIsSet() (bool, error) {
 }
 
 // TPM NVRAM has a valid AUX index
-func Test19AUXIndexIsSet() (bool, error) {
+func TestAUXIndexIsSet() (bool, error) {
 	if tpm12Connection != nil {
 		buf, err := tpm1.NVReadValueNoAuth(*tpm12Connection, auxIndex, 0, 1)
 
@@ -157,7 +157,7 @@ func Test19AUXIndexIsSet() (bool, error) {
 }
 
 // PS index contains a valid LCP policy
-func Test20LCPPolicyIsValid() (bool, error) {
+func TestLCPPolicyIsValid() (bool, error) {
 	var data []byte
 	var err error
 
@@ -186,7 +186,7 @@ func Test20LCPPolicyIsValid() (bool, error) {
 }
 
 // Reads PCR-00 and checks whether if it's not the EmptyDigest
-func Test21PCR0IsSet() (bool, error) {
+func TestPCR0IsSet() (bool, error) {
 	if tpm12Connection != nil {
 		pcr, err := tpm1.ReadPCR(*tpm12Connection, 0)
 
