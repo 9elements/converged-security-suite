@@ -42,17 +42,22 @@ func showHelp() {
 }
 
 func listTests() {
-	for count, item := range test.TestsCPU {
-		fmt.Printf("Test No: %v, %v\n", count+1, item.Name)
+	var tests []*test.Test
+	for i, _ := range test.TestsCPU {
+		tests = append(tests, test.TestsCPU[i])
 	}
-	for count, item := range test.TestsTPM {
-		fmt.Printf("Test No: %v, %v\n", count+len(test.TestsCPU)+1, item.Name)
+	for i, _ := range test.TestsTPM {
+		tests = append(tests, test.TestsTPM[i])
 	}
-	for count, item := range test.TestsFIT {
-		fmt.Printf("Test No: %v, %v\n", count+len(test.TestsCPU)+len(test.TestsTPM)+1, item.Name)
+	for i, _ := range test.TestsFIT {
+		tests = append(tests, test.TestsFIT[i])
 	}
-	for count, item := range test.TestsMemory {
-		fmt.Printf("Test No: %v, %v\n", count+len(test.TestsCPU)+len(test.TestsTPM)+len(test.TestsFIT)+1, item.Name)
+	for i, _ := range test.TestsMemory {
+		tests = append(tests, test.TestsMemory[i])
+	}
+
+	for i, _ := range tests {
+		fmt.Printf("Test No: %v, %v\n", i, tests[i].Name)
 	}
 }
 
