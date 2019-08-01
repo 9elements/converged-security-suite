@@ -127,6 +127,13 @@ func TestWeybridgeOrLater() (bool, error) {
 
 // Check if the CPU supports TXT
 func TestCPUSupportsTXT() (bool, error) {
+	if CPUWhitelistTXTSupport() {
+		return true, nil
+	}
+	if CPUBlacklistTXTSupport() {
+		return false, nil
+	}
+	// Lookup name on Intel
 	return api.ArchitectureTXTSupport()
 }
 
