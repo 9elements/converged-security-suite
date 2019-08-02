@@ -103,6 +103,8 @@ func readFit(data []byte, fitSize uint32) ([]FitEntry, error) {
 		if err != nil {
 			return nil, err
 		}
+		// Intel's Firmware Interface Table Bios Specification
+		// recommends to clear CheckSumValid bit on all entries
 		if ent.CheckSumValid() {
 			// Validate checksum
 			var cksum byte = 0
@@ -142,19 +144,6 @@ func GetFitHeader(data []byte) (FitEntry, error) {
 		return hdr, fmt.Errorf("FIT: Invalid size")
 	}
 
-	if hdr.CheckSumValid() {
-		// FIXME: this is correct, but out test platform is broken, fix testplatform first...
-		/*
-			var cksum byte = 0
-			for j := 0; j < 16; j++ {
-				cksum += data[j]
-			}
-
-			if cksum != 0 {
-				return hdr, fmt.Errorf("FIT: Checksum of header is invalid")
-			}
-		*/
-	}
 	return hdr, nil
 }
 
@@ -172,6 +161,20 @@ func ExtractFit(data []byte) ([]FitEntry, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Intel's Firmware Interface Table Bios Specification recommends
+	// to set CheckSumValid in the header.
+	// Need to verify the whole table in that case, not only the header
+	if hdr.CheckSumValid() {
+		var cksum byte = 0
+		for j := 0; j < int(hdr.Size()); j++ {
+			cksum += data[j]
+		}
+
+		if cksum != 0 {
+			return nil, fmt.Errorf("FIT: Checksum of FIT is invalid")
+		}
+        }
 
 	var lasttype int = 0
 	for i, _ := range fitTable {
