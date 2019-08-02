@@ -93,6 +93,36 @@ var (
 		function:     TestPolicyAllowsTXT,
 		dependencies: []*Test{&testhasfit},
 	}
+	testbiosacmvalid = Test{
+		Name:         "BIOSACM header is valid",
+		Required:     true,
+		function:     TestBIOSACMValid,
+		dependencies: []*Test{&testhasfit, &testhasbiosacm},
+	}
+	testbiosacmsizecorrect = Test{
+		Name:         "BIOSACM size check",
+		Required:     true,
+		function:     TestBIOSACMSizeCorrect,
+		dependencies: []*Test{&testhasfit, &testhasbiosacm},
+	}
+	testbiosacmaligmentcorrect = Test{
+		Name:         "BIOSACM alignment check",
+		Required:     true,
+		function:     TestBIOSACMAlignmentCorrect,
+		dependencies: []*Test{&testhasfit, &testhasbiosacm},
+	}
+	testbiosacmmatcheschipset = Test{
+		Name:         "BIOSACM matches chipset",
+		Required:     true,
+		function:     TestBIOSACMMatchesChipset,
+		dependencies: []*Test{&testhasfit, &testhasbiosacm},
+	}
+	testbiosacmmatchescpu = Test{
+		Name:         "BIOSACM matches processor",
+		Required:     true,
+		function:     TestBIOSACMMatchesCPU,
+		dependencies: []*Test{&testhasfit, &testhasbiosacm},
+	}
 	TestsFIT = [...]*Test{
 		&testfitvectorisset,
 		&testhasfit,
