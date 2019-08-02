@@ -6,7 +6,21 @@ import (
 	"fmt"
 )
 
-const txtPublicSpace = 0xFED30000
+const (
+	txtPublicSpace = 0xFED30000
+	txtEsts        = txtPublicSpace + 0x8
+	txtACMStatus   = txtPublicSpace + 0xa0
+	txtVerFSBIF    = txtPublicSpace + 0x100
+	txtDIDVID      = txtPublicSpace + 0x110
+	txtVerQPIFF    = txtPublicSpace + 0x200
+	txtsInitBase   = txtPublicSpace + 0x270
+	txtsInitSize   = txtPublicSpace + 0x278
+	txtMLEJoin     = txtPublicSpace + 0x290
+	txtHeapBase    = txtPublicSpace + 0x300
+	txtHeapSize    = txtPublicSpace + 0x308
+	txtPublicKey   = txtPublicSpace + 0x400
+	txtE2STS       = txtPublicSpace + 0x8f0
+)
 
 type TXTStatus struct {
 	SenterDone bool // SENTER.DONE.STS (0)
@@ -113,28 +127,28 @@ func ReadTXTRegs() (TXTRegisterSpace, error) {
 	}
 
 	// TXT.ESTS (0x8)
-	err = ReadPhys(txtPublicSpace+0x8, &u8)
+	err = ReadPhys(txtEsts, &u8)
 	if err != nil {
 		return regSpace, err
 	}
 	regSpace.TxtReset = u8&1 != 0
 
 	// TXT.ACMSTATUS (0xa0)
-	err = ReadPhys(txtPublicSpace+0xa0, &u64)
+	err = ReadPhys(txtACMStatus, &u64)
 	if err != nil {
 		return regSpace, err
 	}
 	regSpace.AcmStatus = uint64(u64)
 
 	// TXT.VER.FSBIF
-	err = ReadPhys(txtPublicSpace+0x100, &u32)
+	err = ReadPhys(txtVerFSBIF, &u32)
 	if err != nil {
 		return regSpace, err
 	}
 	regSpace.FsbIf = uint32(u32)
 
 	// TXT.DIDVID
-	err = ReadPhys(txtPublicSpace+0x110, &u64)
+	err = ReadPhys(txtDIDVID, &u64)
 	if err != nil {
 		return regSpace, err
 	}
@@ -144,42 +158,42 @@ func ReadTXTRegs() (TXTRegisterSpace, error) {
 	regSpace.IdExt = uint16((u64 >> 48) & 0xffff)
 
 	// TXT.VER.QPIIF
-	err = ReadPhys(txtPublicSpace+0x200, &u32)
+	err = ReadPhys(txtVerQPIFF, &u32)
 	if err != nil {
 		return regSpace, err
 	}
 	regSpace.QpiIf = uint32(u32)
 
 	// TXT.SINIT.BASE
-	err = ReadPhys(txtPublicSpace+0x270, &u32)
+	err = ReadPhys(txtsInitBase, &u32)
 	if err != nil {
 		return regSpace, err
 	}
 	regSpace.SinitBase = uint32(u32)
 
 	// TXT.SINIT.SIZE
-	err = ReadPhys(txtPublicSpace+0x278, &u32)
+	err = ReadPhys(txtsInitSize, &u32)
 	if err != nil {
 		return regSpace, err
 	}
 	regSpace.SinitSize = uint32(u32)
 
 	// TXT.MLE.JOIN
-	err = ReadPhys(txtPublicSpace+0x290, &u32)
+	err = ReadPhys(txtMLEJoin, &u32)
 	if err != nil {
 		return regSpace, err
 	}
 	regSpace.MleJoin = uint32(u32)
 
 	// TXT.HEAP.BASE
-	err = ReadPhys(txtPublicSpace+0x300, &u32)
+	err = ReadPhys(txtHeapBase, &u32)
 	if err != nil {
 		return regSpace, err
 	}
 	regSpace.HeapBase = uint32(u32)
 
 	// TXT.HEAP.SIZE
-	err = ReadPhys(txtPublicSpace+0x308, &u32)
+	err = ReadPhys(txtHeapSize, &u32)
 	if err != nil {
 		return regSpace, err
 	}
@@ -187,7 +201,7 @@ func ReadTXTRegs() (TXTRegisterSpace, error) {
 
 	// TXT.PUBLIC.KEY
 	for i := 0; i < 4; i++ {
-		err = ReadPhys(txtPublicSpace+0x400+int64(i)*8, &u64)
+		err = ReadPhys(txtPublicKey+int64(i)*8, &u64)
 		if err != nil {
 			return regSpace, err
 		}
@@ -195,7 +209,7 @@ func ReadTXTRegs() (TXTRegisterSpace, error) {
 	}
 
 	// TXT.E2STS
-	err = ReadPhys(txtPublicSpace+0x8f0, &u64)
+	err = ReadPhys(txtE2STS, &u64)
 	if err != nil {
 		return regSpace, err
 	}
