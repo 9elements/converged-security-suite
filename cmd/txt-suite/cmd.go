@@ -15,6 +15,7 @@ var keeprunning = flag.Bool("i", false, "Errors will not stop the testing. Tests
 var help = flag.Bool("h", false, "Shows help")
 var listtests = flag.Bool("l", false, "Lists all test")
 var version = flag.Bool("v", false, "Shows Version, copyright info and license")
+var tpmdev = flag.String("tpm", "", "Select TPM-Path. e.g.: -tpm=/dev/tpmX, with X as number of the TPM module")
 
 func flagUsed() bool {
 	return testno != nil

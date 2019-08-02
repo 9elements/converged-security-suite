@@ -66,6 +66,10 @@ func main() {
 		testnos, _ = deconstructFlag()
 	}
 
+	if *tpmdev != "" {
+		test.TpmPath = *tpmdev
+	}
+
 	if !*help && !*listtests && !*version {
 		ret = run()
 	} else {

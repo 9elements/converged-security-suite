@@ -19,6 +19,7 @@ const (
 var (
 	tpm12Connection   *io.ReadWriteCloser = nil
 	tpm20Connection   *io.ReadWriteCloser = nil
+	TpmPath           string              = "/dev/tpm0"
 	testtpmconnection                     = Test{
 		Name:     "TPM connection",
 		Required: true,
@@ -67,11 +68,10 @@ var (
 
 // Connects to a TPM device (virtual or real) at the given path
 func TestTPMConnect() (bool, error) {
-	tpmPath := "/dev/tpm0"
-	conn, err := tpm2.OpenTPM(tpmPath)
+	conn, err := tpm2.OpenTPM(TpmPath)
 
 	if err != nil {
-		conn, err = tpm1.OpenTPM(tpmPath)
+		conn, err = tpm1.OpenTPM(TpmPath)
 
 		if err != nil {
 			return false, fmt.Errorf("Cannot connect to TPM: %s\n", err)
