@@ -49,8 +49,9 @@ func run() bool {
 			}
 		}
 
-		if !tests[idx].Run() && tests[idx].Required && !stayAlive() {
+		if !tests[idx].Run() && !tests[idx].Required && !stayAlive() {
 			result = true
+			break
 		}
 	}
 
