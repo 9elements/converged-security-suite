@@ -15,6 +15,8 @@ var keeprunning = flag.Bool("i", false, "Errors will not stop the testing. Tests
 var help = flag.Bool("h", false, "Shows help")
 var listtests = flag.Bool("l", false, "Lists all test")
 var version = flag.Bool("v", false, "Shows Version, copyright info and license")
+var tpmdev = flag.String("tpm", "", "Select TPM-Path. e.g.: -tpm=/dev/tpmX, with X as number of the TPM module")
+var logpath = flag.String("log", "", "Give a path/filename for test result output in JSON format. e.g.: /path/to/filename.json")
 
 func flagUsed() bool {
 	return testno != nil
@@ -35,7 +37,7 @@ func showHelp() {
 	fmt.Println("Usage: txt-suite [-l] [-h] [-v] [-i] [-t TESTSPEC]")
 	fmt.Println("")
 	fmt.Println("\t-t TESTSPEC : Only run a subset of tests. TESTSPEC is a comma-separated list of integers or ranges (n-m).")
-	fmt.Println("\t-i : Ignore failing tests.")
+	fmt.Println("\t-i : Ignore failing tests. Results are written to test_log.json")
 	fmt.Println("\t-h : Shows this help")
 	fmt.Println("\t-l : Lists all tests with their test number.")
 	fmt.Println("\t-v : Shows version, license and copyright.")

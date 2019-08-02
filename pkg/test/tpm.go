@@ -19,40 +19,47 @@ const (
 var (
 	tpm12Connection   *io.ReadWriteCloser = nil
 	tpm20Connection   *io.ReadWriteCloser = nil
+	TpmPath           string              = "/dev/tpm0"
 	testtpmconnection                     = Test{
 		Name:     "TPM connection",
 		Required: true,
 		function: TestTPMConnect,
+		Status:   TestImplemented,
 	}
 	testtpmispresent = Test{
 		Name:         "TPM 1.2 present",
 		Required:     true,
 		function:     TestTPMPresent,
 		dependencies: []*Test{&testtpmconnection},
+		Status:       TestImplemented,
 	}
 	testtpmislocked = Test{
 		Name:         "TPM in production mode",
 		function:     TestTPMIsLocked,
 		Required:     false,
 		dependencies: []*Test{&testtpmispresent},
+		Status:       TestPartlyImplemented,
 	}
 	testpsindexisset = Test{
-		Name:         "PS index is set in NVRAM",
+		Name:         "PS index set in NVRAM",
 		function:     TestPSIndexIsSet,
 		Required:     true,
 		dependencies: []*Test{&testtpmispresent},
+		Status:       TestImplemented,
 	}
 	testauxindexisset = Test{
-		Name:         "AUX index is set in NVRAM",
+		Name:         "AUX index set in NVRAM",
 		function:     TestAUXIndexIsSet,
 		Required:     true,
 		dependencies: []*Test{&testtpmispresent},
+		Status:       TestImplemented,
 	}
 	testlcppolicyisvalid = Test{
-		Name:         "PS index contains a valid LCP Policy",
+		Name:         "PS index has valid LCP Policy",
 		function:     TestLCPPolicyIsValid,
 		Required:     true,
 		dependencies: []*Test{&testtpmispresent, &testpsindexisset},
+		Status:       TestImplemented,
 	}
 
 	TestsTPM = [...]*Test{
@@ -67,11 +74,10 @@ var (
 
 // Connects to a TPM device (virtual or real) at the given path
 func TestTPMConnect() (bool, error) {
-	tpmPath := "/dev/tpm0"
-	conn, err := tpm2.OpenTPM(tpmPath)
+	conn, err := tpm2.OpenTPM(TpmPath)
 
 	if err != nil {
-		conn, err = tpm1.OpenTPM(tpmPath)
+		conn, err = tpm1.OpenTPM(TpmPath)
 
 		if err != nil {
 			return false, fmt.Errorf("Cannot connect to TPM: %s\n", err)

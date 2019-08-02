@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
+	"io/ioutil"
 	"os"
 	"sort"
 
@@ -11,7 +13,16 @@ import (
 var (
 	testnos []int
 	testerg bool
+	logfile = "test_log.json"
 )
+
+type temptest struct {
+	Testnumber int
+	Testname   string
+	Result     string
+	Error      string
+	Status     string
+}
 
 func getTests() []*test.Test {
 	var tests []*test.Test
@@ -51,7 +62,21 @@ func run() bool {
 
 		if !tests[idx].Run() && tests[idx].Required && !stayAlive() {
 			result = true
+			break
 		}
+
+	}
+
+	if stayAlive() {
+		var t []temptest
+		for index, _ := range tests {
+			if tests[index].Status != test.TestNotImplemented {
+				ttemp := temptest{index, tests[index].Name, tests[index].Result.String(), tests[index].ErrorText, tests[index].Status.String()}
+				t = append(t, ttemp)
+			}
+		}
+		data, _ := json.MarshalIndent(t, "", "")
+		ioutil.WriteFile(logfile, data, 0664)
 	}
 
 	return result
@@ -64,6 +89,14 @@ func main() {
 
 	if flagUsed() == true {
 		testnos, _ = deconstructFlag()
+	}
+
+	if *tpmdev != "" {
+		test.TpmPath = *tpmdev
+	}
+
+	if *logpath != "" {
+		logfile = *logpath
 	}
 
 	if !*help && !*listtests && !*version {
