@@ -73,19 +73,8 @@ func run() bool {
 		var t []temptest
 		for index, _ := range tests {
 			if tests[index].Status != test.TestNotImplemented {
-				if tests[index].Result != test.ResultPass {
-					if tests[index].Result == test.ResultFail {
-						fmt.Printf("%v : %v\n", tests[index].Name, a.Red(tests[index].Result.String()))
-					} else {
-						fmt.Printf("%v : %v\n", tests[index].Name, a.Blue(tests[index].Result.String()))
-					}
-				} else {
-					fmt.Printf("%v : %v\n", tests[index].Name, a.Green(tests[index].Result.String()))
-				}
 				ttemp := temptest{index, tests[index].Name, tests[index].Result.String(), tests[index].ErrorText, tests[index].Status.String()}
 				t = append(t, ttemp)
-			} else {
-				fmt.Printf("%v : %v\n", tests[index].Name, a.Yellow(tests[index].Status))
 			}
 		}
 		data, _ := json.MarshalIndent(t, "", "")
