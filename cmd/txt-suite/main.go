@@ -3,13 +3,11 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"sort"
 
 	"github.com/9elements/txt-suite/pkg/test"
-	a "github.com/logrusorgru/aurora"
 )
 
 var (
@@ -69,7 +67,6 @@ func run() bool {
 	}
 
 	if stayAlive() {
-		fmt.Println("")
 		var t []temptest
 		for index, _ := range tests {
 			if tests[index].Status != test.TestNotImplemented {
