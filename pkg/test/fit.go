@@ -42,7 +42,7 @@ var (
 		Status:       TestImplemented,
 	}
 	testhasibb = Test{
-		Name:         "initial bootblock entry in FIT",
+		Name:         "IBB entry in FIT",
 		Required:     true,
 		function:     TestHasIBB,
 		dependencies: []*Test{&testhasfit},
@@ -57,28 +57,28 @@ var (
 		Status:       TestImplemented,
 	}
 	testibbcoversresetvector = Test{
-		Name:         "Initial bootblock covers reset vector",
+		Name:         "IBB covers reset vector",
 		Required:     true,
 		function:     TestIBBCoversResetVector,
 		dependencies: []*Test{&testhasfit, &testhasibb},
 		Status:       TestImplemented,
 	}
 	testibbcoversfitvector = Test{
-		Name:         "Initial bootblock covers FIT vector",
+		Name:         "IBB covers FIT vector",
 		Required:     true,
 		function:     TestIBBCoversFITVector,
 		dependencies: []*Test{&testhasfit, &testhasibb},
 		Status:       TestImplemented,
 	}
 	testibbcoversfit = Test{
-		Name:         "Initial bootblock covers FIT",
+		Name:         "IBB covers FIT",
 		Required:     true,
 		function:     TestIBBCoversFIT,
 		dependencies: []*Test{&testhasfit, &testhasibb},
 		Status:       TestImplemented,
 	}
 	testnoibboverlap = Test{
-		Name:         "Initial bootblock does not overlap",
+		Name:         "IBB does not overlap",
 		Required:     true,
 		function:     TestNoIBBOverlap,
 		dependencies: []*Test{&testhasfit, &testhasibb},
@@ -92,14 +92,14 @@ var (
 		Status:       TestImplemented,
 	}
 	testnobiosacmisbelow4g = Test{
-		Name:         "Initial bootblock and BIOS ACM below 4GiB",
+		Name:         "IBB and BIOS ACM below 4GiB",
 		Required:     true,
 		function:     TestBIOSACMIsBelow4G,
 		dependencies: []*Test{&testhasfit, &testhasbiosacm},
 		Status:       TestImplemented,
 	}
 	testpolicyallowstxt = Test{
-		Name:         "Intel TXT not disabled by LCP Policy",
+		Name:         "TXT not disabled by LCP Policy",
 		Required:     true,
 		function:     TestPolicyAllowsTXT,
 		dependencies: []*Test{&testhasfit},

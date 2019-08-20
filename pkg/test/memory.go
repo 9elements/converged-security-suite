@@ -58,7 +58,7 @@ var (
 		Status:       TestImplemented,
 	}
 	testnosiniterrors = Test{
-		Name:     "SINIT ACM startup errors",
+		Name:     "SINIT ACM startup successful",
 		Required: false,
 		function: TestNoSINITErrors,
 		Status:   TestImplemented,

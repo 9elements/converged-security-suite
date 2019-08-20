@@ -78,7 +78,7 @@ var (
 		Status:   TestNotImplemented,
 	}
 	testtxtnotdisabled = Test{
-		Name:     "TXT no disabled by BIOS",
+		Name:     "TXT not disabled by BIOS",
 		function: TestTXTNotDisabled,
 		Required: true,
 		Status:   TestImplemented,
