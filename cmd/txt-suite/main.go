@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
+	"io/ioutil"
 	"os"
 	"sort"
 
@@ -12,6 +14,14 @@ var (
 	testnos []int
 	testerg bool
 )
+
+type temptest struct {
+	Testnumber int
+	Testname   string
+	Result     string
+	Error      string
+	Status     string
+}
 
 func getTests() []*test.Test {
 	var tests []*test.Test
@@ -53,6 +63,19 @@ func run() bool {
 			result = true
 			break
 		}
+
+	}
+
+	if stayAlive() {
+		var t []temptest
+		for index, _ := range tests {
+			if tests[index].Status != test.TestNotImplemented {
+				ttemp := temptest{index, tests[index].Name, tests[index].Result.String(), tests[index].ErrorText, tests[index].Status.String()}
+				t = append(t, ttemp)
+			}
+		}
+		data, _ := json.MarshalIndent(t, "", "")
+		ioutil.WriteFile("test_log.json", data, 0664)
 	}
 
 	return result

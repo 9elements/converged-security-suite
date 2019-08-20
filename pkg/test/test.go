@@ -9,6 +9,7 @@ import (
 )
 
 type TestResult int
+type TestStatus int
 
 const (
 	ResultNotRun TestResult = iota
@@ -17,8 +18,17 @@ const (
 	ResultPass
 )
 
+const (
+	TestImplemented TestStatus = iota
+	TestNotImplemented
+	TestPartlyImplemented
+)
+
+func (t TestStatus) String() string {
+	return [...]string{"Implemented", "Not implemented", "Partly implemented"}[t]
+}
 func (t TestResult) String() string {
-        return [...]string{"TESTNOTRUN", "DEPENDENCY_FAILED", "FAIL", "PASS"}[t]
+	return [...]string{"TESTNOTRUN", "DEPENDENCY_FAILED", "FAIL", "PASS"}[t]
 }
 
 type Test struct {
@@ -28,6 +38,7 @@ type Test struct {
 	Result       TestResult
 	dependencies []*Test
 	ErrorText    string
+	Status       TestStatus
 }
 
 func (self *Test) Run() bool {

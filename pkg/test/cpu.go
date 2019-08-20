@@ -13,77 +13,96 @@ var (
 		Name:     "Intel CPU",
 		Required: true,
 		function: TestCheckForIntelCPU,
+		Status:   TestImplemented,
 	}
 	testwaybridgeorlater = Test{
 		Name:         "Weybridge or later",
 		function:     TestWeybridgeOrLater,
 		Required:     true,
 		dependencies: []*Test{&testcheckforintelcpu},
+		Status:       TestImplemented,
 	}
 	testcpusupportstxt = Test{
 		Name:         "CPU supports TXT",
 		function:     TestCPUSupportsTXT,
 		Required:     true,
 		dependencies: []*Test{&testcheckforintelcpu},
+		Status:       TestImplemented,
 	}
 	testchipsetsupportstxt = Test{
 		Name:         "Chipset supports TXT",
 		function:     TestChipsetSupportsTXT,
 		Required:     false,
 		dependencies: []*Test{&testcheckforintelcpu},
+		Status:       TestNotImplemented,
 	}
 	testtxtregisterspaceaccessible = Test{
 		Name:         "TXT register space accessible",
 		function:     TestTXTRegisterSpaceAccessible,
 		Required:     true,
 		dependencies: []*Test{&testchipsetsupportstxt},
+		Status:       TestImplemented,
 	}
 	testsupportssmx = Test{
 		Name:         "CPU supports SMX",
 		function:     TestSupportsSMX,
 		Required:     true,
 		dependencies: []*Test{&testcheckforintelcpu},
+		Status:       TestImplemented,
 	}
 	testsupportvmx = Test{
 		Name:         "CPU supports VMX",
 		function:     TestSupportVMX,
 		Required:     true,
 		dependencies: []*Test{&testcheckforintelcpu},
+		Status:       TestImplemented,
 	}
 	testia32featurectrl = Test{
 		Name:         "IA32_FEATURE_CONTROL",
 		function:     TestIa32FeatureCtrl,
 		Required:     true,
 		dependencies: []*Test{&testcheckforintelcpu},
+		Status:       TestImplemented,
 	}
 	testhasgetsecleaves = Test{
 		Name:         "GETSEC leaves are enabled",
 		function:     TestHasGetSecLeaves,
 		Required:     false,
 		dependencies: []*Test{&testia32featurectrl},
+		Status:       TestNotImplemented,
+	}
+	testsmxisenabled = Test{
+		Name:     "SMX enabled",
+		function: TestSMXIsEnabled,
+		Required: false,
+		Status:   TestNotImplemented,
 	}
 	testtxtnotdisabled = Test{
-		Name:     "Intel TXT no disabled by BIOS",
+		Name:     "TXT not disabled by BIOS",
 		function: TestTXTNotDisabled,
 		Required: true,
+		Status:   TestImplemented,
 	}
 	testibbmeasured = Test{
 		Name:         "BIOS ACM has run",
 		function:     TestIBBMeasured,
 		Required:     true,
 		dependencies: []*Test{&testtxtregisterspaceaccessible},
+		Status:       TestImplemented,
 	}
 	testibbistrusted = Test{
-		Name:         "Initial Bootblock is trusted. Only necessary in signed policy",
+		Name:         "Initial Bootblock is trusted",
 		function:     TestIBBIsTrusted,
 		Required:     false,
 		dependencies: []*Test{&testtxtregisterspaceaccessible},
+		Status:       TestImplemented,
 	}
 	testtxtregisterslocked = Test{
-		Name:         "Intel TXT registers are locked",
+		Name:         "TXT registers are locked",
 		function:     TestTXTRegistersLocked,
 		Required:     true,
 		dependencies: []*Test{&testtxtregisterspaceaccessible},
+		Status:       TestImplemented,
 	}
 	TestsCPU = [...]*Test{
 		&testcheckforintelcpu,

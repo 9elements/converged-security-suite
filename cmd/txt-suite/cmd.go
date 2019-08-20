@@ -36,7 +36,7 @@ func showHelp() {
 	fmt.Println("Usage: txt-suite [-l] [-h] [-v] [-i] [-t TESTSPEC]")
 	fmt.Println("")
 	fmt.Println("\t-t TESTSPEC : Only run a subset of tests. TESTSPEC is a comma-separated list of integers or ranges (n-m).")
-	fmt.Println("\t-i : Ignore failing tests.")
+	fmt.Println("\t-i : Ignore failing tests. Results are written to test_log.json")
 	fmt.Println("\t-h : Shows this help")
 	fmt.Println("\t-l : Lists all tests with their test number.")
 	fmt.Println("\t-v : Shows version, license and copyright.")
