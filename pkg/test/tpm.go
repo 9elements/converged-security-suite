@@ -24,36 +24,42 @@ var (
 		Name:     "TPM connection",
 		Required: true,
 		function: TestTPMConnect,
+		Status:   TestImplemented,
 	}
 	testtpmispresent = Test{
 		Name:         "TPM 1.2 present",
 		Required:     true,
 		function:     TestTPMPresent,
 		dependencies: []*Test{&testtpmconnection},
+		Status:       TestImplemented,
 	}
 	testtpmislocked = Test{
 		Name:         "TPM in production mode",
 		function:     TestTPMIsLocked,
 		Required:     false,
 		dependencies: []*Test{&testtpmispresent},
+		Status:       TestPartlyImplemented,
 	}
 	testpsindexisset = Test{
 		Name:         "PS index set in NVRAM",
 		function:     TestPSIndexIsSet,
 		Required:     true,
 		dependencies: []*Test{&testtpmispresent},
+		Status:       TestImplemented,
 	}
 	testauxindexisset = Test{
 		Name:         "AUX index set in NVRAM",
 		function:     TestAUXIndexIsSet,
 		Required:     true,
 		dependencies: []*Test{&testtpmispresent},
+		Status:       TestImplemented,
 	}
 	testlcppolicyisvalid = Test{
 		Name:         "PS index has valid LCP Policy",
 		function:     TestLCPPolicyIsValid,
 		Required:     true,
 		dependencies: []*Test{&testtpmispresent, &testpsindexisset},
+		Status:       TestImplemented,
 	}
 
 	TestsTPM = [...]*Test{

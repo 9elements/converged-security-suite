@@ -1,9 +1,10 @@
 package main
 
 import (
-	//"encoding/json"
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"sort"
 
@@ -17,8 +18,8 @@ var (
 )
 
 type temptest struct {
-	testno int             `json:"Testno"`
-	result test.TestResult `json:"Result"`
+	Testname string
+	Result   string
 }
 
 func getTests() []*test.Test {
@@ -64,15 +65,28 @@ func run() bool {
 
 	}
 
-	//Print test results
-	for index, _ := range tests {
-		if tests[index].Result == test.ResultFail || tests[index].Result == test.ResultDependencyFailed {
-			fmt.Printf("%v : %v\n", tests[index].Name, a.Red(tests[index].Result))
-
-		} else {
-			fmt.Printf("%v : %v\n", tests[index].Name, a.Green(tests[index].Result))
+	if stayAlive() {
+		fmt.Println("")
+		var t []temptest
+		for index, _ := range tests {
+			if tests[index].Status != test.TestNotImplemented {
+				if tests[index].Result != test.ResultPass {
+					if tests[index].Result == test.ResultFail {
+						fmt.Printf("%v : %v\n", tests[index].Name, a.Red(tests[index].Result.String()))
+					} else {
+						fmt.Printf("%v : %v\n", tests[index].Name, a.Blue(tests[index].Result.String()))
+					}
+				} else {
+					fmt.Printf("%v : %v\n", tests[index].Name, a.Green(tests[index].Result.String()))
+				}
+				ttemp := temptest{tests[index].Name, tests[index].Result.String()}
+				t = append(t, ttemp)
+			} else {
+				fmt.Printf("%v : %v\n", tests[index].Name, a.Yellow(tests[index].Status))
+			}
 		}
-
+		data, _ := json.MarshalIndent(t, "", "")
+		ioutil.WriteFile("test_log.json", data, 0664)
 	}
 
 	return result

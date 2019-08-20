@@ -11,96 +11,114 @@ var (
 		Name:     "TXT memory reserved in e820",
 		Required: true,
 		function: TestTXTReservedInE820,
+		Status:   TestImplemented,
 	}
 	testtxtmemoryisdpr = Test{
 		Name:     "TXT memory in a DMA protected range",
 		Required: true,
 		function: TestTXTMemoryIsDPR,
+		Status:   TestImplemented,
 	}
 	testtxtdprislocked = Test{
 		Name:     "TXT DPR register locked",
 		Required: true,
 		function: TestTXTDPRisLock,
+		Status:   TestImplemented,
 	}
 	testhostbridgeDPRcorrect = Test{
 		Name:     "CPU DMA protected range equals hostbridge DPR",
 		Required: false,
 		function: TestHostbridgeDPRCorrect,
+		Status:   TestImplemented,
 	}
 	testhostbridgeDPRislocked = Test{
 		Name:     "CPU hostbridge DPR register locked",
 		Required: true,
 		function: TestHostbridgeDPRisLocked,
+		Status:   TestImplemented,
 	}
 	testsinitintxt = Test{
 		Name:     "TXT region contains SINIT ACM",
 		Required: true,
 		function: TestSINITInTXT,
+		Status:   TestImplemented,
 	}
 	testsinitmatcheschipset = Test{
 		Name:         "SINIT ACM matches chipset",
 		Required:     true,
 		function:     TestSINITMatchesChipset,
 		dependencies: []*Test{&testsinitintxt},
+		Status:       TestImplemented,
 	}
 	testsinitmatchescpu = Test{
 		Name:         "SINIT ACM matches CPU",
 		Required:     true,
 		function:     TestSINITMatchesCPU,
 		dependencies: []*Test{&testsinitintxt},
+		Status:       TestImplemented,
 	}
 	testnosiniterrors = Test{
 		Name:     "SINIT ACM startup errors",
 		Required: false,
 		function: TestNoSINITErrors,
+		Status:   TestImplemented,
 	}
 	testbiosdataregionpresent = Test{
 		Name:     "BIOS DATA REGION valid",
 		Required: true,
 		function: TestBIOSDATAREGIONPresent,
+		Status:   TestImplemented,
 	}
 	testhasmtrr = Test{
 		Name:     "CPU supports memory type range registers",
 		Required: true,
 		function: TestHasMTRR,
+		Status:   TestImplemented,
 	}
 	testhassmrr = Test{
 		Name:         "CPU supports system management range registers",
 		Required:     true,
 		function:     TestHasSMRR,
 		dependencies: []*Test{&testservermodetext},
+		Status:       TestImplemented,
 	}
 	testvalidsmrr = Test{
 		Name:         "SMRR covers SMM memory",
 		Required:     true,
 		function:     TestValidSMRR,
 		dependencies: []*Test{&testhassmrr},
+		Status:       TestImplemented,
 	}
 	testactivesmrr = Test{
 		Name:         "SMRR protection active",
 		Required:     true,
 		function:     TestActiveSMRR,
 		dependencies: []*Test{&testhassmrr},
+		Status:       TestImplemented,
 	}
 	testactiveiommi = Test{
 		Name:     "IOMMU/VT-d active",
 		Required: false,
 		function: TestActiveIOMMU,
+		Status:   TestImplemented,
 	}
 	testactivetboot = Test{
 		Name:     "TBOOT hypervisor active",
 		Required: false,
 		function: TestActiveTBOOT,
+		Status:   TestNotImplemented,
 	}
 	testservermodetext = Test{
 		Name:     "TXT server mode enabled",
 		Required: false,
 		function: TestServerModeTXT,
+		Status:   TestImplemented,
 	}
 	testreleasefusedfsbi = Test{
 		Name:     "FSB interface release fused",
 		Required: false,
 		function: TestReleaseFusedFSBI,
+		Status:   TestNotImplemented,
 	}
 
 	TestsMemory = [...]*Test{
