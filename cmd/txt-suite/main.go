@@ -13,6 +13,7 @@ import (
 var (
 	testnos []int
 	testerg bool
+	logfile = "test_log.json"
 )
 
 type temptest struct {
@@ -75,7 +76,7 @@ func run() bool {
 			}
 		}
 		data, _ := json.MarshalIndent(t, "", "")
-		ioutil.WriteFile("test_log.json", data, 0664)
+		ioutil.WriteFile(logfile, data, 0664)
 	}
 
 	return result
@@ -92,6 +93,10 @@ func main() {
 
 	if *tpmdev != "" {
 		test.TpmPath = *tpmdev
+	}
+
+	if *logpath != "" {
+		logfile = *logpath
 	}
 
 	if !*help && !*listtests && !*version {

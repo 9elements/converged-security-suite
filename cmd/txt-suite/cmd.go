@@ -16,6 +16,7 @@ var help = flag.Bool("h", false, "Shows help")
 var listtests = flag.Bool("l", false, "Lists all test")
 var version = flag.Bool("v", false, "Shows Version, copyright info and license")
 var tpmdev = flag.String("tpm", "", "Select TPM-Path. e.g.: -tpm=/dev/tpmX, with X as number of the TPM module")
+var logpath = flag.String("log", "", "Give a path/filename for test result output in JSON format. e.g.: /path/to/filename.json")
 
 func flagUsed() bool {
 	return testno != nil
