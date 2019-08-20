@@ -38,19 +38,19 @@ var (
 		dependencies: []*Test{&testtpmispresent},
 	}
 	testpsindexisset = Test{
-		Name:         "PS index is set in NVRAM",
+		Name:         "PS index set in NVRAM",
 		function:     TestPSIndexIsSet,
 		Required:     true,
 		dependencies: []*Test{&testtpmispresent},
 	}
 	testauxindexisset = Test{
-		Name:         "AUX index is set in NVRAM",
+		Name:         "AUX index set in NVRAM",
 		function:     TestAUXIndexIsSet,
 		Required:     true,
 		dependencies: []*Test{&testtpmispresent},
 	}
 	testlcppolicyisvalid = Test{
-		Name:         "PS index contains a valid LCP Policy",
+		Name:         "PS index has valid LCP Policy",
 		function:     TestLCPPolicyIsValid,
 		Required:     true,
 		dependencies: []*Test{&testtpmispresent, &testpsindexisset},

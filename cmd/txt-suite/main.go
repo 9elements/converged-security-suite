@@ -1,17 +1,25 @@
 package main
 
 import (
+	//"encoding/json"
 	"flag"
+	"fmt"
 	"os"
 	"sort"
 
 	"github.com/9elements/txt-suite/pkg/test"
+	a "github.com/logrusorgru/aurora"
 )
 
 var (
 	testnos []int
 	testerg bool
 )
+
+type temptest struct {
+	testno int             `json:"Testno"`
+	result test.TestResult `json:"Result"`
+}
 
 func getTests() []*test.Test {
 	var tests []*test.Test
@@ -53,6 +61,18 @@ func run() bool {
 			result = true
 			break
 		}
+
+	}
+
+	//Print test results
+	for index, _ := range tests {
+		if tests[index].Result == test.ResultFail || tests[index].Result == test.ResultDependencyFailed {
+			fmt.Printf("%v : %v\n", tests[index].Name, a.Red(tests[index].Result))
+
+		} else {
+			fmt.Printf("%v : %v\n", tests[index].Name, a.Green(tests[index].Result))
+		}
+
 	}
 
 	return result

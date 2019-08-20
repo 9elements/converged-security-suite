@@ -63,7 +63,7 @@ var (
 		dependencies: []*Test{&testia32featurectrl},
 	}
 	testtxtnotdisabled = Test{
-		Name:     "Intel TXT no disabled by BIOS",
+		Name:     "TXT no disabled by BIOS",
 		function: TestTXTNotDisabled,
 		Required: true,
 	}
@@ -74,13 +74,13 @@ var (
 		dependencies: []*Test{&testtxtregisterspaceaccessible},
 	}
 	testibbistrusted = Test{
-		Name:         "Initial Bootblock is trusted. Only necessary in signed policy",
+		Name:         "Initial Bootblock is trusted",
 		function:     TestIBBIsTrusted,
 		Required:     false,
 		dependencies: []*Test{&testtxtregisterspaceaccessible},
 	}
 	testtxtregisterslocked = Test{
-		Name:         "Intel TXT registers are locked",
+		Name:         "TXT registers are locked",
 		function:     TestTXTRegistersLocked,
 		Required:     true,
 		dependencies: []*Test{&testtxtregisterspaceaccessible},

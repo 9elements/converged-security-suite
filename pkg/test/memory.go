@@ -8,17 +8,17 @@ import (
 
 var (
 	testmemoryisreserved = Test{
-		Name:     "Intel TXT memory is reserved in e820",
+		Name:     "TXT memory reserved in e820",
 		Required: true,
 		function: TestTXTReservedInE820,
 	}
 	testtxtmemoryisdpr = Test{
-		Name:     "Intel TXT memory is in a DMA protected range",
+		Name:     "TXT memory in a DMA protected range",
 		Required: true,
 		function: TestTXTMemoryIsDPR,
 	}
 	testtxtdprislocked = Test{
-		Name:     "Intel TXT DPR register is locked",
+		Name:     "TXT DPR register locked",
 		Required: true,
 		function: TestTXTDPRisLock,
 	}
@@ -28,7 +28,7 @@ var (
 		function: TestHostbridgeDPRCorrect,
 	}
 	testhostbridgeDPRislocked = Test{
-		Name:     "CPU hostbridge DPR register is locked",
+		Name:     "CPU hostbridge DPR register locked",
 		Required: true,
 		function: TestHostbridgeDPRisLocked,
 	}
@@ -50,12 +50,12 @@ var (
 		dependencies: []*Test{&testsinitintxt},
 	}
 	testnosiniterrors = Test{
-		Name:     "SINIT ACM had no startup errors",
+		Name:     "SINIT ACM startup errors",
 		Required: false,
 		function: TestNoSINITErrors,
 	}
 	testbiosdataregionpresent = Test{
-		Name:     "BIOS DATA REGION is valid",
+		Name:     "BIOS DATA REGION valid",
 		Required: true,
 		function: TestBIOSDATAREGIONPresent,
 	}
@@ -77,13 +77,13 @@ var (
 		dependencies: []*Test{&testhassmrr},
 	}
 	testactivesmrr = Test{
-		Name:         "SMRR protection is active",
+		Name:         "SMRR protection active",
 		Required:     true,
 		function:     TestActiveSMRR,
 		dependencies: []*Test{&testhassmrr},
 	}
 	testactiveiommi = Test{
-		Name:     "IOMMU/VT-d is active",
+		Name:     "IOMMU/VT-d active",
 		Required: false,
 		function: TestActiveIOMMU,
 	}
@@ -93,12 +93,12 @@ var (
 		function: TestActiveTBOOT,
 	}
 	testservermodetext = Test{
-		Name:     "Intel TXT server mode enabled",
+		Name:     "TXT server mode enabled",
 		Required: false,
 		function: TestServerModeTXT,
 	}
 	testreleasefusedfsbi = Test{
-		Name:     "FSB interface is release fused",
+		Name:     "FSB interface release fused",
 		Required: false,
 		function: TestReleaseFusedFSBI,
 	}
@@ -408,7 +408,7 @@ func TestActiveIOMMU() (bool, error) {
 }
 
 func TestActiveTBOOT() (bool, error) {
-	return false, fmt.Errorf("Unimplemented")
+	return false, fmt.Errorf("TestActiveTBOOT: Unimplemented")
 }
 
 func TestServerModeTXT() (bool, error) {
@@ -422,7 +422,7 @@ func TestServerModeTXT() (bool, error) {
 }
 
 func TestReleaseFusedFSBI() (bool, error) {
-	return false, fmt.Errorf("Unimplemented")
+	return false, fmt.Errorf("TestReleaseFusedFSBI: Unimplemented")
 }
 
 func sinitACM(regs api.TXTRegisterSpace) (*api.ACM, *api.Chipsets, *api.Processors, *api.TPMs, error) {

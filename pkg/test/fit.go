@@ -22,31 +22,31 @@ var (
 	fit []api.FitEntry
 
 	testfitvectorisset = Test{
-		Name:     "Has valid FIT vector",
+		Name:     "Valid FIT vector",
 		Required: true,
 		function: FITVectorIsSet,
 	}
 	testhasfit = Test{
-		Name:         "Has valid FIT",
+		Name:         "Valid FIT",
 		Required:     true,
 		function:     TestHasFIT,
 		dependencies: []*Test{&testfitvectorisset},
 	}
 	testhasbiosacm = Test{
-		Name:         "FIT has an BIOS ACM entry",
+		Name:         "BIOS ACM entry in FIT",
 		Required:     true,
 		function:     TestHasBIOSACM,
 		dependencies: []*Test{&testhasfit},
 	}
 	testhasibb = Test{
-		Name:         "FIT has a initial bootblock entry",
+		Name:         "initial bootblock entry in FIT",
 		Required:     true,
 		function:     TestHasIBB,
 		dependencies: []*Test{&testhasfit},
 	}
 	// Not mandatory, LCP_POLICY_DATA file may be supplied by GRUB to TBOOT
 	testhaslcpTest = Test{
-		Name:         "FIT has a LCP Policy entry",
+		Name:         "LCP Policy entry in FIT",
 		Required:     false,
 		function:     TestHasBIOSPolicy,
 		dependencies: []*Test{&testhasfit},
@@ -82,19 +82,19 @@ var (
 		dependencies: []*Test{&testhasfit, &testhasbiosacm},
 	}
 	testnobiosacmisbelow4g = Test{
-		Name:         "Initial bootblock and BIOS ACM is below 4GiB",
+		Name:         "Initial bootblock and BIOS ACM below 4GiB",
 		Required:     true,
 		function:     TestBIOSACMIsBelow4G,
 		dependencies: []*Test{&testhasfit, &testhasbiosacm},
 	}
 	testpolicyallowstxt = Test{
-		Name:         "LCP Policy does not disable Intel TXT",
+		Name:         "Intel TXT not disabled by LCP Policy",
 		Required:     true,
 		function:     TestPolicyAllowsTXT,
 		dependencies: []*Test{&testhasfit},
 	}
 	testbiosacmvalid = Test{
-		Name:         "BIOSACM header is valid",
+		Name:         "BIOSACM header valid",
 		Required:     true,
 		function:     TestBIOSACMValid,
 		dependencies: []*Test{&testhasfit, &testhasbiosacm},
