@@ -18,8 +18,11 @@ var (
 )
 
 type temptest struct {
-	Testname string
-	Result   string
+	Testnumber int
+	Testname   string
+	Result     string
+	Error      string
+	Status     string
 }
 
 func getTests() []*test.Test {
@@ -79,7 +82,7 @@ func run() bool {
 				} else {
 					fmt.Printf("%v : %v\n", tests[index].Name, a.Green(tests[index].Result.String()))
 				}
-				ttemp := temptest{tests[index].Name, tests[index].Result.String()}
+				ttemp := temptest{index, tests[index].Name, tests[index].Result.String(), tests[index].ErrorText, tests[index].Status.String()}
 				t = append(t, ttemp)
 			} else {
 				fmt.Printf("%v : %v\n", tests[index].Name, a.Yellow(tests[index].Status))
