@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 )
 
 const txtPublicSpace = 0xFED30000
@@ -221,17 +220,9 @@ func ParseBIOSDataRegion(heap []byte) (TXTBiosData, error) {
 		return ret, err
 	}
 
-	if ret.Version < 2 {
-		return ret, fmt.Errorf("BIOS DATA regions version < 2 are not supperted")
-	}
-
 	err = binary.Read(buf, binary.LittleEndian, &ret.BiosSinitSize)
 	if err != nil {
 		return ret, err
-	}
-
-	if ret.BiosSinitSize < 8 {
-		return ret, fmt.Errorf("BIOS DATA region is too small")
 	}
 
 	err = binary.Read(buf, binary.LittleEndian, &ret.Reserved1)
@@ -247,10 +238,6 @@ func ParseBIOSDataRegion(heap []byte) (TXTBiosData, error) {
 	err = binary.Read(buf, binary.LittleEndian, &ret.NumLogProcs)
 	if err != nil {
 		return ret, err
-	}
-
-	if ret.NumLogProcs == 0 {
-		return ret, fmt.Errorf("BIOS DATA region corrupted")
 	}
 
 	if ret.Version >= 3 && ret.Version < 5 {
