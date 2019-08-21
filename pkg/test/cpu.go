@@ -91,7 +91,7 @@ var (
 		Status:       TestImplemented,
 	}
 	testibbistrusted = Test{
-		Name:         "Initial Bootblock is trusted",
+		Name:         "IBB is trusted",
 		function:     TestIBBIsTrusted,
 		Required:     false,
 		dependencies: []*Test{&testtxtregisterspaceaccessible},
