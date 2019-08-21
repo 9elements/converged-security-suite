@@ -22,106 +22,123 @@ var (
 	fit []api.FitEntry
 
 	testfitvectorisset = Test{
-		Name:     "Has valid FIT vector",
+		Name:     "Valid FIT vector",
 		Required: true,
 		function: FITVectorIsSet,
+		Status:   TestImplemented,
 	}
 	testhasfit = Test{
-		Name:         "Has valid FIT",
+		Name:         "Valid FIT",
 		Required:     true,
 		function:     TestHasFIT,
 		dependencies: []*Test{&testfitvectorisset},
+		Status:       TestImplemented,
 	}
 	testhasbiosacm = Test{
-		Name:         "FIT has an BIOS ACM entry",
+		Name:         "BIOS ACM entry in FIT",
 		Required:     true,
 		function:     TestHasBIOSACM,
 		dependencies: []*Test{&testhasfit},
+		Status:       TestImplemented,
 	}
 	testhasibb = Test{
-		Name:         "FIT has a initial bootblock entry",
+		Name:         "IBB entry in FIT",
 		Required:     true,
 		function:     TestHasIBB,
 		dependencies: []*Test{&testhasfit},
+		Status:       TestImplemented,
 	}
 	// Not mandatory, LCP_POLICY_DATA file may be supplied by GRUB to TBOOT
 	testhaslcpTest = Test{
-		Name:         "FIT has a LCP Policy entry",
+		Name:         "LCP Policy entry in FIT",
 		Required:     false,
 		function:     TestHasBIOSPolicy,
 		dependencies: []*Test{&testhasfit},
+		Status:       TestImplemented,
 	}
 	testibbcoversresetvector = Test{
-		Name:         "Initial bootblock covers reset vector",
+		Name:         "IBB covers reset vector",
 		Required:     true,
 		function:     TestIBBCoversResetVector,
 		dependencies: []*Test{&testhasfit, &testhasibb},
+		Status:       TestImplemented,
 	}
 	testibbcoversfitvector = Test{
-		Name:         "Initial bootblock covers FIT vector",
+		Name:         "IBB covers FIT vector",
 		Required:     true,
 		function:     TestIBBCoversFITVector,
 		dependencies: []*Test{&testhasfit, &testhasibb},
+		Status:       TestImplemented,
 	}
 	testibbcoversfit = Test{
-		Name:         "Initial bootblock covers FIT",
+		Name:         "IBB covers FIT",
 		Required:     true,
 		function:     TestIBBCoversFIT,
 		dependencies: []*Test{&testhasfit, &testhasibb},
+		Status:       TestImplemented,
 	}
 	testnoibboverlap = Test{
-		Name:         "Initial bootblock does not overlap",
+		Name:         "IBB does not overlap",
 		Required:     true,
 		function:     TestNoIBBOverlap,
 		dependencies: []*Test{&testhasfit, &testhasibb},
+		Status:       TestImplemented,
 	}
 	testnobiosacmoverlap = Test{
 		Name:         "BIOS ACM does not overlap",
 		Required:     true,
 		function:     TestNoBIOSACMOverlap,
 		dependencies: []*Test{&testhasfit, &testhasbiosacm},
+		Status:       TestImplemented,
 	}
 	testnobiosacmisbelow4g = Test{
-		Name:         "Initial bootblock and BIOS ACM is below 4GiB",
+		Name:         "IBB and BIOS ACM below 4GiB",
 		Required:     true,
 		function:     TestBIOSACMIsBelow4G,
 		dependencies: []*Test{&testhasfit, &testhasbiosacm},
+		Status:       TestImplemented,
 	}
 	testpolicyallowstxt = Test{
-		Name:         "LCP Policy does not disable Intel TXT",
+		Name:         "TXT not disabled by LCP Policy",
 		Required:     true,
 		function:     TestPolicyAllowsTXT,
 		dependencies: []*Test{&testhasfit},
+		Status:       TestImplemented,
 	}
 	testbiosacmvalid = Test{
-		Name:         "BIOSACM header is valid",
+		Name:         "BIOSACM header valid",
 		Required:     true,
 		function:     TestBIOSACMValid,
 		dependencies: []*Test{&testhasfit, &testhasbiosacm},
+		Status:       TestImplemented,
 	}
 	testbiosacmsizecorrect = Test{
 		Name:         "BIOSACM size check",
 		Required:     true,
 		function:     TestBIOSACMSizeCorrect,
 		dependencies: []*Test{&testhasfit, &testhasbiosacm},
+		Status:       TestImplemented,
 	}
 	testbiosacmaligmentcorrect = Test{
 		Name:         "BIOSACM alignment check",
 		Required:     true,
 		function:     TestBIOSACMAlignmentCorrect,
 		dependencies: []*Test{&testhasfit, &testhasbiosacm},
+		Status:       TestImplemented,
 	}
 	testbiosacmmatcheschipset = Test{
 		Name:         "BIOSACM matches chipset",
 		Required:     true,
 		function:     TestBIOSACMMatchesChipset,
 		dependencies: []*Test{&testhasfit, &testhasbiosacm},
+		Status:       TestImplemented,
 	}
 	testbiosacmmatchescpu = Test{
 		Name:         "BIOSACM matches processor",
 		Required:     true,
 		function:     TestBIOSACMMatchesCPU,
 		dependencies: []*Test{&testhasfit, &testhasbiosacm},
+		Status:       TestImplemented,
 	}
 	TestsFIT = [...]*Test{
 		&testfitvectorisset,
@@ -136,6 +153,11 @@ var (
 		&testnobiosacmoverlap,
 		&testnobiosacmisbelow4g,
 		&testpolicyallowstxt,
+		&testbiosacmvalid,
+		&testbiosacmsizecorrect,
+		&testbiosacmaligmentcorrect,
+		&testbiosacmmatcheschipset,
+		&testbiosacmmatchescpu,
 	}
 )
 

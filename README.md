@@ -53,7 +53,8 @@ go run cmd/txt-suite/main.go
 Commandline arguments
 ```bash
 -l : Lists all tests
--i : Enforces testing, so they won't stop at the first error
+-log : Specify a path/filename.json where test results will be written (only in combination with test enforcing (-i option))
+-i : Enforces testing, so they won't stop at the first error. Test results will be written to test_log.json
 -t=<n,m,o> : Choose tests, seperated by comma
 -t=<n-m> or -t=<n-m,o-p> : Choose ranges of tests, can be seperated by comma
 -v : Gives information about Licence, Copyright and Version

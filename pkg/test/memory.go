@@ -8,99 +8,117 @@ import (
 
 var (
 	testmemoryisreserved = Test{
-		Name:     "Intel TXT memory is reserved in e820",
+		Name:     "TXT memory reserved in e820",
 		Required: true,
 		function: TestTXTReservedInE820,
+		Status:   TestImplemented,
 	}
 	testtxtmemoryisdpr = Test{
-		Name:     "Intel TXT memory is in a DMA protected range",
+		Name:     "TXT memory in a DMA protected range",
 		Required: true,
 		function: TestTXTMemoryIsDPR,
+		Status:   TestImplemented,
 	}
 	testtxtdprislocked = Test{
-		Name:     "Intel TXT DPR register is locked",
+		Name:     "TXT DPR register locked",
 		Required: true,
 		function: TestTXTDPRisLock,
+		Status:   TestImplemented,
 	}
 	testhostbridgeDPRcorrect = Test{
 		Name:     "CPU DMA protected range equals hostbridge DPR",
 		Required: false,
 		function: TestHostbridgeDPRCorrect,
+		Status:   TestImplemented,
 	}
 	testhostbridgeDPRislocked = Test{
-		Name:     "CPU hostbridge DPR register is locked",
+		Name:     "CPU hostbridge DPR register locked",
 		Required: true,
 		function: TestHostbridgeDPRisLocked,
+		Status:   TestImplemented,
 	}
 	testsinitintxt = Test{
 		Name:     "TXT region contains SINIT ACM",
 		Required: true,
 		function: TestSINITInTXT,
+		Status:   TestImplemented,
 	}
 	testsinitmatcheschipset = Test{
 		Name:         "SINIT ACM matches chipset",
 		Required:     true,
 		function:     TestSINITMatchesChipset,
 		dependencies: []*Test{&testsinitintxt},
+		Status:       TestImplemented,
 	}
 	testsinitmatchescpu = Test{
 		Name:         "SINIT ACM matches CPU",
 		Required:     true,
 		function:     TestSINITMatchesCPU,
 		dependencies: []*Test{&testsinitintxt},
+		Status:       TestImplemented,
 	}
 	testnosiniterrors = Test{
-		Name:     "SINIT ACM had no startup errors",
+		Name:     "SINIT ACM startup successful",
 		Required: false,
 		function: TestNoSINITErrors,
+		Status:   TestImplemented,
 	}
 	testbiosdataregionpresent = Test{
-		Name:     "BIOS DATA REGION is valid",
+		Name:     "BIOS DATA REGION valid",
 		Required: true,
 		function: TestBIOSDATAREGIONPresent,
+		Status:   TestImplemented,
 	}
 	testhasmtrr = Test{
 		Name:     "CPU supports memory type range registers",
 		Required: true,
 		function: TestHasMTRR,
+		Status:   TestImplemented,
 	}
 	testhassmrr = Test{
 		Name:         "CPU supports system management range registers",
 		Required:     true,
 		function:     TestHasSMRR,
 		dependencies: []*Test{&testservermodetext},
+		Status:       TestImplemented,
 	}
 	testvalidsmrr = Test{
 		Name:         "SMRR covers SMM memory",
 		Required:     true,
 		function:     TestValidSMRR,
 		dependencies: []*Test{&testhassmrr},
+		Status:       TestImplemented,
 	}
 	testactivesmrr = Test{
-		Name:         "SMRR protection is active",
+		Name:         "SMRR protection active",
 		Required:     true,
 		function:     TestActiveSMRR,
 		dependencies: []*Test{&testhassmrr},
+		Status:       TestImplemented,
 	}
 	testactiveiommi = Test{
-		Name:     "IOMMU/VT-d is active",
+		Name:     "IOMMU/VT-d active",
 		Required: false,
 		function: TestActiveIOMMU,
+		Status:   TestImplemented,
 	}
 	testactivetboot = Test{
 		Name:     "TBOOT hypervisor active",
 		Required: false,
 		function: TestActiveTBOOT,
+		Status:   TestNotImplemented,
 	}
 	testservermodetext = Test{
-		Name:     "Intel TXT server mode enabled",
+		Name:     "TXT server mode enabled",
 		Required: false,
 		function: TestServerModeTXT,
+		Status:   TestImplemented,
 	}
 	testreleasefusedfsbi = Test{
-		Name:     "FSB interface is release fused",
+		Name:     "FSB interface release fused",
 		Required: false,
 		function: TestReleaseFusedFSBI,
+		Status:   TestNotImplemented,
 	}
 
 	TestsMemory = [...]*Test{
@@ -408,7 +426,7 @@ func TestActiveIOMMU() (bool, error) {
 }
 
 func TestActiveTBOOT() (bool, error) {
-	return false, fmt.Errorf("Unimplemented")
+	return false, fmt.Errorf("TestActiveTBOOT: Unimplemented")
 }
 
 func TestServerModeTXT() (bool, error) {
@@ -422,7 +440,7 @@ func TestServerModeTXT() (bool, error) {
 }
 
 func TestReleaseFusedFSBI() (bool, error) {
-	return false, fmt.Errorf("Unimplemented")
+	return false, fmt.Errorf("TestReleaseFusedFSBI: Unimplemented")
 }
 
 func sinitACM(regs api.TXTRegisterSpace) (*api.ACM, *api.Chipsets, *api.Processors, *api.TPMs, error) {
