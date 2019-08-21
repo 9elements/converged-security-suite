@@ -64,10 +64,17 @@ var (
 		Status:   TestImplemented,
 	}
 	testbiosdataregionpresent = Test{
-		Name:     "BIOS DATA REGION valid",
+		Name:     "BIOS DATA REGION present",
 		Required: true,
 		function: TestBIOSDATAREGIONPresent,
 		Status:   TestImplemented,
+	}
+	testbiosdataregionvalid = Test{
+		Name:         "BIOS DATA REGION valid",
+		Required:     true,
+		function:     TestBIOSDATAREGIONValid,
+		dependencies: []*Test{&testbiosdataregionpresent},
+		Status:       TestImplemented,
 	}
 	testhasmtrr = Test{
 		Name:     "CPU supports memory type range registers",
@@ -132,6 +139,7 @@ var (
 		&testsinitmatchescpu,
 		&testnosiniterrors,
 		&testbiosdataregionpresent,
+		&testbiosdataregionvalid,
 		&testhasmtrr,
 		&testhassmrr,
 		&testvalidsmrr,
@@ -141,6 +149,10 @@ var (
 		&testservermodetext,
 		&testreleasefusedfsbi,
 	}
+)
+
+var (
+	biosdata api.TXTBiosData
 )
 
 func TestTXTReservedInE820() (bool, error) {
@@ -351,11 +363,26 @@ func TestBIOSDATAREGIONPresent() (bool, error) {
 		return false, err
 	}
 
-	_, err = api.ParseBIOSDataRegion(txtHeap)
+	biosdata, err = api.ParseBIOSDataRegion(txtHeap)
 	if err != nil {
 		return false, err
 	}
 
+	return true, nil
+}
+
+func TestBIOSDATAREGIONValid() (bool, error) {
+	if biosdata.Version < 2 {
+		return false, fmt.Errorf("BIOS DATA regions version < 2 are not supperted")
+	}
+
+	if biosdata.BiosSinitSize < 8 {
+		return false, fmt.Errorf("BIOS DATA region is too small")
+	}
+
+	if biosdata.NumLogProcs == 0 {
+		return false, fmt.Errorf("BIOS DATA region corrupted")
+	}
 	return true, nil
 }
 
