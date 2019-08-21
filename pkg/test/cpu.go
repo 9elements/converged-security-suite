@@ -74,7 +74,7 @@ var (
 		dependencies: []*Test{&testtxtregisterspaceaccessible},
 	}
 	testibbistrusted = Test{
-		Name:         "Initial Bootblock is trusted. Only necessary in signed policy",
+		Name:         "IBB is trusted",
 		function:     TestIBBIsTrusted,
 		Required:     false,
 		dependencies: []*Test{&testtxtregisterspaceaccessible},
