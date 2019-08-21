@@ -76,6 +76,13 @@ var (
 		dependencies: []*Test{&testbiosdataregionpresent},
 		Status:       TestImplemented,
 	}
+	testbiosdatacpucountvalid = Test{
+		Name:         "Bios/Machine CPU count matches",
+		Required:     false,
+		function:     TestBIOSDATACPUCOUNTValid,
+		dependencies: []*Test{&testbiosdataregionpresent},
+		Status:       TestImplemented,
+	}
 	testhasmtrr = Test{
 		Name:     "CPU supports memory type range registers",
 		Required: true,
@@ -140,6 +147,7 @@ var (
 		&testnosiniterrors,
 		&testbiosdataregionpresent,
 		&testbiosdataregionvalid,
+		&testbiosdatacpucountvalid,
 		&testhasmtrr,
 		&testhassmrr,
 		&testvalidsmrr,
@@ -382,6 +390,13 @@ func TestBIOSDATAREGIONValid() (bool, error) {
 
 	if biosdata.NumLogProcs == 0 {
 		return false, fmt.Errorf("BIOS DATA region corrupted")
+	}
+	return true, nil
+}
+
+func TestBIOSDATACPUCOUNTValid() (bool, error) {
+	if biosdata.NumLogProcs != api.CPULogCount() {
+		return false, fmt.Errorf("Logical CPU count in BIOS and machine doesnt match")
 	}
 	return true, nil
 }

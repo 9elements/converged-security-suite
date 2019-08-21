@@ -45,3 +45,7 @@ func ProcessorBrandName() string {
 func CPUSignature() uint32 {
 	return uint32(C.cpuid_leaf1_eax())
 }
+
+func CPULogCount() uint32 {
+	return uint32(cpuid.MaxLogocalCPUId)
+}
