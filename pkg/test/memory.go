@@ -7,6 +7,12 @@ import (
 )
 
 var (
+	testtxtmemoryrangevalid = Test{
+		Name:     "TXT memory ranges valid",
+		Required: true,
+		function: TestTXTRegisterSpaceValid,
+		Status:   TestImplemented,
+	}
 	testmemoryisreserved = Test{
 		Name:     "TXT memory reserved in e820",
 		Required: true,
@@ -136,6 +142,7 @@ var (
 	}
 
 	TestsMemory = [...]*Test{
+		&testtxtmemoryrangevalid,
 		&testmemoryisreserved,
 		&testtxtmemoryisdpr,
 		&testtxtdprislocked,
@@ -162,6 +169,40 @@ var (
 var (
 	biosdata api.TXTBiosData
 )
+
+func TestTXTRegisterSpaceValid() (bool, error) {
+	buf, err := api.FetchTXTRegs()
+	if err != nil {
+		return false, err
+	}
+
+	regs, err := api.ParseTXTRegs(buf)
+	if err != nil {
+		return false, err
+	}
+
+	if uint64(regs.HeapBase) >= api.FourGiB {
+		return false, fmt.Errorf("HeapBase > 4Gib")
+	}
+
+	if uint64(regs.HeapBase+regs.HeapSize) >= api.FourGiB {
+		return false, fmt.Errorf("HeapBase + HeapSize >= 4Gib")
+	}
+
+	if uint64(regs.SinitBase) >= api.FourGiB {
+		return false, fmt.Errorf("SinitBase >= 4Gib")
+	}
+
+	if uint64(regs.SinitBase+regs.SinitSize) >= api.FourGiB {
+		return false, fmt.Errorf("SinitBase + SinitSize >= 4Gib")
+	}
+
+	if uint64(regs.MleJoin) >= api.FourGiB {
+		return false, fmt.Errorf("MleJoin >= 4Gib")
+	}
+
+	return true, nil
+}
 
 func TestTXTReservedInE820() (bool, error) {
 	buf, err := api.FetchTXTRegs()
