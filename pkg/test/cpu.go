@@ -91,11 +91,7 @@ var (
 		Status:       TestImplemented,
 	}
 	testibbistrusted = Test{
-<<<<<<< HEAD
-		Name:         "Initial Bootblock is trusted",
-=======
 		Name:         "IBB is trusted",
->>>>>>> 777f801... Changed name of TestIBBIsTrusted to "IBB is trusted"
 		function:     TestIBBIsTrusted,
 		Required:     false,
 		dependencies: []*Test{&testtxtregisterspaceaccessible},

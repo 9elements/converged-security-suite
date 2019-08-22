@@ -3,21 +3,8 @@ package api
 import (
 	"bytes"
 	"encoding/binary"
-<<<<<<< HEAD
-<<<<<<< HEAD
-	"fmt"
 	"io"
-=======
->>>>>>> bacc684... New test function: validates BIOSDATAREGION now outside of parsing
 )
-=======
-	"io"
-<<<<<<< HEAD
-
->>>>>>> 49112bf... Add registernames to api/txt.go, no magic numbers anymore
-=======
-)
->>>>>>> fa28c6f... Fixed a missing bracket
 
 const (
 	txtPublicSpace       = 0xFED30000
