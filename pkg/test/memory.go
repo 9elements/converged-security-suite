@@ -164,7 +164,11 @@ var (
 )
 
 func TestTXTReservedInE820() (bool, error) {
-	regs, err := api.ReadTXTRegs()
+	buf, err := api.FetchTXTRegs()
+	if err != nil {
+		return false, err
+	}
+	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
 		return false, err
 	}
@@ -183,7 +187,11 @@ func TestTXTReservedInE820() (bool, error) {
 }
 
 func TestTXTMemoryIsDPR() (bool, error) {
-	regs, err := api.ReadTXTRegs()
+	buf, err := api.FetchTXTRegs()
+	if err != nil {
+		return false, err
+	}
+	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
 		return false, err
 	}
@@ -222,7 +230,11 @@ func TestTXTMemoryIsDPR() (bool, error) {
 }
 
 func TestTXTDPRisLock() (bool, error) {
-	regs, err := api.ReadTXTRegs()
+	buf, err := api.FetchTXTRegs()
+	if err != nil {
+		return false, err
+	}
+	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
 		return false, err
 	}
@@ -231,7 +243,11 @@ func TestTXTDPRisLock() (bool, error) {
 }
 
 func TestHostbridgeDPRCorrect() (bool, error) {
-	regs, err := api.ReadTXTRegs()
+	buf, err := api.FetchTXTRegs()
+	if err != nil {
+		return false, err
+	}
+	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
 		return false, err
 	}
@@ -269,7 +285,11 @@ func TestHostbridgeDPRisLocked() (bool, error) {
 }
 
 func TestSINITInTXT() (bool, error) {
-	regs, err := api.ReadTXTRegs()
+	buf, err := api.FetchTXTRegs()
+	if err != nil {
+		return false, err
+	}
+	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
 		return false, err
 	}
@@ -289,7 +309,11 @@ func TestSINITInTXT() (bool, error) {
 }
 
 func TestSINITMatchesChipset() (bool, error) {
-	regs, err := api.ReadTXTRegs()
+	buf, err := api.FetchTXTRegs()
+	if err != nil {
+		return false, err
+	}
+	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
 		return false, err
 	}
@@ -320,7 +344,11 @@ func TestSINITMatchesChipset() (bool, error) {
 }
 
 func TestSINITMatchesCPU() (bool, error) {
-	regs, err := api.ReadTXTRegs()
+	buf, err := api.FetchTXTRegs()
+	if err != nil {
+		return false, err
+	}
+	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
 		return false, err
 	}
@@ -351,7 +379,11 @@ func TestSINITMatchesCPU() (bool, error) {
 }
 
 func TestNoSINITErrors() (bool, error) {
-	regs, err := api.ReadTXTRegs()
+	buf, err := api.FetchTXTRegs()
+	if err != nil {
+		return false, err
+	}
+	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
 		return false, err
 	}
@@ -360,7 +392,11 @@ func TestNoSINITErrors() (bool, error) {
 }
 
 func TestBIOSDATAREGIONPresent() (bool, error) {
-	regs, err := api.ReadTXTRegs()
+	buf, err := api.FetchTXTRegs()
+	if err != nil {
+		return false, err
+	}
+	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
 		return false, err
 	}

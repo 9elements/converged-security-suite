@@ -409,8 +409,11 @@ func TestBIOSACMMatchesChipset() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
-	txt, err := api.ReadTXTRegs()
+	buf, err := api.FetchTXTRegs()
+	if err != nil {
+		return false, err
+	}
+	txt, err := api.ParseTXTRegs(buf)
 	if err != nil {
 		return false, err
 	}

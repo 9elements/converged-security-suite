@@ -123,7 +123,11 @@ var (
 
 func getTxtRegisters() (*api.TXTRegisterSpace, error) {
 	if txtRegisterValues == nil {
-		regs, err := api.ReadTXTRegs()
+		buf, err := api.FetchTXTRegs()
+		if err != nil {
+			return nil, err
+		}
+		regs, err := api.ParseTXTRegs(buf)
 		if err != nil {
 			return nil, err
 		}
@@ -222,7 +226,7 @@ func TestIBBMeasured() (bool, error) {
 		return false, err
 	}
 
-	return regs.AcmStatus&(1<<62) == 0 && regs.AcmStatus&(1<<63) != 0, nil
+	return regs.BootStatus&(1<<62) == 0 && regs.BootStatus&(1<<63) != 0, nil
 }
 
 // Check that the IBB was deemed trusted
@@ -234,7 +238,7 @@ func TestIBBIsTrusted() (bool, error) {
 		return false, err
 	}
 
-	return regs.AcmStatus&(1<<59) != 0 && regs.AcmStatus&(1<<63) != 0, nil
+	return regs.BootStatus&(1<<59) != 0 && regs.BootStatus&(1<<63) != 0, nil
 }
 
 // Verify that the TXT register space is locked

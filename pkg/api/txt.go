@@ -3,9 +3,27 @@ package api
 import (
 	"bytes"
 	"encoding/binary"
+	"io"
 )
 
-const txtPublicSpace = 0xFED30000
+const (
+	txtPublicSpace       = 0xFED30000
+	txtEsts              = 0x8
+	txtErrorCode         = 0x30
+	txtBootStatus        = 0xa0
+	txtVerFSBIF          = 0x100
+	txtDIDVID            = 0x110
+	txtVerQPIFF          = 0x200
+	txtsInitBase         = 0x270
+	txtsInitSize         = 0x278
+	txtMLEJoin           = 0x290
+	txtHeapBase          = 0x300
+	txtHeapSize          = 0x308
+	txtACMStatus         = 0x328
+	txtDMAProtectedRange = 0x330
+	txtPublicKey         = 0x400
+	txtE2STS             = 0x8f0
+)
 
 type TXTStatus struct {
 	SenterDone bool // SENTER.DONE.STS (0)
@@ -43,7 +61,7 @@ type TXTRegisterSpace struct {
 	TxtReset     bool         // TXT.ESTS (0x8)
 	ErrorCode    TXTErrorCode // TXT.ERRORCODE
 	ErrorCodeRaw uint32
-	AcmStatus    uint64            // TXT.ACMSTATUS
+	BootStatus   uint64            // TXT.BOOTSTATUS
 	FsbIf        uint32            // TXT.VER.FSBIF
 	Vid          uint16            // TXT.DIDVID.VID
 	Did          uint16            // TXT.DIDVID.DID
@@ -86,120 +104,135 @@ type TXTBiosMLEFlags struct {
 	IsClientState   bool
 }
 
-func ReadTXTRegs() (TXTRegisterSpace, error) {
+func FetchTXTRegs() ([]byte, error) {
+	data := make([]byte, 1024)
+	if err := ReadPhysBuf(txtPublicSpace, data); err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func ParseTXTRegs(data []byte) (TXTRegisterSpace, error) {
 	var regSpace TXTRegisterSpace
 	var err error
-	var u8 Uint8
-	var u32 Uint32
-	var u64 Uint64
 
-	regSpace.Sts, err = readTXTStatus()
+	regSpace.Sts, err = readTXTStatus(data)
 	if err != nil {
 		return regSpace, err
 
 	}
 
-	regSpace.ErrorCode, regSpace.ErrorCodeRaw, err = readTXTErrorCode()
+	regSpace.ErrorCode, regSpace.ErrorCodeRaw, err = readTXTErrorCode(data)
 	if err != nil {
 		return regSpace, err
 
 	}
 
-	regSpace.Dpr, err = readDMAProtectedRange()
+	regSpace.Dpr, err = readDMAProtectedRange(data)
 	if err != nil {
 		return regSpace, err
 
 	}
 
 	// TXT.ESTS (0x8)
-	err = ReadPhys(txtPublicSpace+0x8, &u8)
-	if err != nil {
-		return regSpace, err
-	}
-	regSpace.TxtReset = u8&1 != 0
+	buf := bytes.NewReader(data)
+	buf.Seek(int64(txtEsts), io.SeekStart)
+	err = binary.Read(buf, binary.LittleEndian, &regSpace.TxtReset)
 
-	// TXT.ACMSTATUS (0xa0)
-	err = ReadPhys(txtPublicSpace+0xa0, &u64)
 	if err != nil {
 		return regSpace, err
 	}
-	regSpace.AcmStatus = uint64(u64)
+
+	// TXT.BootSTATUS (0xa0)
+	buf.Seek(int64(txtBootStatus), io.SeekStart)
+	err = binary.Read(buf, binary.LittleEndian, &regSpace.BootStatus)
+	if err != nil {
+		return regSpace, err
+	}
 
 	// TXT.VER.FSBIF
-	err = ReadPhys(txtPublicSpace+0x100, &u32)
+	buf.Seek(int64(txtVerFSBIF), io.SeekStart)
+	err = binary.Read(buf, binary.LittleEndian, &regSpace.FsbIf)
 	if err != nil {
 		return regSpace, err
 	}
-	regSpace.FsbIf = uint32(u32)
 
 	// TXT.DIDVID
-	err = ReadPhys(txtPublicSpace+0x110, &u64)
+	buf.Seek(int64(txtDIDVID), io.SeekStart)
+	err = binary.Read(buf, binary.LittleEndian, &regSpace.Vid)
 	if err != nil {
 		return regSpace, err
 	}
-	regSpace.Vid = uint16((u64 >> 0) & 0xffff)
-	regSpace.Did = uint16((u64 >> 16) & 0xffff)
-	regSpace.Rid = uint16((u64 >> 32) & 0xffff)
-	regSpace.IdExt = uint16((u64 >> 48) & 0xffff)
+	err = binary.Read(buf, binary.LittleEndian, &regSpace.Did)
+	if err != nil {
+		return regSpace, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &regSpace.Rid)
+	if err != nil {
+		return regSpace, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &regSpace.IdExt)
+	if err != nil {
+		return regSpace, err
+	}
 
 	// TXT.VER.QPIIF
-	err = ReadPhys(txtPublicSpace+0x200, &u32)
+	buf.Seek(int64(txtVerQPIFF), io.SeekStart)
+	err = binary.Read(buf, binary.LittleEndian, &regSpace.QpiIf)
 	if err != nil {
 		return regSpace, err
 	}
-	regSpace.QpiIf = uint32(u32)
 
 	// TXT.SINIT.BASE
-	err = ReadPhys(txtPublicSpace+0x270, &u32)
+	buf.Seek(int64(txtsInitBase), io.SeekStart)
+	err = binary.Read(buf, binary.LittleEndian, &regSpace.SinitBase)
 	if err != nil {
 		return regSpace, err
 	}
-	regSpace.SinitBase = uint32(u32)
 
 	// TXT.SINIT.SIZE
-	err = ReadPhys(txtPublicSpace+0x278, &u32)
+	buf.Seek(int64(txtsInitSize), io.SeekStart)
+	err = binary.Read(buf, binary.LittleEndian, &regSpace.SinitSize)
 	if err != nil {
 		return regSpace, err
 	}
-	regSpace.SinitSize = uint32(u32)
 
 	// TXT.MLE.JOIN
-	err = ReadPhys(txtPublicSpace+0x290, &u32)
+	buf.Seek(int64(txtMLEJoin), io.SeekStart)
+	err = binary.Read(buf, binary.LittleEndian, &regSpace.MleJoin)
 	if err != nil {
 		return regSpace, err
 	}
-	regSpace.MleJoin = uint32(u32)
 
 	// TXT.HEAP.BASE
-	err = ReadPhys(txtPublicSpace+0x300, &u32)
+	buf.Seek(int64(txtHeapBase), io.SeekStart)
+	err = binary.Read(buf, binary.LittleEndian, &regSpace.HeapBase)
 	if err != nil {
 		return regSpace, err
 	}
-	regSpace.HeapBase = uint32(u32)
 
 	// TXT.HEAP.SIZE
-	err = ReadPhys(txtPublicSpace+0x308, &u32)
+	buf.Seek(int64(txtHeapSize), io.SeekStart)
+	err = binary.Read(buf, binary.LittleEndian, &regSpace.HeapSize)
 	if err != nil {
 		return regSpace, err
 	}
-	regSpace.HeapSize = uint32(u32)
 
 	// TXT.PUBLIC.KEY
 	for i := 0; i < 4; i++ {
-		err = ReadPhys(txtPublicSpace+0x400+int64(i)*8, &u64)
+		buf.Seek(int64(txtPublicKey+int64(i)*8), io.SeekStart)
+		err = binary.Read(buf, binary.LittleEndian, &regSpace.PublicKey[i])
 		if err != nil {
 			return regSpace, err
 		}
-		regSpace.PublicKey[i] = uint64(u64)
 	}
 
 	// TXT.E2STS
-	err = ReadPhys(txtPublicSpace+0x8f0, &u64)
+	buf.Seek(int64(txtE2STS), io.SeekStart)
+	err = binary.Read(buf, binary.LittleEndian, &regSpace.E2Sts)
 	if err != nil {
 		return regSpace, err
 	}
-	regSpace.E2Sts = uint64(u64)
-
 	return regSpace, nil
 }
 
@@ -265,10 +298,11 @@ func ParseBIOSDataRegion(heap []byte) (TXTBiosData, error) {
 	return ret, nil
 }
 
-func readTXTStatus() (TXTStatus, error) {
+func readTXTStatus(data []byte) (TXTStatus, error) {
 	var ret TXTStatus
-	var u64 Uint64
-	err := ReadPhys(txtPublicSpace, &u64)
+	var u64 uint64
+	buf := bytes.NewReader(data)
+	err := binary.Read(buf, binary.LittleEndian, &u64)
 
 	if err != nil {
 		return ret, err
@@ -284,10 +318,11 @@ func readTXTStatus() (TXTStatus, error) {
 	return ret, nil
 }
 
-func readTXTErrorCode() (TXTErrorCode, uint32, error) {
+func readTXTErrorCode(data []byte) (TXTErrorCode, uint32, error) {
 	var ret TXTErrorCode
-	var u32 Uint32
-	err := ReadPhys(txtPublicSpace+0x30, &u32)
+	var u32 uint32
+	buf := bytes.NewReader(data[txtErrorCode:])
+	err := binary.Read(buf, binary.LittleEndian, &u32)
 
 	if err != nil {
 		return ret, 0, err
@@ -305,10 +340,11 @@ func readTXTErrorCode() (TXTErrorCode, uint32, error) {
 	return ret, uint32(u32), nil
 }
 
-func readDMAProtectedRange() (DMAProtectedRange, error) {
+func readDMAProtectedRange(data []byte) (DMAProtectedRange, error) {
 	var ret DMAProtectedRange
-	var u32 Uint32
-	err := ReadPhys(txtPublicSpace+0x330, &u32)
+	var u32 uint32
+	buf := bytes.NewReader(data[txtDMAProtectedRange:])
+	err := binary.Read(buf, binary.LittleEndian, &u32)
 
 	if err != nil {
 		return ret, err
@@ -321,11 +357,11 @@ func readDMAProtectedRange() (DMAProtectedRange, error) {
 	return ret, nil
 }
 
-func ReadACMStatus() (ACMStatus, error) {
+func ReadACMStatus(data []byte) (ACMStatus, error) {
 	var ret ACMStatus
-	var u64 Uint64
-	err := ReadPhys(txtPublicSpace+0x328, &u64)
-
+	var u64 uint64
+	buf := bytes.NewReader(data[txtACMStatus:])
+	err := binary.Read(buf, binary.LittleEndian, &u64)
 	if err != nil {
 		return ret, err
 	}
