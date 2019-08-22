@@ -26,10 +26,24 @@ var (
 		function: TestTPMConnect,
 		Status:   TestImplemented,
 	}
-	testtpmispresent = Test{
+	testtpm12present = Test{
 		Name:         "TPM 1.2 present",
+		Required:     false,
+		function:     TestTPM12Present,
+		dependencies: []*Test{&testtpmconnection},
+		Status:       TestImplemented,
+	}
+	testtpm2present = Test{
+		Name:         "TPM 2 is present",
+		Required:     false,
+		function:     TestTPM2Present,
+		dependencies: []*Test{&testtpmconnection},
+		Status:       TestImplemented,
+	}
+	testtpmispresent = Test{
+		Name:         "TPM is present",
 		Required:     true,
-		function:     TestTPMPresent,
+		function:     TestTPMIsPresent,
 		dependencies: []*Test{&testtpmconnection},
 		Status:       TestImplemented,
 	}
@@ -64,6 +78,8 @@ var (
 
 	TestsTPM = [...]*Test{
 		&testtpmconnection,
+		&testtpm12present,
+		&testtpm2present,
 		&testtpmispresent,
 		&testtpmislocked,
 		&testpsindexisset,
@@ -91,19 +107,29 @@ func TestTPMConnect() (bool, error) {
 	return true, nil
 }
 
-// Checks whether a TPM is present and answers to GetCapability
-func TestTPMPresent() (bool, error) {
-	if tpm12Connection != nil {
-		vid, err := tpm1.GetManufacturer(*tpm12Connection)
-
-		return vid != nil && err == nil, nil
-	} else if tpm20Connection != nil {
-		ca, _, err := tpm2.GetCapability(*tpm20Connection, tpm2.CapabilityTPMProperties, 1, uint32(tpm2.Manufacturer))
-
-		return ca != nil && err == nil, nil
-	} else {
-		return false, fmt.Errorf("No TPM connection")
+// Checks if TPM 1.2 is present and answers to GetCapability
+func TestTPM12Present() (bool, error) {
+	if tpm12Connection == nil {
+		return false, fmt.Errorf("No TPM 1.2 connection")
 	}
+	vid, err := tpm1.GetManufacturer(*tpm12Connection)
+	return vid != nil && err == nil, nil
+
+}
+
+func TestTPM2Present() (bool, error) {
+	if tpm20Connection == nil {
+		return false, fmt.Errorf("No TPM 2 connection")
+	}
+	ca, _, err := tpm2.GetCapability(*tpm20Connection, tpm2.CapabilityTPMProperties, 1, uint32(tpm2.Manufacturer))
+	return ca != nil && err == nil, nil
+}
+
+func TestTPMIsPresent() (bool, error) {
+	if (tpm12Connection != nil) || (tpm20Connection != nil) {
+		return true, nil
+	}
+	return false, fmt.Errorf("No TPM present")
 }
 
 // TPM NVRAM is locked
