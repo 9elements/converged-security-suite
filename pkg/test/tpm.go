@@ -126,7 +126,7 @@ func TestTPM2Present() (bool, error) {
 }
 
 func TestTPMIsPresent() (bool, error) {
-	if (tpm12Connection != nil) || (tpm20Connection != nil) {
+	if (testtpm12present.Result.String() == "Pass") || (testtpm2present.Result.String() == "Pass") {
 		return true, nil
 	}
 	return false, fmt.Errorf("No TPM present")
