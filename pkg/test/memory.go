@@ -14,34 +14,39 @@ var (
 		Status:   TestImplemented,
 	}
 	testmemoryisreserved = Test{
-		Name:     "TXT memory reserved in e820",
-		Required: true,
-		function: TestTXTReservedInE820,
-		Status:   TestImplemented,
+		Name:         "TXT memory reserved in e820",
+		Required:     true,
+		function:     TestTXTReservedInE820,
+		dependencies: []*Test{&testtxtmemoryrangevalid},
+		Status:       TestImplemented,
 	}
 	testtxtmemoryisdpr = Test{
-		Name:     "TXT memory in a DMA protected range",
-		Required: true,
-		function: TestTXTMemoryIsDPR,
-		Status:   TestImplemented,
+		Name:         "TXT memory in a DMA protected range",
+		Required:     true,
+		function:     TestTXTMemoryIsDPR,
+		dependencies: []*Test{&testtxtmemoryrangevalid},
+		Status:       TestImplemented,
 	}
 	testtxtdprislocked = Test{
-		Name:     "TXT DPR register locked",
-		Required: true,
-		function: TestTXTDPRisLock,
-		Status:   TestImplemented,
+		Name:         "TXT DPR register locked",
+		Required:     true,
+		function:     TestTXTDPRisLock,
+		dependencies: []*Test{&testtxtmemoryrangevalid},
+		Status:       TestImplemented,
 	}
 	testhostbridgeDPRcorrect = Test{
-		Name:     "CPU DMA protected range equals hostbridge DPR",
-		Required: false,
-		function: TestHostbridgeDPRCorrect,
-		Status:   TestImplemented,
+		Name:         "CPU DMA protected range equals hostbridge DPR",
+		Required:     false,
+		function:     TestHostbridgeDPRCorrect,
+		dependencies: []*Test{&testtxtdprislocked},
+		Status:       TestImplemented,
 	}
 	testhostbridgeDPRislocked = Test{
-		Name:     "CPU hostbridge DPR register locked",
-		Required: true,
-		function: TestHostbridgeDPRisLocked,
-		Status:   TestImplemented,
+		Name:         "CPU hostbridge DPR register locked",
+		Required:     true,
+		function:     TestHostbridgeDPRisLocked,
+		dependencies: []*Test{&testhostbridgeDPRcorrect},
+		Status:       TestImplemented,
 	}
 	testsinitintxt = Test{
 		Name:     "TXT region contains SINIT ACM",
