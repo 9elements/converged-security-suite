@@ -188,6 +188,9 @@ func TestTXTRegisterSpaceValid() (bool, error) {
 	if uint64(regs.HeapBase+regs.HeapSize) >= api.FourGiB {
 		return false, fmt.Errorf("HeapBase + HeapSize >= 4Gib")
 	}
+	if regs.HeapSize >= uint32(0xF00000) {
+		return false, fmt.Errorf("Heap size too small")
+	}
 
 	if uint64(regs.SinitBase) >= api.FourGiB {
 		return false, fmt.Errorf("SinitBase >= 4Gib")
@@ -195,6 +198,10 @@ func TestTXTRegisterSpaceValid() (bool, error) {
 
 	if uint64(regs.SinitBase+regs.SinitSize) >= api.FourGiB {
 		return false, fmt.Errorf("SinitBase + SinitSize >= 4Gib")
+	}
+
+	if regs.SinitSize >= uint32(0x500000) {
+		return false, fmt.Errorf("Sinit size too small")
 	}
 
 	if uint64(regs.MleJoin) >= api.FourGiB {
