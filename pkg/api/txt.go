@@ -159,10 +159,6 @@ func ParseTXTRegs(data []byte) (TXTRegisterSpace, error) {
 
 	// TXT.DIDVID
 	buf.Seek(int64(txtDIDVID), io.SeekStart)
-	err = binary.Read(buf, binary.LittleEndian, &regSpace.FsbIf)
-	if err != nil {
-		return regSpace, err
-	}
 	err = binary.Read(buf, binary.LittleEndian, &regSpace.Vid)
 	if err != nil {
 		return regSpace, err
