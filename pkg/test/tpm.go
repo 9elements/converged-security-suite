@@ -126,7 +126,7 @@ func TestTPM2Present() (bool, error) {
 }
 
 func TestTPMIsPresent() (bool, error) {
-	if (testtpm12present.Result.String() == "PASS") || (testtpm2present.Result.String() == "PASS") {
+	if (testtpm12present.Result == ResultPass) || (testtpm2present.Result == ResultPass) {
 		return true, nil
 	}
 	return false, fmt.Errorf("No TPM present")
