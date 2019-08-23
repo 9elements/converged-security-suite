@@ -28,18 +28,16 @@ var (
 		Status:       TestImplemented,
 	}
 	testtxtdprislocked = Test{
-		Name:         "TXT DPR register locked",
-		Required:     true,
-		function:     TestTXTDPRisLock,
-		dependencies: []*Test{&testtxtmemoryrangevalid},
-		Status:       TestImplemented,
+		Name:     "TXT DPR register locked",
+		Required: true,
+		function: TestTXTDPRisLock,
+		Status:   TestImplemented,
 	}
 	testhostbridgeDPRcorrect = Test{
-		Name:         "CPU DMA protected range equals hostbridge DPR",
-		Required:     false,
-		function:     TestHostbridgeDPRCorrect,
-		dependencies: []*Test{&testtxtdprislocked},
-		Status:       TestImplemented,
+		Name:     "CPU DMA protected range equals hostbridge DPR",
+		Required: false,
+		function: TestHostbridgeDPRCorrect,
+		Status:   TestImplemented,
 	}
 	testhostbridgeDPRislocked = Test{
 		Name:         "CPU hostbridge DPR register locked",
@@ -172,7 +170,9 @@ var (
 )
 
 var (
-	biosdata api.TXTBiosData
+	biosdata     api.TXTBiosData
+	minHeapSize  = uint32(0xF00000)
+	minSinitSize = uint32(0x500000)
 )
 
 func TestTXTRegisterSpaceValid() (bool, error) {
@@ -193,7 +193,7 @@ func TestTXTRegisterSpaceValid() (bool, error) {
 	if uint64(regs.HeapBase+regs.HeapSize) >= api.FourGiB {
 		return false, fmt.Errorf("HeapBase + HeapSize >= 4Gib")
 	}
-	if regs.HeapSize >= uint32(0xF00000) {
+	if regs.HeapSize < minHeapSize {
 		return false, fmt.Errorf("Heap size too small")
 	}
 
@@ -205,12 +205,16 @@ func TestTXTRegisterSpaceValid() (bool, error) {
 		return false, fmt.Errorf("SinitBase + SinitSize >= 4Gib")
 	}
 
-	if regs.SinitSize >= uint32(0x500000) {
+	if regs.SinitSize < minSinitSize {
 		return false, fmt.Errorf("Sinit size too small")
 	}
 
 	if uint64(regs.MleJoin) >= api.FourGiB {
 		return false, fmt.Errorf("MleJoin >= 4Gib")
+	}
+
+	if regs.SinitBase < regs.HeapBase {
+		return false, fmt.Errorf("Sinit above Heapbase")
 	}
 
 	return true, nil
