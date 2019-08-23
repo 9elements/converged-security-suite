@@ -7,17 +7,25 @@ import (
 )
 
 var (
-	testmemoryisreserved = Test{
-		Name:     "TXT memory reserved in e820",
+	testtxtmemoryrangevalid = Test{
+		Name:     "TXT memory ranges valid",
 		Required: true,
-		function: TestTXTReservedInE820,
+		function: TestTXTRegisterSpaceValid,
 		Status:   TestImplemented,
 	}
+	testmemoryisreserved = Test{
+		Name:         "TXT memory reserved in e820",
+		Required:     true,
+		function:     TestTXTReservedInE820,
+		dependencies: []*Test{&testtxtmemoryrangevalid},
+		Status:       TestImplemented,
+	}
 	testtxtmemoryisdpr = Test{
-		Name:     "TXT memory in a DMA protected range",
-		Required: true,
-		function: TestTXTMemoryIsDPR,
-		Status:   TestImplemented,
+		Name:         "TXT memory in a DMA protected range",
+		Required:     true,
+		function:     TestTXTMemoryIsDPR,
+		dependencies: []*Test{&testtxtmemoryrangevalid},
+		Status:       TestImplemented,
 	}
 	testtxtdprislocked = Test{
 		Name:     "TXT DPR register locked",
@@ -32,10 +40,11 @@ var (
 		Status:   TestImplemented,
 	}
 	testhostbridgeDPRislocked = Test{
-		Name:     "CPU hostbridge DPR register locked",
-		Required: true,
-		function: TestHostbridgeDPRisLocked,
-		Status:   TestImplemented,
+		Name:         "CPU hostbridge DPR register locked",
+		Required:     true,
+		function:     TestHostbridgeDPRisLocked,
+		dependencies: []*Test{&testhostbridgeDPRcorrect},
+		Status:       TestImplemented,
 	}
 	testsinitintxt = Test{
 		Name:     "TXT region contains SINIT ACM",
@@ -136,6 +145,7 @@ var (
 	}
 
 	TestsMemory = [...]*Test{
+		&testtxtmemoryrangevalid,
 		&testmemoryisreserved,
 		&testtxtmemoryisdpr,
 		&testtxtdprislocked,
@@ -160,8 +170,55 @@ var (
 )
 
 var (
-	biosdata api.TXTBiosData
+	biosdata     api.TXTBiosData
+	minHeapSize  = uint32(0xF0000)
+	minSinitSize = uint32(0x50000)
 )
+
+func TestTXTRegisterSpaceValid() (bool, error) {
+	buf, err := api.FetchTXTRegs()
+	if err != nil {
+		return false, err
+	}
+
+	regs, err := api.ParseTXTRegs(buf)
+	if err != nil {
+		return false, err
+	}
+
+	if uint64(regs.HeapBase) >= api.FourGiB {
+		return false, fmt.Errorf("HeapBase > 4Gib")
+	}
+
+	if uint64(regs.HeapBase+regs.HeapSize) >= api.FourGiB {
+		return false, fmt.Errorf("HeapBase + HeapSize >= 4Gib")
+	}
+	if regs.HeapSize < minHeapSize {
+		return false, fmt.Errorf("Heap size too small")
+	}
+
+	if uint64(regs.SinitBase) >= api.FourGiB {
+		return false, fmt.Errorf("SinitBase >= 4Gib")
+	}
+
+	if uint64(regs.SinitBase+regs.SinitSize) >= api.FourGiB {
+		return false, fmt.Errorf("SinitBase + SinitSize >= 4Gib")
+	}
+
+	if regs.SinitSize < minSinitSize {
+		return false, fmt.Errorf("Sinit size too small")
+	}
+
+	if uint64(regs.MleJoin) >= api.FourGiB {
+		return false, fmt.Errorf("MleJoin >= 4Gib")
+	}
+
+	if regs.SinitBase > regs.HeapBase {
+		return false, fmt.Errorf("Sinit above Heapbase")
+	}
+
+	return true, nil
+}
 
 func TestTXTReservedInE820() (bool, error) {
 	buf, err := api.FetchTXTRegs()
