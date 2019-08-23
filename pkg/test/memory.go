@@ -213,7 +213,7 @@ func TestTXTRegisterSpaceValid() (bool, error) {
 		return false, fmt.Errorf("MleJoin >= 4Gib")
 	}
 
-	if regs.SinitBase < regs.HeapBase {
+	if regs.SinitBase > regs.HeapBase {
 		return false, fmt.Errorf("Sinit above Heapbase")
 	}
 
