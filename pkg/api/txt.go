@@ -105,7 +105,7 @@ type TXTBiosMLEFlags struct {
 }
 
 func FetchTXTRegs() ([]byte, error) {
-	data := make([]byte, 1024)
+	data := make([]byte, 0x1000)
 	if err := ReadPhysBuf(txtPublicSpace, data); err != nil {
 		return nil, err
 	}
