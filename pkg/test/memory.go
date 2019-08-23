@@ -171,8 +171,8 @@ var (
 
 var (
 	biosdata     api.TXTBiosData
-	minHeapSize  = uint32(0xF00000)
-	minSinitSize = uint32(0x500000)
+	minHeapSize  = uint32(0xF0000)
+	minSinitSize = uint32(0x50000)
 )
 
 func TestTXTRegisterSpaceValid() (bool, error) {
