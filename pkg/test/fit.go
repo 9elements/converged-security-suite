@@ -467,14 +467,33 @@ func TestBIOSACMMatchesCPU() (bool, error) {
 func biosACM(fit []api.FitEntry) (*api.ACM, *api.Chipsets, *api.Processors, *api.TPMs, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.StartUpACMod {
-			buf := make([]byte, 224*4)
+			buf1 := make([]byte, 224*4)
 
-			err := api.ReadPhysBuf(int64(ent.Address), buf)
+			err := api.ReadPhysBuf(int64(ent.Address), buf1)
+
 			if err != nil {
 				return nil, nil, nil, nil, err
 			}
 
-			return api.ParseACM(buf)
+			acm, err := api.ParseACMHeader(buf1)
+			if err != nil {
+				return nil, nil, nil, nil, fmt.Errorf("Can't Parse BIOS ACM header correctly")
+			}
+
+			ret, err := api.ValidateACMHeader(acm)
+
+			if ret == false {
+				return nil, nil, nil, nil, fmt.Errorf("Validating BIOS ACM Header failed: %v", err)
+			}
+
+			buf2 := make([]byte, acm.Size)
+			err = api.ReadPhysBuf(int64(ent.Address), buf2)
+
+			if err != nil {
+				return nil, nil, nil, nil, fmt.Errorf("Cant read BIOS ACM completly")
+			}
+
+			return api.ParseACM(buf2)
 		}
 	}
 

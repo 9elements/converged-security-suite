@@ -121,6 +121,37 @@ type ACM struct {
 	Info            ACMInfo
 }
 
+// ParseACMHeader
+
+func ParseACMHeader(data []byte) (*ACM, error) {
+	var acm ACM
+	buf := bytes.NewReader(data)
+	err := binary.Read(buf, binary.LittleEndian, &acm)
+
+	if err != nil {
+		return nil, fmt.Errorf("Can't read ACM Header")
+	}
+
+	return &acm, nil
+}
+
+// ValidateACMHeader
+func ValidateACMHeader(acm *ACM) (bool, error) {
+	if acm.ModuleType != uint16(2) {
+		return false, fmt.Errorf("BIOS ACM ModuleType is not 2, this is not specified - Intel TXT Software Development Guide, Document: 315168-013, P. 84")
+	}
+	if acm.ModuleSubType >= uint16(2) {
+		return false, fmt.Errorf("BIOS ACM ModuleSubType is greater 1, this is not specified - Intel TXT Software Development Guide, Document: 315168-013, P. 84")
+	}
+	if acm.HeaderLen < uint32(4*161) {
+		return false, fmt.Errorf("BIOS ACM HeaderLength is smaller than 4*161 Byte - Intel TXT Software Development Guide, Document: 315168-013, P. 83")
+	}
+	if acm.Size == 0 {
+		return false, fmt.Errorf("BIOS ACM Size can't be zero!")
+	}
+	return true, nil
+}
+
 // ParseACM
 func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
 	var acm ACM
