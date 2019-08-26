@@ -512,7 +512,14 @@ func TestHasMTRR() (bool, error, error) {
 }
 
 func TestHasSMRR() (bool, error, error) {
-	return api.HasSMRR(), nil
+	ret, err := api.HasSMRR()
+	if err != nil {
+		return false, nil, err
+	}
+	if ret != true {
+		return false, fmt.Errorf("CPU has no SMRR"), nil
+	}
+	return true, nil, nil
 }
 
 func TestValidSMRR() (bool, error, error) {
@@ -569,8 +576,14 @@ func TestActiveIOMMU() (bool, error, error) {
 	if err != nil {
 		return false, nil, err
 	}
-
-	return api.AddressRangesIsDMAProtected(smrr.PhysBase, smrr.PhysBase|^smrr.PhysMask), nil
+	ret, err := api.AddressRangesIsDMAProtected(smrr.PhysBase, smrr.PhysBase|^smrr.PhysMask)
+	if err != nil {
+		return false, nil, err
+	}
+	if ret != true {
+		return false, fmt.Errorf("IOMMU not active"), nil
+	}
+	return true, nil, nil
 }
 
 func TestActiveTBOOT() (bool, error, error) {

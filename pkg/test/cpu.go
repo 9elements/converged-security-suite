@@ -227,6 +227,9 @@ func TestTXTNotDisabled() (bool, error, error) {
 	if err != nil {
 		return false, nil, err
 	}
+	if ret != true {
+		return false, fmt.Errorf("TXT disabled"), nil
+	}
 	return true, nil, nil
 }
 
