@@ -176,7 +176,7 @@ func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
 	}
 
 	//Generate byte slice for scratch with scratchSize from acm header
-	scratch := make([]byte, acmheader.ScratchSize)
+	scratch := make([]byte, acmheader.ScratchSize*4)
 	//Build up struct with correct size
 	acm := ACM{ACMHeader{}, scratch, ACMInfo{}}
 
@@ -190,8 +190,6 @@ func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
 		return nil, nil, nil, nil, err
 	}
 
-	fmt.Printf("%v \n", acm.Scratch)
-	fmt.Printf("%v\n", len(acm.Scratch))
 	err = binary.Read(buf, binary.LittleEndian, &acm.Info)
 	if err != nil {
 		return nil, nil, nil, nil, err
