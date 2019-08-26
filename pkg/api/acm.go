@@ -123,7 +123,7 @@ type ACMHeader struct {
 }
 type ACM struct {
 	Header  ACMHeader
-	Scratch [143]uint32
+	Scratch []byte
 	Info    ACMInfo
 }
 
@@ -163,13 +163,25 @@ func ValidateACMHeader(acmheader *ACMHeader) (bool, error) {
 
 // ParseACM
 func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
-	var acm ACM
+	var acmheader ACMHeader
 	var processors Processors
 	var chipsets Chipsets
 	var tpms TPMs
 
+	//Read only ACM Header without scratch to get scratchSize
 	buf := bytes.NewReader(data)
-	err := binary.Read(buf, binary.LittleEndian, &acm)
+	err := binary.Read(buf, binary.LittleEndian, &acmheader)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	//Generate byte slice for scratch with scratchSize from acm header
+	scratch := make([]byte, acmheader.ScratchSize)
+	//Build up struct with correct size
+	acm := ACM{ACMHeader{}, scratch, ACMInfo{}}
+
+	buf.Seek(int64(0), io.SeekStart)
+	err = binary.Read(buf, binary.LittleEndian, &acm)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
