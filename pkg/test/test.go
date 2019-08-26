@@ -35,7 +35,7 @@ func (t TestResult) String() string {
 type Test struct {
 	Name         string
 	Required     bool
-	function     func() (bool, error)
+	function     func() (bool, error, error)
 	Result       TestResult
 	dependencies []*Test
 	ErrorText    string
