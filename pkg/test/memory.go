@@ -194,7 +194,7 @@ func TestTXTRegisterSpaceValid() (bool, error) {
 		return false, fmt.Errorf("HeapBase + HeapSize >= 4Gib")
 	}
 	if regs.HeapSize < minHeapSize {
-		return false, fmt.Errorf("Heap size too small")
+		return false, fmt.Errorf("Heap must be at least %v", minHeapSize)
 	}
 
 	if uint64(regs.SinitBase) >= api.FourGiB {
@@ -206,7 +206,7 @@ func TestTXTRegisterSpaceValid() (bool, error) {
 	}
 
 	if regs.SinitSize < minSinitSize {
-		return false, fmt.Errorf("Sinit size too small")
+		return false, fmt.Errorf("Sinit must be at least %v", minSinitSize)
 	}
 
 	if uint64(regs.MleJoin) >= api.FourGiB {
@@ -214,7 +214,7 @@ func TestTXTRegisterSpaceValid() (bool, error) {
 	}
 
 	if regs.SinitBase > regs.HeapBase {
-		return false, fmt.Errorf("Sinit above Heapbase")
+		return false, fmt.Errorf("Sinit must be below Heapbase")
 	}
 
 	return true, nil
@@ -432,7 +432,7 @@ func TestSINITMatchesCPU() (bool, error) {
 		}
 	}
 
-	return false, nil
+	return false, fmt.Errorf("Sinit doesn't match CPU")
 }
 
 func TestNoSINITErrors() (bool, error) {

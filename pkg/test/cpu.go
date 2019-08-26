@@ -154,7 +154,7 @@ func TestCPUSupportsTXT() (bool, error) {
 		return true, nil
 	}
 	if CPUBlacklistTXTSupport() {
-		return false, nil
+		return false, fmt.Errorf("CPU does not support TXT - on blacklist")
 	}
 	// Lookup name on Intel
 	return api.ArchitectureTXTSupport()
