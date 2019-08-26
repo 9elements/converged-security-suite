@@ -181,7 +181,18 @@ func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
 	acm := ACM{ACMHeader{}, scratch, ACMInfo{}}
 
 	buf.Seek(int64(0), io.SeekStart)
-	err = binary.Read(buf, binary.LittleEndian, &acm)
+	err = binary.Read(buf, binary.LittleEndian, &acm.Header)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &acm.Scratch)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	fmt.Printf("%v \n", acm.Scratch)
+	fmt.Printf("%v\n", len(acm.Scratch))
+	err = binary.Read(buf, binary.LittleEndian, &acm.Info)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
