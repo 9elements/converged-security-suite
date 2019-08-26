@@ -56,6 +56,9 @@ func (self *Test) Run() bool {
 	var DepsPassed = true
 	// Make sure all dependencies have run and passed
 	for idx, _ := range self.dependencies {
+		if self.dependencies[idx].Status == TestNotImplemented {
+			continue
+		}
 		if self.dependencies[idx].Result == ResultNotRun {
 			self.dependencies[idx].Run()
 		}
