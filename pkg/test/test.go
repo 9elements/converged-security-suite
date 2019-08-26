@@ -69,7 +69,7 @@ func (self *Test) Run() bool {
 		} else if err1 == nil && err2 != nil {
 			err = err2
 		}
-		if err1 != nil {
+		if err != nil {
 			self.ErrorText = err.Error()
 			self.Result = ResultFail
 		} else if rc {
