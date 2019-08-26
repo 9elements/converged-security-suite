@@ -13,7 +13,6 @@ const FITSize int64 = 16 * 1024 * 1024
 const FourGiB int64 = 0x100000000
 const ResetVector = 0xFFFFFFF0
 const FITVector = 0xFFFFFFC0
-const ACMheaderLegSize = uint32(4 * 161)
 const ValidFitRange = 0xFF000000
 
 var (
@@ -404,7 +403,7 @@ func TestBIOSACMSizeCorrect() (bool, error) {
 		return false, err
 	}
 
-	if acm.Header.HeaderLen%64 != 0 {
+	if acm.Header.HeaderLen%32 != 0 {
 		return false, fmt.Errorf("BIOSACM Size is not correct ")
 	}
 	return true, nil
@@ -484,7 +483,7 @@ func TestBIOSACMMatchesCPU() (bool, error) {
 func biosACM(fit []api.FitEntry) (*api.ACM, *api.Chipsets, *api.Processors, *api.TPMs, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.StartUpACMod {
-			buf1 := make([]byte, ACMheaderLegSize)
+			buf1 := make([]byte, api.ACMheaderLen*4)
 
 			err := api.ReadPhysBuf(int64(ent.Address), buf1)
 
@@ -503,7 +502,7 @@ func biosACM(fit []api.FitEntry) (*api.ACM, *api.Chipsets, *api.Processors, *api
 				return nil, nil, nil, nil, fmt.Errorf("Validating BIOS ACM Header failed: %v", err)
 			}
 
-			buf2 := make([]byte, acm.Size)
+			buf2 := make([]byte, acm.Size*4)
 			err = api.ReadPhysBuf(int64(ent.Address), buf2)
 
 			if err != nil {

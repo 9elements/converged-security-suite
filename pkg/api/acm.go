@@ -39,6 +39,7 @@ const (
 )
 
 const vendorIntel = 0x00008086
+const ACMheaderLen = uint32(161)
 
 type UUID struct {
 	Field1 uint32
@@ -148,7 +149,7 @@ func ValidateACMHeader(acmheader *ACMHeader) (bool, error) {
 	if acmheader.ModuleSubType >= uint16(2) {
 		return false, fmt.Errorf("BIOS ACM ModuleSubType is greater 1, this is not specified - Intel TXT Software Development Guide, Document: 315168-013, P. 84")
 	}
-	if acmheader.HeaderLen < uint32(4*161) {
+	if acmheader.HeaderLen < uint32(ACMheaderLen) {
 		return false, fmt.Errorf("BIOS ACM HeaderLength is smaller than 4*161 Byte - Intel TXT Software Development Guide, Document: 315168-013, P. 83")
 	}
 	if acmheader.Size == 0 {
