@@ -362,7 +362,7 @@ func TestSINITInTXT() (bool, error) {
 		return false, err
 	}
 
-	return acm.ModuleType == 2, nil
+	return acm.Header.ModuleType == 2, nil
 }
 
 func TestSINITMatchesChipset() (bool, error) {
@@ -385,7 +385,7 @@ func TestSINITMatchesChipset() (bool, error) {
 		b := ch.DeviceID == regs.Did
 
 		if a && b {
-			if acm.Flags&1 != 0 {
+			if acm.Header.Flags&1 != 0 {
 				if ch.RevisionID&regs.Rid == regs.Rid {
 					return true, nil
 				}

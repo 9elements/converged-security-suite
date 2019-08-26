@@ -13,6 +13,7 @@ const FITSize int64 = 16 * 1024 * 1024
 const FourGiB int64 = 0x100000000
 const ResetVector = 0xFFFFFFF0
 const FITVector = 0xFFFFFFC0
+const ACMheaderLegSize = uint32(4 * 161)
 
 var (
 	fitImage []byte
@@ -391,7 +392,7 @@ func TestBIOSACMSizeCorrect() (bool, error) {
 		return false, err
 	}
 
-	return acm.HeaderLen%64 == 0, nil
+	return acm.Header.HeaderLen%64 == 0, nil
 }
 
 func TestBIOSACMAlignmentCorrect() (bool, error) {
@@ -423,7 +424,7 @@ func TestBIOSACMMatchesChipset() (bool, error) {
 		b := ch.DeviceID == txt.Did
 
 		if a && b {
-			if acm.Flags&1 != 0 {
+			if acm.Header.Flags&1 != 0 {
 				if ch.RevisionID&txt.Rid == txt.Rid {
 					return true, nil
 				}
@@ -467,7 +468,7 @@ func TestBIOSACMMatchesCPU() (bool, error) {
 func biosACM(fit []api.FitEntry) (*api.ACM, *api.Chipsets, *api.Processors, *api.TPMs, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.StartUpACMod {
-			buf1 := make([]byte, 224*4)
+			buf1 := make([]byte, ACMheaderLegSize)
 
 			err := api.ReadPhysBuf(int64(ent.Address), buf1)
 
