@@ -176,12 +176,21 @@ func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
 	}
 
 	//Generate byte slice for scratch with scratchSize from acm header
-	scratch := make([]byte, acmheader.ScratchSize)
+	scratch := make([]byte, acmheader.ScratchSize*4)
 	//Build up struct with correct size
 	acm := ACM{ACMHeader{}, scratch, ACMInfo{}}
 
 	buf.Seek(int64(0), io.SeekStart)
-	err = binary.Read(buf, binary.LittleEndian, &acm)
+	err = binary.Read(buf, binary.LittleEndian, &acm.Header)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &acm.Scratch)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	err = binary.Read(buf, binary.LittleEndian, &acm.Info)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
