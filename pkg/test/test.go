@@ -72,9 +72,15 @@ func (self *Test) Run() bool {
 	fmt.Printf("%s: ", self.Name)
 	f.Flush()
 	if DepsPassed {
+		var err error
 		// Now run the test itself
-		rc, err := self.function()
-		if err != nil {
+		rc, err1, err2 := self.function()
+		if err1 != nil && err2 == nil {
+			err = err1
+		} else if err1 == nil && err2 != nil {
+			err = err2
+		}
+		if err1 != nil {
 			self.ErrorText = err.Error()
 			self.Result = ResultFail
 		} else if rc {
