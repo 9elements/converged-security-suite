@@ -175,82 +175,82 @@ var (
 	minSinitSize = uint32(0x50000)
 )
 
-func TestTXTRegisterSpaceValid() (bool, error) {
+func TestTXTRegisterSpaceValid() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	if uint64(regs.HeapBase) >= api.FourGiB {
-		return false, fmt.Errorf("HeapBase > 4Gib")
+		return false, fmt.Errorf("HeapBase > 4Gib"), nil
 	}
 
 	if uint64(regs.HeapBase+regs.HeapSize) >= api.FourGiB {
-		return false, fmt.Errorf("HeapBase + HeapSize >= 4Gib")
+		return false, fmt.Errorf("HeapBase + HeapSize >= 4Gib"), nil
 	}
 	if regs.HeapSize < minHeapSize {
-		return false, fmt.Errorf("Heap must be at least %v", minHeapSize)
+		return false, fmt.Errorf("Heap must be at least %v", minHeapSize), nil
 	}
 
 	if uint64(regs.SinitBase) >= api.FourGiB {
-		return false, fmt.Errorf("SinitBase >= 4Gib")
+		return false, fmt.Errorf("SinitBase >= 4Gib"), nil
 	}
 
 	if uint64(regs.SinitBase+regs.SinitSize) >= api.FourGiB {
-		return false, fmt.Errorf("SinitBase + SinitSize >= 4Gib")
+		return false, fmt.Errorf("SinitBase + SinitSize >= 4Gib"), nil
 	}
 
 	if regs.SinitSize < minSinitSize {
-		return false, fmt.Errorf("Sinit must be at least %v", minSinitSize)
+		return false, fmt.Errorf("Sinit must be at least %v", minSinitSize), nil
 	}
 
 	if uint64(regs.MleJoin) >= api.FourGiB {
-		return false, fmt.Errorf("MleJoin >= 4Gib")
+		return false, fmt.Errorf("MleJoin >= 4Gib"), nil
 	}
 
 	if regs.SinitBase > regs.HeapBase {
-		return false, fmt.Errorf("Sinit must be below Heapbase")
+		return false, fmt.Errorf("Sinit must be below Heapbase"), nil
 	}
 
-	return true, nil
+	return true, nil, nil
 }
 
-func TestTXTReservedInE820() (bool, error) {
+func TestTXTReservedInE820() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	heapReserved, err := api.IsReservedInE810(uint64(regs.HeapBase), uint64(regs.HeapBase+regs.HeapSize))
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	sinitReserved, err := api.IsReservedInE810(uint64(regs.SinitBase), uint64(regs.SinitBase+regs.SinitSize))
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
-	return heapReserved && sinitReserved, nil
+	return heapReserved && sinitReserved, nil, nil
 }
 
-func TestTXTMemoryIsDPR() (bool, error) {
+func TestTXTMemoryIsDPR() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	var memBase uint32
@@ -277,107 +277,113 @@ func TestTXTMemoryIsDPR() (bool, error) {
 	dprBase = dprLimit - dprSize
 
 	if memBase < dprBase {
-		return false, fmt.Errorf("DPR doesn't protect bottom of TXT memory")
+		return false, fmt.Errorf("DPR doesn't protect bottom of TXT memory"), nil
 	}
 	if memLimit > dprLimit {
-		return false, fmt.Errorf("DPR doesn't protect top of TXT memory")
+		return false, fmt.Errorf("DPR doesn't protect top of TXT memory"), nil
 	}
 
-	return true, nil
+	return true, nil, nil
 }
 
-func TestTXTDPRisLock() (bool, error) {
+func TestTXTDPRisLock() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
-	return regs.Dpr.Lock, nil
+	return regs.Dpr.Lock, nil, nil
 }
 
-func TestHostbridgeDPRCorrect() (bool, error) {
+func TestHostbridgeDPRCorrect() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	hostbridgeDpr, err := api.ReadHostBridgeDPR()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	// No need to validate hostbridge register, already done for TXT DPR
 	// Just make sure they match.
 
 	if hostbridgeDpr.Top != regs.Dpr.Top {
-		return false, fmt.Errorf("Hostbridge DPR Top doesn't match TXT DPR Top")
+		return false, fmt.Errorf("Hostbridge DPR Top doesn't match TXT DPR Top"), nil
 	}
 
 	if hostbridgeDpr.Size != regs.Dpr.Size {
-		return false, fmt.Errorf("Hostbridge DPR Size doesn't match TXT DPR Size")
+		return false, fmt.Errorf("Hostbridge DPR Size doesn't match TXT DPR Size"), nil
 	}
 
-	return true, nil
+	return true, nil, nil
 }
 
-func TestHostbridgeDPRisLocked() (bool, error) {
+func TestHostbridgeDPRisLocked() (bool, error, error) {
 	hostbridgeDpr, err := api.ReadHostBridgeDPR()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	if !hostbridgeDpr.Lock {
-		return false, fmt.Errorf("Hostbridge DPR isn't locked")
+		return false, nil, fmt.Errorf("Hostbridge DPR isn't locked")
 	}
 
-	return true, nil
+	return true, nil, nil
 }
 
-func TestSINITInTXT() (bool, error) {
+func TestSINITInTXT() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	sinitBuf := make([]byte, regs.SinitSize)
 	err = api.ReadPhysBuf(int64(regs.SinitBase), sinitBuf)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	acm, _, _, _, err := api.ParseACM(sinitBuf)
-	if err != nil || acm == nil {
-		return false, err
+	if err != nil {
+		return false, nil, err
+	}
+	if acm == nil {
+		return false, fmt.Errorf("ACM is nil"), nil
 	}
 
-	return acm.ModuleType == 2, nil
+	return acm.ModuleType == 2, nil, nil
 }
 
-func TestSINITMatchesChipset() (bool, error) {
+func TestSINITMatchesChipset() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	acm, chps, _, _, err := sinitACM(regs)
-	if err != nil || chps == nil {
-		return false, err
+	if err != nil {
+		return false, nil, err
+	}
+	if chps == nil {
+		return false, fmt.Errorf("CHPS is nil"), nil
 	}
 
 	for _, ch := range chps.IDList {
@@ -387,38 +393,38 @@ func TestSINITMatchesChipset() (bool, error) {
 		if a && b {
 			if acm.Flags&1 != 0 {
 				if ch.RevisionID&regs.Rid == regs.Rid {
-					return true, nil
+					return true, nil, nil
 				}
 			} else {
 				if ch.RevisionID == regs.Rid {
-					return true, nil
+					return true, nil, nil
 				}
 			}
 		}
 	}
 
-	return false, nil
+	return false, nil, nil
 }
 
-func TestSINITMatchesCPU() (bool, error) {
+func TestSINITMatchesCPU() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	_, _, cpus, _, err := sinitACM(regs)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	// IA32_PLATFORM_ID
 	platform, err := api.IA32PlatformID()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	fms := api.CPUSignature()
@@ -428,154 +434,154 @@ func TestSINITMatchesCPU() (bool, error) {
 		b := platform&cpu.PlatformMask == cpu.PlatformID
 
 		if a && b {
-			return true, nil
+			return true, nil, nil
 		}
 	}
 
-	return false, fmt.Errorf("Sinit doesn't match CPU")
+	return false, fmt.Errorf("Sinit doesn't match CPU"), nil
 }
 
-func TestNoSINITErrors() (bool, error) {
+func TestNoSINITErrors() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
-	return regs.ErrorCodeRaw == 0xc0000001, nil
+	return regs.ErrorCodeRaw == 0xc0000001, nil, nil
 }
 
-func TestBIOSDATAREGIONPresent() (bool, error) {
+func TestBIOSDATAREGIONPresent() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	txtHeap := make([]byte, regs.HeapSize)
 	err = api.ReadPhysBuf(int64(regs.HeapBase), txtHeap)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	biosdata, err = api.ParseBIOSDataRegion(txtHeap)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
-	return true, nil
+	return true, nil, nil
 }
 
-func TestBIOSDATAREGIONValid() (bool, error) {
+func TestBIOSDATAREGIONValid() (bool, error, error) {
 	if biosdata.Version < 2 {
-		return false, fmt.Errorf("BIOS DATA regions version < 2 are not supperted")
+		return false, fmt.Errorf("BIOS DATA regions version < 2 are not supperted"), nil
 	}
 
 	if biosdata.BiosSinitSize < 8 {
-		return false, fmt.Errorf("BIOS DATA region is too small")
+		return false, fmt.Errorf("BIOS DATA region is too small"), nil
 	}
 
 	if biosdata.NumLogProcs == 0 {
-		return false, fmt.Errorf("BIOS DATA region corrupted")
+		return false, fmt.Errorf("BIOS DATA region corrupted"), nil
 	}
-	return true, nil
+	return true, nil, nil
 }
 
-func TestBIOSDATANumLogProcsValid() (bool, error) {
+func TestBIOSDATANumLogProcsValid() (bool, error, error) {
 	if biosdata.NumLogProcs != api.CPULogCount() {
-		return false, fmt.Errorf("Logical CPU count in BIOSData and CPUID doesn't match")
+		return false, fmt.Errorf("Logical CPU count in BIOSData and CPUID doesn't match"), nil
 	}
-	return true, nil
+	return true, nil, nil
 }
 
-func TestHasMTRR() (bool, error) {
-	return api.HasMTRR(), nil
+func TestHasMTRR() (bool, error, error) {
+	return api.HasMTRR(), nil, nil
 }
 
-func TestHasSMRR() (bool, error) {
-	return api.HasSMRR()
+func TestHasSMRR() (bool, error, error) {
+	return api.HasSMRR(), nil
 }
 
-func TestValidSMRR() (bool, error) {
+func TestValidSMRR() (bool, error, error) {
 	smrr, err := api.GetSMRRInfo()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	if smrr.PhysMask == 0 {
-		return false, fmt.Errorf("SMRR PhysMask isn't set")
+		return false, fmt.Errorf("SMRR PhysMask isn't set"), nil
 	}
 	if smrr.PhysBase == 0 {
-		return false, fmt.Errorf("SMRR PhysBase isn't set")
+		return false, fmt.Errorf("SMRR PhysBase isn't set"), nil
 	}
 
 	tsegbase, tseglimit, err := api.ReadHostBridgeTseg()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 	if tsegbase == 0 || tsegbase == 0xffffffff {
-		return false, fmt.Errorf("TSEG base register isn't valid")
+		return false, fmt.Errorf("TSEG base register isn't valid"), nil
 	}
 	if tseglimit == 0 || tseglimit == 0xffffffff {
-		return false, fmt.Errorf("TSEG limit register isn't valid")
+		return false, fmt.Errorf("TSEG limit register isn't valid"), nil
 	}
 
 	if tsegbase&(^(uint32(smrr.PhysMask) << 12)) != 0 {
-		return false, fmt.Errorf("TSEG base isn't aligned to SMRR Physmask")
+		return false, fmt.Errorf("TSEG base isn't aligned to SMRR Physmask"), nil
 	}
 	if tsegbase != (uint32(smrr.PhysBase) << 12) {
-		return false, fmt.Errorf("TSEG base doesn't start at SMRR PhysBase")
+		return false, fmt.Errorf("TSEG base doesn't start at SMRR PhysBase"), nil
 	}
 	if tseglimit&(^(uint32(smrr.PhysMask) << 12)) != 0 {
-		return false, fmt.Errorf("TSEG limit isn't aligned to SMRR Physmask")
+		return false, fmt.Errorf("TSEG limit isn't aligned to SMRR Physmask"), nil
 	}
 	if ((tseglimit - 1) & (uint32(smrr.PhysMask) << 12)) != (uint32(smrr.PhysBase) << 12) {
-		return false, fmt.Errorf("SMRR Physmask doesn't cover whole TSEG")
+		return false, fmt.Errorf("SMRR Physmask doesn't cover whole TSEG"), nil
 	}
 
-	return true, nil
+	return true, nil, nil
 }
 
-func TestActiveSMRR() (bool, error) {
+func TestActiveSMRR() (bool, error, error) {
 	smrr, err := api.GetSMRRInfo()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
-	return smrr.Active, nil
+	return smrr.Active, nil, nil
 }
 
-func TestActiveIOMMU() (bool, error) {
+func TestActiveIOMMU() (bool, error, error) {
 	smrr, err := api.GetSMRRInfo()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
-	return api.AddressRangesIsDMAProtected(smrr.PhysBase, smrr.PhysBase|^smrr.PhysMask)
+	return api.AddressRangesIsDMAProtected(smrr.PhysBase, smrr.PhysBase|^smrr.PhysMask), nil
 }
 
-func TestActiveTBOOT() (bool, error) {
-	return false, fmt.Errorf("TestActiveTBOOT: Unimplemented")
+func TestActiveTBOOT() (bool, error, error) {
+	return false, nil, fmt.Errorf("TestActiveTBOOT: Unimplemented")
 }
 
-func TestServerModeTXT() (bool, error) {
+func TestServerModeTXT() (bool, error, error) {
 	// FIXME: Query GetSec[Parameters] ebx = 5
 	// Assume yes if dependencies are satisfied
 	val, err := api.HasSMRR()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
-	return api.HasSMX() && api.HasVMX() && val, nil
+	return api.HasSMX() && api.HasVMX() && val, nil, nil
 }
 
-func TestReleaseFusedFSBI() (bool, error) {
-	return false, fmt.Errorf("TestReleaseFusedFSBI: Unimplemented")
+func TestReleaseFusedFSBI() (bool, error, error) {
+	return false, nil, fmt.Errorf("TestReleaseFusedFSBI: Unimplemented")
 }
 
 func sinitACM(regs api.TXTRegisterSpace) (*api.ACM, *api.Chipsets, *api.Processors, *api.TPMs, error) {
