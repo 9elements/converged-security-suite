@@ -89,107 +89,107 @@ var (
 )
 
 // Connects to a TPM device (virtual or real) at the given path
-func TestTPMConnect() (bool, error) {
+func TestTPMConnect() (bool, error, error) {
 	conn, err := tpm2.OpenTPM(TpmPath)
 
 	if err != nil {
 		conn, err = tpm1.OpenTPM(TpmPath)
 
 		if err != nil {
-			return false, fmt.Errorf("Cannot connect to TPM: %s\n", err)
+			return false, nil, fmt.Errorf("Cannot connect to TPM: %s\n", err)
 		}
 
 		tpm12Connection = &conn
-		return true, nil
+		return true, nil, nil
 	}
 
 	tpm20Connection = &conn
-	return true, nil
+	return true, nil, nil
 }
 
 // Checks if TPM 1.2 is present and answers to GetCapability
-func TestTPM12Present() (bool, error) {
+func TestTPM12Present() (bool, error, error) {
 	if tpm12Connection == nil {
-		return false, fmt.Errorf("No TPM 1.2 connection")
+		return false, fmt.Errorf("No TPM 1.2 connection"), nil
 	}
 	vid, err := tpm1.GetManufacturer(*tpm12Connection)
-	return vid != nil && err == nil, nil
+	return vid != nil && err == nil, nil, nil
 
 }
 
-func TestTPM2Present() (bool, error) {
+func TestTPM2Present() (bool, error, error) {
 	if tpm20Connection == nil {
-		return false, fmt.Errorf("No TPM 2 connection")
+		return false, fmt.Errorf("No TPM 2 connection"), nil
 	}
 	ca, _, err := tpm2.GetCapability(*tpm20Connection, tpm2.CapabilityTPMProperties, 1, uint32(tpm2.Manufacturer))
-	return ca != nil && err == nil, nil
+	return ca != nil && err == nil, nil, nil
 }
 
-func TestTPMIsPresent() (bool, error) {
+func TestTPMIsPresent() (bool, error, error) {
 	if (testtpm12present.Result == ResultPass) || (testtpm2present.Result == ResultPass) {
-		return true, nil
+		return true, nil, nil
 	}
-	return false, fmt.Errorf("No TPM present")
+	return false, fmt.Errorf("No TPM present"), nil
 }
 
 // TPM NVRAM is locked
-func TestTPMIsLocked() (bool, error) {
+func TestTPMIsLocked() (bool, error, error) {
 	if tpm12Connection != nil {
 		flags, err := tpm1.GetPermanentFlags(*tpm12Connection)
 
-		return flags.NvLocked, err
+		return flags.NvLocked, err, nil
 	} else if tpm20Connection != nil {
-		return false, fmt.Errorf("Unimplemented: TPM 2.0")
+		return false, nil, fmt.Errorf("Unimplemented: TPM 2.0")
 	} else {
-		return false, fmt.Errorf("No TPM connection")
+		return false, nil, fmt.Errorf("No TPM connection")
 	}
 }
 
 // TPM NVRAM has a valid PS index
-func TestPSIndexIsSet() (bool, error) {
+func TestPSIndexIsSet() (bool, error, error) {
 	if tpm12Connection != nil {
 		data, err := tpm1.NVReadValueNoAuth(*tpm12Connection, psIndex, 0, 54)
 		if err != nil {
-			return false, err
+			return false, nil, err
 		}
 
-		return len(data) == 54, err
+		return len(data) == 54, err, nil
 	} else if tpm20Connection != nil {
 		meta, err := tpm2.NVReadPublic(*tpm20Connection, psIndex)
 		if err != nil {
-			return false, err
+			return false, nil, err
 		}
 
 		rc := true
 		rc = rc && meta.NVIndex == psIndex
 		rc = rc && (meta.Attributes&tpm2.KeyProp(tpm2.AttrWriteLocked) != 0)
 
-		return rc, nil
+		return rc, nil, nil
 	} else {
-		return false, fmt.Errorf("Not connected to TPM")
+		return false, fmt.Errorf("Not connected to TPM"), nil
 	}
 }
 
 // TPM NVRAM has a valid AUX index
-func TestAUXIndexIsSet() (bool, error) {
+func TestAUXIndexIsSet() (bool, error, error) {
 	if tpm12Connection != nil {
 		buf, err := tpm1.NVReadValueNoAuth(*tpm12Connection, auxIndex, 0, 1)
 
-		return len(buf) == 1, err
+		return len(buf) == 1, err, nil
 	} else if tpm20Connection != nil {
 		meta, err := tpm2.NVReadPublic(*tpm20Connection, auxIndex)
 		if err != nil {
-			return false, err
+			return false, err, nil
 		}
 
-		return meta.NVIndex == auxIndex, nil
+		return meta.NVIndex == auxIndex, nil, nil
 	} else {
-		return false, fmt.Errorf("Not connected to TPM")
+		return false, fmt.Errorf("Not connected to TPM"), nil
 	}
 }
 
 // PS index contains a valid LCP policy
-func TestLCPPolicyIsValid() (bool, error) {
+func TestLCPPolicyIsValid() (bool, error, error) {
 	var data []byte
 	var err error
 
@@ -197,48 +197,48 @@ func TestLCPPolicyIsValid() (bool, error) {
 		data, err = tpm1.NVReadValueNoAuth(*tpm12Connection, psIndex, 0, 54)
 
 		if err != nil {
-			return false, err
+			return false, nil, err
 		}
 	} else if tpm20Connection != nil {
 		data, err = tpm2.NVRead(*tpm20Connection, psIndex)
 
 		if err != nil {
-			return false, err
+			return false, nil, err
 		}
 	} else {
-		return false, fmt.Errorf("Not connected to TPM")
+		return false, fmt.Errorf("Not connected to TPM"), nil
 	}
 
 	lcp, err := api.ParsePolicy(data)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
-	return lcp.Version < 0x300, nil
+	return lcp.Version < 0x300, nil, nil
 }
 
 // Reads PCR-00 and checks whether if it's not the EmptyDigest
-func TestPCR0IsSet() (bool, error) {
+func TestPCR0IsSet() (bool, error, error) {
 	if tpm12Connection != nil {
 		pcr, err := tpm1.ReadPCR(*tpm12Connection, 0)
 
-		return bytes.Equal(pcr, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}) && err == nil, err
+		return bytes.Equal(pcr, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}) && err == nil, err, nil
 	} else if tpm20Connection != nil {
 		ca, _, err := tpm2.GetCapability(*tpm20Connection, tpm2.CapabilityPCRs, 1, 0)
 		if ca == nil || err != nil {
-			return false, err
+			return false, nil, err
 		}
 
 		for i := 0; i < 4; i++ {
 			pcr, _ := tpm2.ReadPCRs(*tpm20Connection, ca[i].(tpm2.PCRSelection))
 			for j := 0; j < len(pcr[0]); j++ {
 				if pcr[0][j] != 0 {
-					return false, nil
+					return false, nil, nil
 				}
 			}
 		}
-		return true, nil
+		return true, nil, nil
 	} else {
-		return false, fmt.Errorf("Not connected to TPM")
+		return false, fmt.Errorf("Not connected to TPM"), nil
 	}
 }
