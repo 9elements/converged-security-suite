@@ -16,7 +16,6 @@ const FITVector = 0xFFFFFFC0
 const ACMheaderLegSize = uint32(4 * 161)
 const ValidFitRange = 0xFF000000
 
-
 var (
 	fitImage []byte
 	// set by FITVectorIsSet
@@ -405,7 +404,7 @@ func TestBIOSACMSizeCorrect() (bool, error) {
 		return false, err
 	}
 
-	if acm.HeaderLen%64 != 0 {
+	if acm.Header.HeaderLen%64 != 0 {
 		return false, fmt.Errorf("BIOSACM Size is not correct ")
 	}
 	return true, nil
