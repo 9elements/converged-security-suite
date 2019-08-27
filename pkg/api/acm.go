@@ -38,6 +38,9 @@ const (
 	TPMAlgoSM2               uint16 = 0x001B
 )
 
+const vendorIntel = 0x00008086
+const ACMheaderLen = uint32(161)
+
 type UUID struct {
 	Field1 uint32
 	Field2 uint16
@@ -93,7 +96,7 @@ type TPMs struct {
 	AlgID        []uint16
 }
 
-type ACM struct {
+type ACMHeader struct {
 	ModuleType      uint16
 	ModuleSubType   uint16
 	HeaderLen       uint32
@@ -117,22 +120,73 @@ type ACM struct {
 	PubKey          [256]uint8
 	PubExp          uint32
 	Signatur        [256]uint8
-	Scratch         [143]uint32
-	Info            ACMInfo
+}
+type ACM struct {
+	Header  ACMHeader
+	Scratch []byte
+	Info    ACMInfo
+}
+
+// ParseACMHeader
+
+func ParseACMHeader(data []byte) (*ACMHeader, error) {
+	var acm ACMHeader
+	buf := bytes.NewReader(data)
+	err := binary.Read(buf, binary.LittleEndian, &acm)
+
+	if err != nil {
+		return nil, fmt.Errorf("Can't read ACM Header")
+	}
+
+	return &acm, nil
+}
+
+// ValidateACMHeader
+func ValidateACMHeader(acmheader *ACMHeader) (bool, error) {
+	if acmheader.ModuleType != uint16(2) {
+		return false, fmt.Errorf("BIOS ACM ModuleType is not 2, this is not specified - Intel TXT Software Development Guide, Document: 315168-013, P. 84")
+	}
+	if acmheader.ModuleSubType >= uint16(2) {
+		return false, fmt.Errorf("BIOS ACM ModuleSubType is greater 1, this is not specified - Intel TXT Software Development Guide, Document: 315168-013, P. 84")
+	}
+	if acmheader.HeaderLen < uint32(ACMheaderLen) {
+		return false, fmt.Errorf("BIOS ACM HeaderLength is smaller than 4*161 Byte - Intel TXT Software Development Guide, Document: 315168-013, P. 83")
+	}
+	if acmheader.Size == 0 {
+		return false, fmt.Errorf("BIOS ACM Size can't be zero!")
+	}
+	if acmheader.ModuleVendor != vendorIntel {
+		return false, fmt.Errorf("AC Module Vendor is not Intel. Only Intel as Vendor is allowed")
+	}
+	return true, nil
 }
 
 // ParseACM
 func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
-	var acm ACM
+	var acmheader ACMHeader
+	var acminfo ACMInfo
 	var processors Processors
 	var chipsets Chipsets
 	var tpms TPMs
 
 	buf := bytes.NewReader(data)
-	err := binary.Read(buf, binary.LittleEndian, &acm)
+	err := binary.Read(buf, binary.LittleEndian, &acmheader)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
+	scratch := make([]byte, acmheader.ScratchSize*4)
+
+	err = binary.Read(buf, binary.LittleEndian, &scratch)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	err = binary.Read(buf, binary.LittleEndian, &acminfo)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	acm := ACM{acmheader, scratch, acminfo}
 
 	buf.Seek(int64(acm.Info.ChipsetIDList), io.SeekStart)
 	err = binary.Read(buf, binary.LittleEndian, &chipsets.Count)
@@ -196,37 +250,37 @@ func LookupSize(header []byte) (int64, error) {
 func (a *ACM) PrettyPrint() {
 	log.Println("Authenticated Code Module")
 
-	if a.ModuleVendor == ACMVendorIntel {
+	if a.Header.ModuleVendor == ACMVendorIntel {
 		log.Println("Module Vendor: Intel")
 	} else {
 		log.Println("Module Vendor: Unknown")
 	}
 
-	if a.ModuleType == ACMTypeChipset {
+	if a.Header.ModuleType == ACMTypeChipset {
 		log.Println("Module Type: ACM_TYPE_CHIPSET")
 	} else {
 		log.Println("Module Type: UNKNOWN")
 	}
 
-	if a.ModuleSubType == ACMSubTypeReset {
+	if a.Header.ModuleSubType == ACMSubTypeReset {
 		log.Println("Module Subtype: Execute at Reset")
-	} else if a.ModuleSubType == 0 {
+	} else if a.Header.ModuleSubType == 0 {
 		log.Println("Module Subtype: 0x0")
 	} else {
 		log.Println("Module Subtype: Unknown")
 	}
-	log.Printf("Module Date: 0x%02x\n", a.Date)
-	log.Printf("Module Size: %db\n", a.Size*4)
+	log.Printf("Module Date: 0x%02x\n", a.Header.Date)
+	log.Printf("Module Size: %db\n", a.Header.Size*4)
 
-	log.Printf("Header Length: %db\n", a.HeaderLen)
-	log.Printf("Header Version: %d\n", a.HeaderVersion)
-	log.Printf("Chipset ID: 0x%02x\n", a.ChipsetID)
-	log.Printf("Flags: 0x%02x\n", a.Flags)
-	log.Printf("TXT SVN: 0x%08x\n", a.TxtSVN)
-	log.Printf("SE SVN: 0x%08x\n", a.SeSVN)
-	log.Printf("Code Control: 0x%02x\n", a.CodeControl)
-	log.Printf("Entry Point: 0x%08x:%08x\n", a.SegSel, a.EntryPoint)
-	log.Printf("Scratch Size: %db\n", a.ScratchSize)
+	log.Printf("Header Length: %db\n", a.Header.HeaderLen)
+	log.Printf("Header Version: %d\n", a.Header.HeaderVersion)
+	log.Printf("Chipset ID: 0x%02x\n", a.Header.ChipsetID)
+	log.Printf("Flags: 0x%02x\n", a.Header.Flags)
+	log.Printf("TXT SVN: 0x%08x\n", a.Header.TxtSVN)
+	log.Printf("SE SVN: 0x%08x\n", a.Header.SeSVN)
+	log.Printf("Code Control: 0x%02x\n", a.Header.CodeControl)
+	log.Printf("Entry Point: 0x%08x:%08x\n", a.Header.SegSel, a.Header.EntryPoint)
+	log.Printf("Scratch Size: %db\n", a.Header.ScratchSize)
 	log.Println("Info Table:")
 
 	uuidStr := fmt.Sprintf("%08x-%04x-%04x-%04x-%02x%02x%02x%02x%02x%02x",

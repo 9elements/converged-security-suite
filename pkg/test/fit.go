@@ -407,6 +407,7 @@ func TestBIOSACMSizeCorrect() (bool, error, error) {
 		return false, fmt.Errorf("BIOSACM Size is not correct "), nil
 	}
 	return true, nil, nil
+
 }
 
 func TestBIOSACMAlignmentCorrect() (bool, error, error) {
@@ -438,7 +439,7 @@ func TestBIOSACMMatchesChipset() (bool, error, error) {
 		b := ch.DeviceID == txt.Did
 
 		if a && b {
-			if acm.Flags&1 != 0 {
+			if acm.Header.Flags&1 != 0 {
 				if ch.RevisionID&txt.Rid == txt.Rid {
 					return true, nil, nil
 				}
@@ -482,14 +483,33 @@ func TestBIOSACMMatchesCPU() (bool, error, error) {
 func biosACM(fit []api.FitEntry) (*api.ACM, *api.Chipsets, *api.Processors, *api.TPMs, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.StartUpACMod {
-			buf := make([]byte, 224*4)
+			buf1 := make([]byte, api.ACMheaderLen*4)
 
-			err := api.ReadPhysBuf(int64(ent.Address), buf)
+			err := api.ReadPhysBuf(int64(ent.Address), buf1)
+
 			if err != nil {
 				return nil, nil, nil, nil, fmt.Errorf("ReadPhysBuf failed at %v with error: %v", ent.Address, err)
 			}
 
-			return api.ParseACM(buf)
+			acm, err := api.ParseACMHeader(buf1)
+			if err != nil {
+				return nil, nil, nil, nil, fmt.Errorf("Can't Parse BIOS ACM header correctly")
+			}
+
+			ret, err := api.ValidateACMHeader(acm)
+
+			if ret == false {
+				return nil, nil, nil, nil, fmt.Errorf("Validating BIOS ACM Header failed: %v", err)
+			}
+
+			buf2 := make([]byte, acm.Size*4)
+			err = api.ReadPhysBuf(int64(ent.Address), buf2)
+
+			if err != nil {
+				return nil, nil, nil, nil, fmt.Errorf("Cant read BIOS ACM completly")
+			}
+
+			return api.ParseACM(buf2)
 		}
 	}
 

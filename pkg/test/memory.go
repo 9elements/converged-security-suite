@@ -369,6 +369,7 @@ func TestSINITInTXT() (bool, error, error) {
 		return false, fmt.Errorf("SINIT in TXT: ACM ModuleType not 2"), nil
 	}
 	return true, nil, nil
+
 }
 
 func TestSINITMatchesChipset() (bool, error, error) {
@@ -394,7 +395,7 @@ func TestSINITMatchesChipset() (bool, error, error) {
 		b := ch.DeviceID == regs.Did
 
 		if a && b {
-			if acm.Flags&1 != 0 {
+			if acm.Header.Flags&1 != 0 {
 				if ch.RevisionID&regs.Rid == regs.Rid {
 					return true, nil, nil
 				}
