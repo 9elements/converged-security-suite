@@ -164,7 +164,7 @@ func TestCPUSupportsTXT() (bool, error, error) {
 	if ret != true {
 		return false, fmt.Errorf("CPU not supported"), nil
 	}
-	return ret, nil, nil
+	return true, nil, nil
 }
 
 // Check whether chipset supports TXT
@@ -179,7 +179,22 @@ func TestTXTRegisterSpaceAccessible() (bool, error, error) {
 		return false, nil, err
 	}
 
-	return regs.Vid == 0x8086, nil, nil
+	if regs.Vid != 0x8086 {
+		return false, fmt.Errorf("TXTRegisterSpace: Unexpected VendorID"), nil
+	}
+
+	if regs.HeapBase == 0x0 {
+		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: HeapBase is 0  "), nil
+	}
+
+	if regs.SinitBase == 0x0 {
+		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: SinitBase is 0  "), nil
+	}
+
+	if regs.Did == 0x0 {
+		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: DeviceID is 0  "), nil
+	}
+	return true, nil, nil
 }
 
 // Check if CPU supports SMX
@@ -204,7 +219,10 @@ func TestIa32FeatureCtrl() (bool, error, error) {
 		return false, nil, err
 	}
 
-	return locked, nil, nil
+	if locked != true {
+		return false, fmt.Errorf("IA32 Feature Control not locked"), nil
+	}
+	return true, nil, nil
 }
 
 func TestSMXIsEnabled() (bool, error, error) {
@@ -244,7 +262,7 @@ func TestIBBMeasured() (bool, error, error) {
 		return true, nil, nil
 	}
 
-	return false, fmt.Errorf("Bootstatus in Register incorrect"), nil
+	return false, fmt.Errorf("Bootstatus register incorrect"), nil
 }
 
 // Check that the IBB was deemed trusted

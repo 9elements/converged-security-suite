@@ -113,7 +113,13 @@ func TestTPM12Present() (bool, error, error) {
 		return false, fmt.Errorf("No TPM 1.2 connection"), nil
 	}
 	vid, err := tpm1.GetManufacturer(*tpm12Connection)
-	return vid != nil && err == nil, nil, nil
+	if err != nil {
+		return false, nil, err
+	}
+	if vid == nil {
+		return false, fmt.Errorf("TestTPM12Present: GetManufacturer() didn't return anything"), nil
+	}
+	return true, nil, nil
 
 }
 
@@ -122,6 +128,12 @@ func TestTPM2Present() (bool, error, error) {
 		return false, fmt.Errorf("No TPM 2 connection"), nil
 	}
 	ca, _, err := tpm2.GetCapability(*tpm20Connection, tpm2.CapabilityTPMProperties, 1, uint32(tpm2.Manufacturer))
+	if err != nil {
+		return false, nil, err
+	}
+	if ca == nil {
+		return false, fmt.Errorf("TestTPM2Present: no Manufacturer returned"), nil
+	}
 	return ca != nil && err == nil, nil, nil
 }
 
@@ -153,7 +165,10 @@ func TestPSIndexIsSet() (bool, error, error) {
 			return false, nil, err
 		}
 
-		return len(data) == 54, err, nil
+		if len(data) != 54 {
+			return false, fmt.Errorf("TestPSIndexIsSet: TPM1 - Length of data not 54 "), nil
+		}
+		return true, nil, nil
 	} else if tpm20Connection != nil {
 		meta, err := tpm2.NVReadPublic(*tpm20Connection, psIndex)
 		if err != nil {
@@ -162,9 +177,15 @@ func TestPSIndexIsSet() (bool, error, error) {
 
 		rc := true
 		rc = rc && meta.NVIndex == psIndex
+		if rc != true {
+			return false, fmt.Errorf("TestPSIndexIsSet: TPM2 - PS Index Addresses don't match"), nil
+		}
 		rc = rc && (meta.Attributes&tpm2.KeyProp(tpm2.AttrWriteLocked) != 0)
 
-		return rc, nil, nil
+		if rc != true {
+			return false, fmt.Errorf("TestPSIndexIsSet: TPM2 - WriteLock not set"), nil
+		}
+		return true, nil, nil
 	} else {
 		return false, fmt.Errorf("Not connected to TPM"), nil
 	}
@@ -179,12 +200,14 @@ func TestAUXIndexIsSet() (bool, error, error) {
 	} else if tpm20Connection != nil {
 		meta, err := tpm2.NVReadPublic(*tpm20Connection, auxIndex)
 		if err != nil {
-			return false, err, nil
+			return false, nil, err
 		}
-
-		return meta.NVIndex == auxIndex, nil, nil
+		if meta.NVIndex != auxIndex {
+			return false, fmt.Errorf("AUXIndexIsSet: AUXIndex Addresses don't match"), nil
+		}
+		return true, nil, nil
 	} else {
-		return false, fmt.Errorf("Not connected to TPM"), nil
+		return false, nil, fmt.Errorf("Not connected to TPM")
 	}
 }
 
@@ -206,7 +229,7 @@ func TestLCPPolicyIsValid() (bool, error, error) {
 			return false, nil, err
 		}
 	} else {
-		return false, fmt.Errorf("Not connected to TPM"), nil
+		return false, nil, fmt.Errorf("Not connected to TPM")
 	}
 
 	lcp, err := api.ParsePolicy(data)
@@ -214,19 +237,34 @@ func TestLCPPolicyIsValid() (bool, error, error) {
 		return false, nil, err
 	}
 
-	return lcp.Version < 0x300, nil, nil
+	if lcp.Version >= 0x300 {
+		return false, fmt.Errorf("LCP-Version invalid"), nil
+	}
+	return true, nil, nil
 }
 
 // Reads PCR-00 and checks whether if it's not the EmptyDigest
 func TestPCR0IsSet() (bool, error, error) {
 	if tpm12Connection != nil {
 		pcr, err := tpm1.ReadPCR(*tpm12Connection, 0)
+		if err != nil {
+			return false, nil, err
+		}
+		if pcr == nil {
+			return false, fmt.Errorf("No PCR returned"), nil
+		}
+		if bytes.Equal(pcr, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}) {
+			return true, nil, nil
+		}
 
-		return bytes.Equal(pcr, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}) && err == nil, err, nil
+		return false, fmt.Errorf("PCR not set correctly"), nil
 	} else if tpm20Connection != nil {
 		ca, _, err := tpm2.GetCapability(*tpm20Connection, tpm2.CapabilityPCRs, 1, 0)
-		if ca == nil || err != nil {
+		if err != nil {
 			return false, nil, err
+		}
+		if ca == nil {
+			return false, fmt.Errorf("GetCapability didn't return anything"), nil
 		}
 
 		for i := 0; i < 4; i++ {

@@ -365,7 +365,10 @@ func TestSINITInTXT() (bool, error, error) {
 		return false, fmt.Errorf("ACM is nil"), nil
 	}
 
-	return acm.ModuleType == 2, nil, nil
+	if acm.ModuleType != 2 {
+		return false, fmt.Errorf("SINIT in TXT: ACM ModuleType not 2"), nil
+	}
+	return true, nil, nil
 }
 
 func TestSINITMatchesChipset() (bool, error, error) {
@@ -403,7 +406,7 @@ func TestSINITMatchesChipset() (bool, error, error) {
 		}
 	}
 
-	return false, nil, nil
+	return false, fmt.Errorf("SINIT doesn't match chipset"), nil
 }
 
 func TestSINITMatchesCPU() (bool, error, error) {
@@ -451,7 +454,10 @@ func TestNoSINITErrors() (bool, error, error) {
 		return false, nil, err
 	}
 
-	return regs.ErrorCodeRaw == 0xc0000001, nil, nil
+	if regs.ErrorCodeRaw != 0xc0000001 {
+		return false, fmt.Errorf("SINIT Error detected"), nil
+	}
+	return true, nil, nil
 }
 
 func TestBIOSDATAREGIONPresent() (bool, error, error) {
@@ -501,7 +507,10 @@ func TestBIOSDATANumLogProcsValid() (bool, error, error) {
 }
 
 func TestHasMTRR() (bool, error, error) {
-	return api.HasMTRR(), nil, nil
+	if api.HasMTRR() != true {
+		return false, fmt.Errorf("CPU does not have MTRR"), nil
+	}
+	return true, nil, nil
 }
 
 func TestHasSMRR() (bool, error, error) {
@@ -561,7 +570,10 @@ func TestActiveSMRR() (bool, error, error) {
 		return false, nil, err
 	}
 
-	return smrr.Active, nil, nil
+	if smrr.Active != true {
+		return false, fmt.Errorf("SMRR not active"), nil
+	}
+	return true, nil, nil
 }
 
 func TestActiveIOMMU() (bool, error, error) {
@@ -590,7 +602,10 @@ func TestServerModeTXT() (bool, error, error) {
 	if err != nil {
 		return false, nil, err
 	}
-	return api.HasSMX() && api.HasVMX() && val, nil, nil
+	if api.HasSMX() && api.HasVMX() && val {
+		return true, nil, nil
+	}
+	return false, fmt.Errorf("Servermode not active"), nil
 }
 
 func TestReleaseFusedFSBI() (bool, error, error) {
