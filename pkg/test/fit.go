@@ -403,7 +403,7 @@ func TestBIOSACMSizeCorrect() (bool, error, error) {
 		return false, nil, err
 	}
 
-	if acm.HeaderLen%64 != 0 {
+	if acm.Header.HeaderLen%64 != 0 {
 		return false, fmt.Errorf("BIOSACM Size is not correct "), nil
 	}
 	return true, nil, nil

@@ -372,7 +372,7 @@ func TestSINITInTXT() (bool, error, error) {
 		return false, fmt.Errorf("ACM is nil"), nil
 	}
 
-	if acm.ModuleType != 2 {
+	if acm.Header.ModuleType != 2 {
 		return false, fmt.Errorf("SINIT in TXT: ACM ModuleType not 2"), nil
 	}
 	return true, nil, nil
