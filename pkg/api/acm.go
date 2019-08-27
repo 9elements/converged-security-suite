@@ -164,36 +164,29 @@ func ValidateACMHeader(acmheader *ACMHeader) (bool, error) {
 // ParseACM
 func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
 	var acmheader ACMHeader
+	var acminfo ACMInfo
 	var processors Processors
 	var chipsets Chipsets
 	var tpms TPMs
 
-	//Read only ACM Header without scratch to get scratchSize
 	buf := bytes.NewReader(data)
 	err := binary.Read(buf, binary.LittleEndian, &acmheader)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-
-	//Generate byte slice for scratch with scratchSize from acm header
 	scratch := make([]byte, acmheader.ScratchSize*4)
-	//Build up struct with correct size
-	acm := ACM{ACMHeader{}, scratch, ACMInfo{}}
 
-	buf.Seek(int64(0), io.SeekStart)
-	err = binary.Read(buf, binary.LittleEndian, &acm.Header)
-	if err != nil {
-		return nil, nil, nil, nil, err
-	}
-	err = binary.Read(buf, binary.LittleEndian, &acm.Scratch)
+	err = binary.Read(buf, binary.LittleEndian, &scratch)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
 
-	err = binary.Read(buf, binary.LittleEndian, &acm.Info)
+	err = binary.Read(buf, binary.LittleEndian, &acminfo)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
+
+	acm := ACM{acmheader, scratch, acminfo}
 
 	buf.Seek(int64(acm.Info.ChipsetIDList), io.SeekStart)
 	err = binary.Read(buf, binary.LittleEndian, &chipsets.Count)
