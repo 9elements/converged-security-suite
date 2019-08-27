@@ -171,11 +171,11 @@ var (
 
 var (
 	biosdata api.TXTBiosData
-	//Heapsize from newer spec, fails on systems running older spec
+	//Heapsize from newer spec - Document 575623
 	minHeapSize  = uint32(0xF0000)
 	minSinitSize = uint32(0x50000)
-	//Heapsize reduced for legacy spec, no information on size, try and error
-	legacyMinHeapSize = uint32(0x70000)
+	//Heapsize reduced for legacy spec - Document 558294
+	legacyMinHeapSize = uint32(0xE0000)
 )
 
 func TestTXTRegisterSpaceValid() (bool, error) {
@@ -196,14 +196,14 @@ func TestTXTRegisterSpaceValid() (bool, error) {
 	if uint64(regs.HeapBase+regs.HeapSize) >= api.FourGiB {
 		return false, fmt.Errorf("HeapBase + HeapSize >= 4Gib")
 	}
-	//This test fails on systems running on older spec, heapsize from spec
+	//This test fails on systems running on spec pre Document 575623
 	/*
 		if regs.HeapSize < minHeapSize {
 			return false, fmt.Errorf("Heap must be at least %v", minHeapSize)
 		}
 	*/
 
-	//This checks for legacy heap size. May remove later.
+	//This checks for legacy heap size - Document 558294
 	if regs.HeapSize < legacyMinHeapSize {
 		return false, fmt.Errorf("Heap must be at least %v", minHeapSize)
 	}
