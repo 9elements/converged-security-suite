@@ -422,7 +422,7 @@ func TestBIOSACMAlignmentCorrect() (bool, error) {
 }
 
 func TestBIOSACMMatchesChipset() (bool, error) {
-	acm, chp, _, _, err := biosACM(fit)
+	_, chp, _, _, err := biosACM(fit)
 	if err != nil {
 		return false, err
 	}
@@ -440,8 +440,8 @@ func TestBIOSACMMatchesChipset() (bool, error) {
 		b := ch.DeviceID == txt.Did
 
 		if a && b {
-			if acm.Header.Flags&1 != 0 {
-				if ch.RevisionID&txt.Rid == txt.Rid {
+			if ch.Flags&1 != 0 {
+				if ch.RevisionID&txt.Rid > 0 {
 					return true, nil
 				}
 			} else {
