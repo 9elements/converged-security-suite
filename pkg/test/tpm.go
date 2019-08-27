@@ -134,7 +134,7 @@ func TestTPM2Present() (bool, error, error) {
 	if ca == nil {
 		return false, fmt.Errorf("TestTPM2Present: no Manufacturer returned"), nil
 	}
-	return ca != nil && err == nil, nil, nil
+	return true, nil, nil
 }
 
 func TestTPMIsPresent() (bool, error, error) {
