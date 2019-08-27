@@ -303,7 +303,10 @@ func TestTXTDPRisLock() (bool, error, error) {
 		return false, nil, err
 	}
 
-	return regs.Dpr.Lock, nil, nil
+	if regs.Dpr.Lock != true {
+		return false, fmt.Errorf("TXTDPR is locked"), nil
+	}
+	return true, nil, nil
 }
 
 func TestHostbridgeDPRCorrect() (bool, error, error) {
