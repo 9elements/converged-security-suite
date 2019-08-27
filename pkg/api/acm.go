@@ -69,8 +69,7 @@ type ChipsetID struct {
 	VendorID   uint16
 	DeviceID   uint16
 	RevisionID uint16
-	Reserved   uint16
-	ExtendedID uint16
+	Reserved   [3]uint16
 }
 
 type Chipsets struct {
@@ -334,7 +333,6 @@ func (c *Chipsets) PrettyPrint() {
 		log.Printf("\t\tVendor: 0x%02x\n", chipset.VendorID)
 		log.Printf("\t\tDevice: 0x%02x\n", chipset.DeviceID)
 		log.Printf("\t\tRevision: 0x%02x\n", chipset.RevisionID)
-		log.Printf("\t\tExtended: 0x%02x\n", chipset.ExtendedID)
 	}
 }
 
