@@ -196,16 +196,12 @@ func TestTXTRegisterSpaceValid() (bool, error) {
 	if uint64(regs.HeapBase+regs.HeapSize) >= api.FourGiB {
 		return false, fmt.Errorf("HeapBase + HeapSize >= 4Gib")
 	}
-	//This test fails on systems running on spec pre Document 575623
-	/*
-		if regs.HeapSize < minHeapSize {
-			return false, fmt.Errorf("Heap must be at least %v", minHeapSize)
-		}
-	*/
+
+	//TODO: Validate against minHeapSize once legacy detection is implemented
 
 	//This checks for legacy heap size - Document 558294
 	if regs.HeapSize < legacyMinHeapSize {
-		return false, fmt.Errorf("Heap must be at least %v", minHeapSize)
+		return false, fmt.Errorf("Heap must be at least %v", legacyMinHeapSize)
 	}
 
 	if uint64(regs.SinitBase) >= api.FourGiB {
