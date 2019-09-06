@@ -1,13 +1,5 @@
 package test
 
-import (
-	"bufio"
-	"fmt"
-	"os"
-
-	a "github.com/logrusorgru/aurora"
-)
-
 type TestResult int
 type TestStatus int
 type TXTSpec int
@@ -52,7 +44,6 @@ type Test struct {
 }
 
 func (self *Test) Run() bool {
-	f := bufio.NewWriter(os.Stdout)
 	var DepsPassed = true
 	// Make sure all dependencies have run and passed
 	for idx, _ := range self.dependencies {
@@ -69,8 +60,6 @@ func (self *Test) Run() bool {
 		}
 	}
 
-	fmt.Printf("%s: ", self.Name)
-	f.Flush()
 	if DepsPassed {
 		// Now run the test itself
 		rc, err := self.function()
@@ -83,16 +72,6 @@ func (self *Test) Run() bool {
 			self.Result = ResultFail
 		}
 	}
-
-	if self.Result == ResultPass {
-		fmt.Println(a.Green(self.Result))
-	} else {
-		fmt.Println(a.Red(self.Result))
-	}
-	if self.ErrorText != "" {
-		fmt.Println(a.Bold(self.ErrorText))
-	}
-	f.Flush()
 
 	return self.Result == ResultPass
 }

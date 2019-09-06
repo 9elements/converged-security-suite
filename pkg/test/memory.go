@@ -34,7 +34,7 @@ var (
 		Status:   TestImplemented,
 	}
 	testhostbridgeDPRcorrect = Test{
-		Name:     "CPU DMA protected range equals hostbridge DPR",
+		Name:     "CPU DPR equals hostbridge DPR",
 		Required: false,
 		function: TestHostbridgeDPRCorrect,
 		Status:   TestImplemented,
@@ -93,13 +93,13 @@ var (
 		Status:       TestImplemented,
 	}
 	testhasmtrr = Test{
-		Name:     "CPU supports memory type range registers",
+		Name:     "CPU supports MTRRs",
 		Required: true,
 		function: TestHasMTRR,
 		Status:   TestImplemented,
 	}
 	testhassmrr = Test{
-		Name:         "CPU supports system management range registers",
+		Name:         "CPU supports SMRRs",
 		Required:     true,
 		function:     TestHasSMRR,
 		dependencies: []*Test{&testservermodetext},
