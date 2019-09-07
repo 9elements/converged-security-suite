@@ -68,55 +68,62 @@ The test suite implements the following tests.
 
 |  # | Test                                             | Implementation status  |
 | -- | ------------------------------------------------ | ---------------------- |
-|  1 | Check CPUID for Intel CPU                        | :white_check_mark:     |
-|  2 | Check CPUID for CPU generation                   | :white_check_mark:     |
-|  3 | Check if CPU supports TXT                        | :white_check_mark:     |
-|  4 | Check if chipset supports TXT                    | Unimplementable :x:    |
-|  5 | Check if TXT registers supports TXT              | :white_check_mark:     |
-|  6 | Check CPUID SMX support                          | :white_check_mark:     |
-|  7 | Check CPUID VMX support                          | :white_check_mark:     |
-|  8 | Check IA\_32FEATURE\_CONTROL bits                | :white_check_mark:     |
-|  9 | Check SMX is enabled                             | :white_check_mark:     |
-| 10 | Check supported GetSec leaves                    | Unimplementable :x:    |
-| 11 | Check TXT not disabled                           | :white_check_mark:     |
-| 12 | Check IBB measured                               | :white_check_mark:     |
-| 13 | Check firmware trusted                           | :white_check_mark:     |
-| 14 | TXT registers are locked                         | :white_check_mark:     |
-| 15 | BIOS ACM had no startup error                    | :white_check_mark:     |
+| 00 | Intel CPU                                        | :white_check_mark:     |
+| 01 | Weybridge or later                               | :white_check_mark:     |
+| 02 | CPU supports TXT                                 | :white_check_mark:     |
+| 03 | Chipset supports TXT                             | :x:                    |
+| 04 | TXT register space accessible                    | :white_check_mark:     |
+| 05 | CPU supports SMX                                 | :white_check_mark:     |
+| 06 | CPU supports VMX                                 | :white_check_mark:     |
+| 07 | IA32_FEATURE_CONTROL                             | :white_check_mark:     |
+| 08 | GETSEC leaves are enabled                        | :x:                    |
+| 09 | TXT not disabled by BIOS                         | :white_check_mark:     |
+| 10 | BIOS ACM has run                                 | :white_check_mark:     |
+| 11 | IBB is trusted                                   | :white_check_mark:     |
+| 12 | TXT registers are locked                         | :white_check_mark:     |
+| 13 | TPM connection                                   | :white_check_mark:     |
+| 14 | TPM 1.2 present                                  | :white_check_mark:     |
+| 15 | TPM 2 is present                                 | :white_check_mark:     |
 | 16 | TPM is present                                   | :white_check_mark:     |
-| 17 | TPM is locked                                    | Only TPM 1.2 :clock1:  |
-| 18 | TPM PS index set                                 | Only TPM 1.2 :clock1:  |
-| 19 | TPM AUX index set                                | Only TPM 1.2 :clock1:  |
-| 20 | TPM LCP\_POLICY has set                          | Only TPM 1.2 :clock1:  |
-| 21 | TPM PCR0 has been extended                       | Only TPM 1.2 :clock1:  |
-| 22 | FIT exists                                       | :white_check_mark:     |
-| 23 | FIT contains BIOSACM entry                       | :white_check_mark:     |
-| 24 | FIT contains IBB entry                           | :white_check_mark:     |
-| 25 | FIT contains BIOS POLICY                         | :white_check_mark:     |
-| 26 | FIT IBB covers reset vector                      | :white_check_mark:     |
-| 27 | FIT IBB doesn’t overlap IBB                      | :white_check_mark:     |
-| 28 | FIT IBBs doesn’t overlap BIOSACM                 | :white_check_mark:     |
-| 29 | FIT IBBs and BIOSACM are in 32bit address space  | :white_check_mark:     |
-| 30 | FIT TXT\_DISABLE\_POLICY does not disable TXT    | :white_check_mark:     |
-| 31 | BIOSACM header is valid                          | :white_check_mark:     |
-| 32 | BIOSACM size check                               | :white_check_mark:     |
-| 33 | BIOSACM alignment check                          | :white_check_mark:     |
-| 34 | BIOSACM matches chipset                          | :white_check_mark:     |
-| 35 | BIOSACM matches processor                        | :white_check_mark:     |
-| 36 | TXT memory is reserved in e820 map               | :white_check_mark:     |
-| 37 | TXT DPR protectes TXT memory                     | :white_check_mark:     |
-| 38 | CPU DMA protected range equals hostbridge DPR    | :white_check_mark:     |
-| 39 | TXT SINIT in TXT region                          | :white_check_mark:     |
-| 40 | TXT SINIT matches chipset                        | :white_check_mark:     |
-| 41 | TXT SINIT matches processor                      | :white_check_mark:     |
-| 42 | SINIT ACM startup errors                         | :white_check_mark:     |
-| 43 | BIOSDATAREGION is present in TXT regions         | :white_check_mark:     |
-| 44 | Check CPUID MTRR support                         | :white_check_mark:     |
-| 45 | Check MTRRcap for SMRR support                   | :white_check_mark:     |
-| 46 | Get SMM/TSEG region                              | :white_check_mark:     |
-| 47 | SMRRs are active                                 | :white_check_mark:     |
-| 48 | IOMMU/Vt-d is active                             | Todo :clock1:          |
-| 49 | TBOOT is active                                  | Todo :clock1:          |
-| 50 | Servermode TXT                                   | Todo :clock1:          |
-| 51 | FSB Interface is release fused                   | Todo :clock1:          |
-| 52 | Memory controller is release fused               | Todo :clock1:          |
+| 17 | TPM in production mode                           | :clock1:               |
+| 18 | PS index set in NVRAM                            | :white_check_mark:     |
+| 19 | AUX index set in NVRAM                           | :white_check_mark:     |
+| 20 | PS index has valid LCP Policy                    | :white_check_mark:     |
+| 21 | Valid FIT vector                                 | :white_check_mark:     |
+| 22 | Valid FIT                                        | :white_check_mark:     |
+| 23 | BIOS ACM entry in FIT                            | :white_check_mark:     |
+| 24 | IBB entry in FIT                                 | :white_check_mark:     |
+| 25 | LCP Policy entry in FIT                          | :white_check_mark:     |
+| 26 | IBB covers reset vector                          | :white_check_mark:     |
+| 27 | IBB covers FIT vector                            | :white_check_mark:     |
+| 28 | IBB covers FIT                                   | :white_check_mark:     |
+| 29 | IBB does not overlap                             | :white_check_mark:     |
+| 30 | BIOS ACM does not overlap                        | :white_check_mark:     |
+| 31 | IBB and BIOS ACM below 4GiB                      | :white_check_mark:     |
+| 32 | TXT not disabled by LCP Policy                   | :white_check_mark:     |
+| 33 | BIOSACM header valid                             | :white_check_mark:     |
+| 34 | BIOSACM size check                               | :white_check_mark:     |
+| 35 | BIOSACM alignment check                          | :white_check_mark:     |
+| 36 | BIOSACM matches chipset                          | :white_check_mark:     |
+| 37 | BIOSACM matches processor                        | :white_check_mark:     |
+| 38 | TXT memory ranges valid                          | :white_check_mark:     |
+| 39 | TXT memory reserved in e820                      | :white_check_mark:     |
+| 40 | TXT memory in a DMA protected range              | :white_check_mark:     |
+| 41 | TXT DPR register locked                          | :white_check_mark:     |
+| 42 | CPU DMA protected range equals hostbridge DPR    | :white_check_mark:     |
+| 43 | CPU hostbridge DPR register locked               | :white_check_mark:     |
+| 44 | TXT region contains SINIT ACM                    | :white_check_mark:     |
+| 45 | SINIT ACM matches chipset                        | :white_check_mark:     |
+| 46 | SINIT ACM matches CPU                            | :white_check_mark:     |
+| 47 | SINIT ACM startup successful                     | :white_check_mark:     |
+| 48 | BIOS DATA REGION present                         | :white_check_mark:     |
+| 49 | BIOS DATA REGION valid                           | :white_check_mark:     |
+| 50 | BIOS DATA NumLogProcs valid                      | :white_check_mark:     |
+| 51 | CPU supports memory type range registers         | :white_check_mark:     |
+| 52 | CPU supports system management range registers   | :white_check_mark:     |
+| 53 | SMRR covers SMM memory                           | :white_check_mark:     |
+| 54 | SMRR protection active                           | :white_check_mark:     |
+| 55 | IOMMU/VT-d active                                | :white_check_mark:     |
+| 56 | TBOOT hypervisor active                          | :x:                    |
+| 57 | TXT server mode enabled                          | :white_check_mark:     |
+| 58 | FSB interface release fused                      | :x:                    |

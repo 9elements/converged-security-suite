@@ -24,23 +24,6 @@ type temptest struct {
 	Status     string
 }
 
-func getTests() []*test.Test {
-	var tests []*test.Test
-	for i, _ := range test.TestsCPU {
-		tests = append(tests, test.TestsCPU[i])
-	}
-	for i, _ := range test.TestsTPM {
-		tests = append(tests, test.TestsTPM[i])
-	}
-	for i, _ := range test.TestsFIT {
-		tests = append(tests, test.TestsFIT[i])
-	}
-	for i, _ := range test.TestsMemory {
-		tests = append(tests, test.TestsMemory[i])
-	}
-	return tests
-}
-
 func run() bool {
 	var result = false
 	var tests []*test.Test
@@ -99,18 +82,16 @@ func main() {
 		logfile = *logpath
 	}
 
-	if !*help && !*listtests && !*version {
-		ret = run()
+	if *listtests == true {
+		listTests()
+	} else if *help == true {
+		showHelp()
+	} else if *version == true {
+		showVersion()
+	} else if *teststomarkdown == true {
+		listTestsAsMarkdown()
 	} else {
-		if *listtests == true {
-			listTests()
-		}
-		if *help == true {
-			showHelp()
-		}
-		if *version == true {
-			showVersion()
-		}
+		ret = run()
 	}
 
 	if ret {
