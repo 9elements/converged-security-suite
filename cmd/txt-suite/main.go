@@ -6,8 +6,11 @@ import (
 	"io/ioutil"
 	"os"
 	"sort"
+	"fmt"
+	"bufio"
 
 	"github.com/9elements/txt-suite/pkg/test"
+	a "github.com/logrusorgru/aurora"
 )
 
 var (
@@ -27,6 +30,7 @@ type temptest struct {
 func run() bool {
 	var result = false
 	var tests []*test.Test
+	f := bufio.NewWriter(os.Stdout)
 
 	tests = getTests()
 
@@ -60,6 +64,27 @@ func run() bool {
 		}
 		data, _ := json.MarshalIndent(t, "", "")
 		ioutil.WriteFile(logfile, data, 0664)
+	}
+
+	for index, _ := range tests {
+		if tests[index].Status == test.TestNotImplemented {
+			continue
+		}
+		if tests[index].Result == test.ResultNotRun {
+			continue
+		}
+		fmt.Printf("%-40s: ", a.Bold(tests[index].Name))
+		f.Flush()
+
+		if tests[index].Result == test.ResultPass {
+			fmt.Printf("%-20s\n", a.Bold(a.Green(tests[index].Result)))
+		} else {
+			fmt.Printf("%-20s\n", a.Bold(a.Red(tests[index].Result)))
+		}
+		if tests[index].ErrorText != "" {
+			fmt.Printf(" %s\n\n", tests[index].ErrorText)
+		}
+		f.Flush()
 	}
 
 	return result
