@@ -8,7 +8,7 @@ import (
 	"github.com/9elements/txt-suite/pkg/api"
 )
 
-func TestParseACMHeader(t *testing.T) {
+func TestParseandValidateACMHeader(t *testing.T) {
 	file, err := ioutil.ReadFile("./tests/sinit_acm.bin")
 	if err != nil {
 		t.Errorf("Failed to read file: %v", err)
@@ -17,6 +17,14 @@ func TestParseACMHeader(t *testing.T) {
 	header, err := api.ParseACMHeader(file)
 	if err != nil {
 		t.Errorf("ParseACMHeader() failed: %v", err)
+	}
+
+	valid, err := api.ValidateACMHeader(header)
+	if err != nil {
+		t.Errorf("ValidateACMHeader() failed: %v", err)
+	}
+	if !valid {
+		t.Errorf("ValidateACMHeader() failed to validate the ACMHeader")
 	}
 
         header.PrettyPrint()
