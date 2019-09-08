@@ -246,40 +246,44 @@ func LookupSize(header []byte) (int64, error) {
 	return int64(acmSize * 4), nil
 }
 
-func (a *ACM) PrettyPrint() {
+func (a *ACMHeader) PrettyPrint() {
 	log.Println("Authenticated Code Module")
 
-	if a.Header.ModuleVendor == ACMVendorIntel {
+	if a.ModuleVendor == ACMVendorIntel {
 		log.Println("Module Vendor: Intel")
 	} else {
 		log.Println("Module Vendor: Unknown")
 	}
 
-	if a.Header.ModuleType == ACMTypeChipset {
+	if a.ModuleType == ACMTypeChipset {
 		log.Println("Module Type: ACM_TYPE_CHIPSET")
 	} else {
 		log.Println("Module Type: UNKNOWN")
 	}
 
-	if a.Header.ModuleSubType == ACMSubTypeReset {
+	if a.ModuleSubType == ACMSubTypeReset {
 		log.Println("Module Subtype: Execute at Reset")
-	} else if a.Header.ModuleSubType == 0 {
+	} else if a.ModuleSubType == 0 {
 		log.Println("Module Subtype: 0x0")
 	} else {
 		log.Println("Module Subtype: Unknown")
 	}
-	log.Printf("Module Date: 0x%02x\n", a.Header.Date)
-	log.Printf("Module Size: %db\n", a.Header.Size*4)
+	log.Printf("Module Date: 0x%02x\n", a.Date)
+	log.Printf("Module Size: %db\n", a.Size*4)
 
-	log.Printf("Header Length: %db\n", a.Header.HeaderLen)
-	log.Printf("Header Version: %d\n", a.Header.HeaderVersion)
-	log.Printf("Chipset ID: 0x%02x\n", a.Header.ChipsetID)
-	log.Printf("Flags: 0x%02x\n", a.Header.Flags)
-	log.Printf("TXT SVN: 0x%08x\n", a.Header.TxtSVN)
-	log.Printf("SE SVN: 0x%08x\n", a.Header.SeSVN)
-	log.Printf("Code Control: 0x%02x\n", a.Header.CodeControl)
-	log.Printf("Entry Point: 0x%08x:%08x\n", a.Header.SegSel, a.Header.EntryPoint)
-	log.Printf("Scratch Size: %db\n", a.Header.ScratchSize)
+	log.Printf("Header Length: %db\n", a.HeaderLen)
+	log.Printf("Header Version: %d\n", a.HeaderVersion)
+	log.Printf("Chipset ID: 0x%02x\n", a.ChipsetID)
+	log.Printf("Flags: 0x%02x\n", a.Flags)
+	log.Printf("TXT SVN: 0x%08x\n", a.TxtSVN)
+	log.Printf("SE SVN: 0x%08x\n", a.SeSVN)
+	log.Printf("Code Control: 0x%02x\n", a.CodeControl)
+	log.Printf("Entry Point: 0x%08x:%08x\n", a.SegSel, a.EntryPoint)
+	log.Printf("Scratch Size: %db\n", a.ScratchSize)
+}
+
+func (a *ACM) PrettyPrint() {
+	a.Header.PrettyPrint()
 	log.Println("Info Table:")
 
 	uuidStr := fmt.Sprintf("%08x-%04x-%04x-%04x-%02x%02x%02x%02x%02x%02x",
