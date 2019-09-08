@@ -269,9 +269,9 @@ func (a *ACMHeader) PrettyPrint() {
 		log.Println("Module Subtype: Unknown")
 	}
 	log.Printf("Module Date: 0x%02x\n", a.Date)
-	log.Printf("Module Size: %db\n", a.Size*4)
+	log.Printf("Module Size: 0x%x (%d)\n", a.Size*4, a.Size*4)
 
-	log.Printf("Header Length: %db\n", a.HeaderLen)
+	log.Printf("Header Length: 0x%x (%d)\n", a.HeaderLen, a.HeaderLen)
 	log.Printf("Header Version: %d\n", a.HeaderVersion)
 	log.Printf("Chipset ID: 0x%02x\n", a.ChipsetID)
 	log.Printf("Flags: 0x%02x\n", a.Flags)
@@ -279,7 +279,7 @@ func (a *ACMHeader) PrettyPrint() {
 	log.Printf("SE SVN: 0x%08x\n", a.SeSVN)
 	log.Printf("Code Control: 0x%02x\n", a.CodeControl)
 	log.Printf("Entry Point: 0x%08x:%08x\n", a.SegSel, a.EntryPoint)
-	log.Printf("Scratch Size: %db\n", a.ScratchSize)
+	log.Printf("Scratch Size: 0x%x (%d)\n", a.ScratchSize, a.ScratchSize)
 }
 
 func (a *ACM) PrettyPrint() {
@@ -320,7 +320,7 @@ func (a *ACM) PrettyPrint() {
 	}
 
 	log.Printf("\tVersion: %d\n", a.Info.Version)
-	log.Printf("\tLength: %db\n", a.Info.Length)
+	log.Printf("\tLength: 0x%x (%d)\n", a.Info.Length, a.Info.Length)
 	log.Printf("\tChipset ID List: 0x%02x\n", a.Info.ChipsetIDList)
 	log.Printf("\tOS SINIT Data Version: 0x%02x\n", a.Info.OSSinitDataVersion)
 	log.Printf("\tMin. MLE Header Version: 0x%08x\n", a.Info.MinMleHeaderVersion)
