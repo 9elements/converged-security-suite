@@ -175,14 +175,11 @@ func TestPSIndexIsSet() (bool, error, error) {
 			return false, nil, err
 		}
 
-		rc := true
-		rc = rc && meta.NVIndex == psIndex
-		if rc != true {
+		if meta.NVIndex == psIndex {
 			return false, fmt.Errorf("TestPSIndexIsSet: TPM2 - PS Index Addresses don't match"), nil
 		}
-		rc = rc && (meta.Attributes&tpm2.KeyProp(tpm2.AttrWriteLocked) != 0)
 
-		if rc != true {
+		if meta.Attributes&tpm2.KeyProp(tpm2.AttrWriteLocked) != 0 {
 			return false, fmt.Errorf("TestPSIndexIsSet: TPM2 - WriteLock not set"), nil
 		}
 		return true, nil, nil

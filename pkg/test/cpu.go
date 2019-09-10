@@ -184,15 +184,15 @@ func TestTXTRegisterSpaceAccessible() (bool, error, error) {
 	}
 
 	if regs.HeapBase == 0x0 {
-		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: HeapBase is 0  "), nil
+		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: HeapBase is 0"), nil
 	}
 
 	if regs.SinitBase == 0x0 {
-		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: SinitBase is 0  "), nil
+		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: SinitBase is 0"), nil
 	}
 
 	if regs.Did == 0x0 {
-		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: DeviceID is 0  "), nil
+		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: DeviceID is 0"), nil
 	}
 	return true, nil, nil
 }

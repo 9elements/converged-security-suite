@@ -305,7 +305,7 @@ func TestTXTDPRisLock() (bool, error, error) {
 	}
 
 	if regs.Dpr.Lock != true {
-		return false, fmt.Errorf("TXTDPR is locked"), nil
+		return false, fmt.Errorf("TXTDPR is not locked"), nil
 	}
 	return true, nil, nil
 }
