@@ -403,8 +403,9 @@ func TestBIOSACMSizeCorrect() (bool, error, error) {
 		return false, nil, err
 	}
 
-	if acm.Header.HeaderLen%64 != 0 {
-		return false, fmt.Errorf("BIOSACM Size is not correct "), nil
+	acmModSize := acm.Header.Size - acm.Header.HeaderLen - acm.Header.ScratchSize
+	if acmModSize%64 != 0 {
+		return false, fmt.Errorf("BIOSACM Size is not correct: %v ", acmModSize%64), nil
 	}
 	return true, nil, nil
 }

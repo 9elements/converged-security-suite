@@ -513,7 +513,7 @@ func TestBIOSDATAREGIONValid() (bool, error, error) {
 
 func TestBIOSDATANumLogProcsValid() (bool, error, error) {
 	if biosdata.NumLogProcs != api.CPULogCount() {
-		return false, fmt.Errorf("Logical CPU count in BIOSData and CPUID doesn't match"), nil
+		return false, fmt.Errorf("Logical CPU count in BIOSData and CPUID doesn't match: BIOS_ACM_CPU_Count: %v - CPU_Log_Count: %v", biosdata.NumLogProcs, api.CPULogCount()), nil
 	}
 	return true, nil, nil
 }
