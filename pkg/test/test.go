@@ -7,6 +7,7 @@ type TXTSpec int
 const (
 	ResultNotRun TestResult = iota
 	ResultDependencyFailed
+	ResultInternalError
 	ResultFail
 	ResultPass
 )
@@ -29,7 +30,7 @@ func (t TestStatus) String() string {
 	return [...]string{"Implemented", "Not implemented", "Partly implemented"}[t]
 }
 func (t TestResult) String() string {
-	return [...]string{"TESTNOTRUN", "DEPENDENCY_FAILED", "FAIL", "PASS"}[t]
+	return [...]string{"TESTNOTRUN", "DEPENDENCY_FAILED", "INTERNAL_ERROR", "FAIL", "PASS"}[t]
 }
 
 type Test struct {
@@ -66,16 +67,13 @@ func (self *Test) Run() bool {
 	}
 
 	if DepsPassed {
-		var err error
 		// Now run the test itself
 		rc, testerror, internalerror := self.function()
-		if testerror != nil && internalerror == nil {
-			err = testerror
-		} else if testerror == nil && internalerror != nil {
-			err = internalerror
-		}
-		if err != nil {
-			self.ErrorText = err.Error()
+		if internalerror != nil && testerror == nil {
+			self.Result = ResultInternalError
+			self.ErrorText = internalerror.Error()
+		} else if testerror != nil && internalerror == nil {
+			self.ErrorText = testerror.Error()
 			self.Result = ResultFail
 		} else if rc {
 			self.Result = ResultPass
