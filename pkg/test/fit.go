@@ -421,6 +421,7 @@ func TestBIOSACMAlignmentCorrect() (bool, error, error) {
 
 func TestBIOSACMMatchesChipset() (bool, error, error) {
 	_, chp, _, _, err := biosACM(fit)
+
 	if err != nil {
 		return false, nil, err
 	}

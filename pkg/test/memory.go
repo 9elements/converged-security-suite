@@ -380,6 +380,7 @@ func TestSINITInTXT() (bool, error, error) {
 		return false, fmt.Errorf("SINIT in TXT: ACM ModuleType not 2"), nil
 	}
 	return true, nil, nil
+
 }
 
 func TestSINITMatchesChipset() (bool, error, error) {
