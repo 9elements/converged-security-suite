@@ -37,17 +37,18 @@ Stop the *tpm2-abrmd.service* if running:
 systemctl stop tpm2-abrmd.service
 ```
 
-The only dependency is a working Go toolchain and the  `dep` tool. After cloning
-the repository, fetch the dependencies:
+There are currently no dependencies required.
+
+To build the test suite run:
 
 ```bash
-dep ensure
+go build -o txt-suite cmd/txt-suite/*.go
 ```
 
-Then, run the test suite as root.
+Run it as root:
 
 ```bash
-go run cmd/txt-suite/main.go
+./txt-suite
 ```
 
 Commandline arguments
