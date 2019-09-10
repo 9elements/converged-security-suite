@@ -438,8 +438,8 @@ func TestBIOSACMMatchesChipset() (bool, error, error) {
 		b := ch.DeviceID == txt.Did
 
 		if a && b {
-			if acm.Flags&1 != 0 {
-				if ch.RevisionID&txt.Rid == txt.Rid {
+			if ch.Flags&1 != 0 {
+				if ch.RevisionID&txt.Rid > 0 {
 					return true, nil, nil
 				}
 			} else {
