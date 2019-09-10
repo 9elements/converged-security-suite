@@ -139,69 +139,94 @@ func getTxtRegisters() (*api.TXTRegisterSpace, error) {
 }
 
 // Check we're running on a Intel CPU
-func TestCheckForIntelCPU() (bool, error) {
-	return api.VersionString() == "GenuineIntel", nil
+func TestCheckForIntelCPU() (bool, error, error) {
+	return api.VersionString() == "GenuineIntel", nil, nil
 }
 
 // Check we're running on Weybridge
-func TestWeybridgeOrLater() (bool, error) {
-	return cpuid.DisplayFamily == 6, nil
+func TestWeybridgeOrLater() (bool, error, error) {
+	return cpuid.DisplayFamily == 6, nil, nil
 }
 
 // Check if the CPU supports TXT
-func TestCPUSupportsTXT() (bool, error) {
+func TestCPUSupportsTXT() (bool, error, error) {
 	if CPUWhitelistTXTSupport() {
-		return true, nil
+		return true, nil, nil
 	}
 	if CPUBlacklistTXTSupport() {
-		return false, fmt.Errorf("CPU does not support TXT - on blacklist")
+		return false, fmt.Errorf("CPU does not support TXT - on blacklist"), nil
 	}
 	// Lookup name on Intel
-	return api.ArchitectureTXTSupport()
+	ret, err := api.ArchitectureTXTSupport()
+	if err != nil {
+		return false, nil, err
+	}
+	if ret != true {
+		return false, fmt.Errorf("CPU not supported"), nil
+	}
+	return true, nil, nil
 }
 
 // Check whether chipset supports TXT
-func TestChipsetSupportsTXT() (bool, error) {
-	return false, fmt.Errorf("Unimplemented: Linux disables GETSEC by clearing CR4.SMXE")
+func TestChipsetSupportsTXT() (bool, error, error) {
+	return false, nil, fmt.Errorf("Unimplemented: Linux disables GETSEC by clearing CR4.SMXE")
 }
 
 // Check if the TXT register space is accessible
-func TestTXTRegisterSpaceAccessible() (bool, error) {
+func TestTXTRegisterSpaceAccessible() (bool, error, error) {
 	regs, err := getTxtRegisters()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
-	return regs.Vid == 0x8086, nil
+	if regs.Vid != 0x8086 {
+		return false, fmt.Errorf("TXTRegisterSpace: Unexpected VendorID"), nil
+	}
+
+	if regs.HeapBase == 0x0 {
+		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: HeapBase is 0"), nil
+	}
+
+	if regs.SinitBase == 0x0 {
+		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: SinitBase is 0"), nil
+	}
+
+	if regs.Did == 0x0 {
+		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: DeviceID is 0"), nil
+	}
+	return true, nil, nil
 }
 
 // Check if CPU supports SMX
-func TestSupportsSMX() (bool, error) {
-	return api.HasSMX(), nil
+func TestSupportsSMX() (bool, error, error) {
+	return api.HasSMX(), nil, nil
 }
 
 // Check if CPU supports VMX
-func TestSupportVMX() (bool, error) {
-	return api.HasVMX(), nil
+func TestSupportVMX() (bool, error, error) {
+	return api.HasVMX(), nil, nil
 }
 
 // Check IA_32FEATURE_CONTROL
-func TestIa32FeatureCtrl() (bool, error) {
+func TestIa32FeatureCtrl() (bool, error, error) {
 	vmxInSmx, err := api.AllowsVMXInSMX()
 	if err != nil || !vmxInSmx {
-		return vmxInSmx, err
+		return vmxInSmx, nil, err
 	}
 
 	locked, err := api.IA32FeatureControlIsLocked()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
-	return locked, nil
+	if locked != true {
+		return false, fmt.Errorf("IA32 Feature Control not locked"), nil
+	}
+	return true, nil, nil
 }
 
-func TestSMXIsEnabled() (bool, error) {
-	return false, fmt.Errorf("Unimplemented: no comment")
+func TestSMXIsEnabled() (bool, error, error) {
+	return false, nil, fmt.Errorf("Unimplemented: no comment")
 }
 
 // Check CR4 wherther SMXE is set
@@ -210,53 +235,67 @@ func TestSMXIsEnabled() (bool, error) {
 //}
 
 // Check for needed GETSEC leaves
-func TestHasGetSecLeaves() (bool, error) {
-	return false, fmt.Errorf("Unimplemented: Linux disables GETSEC by clearing CR4.SMXE")
+func TestHasGetSecLeaves() (bool, error, error) {
+	return false, nil, fmt.Errorf("Unimplemented: Linux disables GETSEC by clearing CR4.SMXE")
 }
 
 // Check TXT_DISABLED bit in TXT_ACM_STATUS
-func TestTXTNotDisabled() (bool, error) {
-	return api.TXTLeavesAreEnabled()
+func TestTXTNotDisabled() (bool, error, error) {
+	ret, err := api.TXTLeavesAreEnabled()
+	if err != nil {
+		return false, nil, err
+	}
+	if ret != true {
+		return false, fmt.Errorf("TXT disabled"), nil
+	}
+	return true, nil, nil
 }
 
 // Verify that the IBB has been measured
-func TestIBBMeasured() (bool, error) {
+func TestIBBMeasured() (bool, error, error) {
 	regs, err := getTxtRegisters()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
-	return regs.BootStatus&(1<<62) == 0 && regs.BootStatus&(1<<63) != 0, nil
+	if regs.BootStatus&(1<<62) == 0 && regs.BootStatus&(1<<63) != 0 {
+		return true, nil, nil
+	}
+
+	return false, fmt.Errorf("Bootstatus register incorrect"), nil
 }
 
 // Check that the IBB was deemed trusted
 // Only set in Signed Policy mode
-func TestIBBIsTrusted() (bool, error) {
+func TestIBBIsTrusted() (bool, error, error) {
 	regs, err := getTxtRegisters()
 
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
-	return regs.BootStatus&(1<<59) != 0 && regs.BootStatus&(1<<63) != 0, nil
+	if regs.BootStatus&(1<<59) != 0 && regs.BootStatus&(1<<63) != 0 {
+		return true, nil, nil
+	}
+	return false, fmt.Errorf("IBB not trusted"), err
 }
 
 // Verify that the TXT register space is locked
-func TestTXTRegistersLocked() (bool, error) {
+func TestTXTRegistersLocked() (bool, error, error) {
 	regs, err := getTxtRegisters()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
-	return regs.Sts.PrivateOpen, nil
+	return regs.Sts.PrivateOpen, nil, nil
 }
 
 // Check that the BIOS ACM has no startup error
-func TestNoBIOSACMErrors() (bool, error) {
+func TestNoBIOSACMErrors() (bool, error, error) {
 	regs, err := getTxtRegisters()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
-	return !regs.ErrorCode.ValidInvalid, nil
+	return !regs.ErrorCode.ValidInvalid, nil, nil
 }

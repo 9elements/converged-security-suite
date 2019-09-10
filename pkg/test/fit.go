@@ -180,44 +180,44 @@ func LoadFITFromFile(path string) error {
 	return nil
 } */
 
-func FITVectorIsSet() (bool, error) {
+func FITVectorIsSet() (bool, error, error) {
 	fitvec := make([]byte, 4)
 	err := api.ReadPhysBuf(FITVector, fitvec)
 
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	buf := bytes.NewReader(fitvec)
 	err = binary.Read(buf, binary.LittleEndian, &fitPointer)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	if fitPointer < ValidFitRange {
-		return false, fmt.Errorf("FitPointer must be in ValidFitRange - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 6")
+		return false, fmt.Errorf("FitPointer must be in ValidFitRange - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 6"), nil
 	}
 	if fitPointer >= ResetVector {
-		return false, fmt.Errorf("FitPointer must be smaller than ResetVector - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 6")
+		return false, fmt.Errorf("FitPointer must be smaller than ResetVector - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 6"), nil
 	}
 
-	return true, nil
+	return true, nil, nil
 }
 
-func TestHasFIT() (bool, error) {
+func TestHasFIT() (bool, error, error) {
 	fithdr := make([]byte, 16)
 	err := api.ReadPhysBuf(int64(fitPointer), fithdr)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	hdr, err := api.GetFitHeader(fithdr)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	if int64(fitPointer)+int64(hdr.Size()) > FourGiB {
-		return false, fmt.Errorf("FIT isn't part of 32bit address-space - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 6")
+		return false, fmt.Errorf("FIT isn't part of 32bit address-space - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 6"), nil
 	}
 
 	fitblob := make([]byte, hdr.Size())
@@ -225,16 +225,16 @@ func TestHasFIT() (bool, error) {
 
 	fit, err = api.ExtractFit(fitblob)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	if fit == nil {
-		return false, nil
+		return false, fmt.Errorf("FIT-Error: Referenz is nil"), nil
 	}
-	return true, nil
+	return true, nil, nil
 }
 
-func TestHasBIOSACM() (bool, error) {
+func TestHasBIOSACM() (bool, error, error) {
 	count := 0
 	for _, ent := range fit {
 		if ent.Type() == api.StartUpACMod {
@@ -242,22 +242,22 @@ func TestHasBIOSACM() (bool, error) {
 		}
 	}
 	if count == 0 {
-		return false, fmt.Errorf("Fit has no Startup AC Module Entry, but at least one is required - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 9")
+		return false, fmt.Errorf("Fit has no Startup AC Module Entry, but at least one is required - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 9"), nil
 	}
-	return true, nil
+	return true, nil, nil
 }
 
-func TestHasIBB() (bool, error) {
+func TestHasIBB() (bool, error, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSStartUpMod {
-			return true, nil
+			return true, nil, nil
 		}
 	}
 
-	return false, fmt.Errorf("Fit has no BIOS Startup Module Entry, but at least one is required - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 10")
+	return false, fmt.Errorf("Fit has no BIOS Startup Module Entry, but at least one is required - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 10"), nil
 }
 
-func TestHasBIOSPolicy() (bool, error) {
+func TestHasBIOSPolicy() (bool, error, error) {
 	count := 0
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSPolicyRec {
@@ -265,58 +265,58 @@ func TestHasBIOSPolicy() (bool, error) {
 		}
 	}
 	if count == 0 {
-		return false, fmt.Errorf("Fit has no BIOS Policy Data Record Entry - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 11")
+		return false, fmt.Errorf("Fit has no BIOS Policy Data Record Entry - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 11"), nil
 	}
 
 	if count > 1 {
-		return false, fmt.Errorf("Fit has more than 1 BIOS Policy Data Record Entry, only one is allowed - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 11")
+		return false, fmt.Errorf("Fit has more than 1 BIOS Policy Data Record Entry, only one is allowed - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 11"), nil
 	}
-	return true, nil
+	return true, nil, nil
 }
 
-func TestIBBCoversResetVector() (bool, error) {
+func TestIBBCoversResetVector() (bool, error, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSStartUpMod {
 			coversRv := ent.Address <= ResetVector && ent.Address+uint64(ent.Size()) >= ResetVector+4
 
 			if coversRv {
-				return true, nil
+				return true, nil, nil
 			}
 		}
 	}
 
-	return false, fmt.Errorf("BIOS Startup Module Entry must cover Reset Vector")
+	return false, fmt.Errorf("BIOS Startup Module Entry must cover Reset Vector"), nil
 }
 
-func TestIBBCoversFITVector() (bool, error) {
+func TestIBBCoversFITVector() (bool, error, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSStartUpMod {
 			coversRv := ent.Address <= FITVector && ent.Address+uint64(ent.Size()) >= FITVector+4
 
 			if coversRv {
-				return true, nil
+				return true, nil, nil
 			}
 		}
 	}
 
-	return false, fmt.Errorf("BIOS Startup Module Entry must cover Firmware Interface Table Vector")
+	return false, fmt.Errorf("BIOS Startup Module Entry must cover Firmware Interface Table Vector"), nil
 }
 
-func TestIBBCoversFIT() (bool, error) {
+func TestIBBCoversFIT() (bool, error, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.BIOSStartUpMod {
 			coversRv := ent.Address <= uint64(fitPointer) && ent.Address+uint64(ent.Size()) >= uint64(fitPointer+uint32(len(fit)*16))
 
 			if coversRv {
-				return true, nil
+				return true, nil, nil
 			}
 		}
 	}
 
-	return false, fmt.Errorf("BIOS Startup Module Entry must cover Firmware Interface Table")
+	return false, fmt.Errorf("BIOS Startup Module Entry must cover Firmware Interface Table"), nil
 }
 
-func TestNoIBBOverlap() (bool, error) {
+func TestNoIBBOverlap() (bool, error, error) {
 	for i, ent1 := range fit {
 		if ent1.Type() == api.BIOSStartUpMod {
 			for j, ent2 := range fit {
@@ -325,17 +325,17 @@ func TestNoIBBOverlap() (bool, error) {
 					b := ent2.Address > ent1.Address+uint64(ent1.Size())
 
 					if !a && !b {
-						return false, fmt.Errorf("BIOS Startup Module Entries overlap ")
+						return false, fmt.Errorf("BIOS Startup Module Entries overlap "), nil
 					}
 				}
 			}
 		}
 	}
 
-	return true, nil
+	return true, nil, nil
 }
 
-func TestNoBIOSACMOverlap() (bool, error) {
+func TestNoBIOSACMOverlap() (bool, error, error) {
 	for i, ent1 := range fit {
 		if ent1.Type() == api.BIOSStartUpMod {
 			for j, ent2 := range fit {
@@ -344,95 +344,94 @@ func TestNoBIOSACMOverlap() (bool, error) {
 					b := ent2.Address > ent1.Address+uint64(ent1.Size())
 
 					if !a && !b {
-						return false, fmt.Errorf("Startup AC Module Entries overlap")
+						return false, fmt.Errorf("Startup AC Module Entries overlap"), nil
 					}
 				}
 			}
 		}
 	}
 
-	return true, nil
+	return true, nil, nil
 }
 
-func TestBIOSACMIsBelow4G() (bool, error) {
+func TestBIOSACMIsBelow4G() (bool, error, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.StartUpACMod {
 			if ent.Address+uint64(ent.Size()) > uint64(FourGiB) {
-				return false, fmt.Errorf("Startup AC Module Entry is above 4Gib")
+				return false, fmt.Errorf("Startup AC Module Entry is above 4Gib"), nil
 			}
 		}
 	}
 
-	return true, nil
+	return true, nil, nil
 }
 
-func TestPolicyAllowsTXT() (bool, error) {
+func TestPolicyAllowsTXT() (bool, error, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.TXTPolicyRec {
 			switch ent.Version {
 			case 0:
-				return false, fmt.Errorf("Indexed IO type pointer are not supported - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 11")
+				return false, fmt.Errorf("Indexed IO type pointer are not supported - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 11"), nil
 			case 1:
 				var b api.Uint8
 
 				err := api.ReadPhys(int64(ent.Address), &b)
 				if err != nil {
-					return false, err
+					return false, nil, err
 				}
 
-				return b&1 != 0, nil
+				return b&1 != 0, nil, nil
 			default:
-				return false, fmt.Errorf("Unknown TXT policy record version %d - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 11", ent.Version)
+				return false, fmt.Errorf("Unknown TXT policy record version %d - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 11", ent.Version), nil
 			}
 		}
 	}
 
 	// No record means TXT is enabled
-	return true, nil
+	return true, nil, nil
 }
 
-func TestBIOSACMValid() (bool, error) {
+func TestBIOSACMValid() (bool, error, error) {
 	acm, _, _, _, err := biosACM(fit)
 
-	return acm != nil, err
+	return acm != nil, nil, err
 }
 
-func TestBIOSACMSizeCorrect() (bool, error) {
+func TestBIOSACMSizeCorrect() (bool, error, error) {
 	acm, _, _, _, err := biosACM(fit)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
-	if (acm.Header.HeaderLen*4)%4 != 0 {
-
-		return false, fmt.Errorf("BIOSACM Size is not correct ")
+	if acm.Header.HeaderLen%64 != 0 {
+		return false, fmt.Errorf("BIOSACM Size is not correct "), nil
 	}
-	return true, nil
-
+	return true, nil, nil
 }
 
-func TestBIOSACMAlignmentCorrect() (bool, error) {
+func TestBIOSACMAlignmentCorrect() (bool, error, error) {
 	for _, ent := range fit {
 		if ent.Type() == api.StartUpACMod {
-			return ent.Address%(128*1024) == 0, nil
+			return ent.Address%(128*1024) == 0, nil, nil
 		}
 	}
 
-	return false, fmt.Errorf("no BIOS ACM in FIT")
+	return false, fmt.Errorf("no BIOS ACM in FIT"), nil
 }
 
-func TestBIOSACMMatchesChipset() (bool, error) {
+func TestBIOSACMMatchesChipset() (bool, error, error) {
 	_, chp, _, _, err := biosACM(fit)
+
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 	txt, err := api.ParseTXTRegs(buf)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	for _, ch := range chp.IDList {
@@ -442,29 +441,29 @@ func TestBIOSACMMatchesChipset() (bool, error) {
 		if a && b {
 			if ch.Flags&1 != 0 {
 				if ch.RevisionID&txt.Rid > 0 {
-					return true, nil
+					return true, nil, nil
 				}
 			} else {
 				if ch.RevisionID == txt.Rid {
-					return true, nil
+					return true, nil, nil
 				}
 			}
 		}
 	}
 
-	return false, fmt.Errorf("BIOS StartUp Module and Chipset doens't match")
+	return false, fmt.Errorf("BIOS StartUp Module and Chipset doens't match"), nil
 }
 
-func TestBIOSACMMatchesCPU() (bool, error) {
+func TestBIOSACMMatchesCPU() (bool, error, error) {
 	_, _, cpus, _, err := biosACM(fit)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	// IA32_PLATFORM_ID
 	platform, err := api.IA32PlatformID()
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	fms := api.CPUSignature()
@@ -474,11 +473,11 @@ func TestBIOSACMMatchesCPU() (bool, error) {
 		b := platform&cpu.PlatformMask == cpu.PlatformID
 
 		if a && b {
-			return true, nil
+			return true, nil, nil
 		}
 	}
 
-	return false, fmt.Errorf("BIOS Startup Module and CPU doesn't match")
+	return false, fmt.Errorf("BIOS Startup Module and CPU doesn't match"), nil
 }
 
 func biosACM(fit []api.FitEntry) (*api.ACM, *api.Chipsets, *api.Processors, *api.TPMs, error) {

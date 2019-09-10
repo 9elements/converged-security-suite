@@ -33,9 +33,14 @@ func (t TestResult) String() string {
 }
 
 type Test struct {
-	Name         string
-	Required     bool
-	function     func() (bool, error)
+	Name     string
+	Required bool
+	//testerror: If test fails and returns an testerror -> test failure
+	//internalerror: If test fails and returns an internalerror
+	//-> mostly api errors, but not directly testrelated problem.
+	//The return call in test functions shall return only one of the errors,
+	//while the other is nil.
+	function     func() (bool, error, error)
 	Result       TestResult
 	dependencies []*Test
 	ErrorText    string
@@ -61,8 +66,14 @@ func (self *Test) Run() bool {
 	}
 
 	if DepsPassed {
+		var err error
 		// Now run the test itself
-		rc, err := self.function()
+		rc, testerror, internalerror := self.function()
+		if testerror != nil && internalerror == nil {
+			err = testerror
+		} else if testerror == nil && internalerror != nil {
+			err = internalerror
+		}
 		if err != nil {
 			self.ErrorText = err.Error()
 			self.Result = ResultFail
