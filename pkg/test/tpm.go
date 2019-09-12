@@ -192,8 +192,14 @@ func TestPSIndexIsSet() (bool, error, error) {
 func TestAUXIndexIsSet() (bool, error, error) {
 	if tpm12Connection != nil {
 		buf, err := tpm1.NVReadValueNoAuth(*tpm12Connection, auxIndex, 0, 1)
+		if err != nil {
+			return false, nil, err
+		}
+		if len(buf) != 1 {
+			return false, fmt.Errorf("TPM AUX Index not set"), nil
+		}
 
-		return len(buf) == 1, err, nil
+		return true, nil, nil
 	} else if tpm20Connection != nil {
 		meta, err := tpm2.NVReadPublic(*tpm20Connection, auxIndex)
 		if err != nil {
