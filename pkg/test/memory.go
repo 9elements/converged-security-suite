@@ -48,7 +48,7 @@ var (
 	}
 	testsinitintxt = Test{
 		Name:     "TXT region contains SINIT ACM",
-		Required: true,
+		Required: false,
 		function: TestSINITInTXT,
 		Status:   TestImplemented,
 	}
