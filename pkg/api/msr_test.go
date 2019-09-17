@@ -5,6 +5,7 @@ import (
 )
 
 func TestSMRR(t *testing.T) {
+	t.Skip()
 	has, err := HasSMRR()
 	if err != nil {
 		t.Errorf("HasSMRR() failed: %v", err)
