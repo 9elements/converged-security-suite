@@ -286,8 +286,7 @@ func lookupIOLegacy(addr, rootTblAddr uint64) ([]uint64, error) {
 }
 
 func lookupIOScalable(addr, rootTblAddr uint64) ([]uint64, error) {
-	panic("Scalable IOMMU not implemented")
-	return []uint64{}, nil
+	return []uint64{}, fmt.Errorf("Scalable IOMMU not implemented")
 	// read root table entry
 
 	// read ctx entry

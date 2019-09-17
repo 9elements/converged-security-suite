@@ -19,12 +19,12 @@ func TestSMRR(t *testing.T) {
 			t.Errorf("GetSMRRInfo() failed: %v", err)
 		}
 
-		if got.active != (got.phys_base != 0 && got.phys_mask != 0) {
+		if got.Active != (got.PhysBase != 0 && got.PhysMask != 0) {
 			t.Error("Invalid SMRR config.")
 		}
 
-		if got.active {
-			t.Logf("SMRR is active. PHYS_BASE: %x, PHYS_MASK: %x", got.phys_base, got.phys_mask)
+		if got.Active {
+			t.Logf("SMRR is active. PHYS_BASE: %x, PHYS_MASK: %x", got.PhysBase, got.PhysMask)
 		} else {
 			t.Log("SMRR is not active")
 		}

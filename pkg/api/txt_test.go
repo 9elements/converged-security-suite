@@ -5,7 +5,7 @@ import (
 )
 
 func TestTXT(t *testing.T) {
-	got, err := ReadTXTRegs()
+	got, err := FetchTXTRegs()
 
 	if err != nil {
 		t.Errorf("ReadTXTRegs() failed: %v", err)
