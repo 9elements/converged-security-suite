@@ -1,13 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"sort"
-	"fmt"
-	"bufio"
 
 	"github.com/9elements/txt-suite/pkg/test"
 	a "github.com/logrusorgru/aurora"

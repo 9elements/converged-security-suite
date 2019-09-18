@@ -10,6 +10,9 @@ Build Status
 -----------
 [![CircleCI](https://circleci.com/gh/9elements/txt-suite.svg?style=svg)](https://circleci.com/gh/9elements/txt-suite)
 
+
+Using Go Modules => needs GO Version >= 1.11
+
 Usage
 -----
 
@@ -37,12 +40,28 @@ Stop the *tpm2-abrmd.service* if running:
 systemctl stop tpm2-abrmd.service
 ```
 
-There are currently no dependencies required.
+For GO 1.11 you need to:
+```
+export GO111MODULE=on
+```
+or set it in front of every go command.
+This environment variable activates modules for GO 1.11
+
+
+To download all dependencies run:
+```
+<GO111MODULE=on> go mod download
+```
+
+Verify all downloaded dependencies run:
+```
+<GO111MODULE=on> go mod verify
+```
 
 To build the test suite run:
 
-```bash
-go build -o txt-suite cmd/txt-suite/*.go
+```
+<GO111MODULE=on> go build -o txt-suite cmd/txt-suite/*.go
 ```
 
 Run it as root:

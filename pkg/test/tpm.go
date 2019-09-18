@@ -149,7 +149,7 @@ func TestTPMIsLocked() (bool, error, error) {
 	if tpm12Connection != nil {
 		flags, err := tpm1.GetPermanentFlags(*tpm12Connection)
 
-		return flags.NvLocked, err, nil
+		return flags.NVLocked, err, nil
 	} else if tpm20Connection != nil {
 		return false, nil, fmt.Errorf("Unimplemented: TPM 2.0")
 	} else {
@@ -160,7 +160,7 @@ func TestTPMIsLocked() (bool, error, error) {
 // TPM NVRAM has a valid PS index
 func TestPSIndexIsSet() (bool, error, error) {
 	if tpm12Connection != nil {
-		data, err := tpm1.NVReadValueNoAuth(*tpm12Connection, psIndex, 0, 54)
+		data, err := tpm1.NVReadValue(*tpm12Connection, psIndex, 0, 54, nil)
 		if err != nil {
 			return false, nil, err
 		}
@@ -191,7 +191,7 @@ func TestPSIndexIsSet() (bool, error, error) {
 // TPM NVRAM has a valid AUX index
 func TestAUXIndexIsSet() (bool, error, error) {
 	if tpm12Connection != nil {
-		buf, err := tpm1.NVReadValueNoAuth(*tpm12Connection, auxIndex, 0, 1)
+		buf, err := tpm1.NVReadValue(*tpm12Connection, auxIndex, 0, 1, nil)
 		if err != nil {
 			return false, nil, err
 		}
@@ -220,7 +220,7 @@ func TestLCPPolicyIsValid() (bool, error, error) {
 	var err error
 
 	if tpm12Connection != nil {
-		data, err = tpm1.NVReadValueNoAuth(*tpm12Connection, psIndex, 0, 54)
+		data, err = tpm1.NVReadValue(*tpm12Connection, psIndex, 0, 54, nil)
 
 		if err != nil {
 			return false, nil, err

@@ -6,7 +6,7 @@ jobs:
   build:
     docker:
       # specify the version
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.13
 
     working_directory: /go/src/github.com/9elements/txt-suite
     steps:
@@ -16,8 +16,10 @@ jobs:
       - run: gofmt -e ./pkg/api/
       - run: gofmt -e ./pkg/test/
       - run: gofmt -e ./cmd/txt-suite/
-      - run: go test ./pkg/api/
+      - run: go mod download
+      - run: go mod verify
       - run: go build -o txt-suite cmd/txt-suite/*.go
+      - run: go test ./pkg/api/
       - run: mkdir out
       - run: cp txt-suite out/
 
