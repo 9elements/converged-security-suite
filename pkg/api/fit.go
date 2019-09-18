@@ -133,11 +133,11 @@ func GetFitHeader(data []byte) (FitEntry, error) {
 	}
 
 	if hdr.Address != type0MagicWord {
-		return hdr, fmt.Errorf("FIT: magic word wrong")
+		return hdr, fmt.Errorf("FIT: magic word wrong - See: Firmware Interface Table - BIOS Specification, Document: 338505-001, P.8")
 	}
 
 	if hdr.Type() != 0 {
-		return hdr, fmt.Errorf("FIT: first entry not of type 0")
+		return hdr, fmt.Errorf("FIT: first entry not of type 0 - See: Firmware Interface Table - BIOS Specification, Document: 338505-001, P.8")
 	}
 
 	if hdr.Size() == 0 {
@@ -179,7 +179,7 @@ func ExtractFit(data []byte) ([]FitEntry, error) {
 	var lasttype int = 0
 	for i, _ := range fitTable {
 		if int(fitTable[i].Type()) < lasttype {
-			return nil, fmt.Errorf("FIT: Entries aren't sorted")
+			return nil, fmt.Errorf("FIT: Entries aren't sorted - See: Firmware Interface Table - BIOS Specification, Document: 338505-001, P.8")
 		}
 		lasttype = int(fitTable[i].Type())
 	}
