@@ -49,14 +49,6 @@
   version = "v2.0"
 
 [[projects]]
-  digest = "1:d9035f1a767137be526beb2956930c8e0395231719f441cdb27a1a29949849ea"
-  name = "github.com/u-root/u-root"
-  packages = ["pkg/ubinary"]
-  pruneopts = ""
-  revision = "9b13d3a77a1436b6f58eb2e0638067f5b04ef1e9"
-  version = "v5.0.0"
-
-[[projects]]
   branch = "master"
   digest = "1:955694a7c42527d7fb188505a22f10b3e158c6c2cf31fe64b1e62c9ab7b18401"
   name = "golang.org/x/net"
@@ -110,7 +102,6 @@
     "github.com/google/go-tpm/tpm2",
     "github.com/intel-go/cpuid",
     "github.com/logrusorgru/aurora",
-    "github.com/u-root/u-root/pkg/ubinary",
     "gopkg.in/resty.v1",
   ]
   solver-name = "gps-cdcl"

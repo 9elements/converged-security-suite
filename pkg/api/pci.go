@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-
-	"github.com/u-root/u-root/pkg/ubinary"
 )
 
 func PCIReadConfigSpace(bus int, device int, dev_fn int, off int, buf []byte) error {
@@ -23,7 +21,7 @@ func PCIReadConfigSpace(bus int, device int, dev_fn int, off int, buf []byte) er
 	if _, err := f.Seek(int64(off), io.SeekStart); err != nil {
 		return err
 	}
-	return binary.Read(f, ubinary.NativeEndian, buf)
+	return binary.Read(f, binary.LittleEndian, buf)
 }
 
 func PCIReadConfig16(bus int, device int, dev_fn int, off int) (uint16, error) {

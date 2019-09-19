@@ -12,8 +12,6 @@ import (
 	"io"
 	"os"
 	"unsafe"
-
-	"github.com/u-root/u-root/pkg/ubinary"
 )
 
 const memPath = "/dev/mem"
@@ -138,7 +136,7 @@ func pathRead(path string, addr int64, data UintN) error {
 	if _, err := f.Seek(addr, io.SeekCurrent); err != nil {
 		return err
 	}
-	return binary.Read(f, ubinary.NativeEndian, data)
+	return binary.Read(f, binary.LittleEndian, data)
 }
 
 // Read reads data from physical memory at address addr. On x86 platforms,
@@ -157,7 +155,7 @@ func ReadPhysBuf(addr int64, buf []byte) error {
 	if _, err := f.Seek(addr, io.SeekCurrent); err != nil {
 		return err
 	}
-	return binary.Read(f, ubinary.NativeEndian, buf)
+	return binary.Read(f, binary.LittleEndian, buf)
 }
 
 func pathWrite(path string, addr int64, data UintN) error {
@@ -170,7 +168,7 @@ func pathWrite(path string, addr int64, data UintN) error {
 	if _, err := f.Seek(addr, io.SeekCurrent); err != nil {
 		return err
 	}
-	return binary.Write(f, ubinary.NativeEndian, data)
+	return binary.Write(f, binary.LittleEndian, data)
 }
 
 // Write writes data to physical memory at address addr. On x86 platforms, this
