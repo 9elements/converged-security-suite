@@ -134,6 +134,13 @@ var (
 		dependencies: []*Test{&testhasfit, &testhasbiosacm},
 		Status:       TestImplemented,
 	}
+	testbiosacmmatcheschipsetdebug = Test{
+		Name:         "BIOSACM matches chipset in debug mode",
+		Required:     false,
+		function:     TestBiosACMMatchesChipsetDebug,
+		dependencies: []*Test{&testbiosacmmatcheschipset},
+		Status:       TestImplemented,
+	}
 	testbiosacmmatchescpu = Test{
 		Name:         "BIOSACM matches processor",
 		Required:     true,
@@ -158,6 +165,7 @@ var (
 		&testbiosacmsizecorrect,
 		&testbiosacmaligmentcorrect,
 		&testbiosacmmatcheschipset,
+		&testbiosacmmatcheschipsetdebug,
 		&testbiosacmmatchescpu,
 	}
 )
@@ -454,6 +462,36 @@ func TestBIOSACMMatchesChipset() (bool, error, error) {
 	return false, fmt.Errorf("BIOS StartUp Module and Chipset doens't match"), nil
 }
 
+func TestBiosACMMatchesChipsetDebug() (bool, error, error) {
+	acm, _, _, _, err := biosACM(fit)
+	var chflag uint32
+	if err != nil {
+		return false, nil, err
+	}
+	buf, err := api.FetchTXTRegs()
+	if err != nil {
+		return false, nil, err
+	}
+	txt, err := api.ParseTXTRegs(buf)
+	if err != nil {
+		return false, nil, err
+	}
+
+	chflag = txt.FsbIf
+
+	if txt.FsbIf&uint32(0) == 0 || txt.FsbIf&uint32(0xFFFFFFFF) == 0xFFFFFFFF {
+		chflag = txt.QpiIf
+	}
+
+	if (acm.Header.Flags&api.ACMDebug>>15) != 1 && (chflag&uint32(0x0)>>31) == 0 {
+		return false, fmt.Errorf("BIOS ACM is not in debug, but Chipset is debug fused"), nil
+	} else if (acm.Header.Flags&api.ACMDebug>>15) == 1 && (chflag&uint32(0x0)) != 0 {
+		return false, fmt.Errorf("BIOS ACM is for debug, but Chipset is not debug fused"), nil
+	} else if (acm.Header.Flags&api.ACMDebug>>15) == 1 && (chflag&uint32(0x0)>>31) == 0 {
+		return true, nil, nil
+	}
+	return false, fmt.Errorf("BIOS ACM and Chipset aren't in debug mode/fuse"), nil
+}
 func TestBIOSACMMatchesCPU() (bool, error, error) {
 	_, _, cpus, _, err := biosACM(fit)
 	if err != nil {

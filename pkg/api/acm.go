@@ -16,6 +16,9 @@ const (
 	ACMTypeChipset           uint16 = 0x02
 	ACMSubTypeReset          uint16 = 0x01
 	ACMVendorIntel           uint32 = 0x8086
+	ACMProduction            uint16 = 0x0000
+	ACMPreProduction         uint16 = 0x4000
+	ACMDebug                 uint16 = 0x8000
 	TPMExtPolicyIllegal      uint8  = 0x00
 	TPMExtPolicyAlgAgile     uint8  = 0x01
 	TPMExtPolicyEmbeddedAlgs uint8  = 0x10

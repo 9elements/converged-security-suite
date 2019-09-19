@@ -125,25 +125,26 @@ The test suite implements the following tests.
 | 34 | BIOSACM size check                               | :white_check_mark:     |
 | 35 | BIOSACM alignment check                          | :white_check_mark:     |
 | 36 | BIOSACM matches chipset                          | :white_check_mark:     |
-| 37 | BIOSACM matches processor                        | :white_check_mark:     |
-| 38 | TXT memory ranges valid                          | :white_check_mark:     |
-| 39 | TXT memory reserved in e820                      | :white_check_mark:     |
-| 40 | TXT memory in a DMA protected range              | :white_check_mark:     |
-| 41 | TXT DPR register locked                          | :white_check_mark:     |
-| 42 | CPU DMA protected range equals hostbridge DPR    | :white_check_mark:     |
-| 43 | CPU hostbridge DPR register locked               | :white_check_mark:     |
-| 44 | TXT region contains SINIT ACM                    | :white_check_mark:     |
-| 45 | SINIT ACM matches chipset                        | :white_check_mark:     |
-| 46 | SINIT ACM matches CPU                            | :white_check_mark:     |
-| 47 | SINIT ACM startup successful                     | :white_check_mark:     |
-| 48 | BIOS DATA REGION present                         | :white_check_mark:     |
-| 49 | BIOS DATA REGION valid                           | :white_check_mark:     |
-| 50 | BIOS DATA NumLogProcs valid                      | :white_check_mark:     |
-| 51 | CPU supports memory type range registers         | :white_check_mark:     |
-| 52 | CPU supports system management range registers   | :white_check_mark:     |
-| 53 | SMRR covers SMM memory                           | :white_check_mark:     |
-| 54 | SMRR protection active                           | :white_check_mark:     |
-| 55 | IOMMU/VT-d active                                | :white_check_mark:     |
-| 56 | TBOOT hypervisor active                          | :x:                    |
-| 57 | TXT server mode enabled                          | :white_check_mark:     |
-| 58 | FSB interface release fused                      | :x:                    |
+| 37 | BIOSACM and chipset are for debug                | :white_check_mark:     |
+| 38 | BIOSACM matches processor                        | :white_check_mark:     |
+| 39 | TXT memory ranges valid                          | :white_check_mark:     |
+| 40 | TXT memory reserved in e820                      | :white_check_mark:     |
+| 41 | TXT memory in a DMA protected range              | :white_check_mark:     |
+| 42 | TXT DPR register locked                          | :white_check_mark:     |
+| 43 | CPU DMA protected range equals hostbridge DPR    | :white_check_mark:     |
+| 44 | CPU hostbridge DPR register locked               | :white_check_mark:     |
+| 45 | TXT region contains SINIT ACM                    | :white_check_mark:     |
+| 46 | SINIT ACM matches chipset                        | :white_check_mark:     |
+| 47 | SINIT ACM matches CPU                            | :white_check_mark:     |
+| 48 | SINIT ACM startup successful                     | :white_check_mark:     |
+| 49 | BIOS DATA REGION present                         | :white_check_mark:     |
+| 50 | BIOS DATA REGION valid                           | :white_check_mark:     |
+| 51 | BIOS DATA NumLogProcs valid                      | :white_check_mark:     |
+| 52 | CPU supports memory type range registers         | :white_check_mark:     |
+| 53 | CPU supports system management range registers   | :white_check_mark:     |
+| 54 | SMRR covers SMM memory                           | :white_check_mark:     |
+| 55 | SMRR protection active                           | :white_check_mark:     |
+| 56 | IOMMU/VT-d active                                | :white_check_mark:     |
+| 57 | TBOOT hypervisor active                          | :x:                    |
+| 58 | TXT server mode enabled                          | :white_check_mark:     |
+| 59 | FSB interface release fused                      | :x:                    |
