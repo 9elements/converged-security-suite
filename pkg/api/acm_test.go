@@ -4,17 +4,41 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/9elements/txt-suite/pkg/api"
 )
+
+func TestParseandValidateACMHeader(t *testing.T) {
+	file, err := ioutil.ReadFile("./tests/sinit_acm.bin")
+	if err != nil {
+		t.Errorf("Failed to read file: %v", err)
+	}
+
+	header, err := api.ParseACMHeader(file)
+	if err != nil {
+		t.Errorf("ParseACMHeader() failed: %v", err)
+	}
+
+	valid, err := api.ValidateACMHeader(header)
+	if err != nil {
+		t.Errorf("ValidateACMHeader() failed: %v", err)
+	}
+	if !valid {
+		t.Errorf("ValidateACMHeader() failed to validate the ACMHeader")
+	}
+
+        header.PrettyPrint()
+}
 
 func TestACMParser(t *testing.T) {
 	file, err := ioutil.ReadFile("./tests/sinit_acm.bin")
 	if err != nil {
-		t.Errorf("ACMParser() failed: %v", err)
+		t.Errorf("Failed to read file: %v", err)
 	}
 
-	acm, chipsets, processors, tpms, err := ParseACM(file)
+	acm, chipsets, processors, tpms, err := api.ParseACM(file)
 	if err != nil {
-		t.Errorf("ACMParser() failed: %v", err)
+		t.Errorf("ParseACM() failed: %v", err)
 	}
 
 	acm.PrettyPrint()
@@ -26,9 +50,9 @@ func TestACMParser(t *testing.T) {
 func TestACMSize(t *testing.T) {
 	file, err := ioutil.ReadFile("./tests/sinit_acm.bin")
 	if err != nil {
-		t.Errorf("ACMSize() failed: %v", err)
+		t.Errorf("Failed to read file: %v", err)
 	}
-	size, err := LookupSize(file)
+	size, err := api.LookupSize(file)
 	if err != nil {
 		t.Errorf("ACMSize() failed: %v", err)
 	}
@@ -48,7 +72,7 @@ func TestACMParser2(t *testing.T) {
 		t.Errorf("ACMParser() failed: %v", err)
 	}
 
-	acm, chipsets, processors, tpms, err := ParseACM(file)
+	acm, chipsets, processors, tpms, err := api.ParseACM(file)
 	if err != nil {
 		t.Errorf("ACMParser() failed: %v", err)
 	}
@@ -64,7 +88,7 @@ func TestACMSize2(t *testing.T) {
 	if err != nil {
 		t.Errorf("ACMSize() failed: %v", err)
 	}
-	size, err := LookupSize(file)
+	size, err := api.LookupSize(file)
 	if err != nil {
 		t.Errorf("ACMSize() failed: %v", err)
 	}
