@@ -4,8 +4,6 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
-
-	"github.com/9elements/txt-suite/pkg/api"
 )
 
 func TestParseandValidateACMHeader(t *testing.T) {
@@ -14,12 +12,12 @@ func TestParseandValidateACMHeader(t *testing.T) {
 		t.Errorf("Failed to read file: %v", err)
 	}
 
-	header, err := api.ParseACMHeader(file)
+	header, err := ParseACMHeader(file)
 	if err != nil {
 		t.Errorf("ParseACMHeader() failed: %v", err)
 	}
 
-	valid, err := api.ValidateACMHeader(header)
+	valid, err := ValidateACMHeader(header)
 	if err != nil {
 		t.Errorf("ValidateACMHeader() failed: %v", err)
 	}
@@ -27,7 +25,7 @@ func TestParseandValidateACMHeader(t *testing.T) {
 		t.Errorf("ValidateACMHeader() failed to validate the ACMHeader")
 	}
 
-        header.PrettyPrint()
+	header.PrettyPrint()
 }
 
 func TestACMParser(t *testing.T) {
@@ -36,7 +34,7 @@ func TestACMParser(t *testing.T) {
 		t.Errorf("Failed to read file: %v", err)
 	}
 
-	acm, chipsets, processors, tpms, err := api.ParseACM(file)
+	acm, chipsets, processors, tpms, err := ParseACM(file)
 	if err != nil {
 		t.Errorf("ParseACM() failed: %v", err)
 	}
@@ -52,7 +50,7 @@ func TestACMSize(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to read file: %v", err)
 	}
-	size, err := api.LookupSize(file)
+	size, err := LookupSize(file)
 	if err != nil {
 		t.Errorf("ACMSize() failed: %v", err)
 	}
@@ -72,7 +70,7 @@ func TestACMParser2(t *testing.T) {
 		t.Errorf("ACMParser() failed: %v", err)
 	}
 
-	acm, chipsets, processors, tpms, err := api.ParseACM(file)
+	acm, chipsets, processors, tpms, err := ParseACM(file)
 	if err != nil {
 		t.Errorf("ACMParser() failed: %v", err)
 	}
@@ -88,7 +86,7 @@ func TestACMSize2(t *testing.T) {
 	if err != nil {
 		t.Errorf("ACMSize() failed: %v", err)
 	}
-	size, err := api.LookupSize(file)
+	size, err := LookupSize(file)
 	if err != nil {
 		t.Errorf("ACMSize() failed: %v", err)
 	}

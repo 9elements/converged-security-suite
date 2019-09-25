@@ -174,7 +174,7 @@ func ExtractFit(data []byte) ([]FitEntry, error) {
 		if cksum != 0 {
 			return nil, fmt.Errorf("FIT: Checksum of FIT is invalid")
 		}
-        }
+	}
 
 	var lasttype int = 0
 	for i, _ := range fitTable {
