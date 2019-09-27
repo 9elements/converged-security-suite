@@ -10,7 +10,7 @@ func NVReadAll(conn io.ReadWriteCloser, index uint32) []byte {
 	ret := []byte{}
 
 	for i := uint32(0); ; i += 1 {
-		b, err := tpm1.NVReadValueNoAuth(conn, index, i, 1)
+		b, err := tpm1.NVReadValue(conn, index, i, 1, nil)
 		if err != nil {
 			return ret
 		}
