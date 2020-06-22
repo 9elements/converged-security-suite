@@ -1,9 +1,7 @@
-package test
+package api
 
 import (
 	"strings"
-
-	"github.com/9elements/txt-suite/pkg/api"
 )
 
 type brandNameMetaBl struct {
@@ -1023,7 +1021,7 @@ var (
 )
 
 func CPUBlacklistTXTSupport() bool {
-	cpuName := api.ProcessorBrandName()
+	cpuName := ProcessorBrandName()
 
 	for i := range TXTUnSupportedCPUs {
 		if TXTUnSupportedCPUs[i].xeon && !strings.Contains(cpuName, "Xeon") {

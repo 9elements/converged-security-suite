@@ -47,14 +47,14 @@ func run() bool {
 			}
 		}
 
-		if !tests[idx].Run() && tests[idx].Required && !stayAlive() {
+		if !tests[idx].Run() && tests[idx].Required && flagInteractive() {
 			result = true
 			break
 		}
 
 	}
 
-	if stayAlive() {
+	if !flagInteractive() {
 		var t []temptest
 		for index, _ := range tests {
 			if tests[index].Status != test.TestNotImplemented {
@@ -78,6 +78,8 @@ func run() bool {
 
 		if tests[index].Result == test.ResultPass {
 			fmt.Printf("%-20s\n", a.Bold(a.Green(tests[index].Result)))
+		} else if tests[index].Result == test.ResultWarn {
+			fmt.Printf("%-20s\n", a.Bold(a.Yellow(tests[index].Result)))
 		} else {
 			fmt.Printf("%-20s\n", a.Bold(a.Red(tests[index].Result)))
 		}

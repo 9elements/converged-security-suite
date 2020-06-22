@@ -11,7 +11,7 @@ import (
 )
 
 var testno = flag.String("t", "", "Select test number 1 - 50. e.g.: -t=1,2,3,4,...")
-var keeprunning = flag.Bool("i", false, "Errors will not stop the testing. Tests will keep going.")
+var interactive = flag.Bool("i", false, "Interactive mode. Errors will stop the testing.")
 var help = flag.Bool("h", false, "Shows help")
 var listtests = flag.Bool("l", false, "Lists all test")
 var teststomarkdown = flag.Bool("m", false, "Output test implementation state as Markdown")
@@ -23,8 +23,8 @@ func flagUsed() bool {
 	return testno != nil
 }
 
-func stayAlive() bool {
-	return *keeprunning
+func flagInteractive() bool {
+	return *interactive
 }
 
 func showVersion() {

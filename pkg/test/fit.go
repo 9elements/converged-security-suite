@@ -53,6 +53,7 @@ var (
 	testhaslcpTest = Test{
 		Name:         "LCP Policy entry in FIT",
 		Required:     false,
+		NonCritical:  true,
 		function:     TestHasBIOSPolicy,
 		dependencies: []*Test{&testhasfit},
 		Status:       TestImplemented,
@@ -403,7 +404,7 @@ func TestBIOSACMSizeCorrect() (bool, error, error) {
 		return false, nil, err
 	}
 
-	if acm.Header.HeaderLen%64 != 0 {
+	if acm.Header.Size%64 != 0 {
 		return false, fmt.Errorf("BIOSACM Size is not correct "), nil
 	}
 	return true, nil, nil

@@ -67,10 +67,11 @@ var (
 		Status:       TestImplemented,
 	}
 	testnosiniterrors = Test{
-		Name:     "SINIT ACM startup successful",
-		Required: false,
-		function: TestNoSINITErrors,
-		Status:   TestImplemented,
+		Name:        "SINIT ACM startup successful",
+		Required:    false,
+		NonCritical: true,
+		function:    TestNoSINITErrors,
+		Status:      TestImplemented,
 	}
 	testbiosdataregionpresent = Test{
 		Name:     "BIOS DATA REGION present",
@@ -82,13 +83,6 @@ var (
 		Name:         "BIOS DATA REGION valid",
 		Required:     true,
 		function:     TestBIOSDATAREGIONValid,
-		dependencies: []*Test{&testbiosdataregionpresent},
-		Status:       TestImplemented,
-	}
-	testbiosdatanumlogprocsvalid = Test{
-		Name:         "BIOS DATA NumLogProcs valid",
-		Required:     false,
-		function:     TestBIOSDATANumLogProcsValid,
 		dependencies: []*Test{&testbiosdataregionpresent},
 		Status:       TestImplemented,
 	}
@@ -157,7 +151,6 @@ var (
 		&testnosiniterrors,
 		&testbiosdataregionpresent,
 		&testbiosdataregionvalid,
-		&testbiosdatanumlogprocsvalid,
 		&testhasmtrr,
 		&testhassmrr,
 		&testvalidsmrr,
@@ -173,7 +166,7 @@ var (
 	biosdata api.TXTBiosData
 	//Heapsize from newer spec - Document 575623
 	minHeapSize  = uint32(0xF0000)
-	minSinitSize = uint32(0x50000)
+	minSinitSize = uint32(0x10000)
 	//Heapsize reduced for legacy spec - Document 558294
 	legacyMinHeapSize = uint32(0xE0000)
 )
@@ -507,13 +500,6 @@ func TestBIOSDATAREGIONValid() (bool, error, error) {
 
 	if biosdata.NumLogProcs == 0 {
 		return false, fmt.Errorf("BIOS DATA region corrupted"), nil
-	}
-	return true, nil, nil
-}
-
-func TestBIOSDATANumLogProcsValid() (bool, error, error) {
-	if biosdata.NumLogProcs != api.CPULogCount() {
-		return false, fmt.Errorf("Logical CPU count in BIOSData and CPUID doesn't match"), nil
 	}
 	return true, nil, nil
 }

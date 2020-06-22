@@ -94,6 +94,7 @@ var (
 		Name:         "IBB is trusted",
 		function:     TestIBBIsTrusted,
 		Required:     false,
+		NonCritical:  true,
 		dependencies: []*Test{&testtxtregisterspaceaccessible},
 		Status:       TestImplemented,
 	}
@@ -150,19 +151,11 @@ func TestWeybridgeOrLater() (bool, error, error) {
 
 // Check if the CPU supports TXT
 func TestCPUSupportsTXT() (bool, error, error) {
-	if CPUWhitelistTXTSupport() {
+	if api.CPUWhitelistTXTSupport() {
 		return true, nil, nil
 	}
-	if CPUBlacklistTXTSupport() {
+	if api.CPUBlacklistTXTSupport() {
 		return false, fmt.Errorf("CPU does not support TXT - on blacklist"), nil
-	}
-	// Lookup name on Intel
-	ret, err := api.ArchitectureTXTSupport()
-	if err != nil {
-		return false, nil, err
-	}
-	if ret != true {
-		return false, fmt.Errorf("CPU not supported"), nil
 	}
 	return true, nil, nil
 }
