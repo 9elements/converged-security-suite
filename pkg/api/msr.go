@@ -2,15 +2,17 @@ package api
 
 import (
 	"fmt"
+
 	"github.com/fearful-symmetry/gomsr"
 )
 
 //Model specific registers
 const (
-	msrSMRRPhysBase   int64 = 0x1F2
-	msrSMRRPhysMask   int64 = 0x1F3
-	msrFeatureControl int64 = 0x3A
-	msrPlatformID     int64 = 0x17
+	msrSMRRPhysBase       int64 = 0x1F2
+	msrSMRRPhysMask       int64 = 0x1F3
+	msrFeatureControl     int64 = 0x3A
+	msrPlatformID         int64 = 0x17
+	msrIA32DebugInterface int64 = 0xC80
 )
 
 func HasSMRR() (bool, error) {
@@ -86,4 +88,16 @@ func TXTLeavesAreEnabled() (bool, error) {
 
 	txt_bits := (featCtrl >> 8) & 0x1ff
 	return (txt_bits&0xff == 0xff) || (txt_bits&0x100 == 0x100), nil
+}
+
+func IA32DebugInterfaceEnabledOrLocked() (bool, bool, bool, error) {
+	debugInterfaceCtrl, err := gomsr.ReadMSR(0, msrIA32DebugInterface)
+	if err != nil {
+		return false, false, false, fmt.Errorf("Cannot access MSR IA32_DEBUG_INTERFACE: %s", err)
+	}
+
+	locked := (debugInterfaceCtrl>>0)&1 != 0
+	pchStrap := (debugInterfaceCtrl>>30)&1 != 0
+	enabled := (debugInterfaceCtrl>>31)&1 != 0
+	return locked, pchStrap, enabled, nil
 }
