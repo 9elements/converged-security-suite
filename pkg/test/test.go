@@ -9,6 +9,7 @@ const (
 	ResultDependencyFailed
 	ResultInternalError
 	ResultFail
+	ResultWarn
 	ResultPass
 )
 
@@ -30,7 +31,7 @@ func (t TestStatus) String() string {
 	return [...]string{"Implemented", "Not implemented", "Partly implemented"}[t]
 }
 func (t TestResult) String() string {
-	return [...]string{"TESTNOTRUN", "DEPENDENCY_FAILED", "INTERNAL_ERROR", "FAIL", "PASS"}[t]
+	return [...]string{"TESTNOTRUN", "DEPENDENCY_FAILED", "INTERNAL_ERROR", "FAIL", "WARN", "PASS"}[t]
 }
 
 type Test struct {
@@ -47,6 +48,7 @@ type Test struct {
 	ErrorText    string
 	Status       TestStatus
 	Spec         TXTSpec
+	NonCritical  bool
 }
 
 func (self *Test) Run() bool {
@@ -74,7 +76,11 @@ func (self *Test) Run() bool {
 			self.ErrorText = internalerror.Error()
 		} else if testerror != nil && internalerror == nil {
 			self.ErrorText = testerror.Error()
-			self.Result = ResultFail
+			if self.NonCritical {
+				self.Result = ResultWarn
+			} else {
+				self.Result = ResultFail
+			}
 		} else if rc {
 			self.Result = ResultPass
 		} else {
