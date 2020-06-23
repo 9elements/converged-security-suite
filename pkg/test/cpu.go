@@ -107,7 +107,7 @@ var (
 	}
 	testia32debuginterfacelockeddisabled = Test{
 		Name:         "IA32 debug interface isn't disabled",
-		function:     IA32DebugInterfaceLockedDisabled,
+		function:     TestIA32DebugInterfaceLockedDisabled,
 		Required:     true,
 		dependencies: []*Test{&testcheckforintelcpu},
 		Status:       TestImplemented,
@@ -301,8 +301,8 @@ func TestNoBIOSACMErrors() (bool, error, error) {
 	return !regs.ErrorCode.ValidInvalid, nil, nil
 }
 
-// IA32DebugInterfaceLockedDisabled checks if IA32 debug interface is locked
-func IA32DebugInterfaceLockedDisabled() (bool, error, error) {
+// TestIA32DebugInterfaceLockedDisabled checks if IA32 debug interface is locked
+func TestIA32DebugInterfaceLockedDisabled() (bool, error, error) {
 	locked, pchStrap, enabled, err := api.IA32DebugInterfaceEnabledOrLocked()
 	if err != nil {
 		return false, nil, err

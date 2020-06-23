@@ -61,7 +61,7 @@ var (
 	}
 	testtpmnvramislocked = Test{
 		Name:         "TPM NVRAM is locked",
-		function:     TPMNVRAMIsLocked,
+		function:     TestTPMNVRAMIsLocked,
 		Required:     true,
 		dependencies: []*Test{&testtpmispresent},
 		Status:       TestImplemented,
@@ -156,8 +156,8 @@ func TestTPMIsPresent() (bool, error, error) {
 	return false, fmt.Errorf("No TPM present"), nil
 }
 
-// TPMNVRAMIsLocked checks if NVRAM indexes are write protected
-func TPMNVRAMIsLocked() (bool, error, error) {
+// TestTPMNVRAMIsLocked checks if NVRAM indexes are write protected
+func TestTPMNVRAMIsLocked() (bool, error, error) {
 	if tpm12Connection != nil {
 		flags, err := tpm1.GetPermanentFlags(*tpm12Connection)
 
