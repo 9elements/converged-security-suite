@@ -16,13 +16,17 @@ Using Go Modules => needs GO Version >= 1.11
 Usage
 -----
 
-The test suite runs on GNU/Linux. The `/dev/mem` device must allow access to the
-full physical memory. You may have to add the following to the kernel command line:
+The test suite runs on GNU/Linux and needs access to physical memory. Nowadays
+most GNU/Linux distributions limit of forbid that. If you get an error on the
+lines of "cannot read from /dev/mem: operation not permitted" you may have to
+add the following to the kernel command line:
 
 ```bash
 iomem=relaxed strict-devmem=0 mem.devmem=1 intel_iommu=on
 ```
-If /dev/mem can't accessed even with the command-line passed to the kernel use https://github.com/9elements/fmem .
+
+If that does not help get, compile and load the
+[`fmem`](https://github.com/9elements/fmem) kernel module.
 
 Prepare the environment:
 
