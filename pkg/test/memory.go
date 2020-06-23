@@ -306,16 +306,16 @@ func TestTXTDPRisLock() (bool, error, error) {
 func TestHostbridgeDPRCorrect() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
-		return false, nil, err
+		return false, fmt.Errorf("Cannot read DPR registers: %s", err), nil
 	}
 	regs, err := api.ParseTXTRegs(buf)
 	if err != nil {
-		return false, nil, err
+		return false, fmt.Errorf("Cannot parse DPR registers: %s", err), nil
 	}
 
 	hostbridgeDpr, err := api.ReadHostBridgeDPR()
 	if err != nil {
-		return false, nil, err
+		return false, fmt.Errorf("Cannot read hostbridge DPR registers: %s", err), nil
 	}
 
 	// No need to validate hostbridge register, already done for TXT DPR
@@ -339,7 +339,7 @@ func TestHostbridgeDPRisLocked() (bool, error, error) {
 	}
 
 	if !hostbridgeDpr.Lock {
-		return false, nil, fmt.Errorf("Hostbridge DPR isn't locked")
+		return false, fmt.Errorf("Hostbridge DPR isn't locked"), nil
 	}
 
 	return true, nil, nil
@@ -579,12 +579,13 @@ func TestActiveIOMMU() (bool, error, error) {
 	if err != nil {
 		return false, nil, err
 	}
-	ret, err := api.AddressRangesIsDMAProtected(smrr.PhysBase, smrr.PhysBase|^smrr.PhysMask)
+	smrrPhysEnd:=(smrr.PhysBase|^smrr.PhysMask)&0xfffff
+	ret, err := api.AddressRangesIsDMAProtected(smrr.PhysBase, smrrPhysEnd)
 	if err != nil {
-		return false, nil, err
+		return false, fmt.Errorf("Failed to check SMRR DMA protection: %s", err), nil
 	}
 	if ret != true {
-		return false, fmt.Errorf("IOMMU not active"), nil
+		return false, fmt.Errorf("IOMMU does not protect SMRR (%x-%x) from DMA", smrr.PhysBase, smrrPhysEnd), nil
 	}
 	return true, nil, nil
 }

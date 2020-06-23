@@ -135,7 +135,7 @@ func readVTdRegs() (VTdRegisters, error) {
 		return regs, nil
 	}
 
-	return regs, fmt.Errorf("No IOMMU found")
+	return regs, fmt.Errorf("No IOMMU found: /sys/class/iommu/*/intel-iommu/address does not exists or is malformed")
 }
 
 func LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, error) {
@@ -318,7 +318,7 @@ func AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
 	for addr := first & 0xffffffffffff0000; addr < end; addr += 4096 {
 		vas, err := LookupIOAddress(addr, regs)
 		if err != nil {
-			return false, nil
+			return false, err
 		}
 
 		if len(vas) < 0 {

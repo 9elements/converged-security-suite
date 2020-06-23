@@ -8,6 +8,8 @@ import (
 
 //Model specific registers
 const (
+	msrSMBase   int64 = 0x9e
+	msrMTRRCap   int64 = 0xfe
 	msrSMRRPhysBase       int64 = 0x1F2
 	msrSMRRPhysMask       int64 = 0x1F3
 	msrFeatureControl     int64 = 0x3A
@@ -16,7 +18,7 @@ const (
 )
 
 func HasSMRR() (bool, error) {
-	mtrrcap, err := gomsr.ReadMSR(0, 0xfe)
+	mtrrcap, err := gomsr.ReadMSR(0, msrMTRRCap)
 	if err != nil {
 		return false, fmt.Errorf("Cannot access MSR IA32_MTRRCAP: %s", err)
 	}

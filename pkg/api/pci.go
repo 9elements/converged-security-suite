@@ -1,14 +1,13 @@
 package api
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
 )
 
-func PCIReadConfigSpace(bus int, device int, dev_fn int, off int, buf []byte) error {
+func PCIReadConfigSpace(bus int, device int, dev_fn int, off int, buf interface{}) error {
 	var path string
 	path = fmt.Sprintf("/sys/bus/pci/devices/0000:%02x:%02x.%1x/config", bus, device, dev_fn)
 
@@ -25,17 +24,9 @@ func PCIReadConfigSpace(bus int, device int, dev_fn int, off int, buf []byte) er
 }
 
 func PCIReadConfig16(bus int, device int, dev_fn int, off int) (uint16, error) {
-	data := make([]byte, 2)
-
-	err := PCIReadConfigSpace(bus, device, dev_fn, off, data)
-	if err != nil {
-		return 0, err
-	}
-
 	var reg16 uint16
 
-	buf := bytes.NewReader(data)
-	err = binary.Read(buf, binary.LittleEndian, &reg16)
+	err := PCIReadConfigSpace(bus, device, dev_fn, off, &reg16)
 	if err != nil {
 		return 0, err
 	}
@@ -44,17 +35,9 @@ func PCIReadConfig16(bus int, device int, dev_fn int, off int) (uint16, error) {
 }
 
 func PCIReadConfig32(bus int, device int, dev_fn int, off int) (uint32, error) {
-	data := make([]byte, 4)
-
-	err := PCIReadConfigSpace(bus, device, dev_fn, off, data)
-	if err != nil {
-		return 0, err
-	}
-
 	var reg32 uint32
 
-	buf := bytes.NewReader(data)
-	err = binary.Read(buf, binary.LittleEndian, &reg32)
+	err := PCIReadConfigSpace(bus, device, dev_fn, off, &reg32)
 	if err != nil {
 		return 0, err
 	}
