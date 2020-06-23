@@ -29,19 +29,11 @@ var (
 		dependencies: []*Test{&testcheckforintelcpu},
 		Status:       TestImplemented,
 	}
-	testchipsetsupportstxt = Test{
-		Name:         "Chipset supports TXT",
-		function:     TestChipsetSupportsTXT,
-		Required:     false,
-		dependencies: []*Test{&testcheckforintelcpu},
-		Status:       TestNotImplemented,
-	}
 	testtxtregisterspaceaccessible = Test{
-		Name:         "TXT register space accessible",
-		function:     TestTXTRegisterSpaceAccessible,
-		Required:     true,
-		dependencies: []*Test{&testchipsetsupportstxt},
-		Status:       TestImplemented,
+		Name:     "TXT register space accessible",
+		function: TestTXTRegisterSpaceAccessible,
+		Required: true,
+		Status:   TestImplemented,
 	}
 	testsupportssmx = Test{
 		Name:         "CPU supports SMX",
@@ -116,7 +108,6 @@ var (
 		&testcheckforintelcpu,
 		&testwaybridgeorlater,
 		&testcpusupportstxt,
-		&testchipsetsupportstxt,
 		&testtxtregisterspaceaccessible,
 		&testsupportssmx,
 		&testsupportvmx,
@@ -166,11 +157,6 @@ func TestCPUSupportsTXT() (bool, error, error) {
 		return false, fmt.Errorf("CPU does not support TXT - on blacklist"), nil
 	}
 	return true, nil, nil
-}
-
-// Check whether chipset supports TXT
-func TestChipsetSupportsTXT() (bool, error, error) {
-	return false, nil, fmt.Errorf("Unimplemented: Linux disables GETSEC by clearing CR4.SMXE")
 }
 
 // Check if the TXT register space is accessible
