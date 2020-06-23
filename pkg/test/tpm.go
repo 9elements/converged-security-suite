@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strings"
 
 	tpm1 "github.com/google/go-tpm/tpm"
 	"github.com/google/go-tpm/tpm2"
@@ -12,8 +13,17 @@ import (
 )
 
 const (
-	psIndex  = 0x50000001
-	auxIndex = 0x50000003
+	tpm12PSIndex     = 0x50000001
+	tpm12AUXIndex    = 0x50000003
+	tpm12OldAUXIndex = 0x50000002
+	tpm12POIndex     = 0x40000001
+	tpm20PSIndex     = 0x1C10103
+	tpm20OldPSIndex  = 0x1800001
+	tpm20AUXIndex    = 0x1C10102
+	tpm20OldAUXIndex = 0x1800003
+	tpm20POIndex     = 0x1C10106
+	tpm20OldPOIndex  = 0x1400001
+	tpm2LockedResult = "error code 0x22"
 )
 
 var (
@@ -29,6 +39,7 @@ var (
 	testtpm12present = Test{
 		Name:         "TPM 1.2 present",
 		Required:     false,
+		NonCritical:  true,
 		function:     TestTPM12Present,
 		dependencies: []*Test{&testtpmconnection},
 		Status:       TestImplemented,
@@ -36,6 +47,7 @@ var (
 	testtpm2present = Test{
 		Name:         "TPM 2 is present",
 		Required:     false,
+		NonCritical:  true,
 		function:     TestTPM2Present,
 		dependencies: []*Test{&testtpmconnection},
 		Status:       TestImplemented,
@@ -47,12 +59,12 @@ var (
 		dependencies: []*Test{&testtpmconnection},
 		Status:       TestImplemented,
 	}
-	testtpmislocked = Test{
-		Name:         "TPM in production mode",
-		function:     TestTPMIsLocked,
-		Required:     false,
+	testtpmnvramislocked = Test{
+		Name:         "TPM NVRAM is locked",
+		function:     TPMNVRAMIsLocked,
+		Required:     true,
 		dependencies: []*Test{&testtpmispresent},
-		Status:       TestPartlyImplemented,
+		Status:       TestImplemented,
 	}
 	testpsindexisset = Test{
 		Name:         "PS index set in NVRAM",
@@ -81,7 +93,7 @@ var (
 		&testtpm12present,
 		&testtpm2present,
 		&testtpmispresent,
-		&testtpmislocked,
+		&testtpmnvramislocked,
 		&testpsindexisset,
 		&testauxindexisset,
 		&testlcppolicyisvalid,
@@ -144,14 +156,19 @@ func TestTPMIsPresent() (bool, error, error) {
 	return false, fmt.Errorf("No TPM present"), nil
 }
 
-// TPM NVRAM is locked
-func TestTPMIsLocked() (bool, error, error) {
+// TPMNVRAMIsLocked checks if NVRAM indexes are write protected
+func TPMNVRAMIsLocked() (bool, error, error) {
 	if tpm12Connection != nil {
 		flags, err := tpm1.GetPermanentFlags(*tpm12Connection)
 
 		return flags.NVLocked, err, nil
 	} else if tpm20Connection != nil {
-		return false, nil, fmt.Errorf("Unimplemented: TPM 2.0")
+		err := tpm2.HierarchyChangeAuth(*tpm20Connection, tpm2.HandlePlatform, tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession}, string(tpm2.EmptyAuth))
+		if err != nil && strings.Contains(err.Error(), tpm2LockedResult) {
+			return true, nil, nil
+		} else {
+			return false, fmt.Errorf("Platform hierarchy not defined or auth is empty buffer"), nil
+		}
 	} else {
 		return false, nil, fmt.Errorf("No TPM connection")
 	}
@@ -160,7 +177,7 @@ func TestTPMIsLocked() (bool, error, error) {
 // TPM NVRAM has a valid PS index
 func TestPSIndexIsSet() (bool, error, error) {
 	if tpm12Connection != nil {
-		data, err := tpm1.NVReadValue(*tpm12Connection, psIndex, 0, 54, nil)
+		data, err := tpm1.NVReadValue(*tpm12Connection, tpm12PSIndex, 0, 54, nil)
 		if err != nil {
 			return false, nil, err
 		}
@@ -170,17 +187,18 @@ func TestPSIndexIsSet() (bool, error, error) {
 		}
 		return true, nil, nil
 	} else if tpm20Connection != nil {
-		meta, err := tpm2.NVReadPublic(*tpm20Connection, psIndex)
+		meta, err := tpm2.NVReadPublic(*tpm20Connection, tpm20PSIndex)
 		if err != nil {
-			return false, nil, err
+			meta, err := tpm2.NVReadPublic(*tpm20Connection, tpm20OldPSIndex)
+			if err != nil {
+				return false, fmt.Errorf("TestPSIndexIsSet: TPM2 - No PS index found"), err
+			}
+			if meta.NVIndex != tpm20OldPSIndex {
+				return false, fmt.Errorf("TestPSIndexIsSet: TPM2 - PS Index Addresses don't match"), nil
+			}
 		}
-
-		if meta.NVIndex != psIndex {
+		if meta.NVIndex != tpm20PSIndex {
 			return false, fmt.Errorf("TestPSIndexIsSet: TPM2 - PS Index Addresses don't match"), nil
-		}
-
-		if meta.Attributes&tpm2.KeyProp(tpm2.AttrWriteLocked) == 0 {
-			return false, fmt.Errorf("TestPSIndexIsSet: TPM2 - WriteLock not set"), nil
 		}
 		return true, nil, nil
 	} else {
@@ -191,7 +209,7 @@ func TestPSIndexIsSet() (bool, error, error) {
 // TPM NVRAM has a valid AUX index
 func TestAUXIndexIsSet() (bool, error, error) {
 	if tpm12Connection != nil {
-		buf, err := tpm1.NVReadValue(*tpm12Connection, auxIndex, 0, 1, nil)
+		buf, err := tpm1.NVReadValue(*tpm12Connection, tpm12AUXIndex, 0, 1, nil)
 		if err != nil {
 			return false, nil, err
 		}
@@ -201,11 +219,11 @@ func TestAUXIndexIsSet() (bool, error, error) {
 
 		return true, nil, nil
 	} else if tpm20Connection != nil {
-		meta, err := tpm2.NVReadPublic(*tpm20Connection, auxIndex)
+		meta, err := tpm2.NVReadPublic(*tpm20Connection, tpm20AUXIndex)
 		if err != nil {
 			return false, nil, err
 		}
-		if meta.NVIndex != auxIndex {
+		if meta.NVIndex != tpm20AUXIndex {
 			return false, fmt.Errorf("AUXIndexIsSet: AUXIndex Addresses don't match"), nil
 		}
 		return true, nil, nil
@@ -220,13 +238,13 @@ func TestLCPPolicyIsValid() (bool, error, error) {
 	var err error
 
 	if tpm12Connection != nil {
-		data, err = tpm1.NVReadValue(*tpm12Connection, psIndex, 0, 54, nil)
+		data, err = tpm1.NVReadValue(*tpm12Connection, tpm12PSIndex, 0, 54, nil)
 
 		if err != nil {
 			return false, nil, err
 		}
 	} else if tpm20Connection != nil {
-		data, err = tpm2.NVRead(*tpm20Connection, psIndex)
+		data, err = tpm2.NVRead(*tpm20Connection, tpm20PSIndex)
 
 		if err != nil {
 			return false, nil, err

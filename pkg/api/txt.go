@@ -93,7 +93,7 @@ type TXTBiosData struct {
 	Reserved1     uint64
 	Reserved2     uint64
 	NumLogProcs   uint32
-	SinitFlags    *uint32
+	SinitFlags    uint32
 	MleFlags      *TXTBiosMLEFlags
 }
 
