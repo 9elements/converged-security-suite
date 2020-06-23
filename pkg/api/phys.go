@@ -14,7 +14,7 @@ import (
 	"unsafe"
 )
 
-const memPath = "/dev/mem"
+var memPaths = [...]string{"/dev/fmem","/dev/mem"}
 
 // UintN is a wrapper around uint types and provides a few io-related
 // functions.
@@ -139,14 +139,38 @@ func pathRead(path string, addr int64, data UintN) error {
 	return binary.Read(f, binary.LittleEndian, data)
 }
 
+func selectDevMem() (string, error) {
+	if len(memPaths) == 0 {
+		return "", fmt.Errorf("Internal error: no /dev/mem device specified")
+	}
+
+	for _, p := range memPaths {
+		if _, err := os.Stat(p); err == nil {
+			return p, nil
+		}
+	}
+
+	return "", fmt.Errorf("No suitable /dev/mem device found. Tried %#v", memPaths)
+}
+
 // Read reads data from physical memory at address addr. On x86 platforms,
 // this uses the seek+read syscalls. On arm platforms, this uses mmap.
 func ReadPhys(addr int64, data UintN) error {
-	return pathRead(memPath, addr, data)
+	devMem, err := selectDevMem()
+	if err != nil {
+		return err
+	}
+
+	return pathRead(devMem, addr, data)
 }
 
 func ReadPhysBuf(addr int64, buf []byte) error {
-	f, err := os.OpenFile(memPath, os.O_RDONLY, 0)
+	devMem, err := selectDevMem()
+	if err != nil {
+		return err
+	}
+
+	f, err := os.OpenFile(devMem, os.O_RDONLY, 0)
 	if err != nil {
 		return err
 	}
@@ -174,5 +198,10 @@ func pathWrite(path string, addr int64, data UintN) error {
 // Write writes data to physical memory at address addr. On x86 platforms, this
 // uses the seek+read syscalls. On arm platforms, this uses mmap.
 func WritePhys(addr int64, data UintN) error {
-	return pathWrite(memPath, addr, data)
+	devMem, err := selectDevMem()
+	if err != nil {
+		return err
+	}
+
+	return pathWrite(devMem, addr, data)
 }
