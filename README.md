@@ -20,8 +20,9 @@ The test suite runs on GNU/Linux. The `/dev/mem` device must allow access to the
 full physical memory. You may have to add the following to the kernel command line:
 
 ```bash
-iomem=relaxed strict-devmem=0 mem.devmem=1
+iomem=relaxed strict-devmem=0 mem.devmem=1 intel_iommu=on
 ```
+If /dev/mem can't accessed even with the command-line passed to the kernel use https://github.com/9elements/fmem .
 
 Prepare the environment:
 
