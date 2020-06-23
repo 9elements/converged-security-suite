@@ -105,6 +105,13 @@ var (
 		dependencies: []*Test{&testtxtregisterspaceaccessible},
 		Status:       TestImplemented,
 	}
+	testia32debuginterfacelockeddisabled = Test{
+		Name:         "IA32 debug interface isn't disabled",
+		function:     TestIA32DebugInterfaceLockedDisabled,
+		Required:     true,
+		dependencies: []*Test{&testcheckforintelcpu},
+		Status:       TestImplemented,
+	}
 	TestsCPU = [...]*Test{
 		&testcheckforintelcpu,
 		&testwaybridgeorlater,
@@ -119,6 +126,7 @@ var (
 		&testibbmeasured,
 		&testibbistrusted,
 		&testtxtregisterslocked,
+		&testia32debuginterfacelockeddisabled,
 	}
 )
 
@@ -291,4 +299,20 @@ func TestNoBIOSACMErrors() (bool, error, error) {
 	}
 
 	return !regs.ErrorCode.ValidInvalid, nil, nil
+}
+
+// TestIA32DebugInterfaceLockedDisabled checks if IA32 debug interface is locked
+func TestIA32DebugInterfaceLockedDisabled() (bool, error, error) {
+	locked, pchStrap, enabled, err := api.IA32DebugInterfaceEnabledOrLocked()
+	if err != nil {
+		return false, nil, err
+	}
+	if !pchStrap {
+		if locked || !enabled {
+			return true, nil, nil
+		} else {
+			return false, fmt.Errorf("ia32 jtag isn't locked or disabled"), nil
+		}
+	}
+	return false, fmt.Errorf("ia32 jtag is force enabled by a hardware strap"), nil
 }
