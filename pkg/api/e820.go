@@ -5,9 +5,19 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"strings"
 )
 
-const reservedKeyword = "Reserved\n"
+func isReservedType(regionType string) bool {
+	switch t := strings.TrimSpace(regionType); t {
+	case "reserved":
+		return true
+	case "Reserved":
+		return true
+	default:
+		return false
+	}
+}
 
 // Reads the e820 table exported via /sys/firmware/memmap and checks whether
 // the range [start; end] is marked as reserved. Returns true if it is reserved,
@@ -36,7 +46,7 @@ func IsReservedInE810(start uint64, end uint64) (bool, error) {
 				continue
 			}
 
-			if string(buf) == reservedKeyword {
+			if isReservedType(string(buf)) {
 				path := fmt.Sprintf("/sys/firmware/memmap/%s/start", subdir.Name())
 				this_start, err := readHexInteger(path)
 				if err != nil {
