@@ -40,11 +40,10 @@ var (
 		Status:   TestImplemented,
 	}
 	testhostbridgeDPRislocked = Test{
-		Name:         "CPU hostbridge DPR register locked",
-		Required:     true,
-		function:     TestHostbridgeDPRisLocked,
-		dependencies: []*Test{&testhostbridgeDPRcorrect},
-		Status:       TestImplemented,
+		Name:     "CPU hostbridge DPR register locked",
+		Required: true,
+		function: TestHostbridgeDPRisLocked,
+		Status:   TestImplemented,
 	}
 	testsinitintxt = Test{
 		Name:     "TXT region contains SINIT ACM",
@@ -334,6 +333,7 @@ func TestHostbridgeDPRCorrect() (bool, error, error) {
 
 func TestHostbridgeDPRisLocked() (bool, error, error) {
 	hostbridgeDpr, err := api.ReadHostBridgeDPR()
+
 	if err != nil {
 		return false, nil, err
 	}
@@ -579,7 +579,7 @@ func TestActiveIOMMU() (bool, error, error) {
 	if err != nil {
 		return false, nil, err
 	}
-	smrrPhysEnd:=(smrr.PhysBase|^smrr.PhysMask)&0xfffff
+	smrrPhysEnd := (smrr.PhysBase | ^smrr.PhysMask) & 0xfffff
 	ret, err := api.AddressRangesIsDMAProtected(smrr.PhysBase, smrrPhysEnd)
 	if err != nil {
 		return false, fmt.Errorf("Failed to check SMRR DMA protection: %s", err), nil
