@@ -303,7 +303,7 @@ func TestNoBIOSACMErrors() (bool, error, error) {
 
 // TestIA32DebugInterfaceLockedDisabled checks if IA32 debug interface is locked
 func TestIA32DebugInterfaceLockedDisabled() (bool, error, error) {
-	locked, pchStrap, enabled, err := api.IA32DebugInterfaceEnabledOrLocked()
+	enabled, locked, pchStrap, err := api.IA32DebugInterfaceEnabledOrLocked()
 	if err != nil {
 		return false, nil, err
 	}
