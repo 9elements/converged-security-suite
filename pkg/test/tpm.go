@@ -253,17 +253,17 @@ func TestLCPPolicyIsValid() (bool, error, error) {
 		return false, nil, fmt.Errorf("Not connected to TPM")
 	}
 
-	lcp, err := api.ParsePolicy(data)
+	pol, pol2, err := api.ParsePolicy(data)
 	if err != nil {
 		return false, nil, err
 	}
 
 	if tpm12Connection != nil {
-		if lcp.Policy.Version > 0x204 || lcp.Policy.Version < 0x200 {
+		if pol.Version > 0x204 || pol.Version < 0x200 {
 			return false, fmt.Errorf("LCP-Version invalid"), nil
 		}
 	} else if tpm20Connection != nil {
-		if lcp.Policy2.Version > 0x302 || lcp.Policy2.Version < 0x300 {
+		if pol2.Version > 0x302 || pol2.Version < 0x300 {
 			return false, fmt.Errorf("LCP-Version invalid"), nil
 		}
 	} else {
