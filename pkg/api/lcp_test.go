@@ -11,7 +11,7 @@ func TestLCPParser(t *testing.T) {
 		t.Errorf("LCPParser() read failed: %v", err)
 	}
 
-	_, _, err := ParsePolicy(file)
+	_, _, err = ParsePolicy(file)
 	if err != nil {
 		t.Errorf("LCPParser() failed: %v", err)
 	}
@@ -23,7 +23,7 @@ func TestLCPParser2(t *testing.T) {
 		t.Errorf("LCPParser() read failed: %v", err)
 	}
 
-	_, _, err := ParsePolicy(file)
+	_, _, err = ParsePolicy(file)
 	if err != nil {
 		t.Errorf("LCPParser() failed: %v", err)
 	}
@@ -35,7 +35,7 @@ func TestLCPParser3(t *testing.T) {
 		t.Errorf("LCPDataParser() failed: %v", err)
 	}
 
-	_, _, err := ParsePolicy(file)
+	_, _, err = ParsePolicy(file)
 	if err != nil {
 		t.Errorf("LCPDataParser() failed: %v", err)
 	}
