@@ -308,7 +308,7 @@ func TestIA32DebugInterfaceLockedDisabled() (bool, error, error) {
 		return false, nil, err
 	}
 	if !pchStrap {
-		if locked || !enabled {
+		if locked && !enabled {
 			return true, nil, nil
 		} else {
 			return false, fmt.Errorf("ia32 jtag isn't locked or disabled"), nil
