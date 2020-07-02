@@ -191,14 +191,20 @@ type LCPPolicyData struct {
 // TODO needs to be reverse engineered
 func (p *LCPPolicy) ParsePolicyControl() PolicyControl {
 	var polCtrl PolicyControl
-	polCtrl.NPW = (p.PolicyControl>>0)&1 != 0
+	polCtrl.NPW = (p.PolicyControl>>1)&1 != 0
+	polCtrl.SinitCaps = (p.PolicyControl>>2)&1 != 0
+	polCtrl.AuxDelete = (p.PolicyControl>>15)&1 != 0
+	polCtrl.OwnerEnforced = (p.PolicyControl>>3)&1 != 0
 	return polCtrl
 }
 
 // TODO needs to be reverse engineered
 func (p *LCPPolicy2) ParsePolicyControl2() PolicyControl {
 	var polCtrl PolicyControl
-	polCtrl.NPW = (p.PolicyControl>>0)&1 != 0
+	polCtrl.NPW = (p.PolicyControl>>1)&1 != 0
+	polCtrl.SinitCaps = (p.PolicyControl>>2)&1 != 0
+	polCtrl.AuxDelete = (p.PolicyControl>>15)&1 != 0
+	polCtrl.OwnerEnforced = (p.PolicyControl>>3)&1 != 0
 	return polCtrl
 }
 
