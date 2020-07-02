@@ -4,11 +4,15 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/google/go-tpm/tpm2"
+	"io"
 	"log"
+
+	"github.com/google/go-tpm/tpm2"
 )
 
 const (
+	LCPPolicyTypeAny         uint   = 1
+	LCPPolicyTypeList        uint   = 0
 	LCPMaxLists              uint   = 8
 	SHA1DigestSize           uint   = 20
 	SHA256DigestSize         uint   = 32
@@ -27,6 +31,11 @@ const (
 	LCPPolicyElementSBIOS2   uint32 = 0x12
 	LCPPolicyElementSTM2     uint32 = 0x14
 	LCPPolHAlgSHA1           uint8  = 0
+	LCPPol2HAlgSHA1          uint16 = 0x04
+	LCPPol2HAlgSHA256        uint16 = 0x0B
+	LCPPol2HAlgSHA384        uint16 = 0x0C
+	LCPPol2HAlgNULL          uint16 = 0x10
+	LCPPol2HAlgSM3           uint16 = 0x12
 )
 
 type LCPHash struct {
@@ -115,22 +124,61 @@ type LCPPolicyList struct {
 
 type LCPList struct {
 	TPM12PolicyList LCPPolicyList
-	//TPM20PolicyList LCPPolicyList2
+	TPM20PolicyList LCPPolicyList2
+}
+
+type PolicyControl struct {
+	NPW           bool
+	OwnerEnforced bool
+	AuxDelete     bool
+	SinitCaps     bool
+}
+
+type ApprovedHashAlgorithm struct {
+	SHA1   bool
+	SHA256 bool
+	SHA384 bool
+	SM3    bool
+}
+
+type ApprovedSignatureAlogrithm struct {
+	RSA2048SHA1     bool
+	RSA2048SHA256   bool
+	RSA3072SHA256   bool
+	RSA3072SHA384   bool
+	ECDSAP256SHA256 bool
+	ECDSAP384SHA384 bool
+	SM2SM2CurveSM3  bool
 }
 
 type LCPPolicy struct {
-	Version                uint16 // < 0x0300
+	Version                uint16 // < 0x0204
 	HashAlg                uint8
 	PolicyType             uint8
 	SINITMinVersion        uint8
-	Reserved1              uint8
+	Reserved               uint8
 	DataRevocationCounters [LCPMaxLists]uint16
 	PolicyControl          uint32
-	MaxSINITMinVersion     uint8 // v2.0
-	MaxBIOSACMinVersion    uint8 // v2.0
+	MaxSINITMinVersion     uint8
+	Reserved1              uint8
 	Reserved2              uint16
 	Reserved3              uint32
 	PolicyHash             [20]byte
+}
+
+type LCPPolicy2 struct {
+	Version                uint16 // < 0x0302
+	HashAlg                uint16
+	PolicyType             uint8
+	SINITMinVersion        uint8
+	DataRevocationCounters [LCPMaxLists]uint16
+	PolicyControl          uint32
+	MaxSINITMinVersion     uint8 // v2.0
+	Reserved               uint8 // v2.0
+	LcpHashAlgMask         uint16
+	LcpSignAlgMask         uint32
+	Reserved2              uint32
+	PolicyHash             LCPHash
 }
 
 type LCPPolicyData struct {
@@ -140,16 +188,197 @@ type LCPPolicyData struct {
 	PolicyLists   []LCPList
 }
 
-func ParsePolicy(policy []byte) (*LCPPolicy, error) {
-	var pol LCPPolicy
+// TODO needs to be reverse engineered
+func (p *LCPPolicy) ParsePolicyControl() PolicyControl {
+	var polCtrl PolicyControl
+	polCtrl.NPW = (p.PolicyControl>>0)&1 != 0
+	return polCtrl
+}
 
+// TODO needs to be reverse engineered
+func (p *LCPPolicy2) ParsePolicyControl2() PolicyControl {
+	var polCtrl PolicyControl
+	polCtrl.NPW = (p.PolicyControl>>0)&1 != 0
+	return polCtrl
+}
+
+func (p *LCPPolicy2) ParseApprovedHashAlgorithm() ApprovedHashAlgorithm {
+	var hashAlgs ApprovedHashAlgorithm
+	hashAlgs.SHA1 = (p.LcpHashAlgMask>>0)&1 != 0
+	hashAlgs.SHA256 = (p.LcpHashAlgMask>>3)&1 != 0
+	hashAlgs.SHA384 = (p.LcpHashAlgMask>>6)&1 != 0
+	hashAlgs.SM3 = (p.LcpHashAlgMask>>5)&1 != 0
+	return hashAlgs
+}
+
+func (p *LCPPolicy2) ParseApprovedSignatureAlgorithm() ApprovedSignatureAlogrithm {
+	var signatureAlgs ApprovedSignatureAlogrithm
+	signatureAlgs.RSA2048SHA1 = (p.LcpSignAlgMask>>2)&1 != 0
+	signatureAlgs.RSA2048SHA256 = (p.LcpSignAlgMask>>3)&1 != 0
+	signatureAlgs.RSA3072SHA256 = (p.LcpSignAlgMask>>6)&1 != 0
+	signatureAlgs.RSA3072SHA384 = (p.LcpSignAlgMask>>7)&1 != 0
+	signatureAlgs.ECDSAP256SHA256 = (p.LcpSignAlgMask>>12)&1 != 0
+	signatureAlgs.ECDSAP384SHA384 = (p.LcpSignAlgMask>>13)&1 != 0
+	signatureAlgs.SM2SM2CurveSM3 = (p.LcpSignAlgMask>>16)&1 != 0
+	return signatureAlgs
+}
+
+func parsePolicy(policy []byte) (*LCPPolicy, error) {
+	var pol LCPPolicy
 	buf := bytes.NewReader(policy)
-	err := binary.Read(buf, binary.LittleEndian, &pol)
+	err := binary.Read(buf, binary.LittleEndian, &pol.Version)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol.HashAlg)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol.PolicyType)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol.SINITMinVersion)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol.Reserved)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol.DataRevocationCounters)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol.PolicyControl)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol.MaxSINITMinVersion)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol.Reserved1)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol.Reserved2)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol.Reserved3)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol.PolicyHash)
 	if err != nil {
 		return nil, err
 	}
 
 	return &pol, nil
+}
+
+func parsePolicy2(policy []byte) (*LCPPolicy2, error) {
+	var pol2 LCPPolicy2
+	buf := bytes.NewReader(policy)
+	err := binary.Read(buf, binary.LittleEndian, &pol2.Version)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol2.HashAlg)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol2.PolicyType)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol2.SINITMinVersion)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol2.DataRevocationCounters)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol2.PolicyControl)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol2.MaxSINITMinVersion)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol2.Reserved)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol2.LcpHashAlgMask)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol2.LcpSignAlgMask)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &pol2.Reserved2)
+	if err != nil {
+		return nil, err
+	}
+	switch pol2.HashAlg {
+	case LCPPol2HAlgSHA1:
+		var sha1 [SHA1DigestSize]byte
+		err = binary.Read(buf, binary.LittleEndian, &sha1)
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+		pol2.PolicyHash.sha1 = &sha1
+		break
+	case LCPPol2HAlgSHA256:
+		var sha256 [SHA256DigestSize]byte
+		err = binary.Read(buf, binary.LittleEndian, &sha256)
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+		pol2.PolicyHash.sha256 = &sha256
+		break
+	case LCPPol2HAlgSHA384:
+		var sha384 [SHA384DigestSize]byte
+		err = binary.Read(buf, binary.LittleEndian, &sha384)
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+		pol2.PolicyHash.sha384 = &sha384
+		break
+	case LCPPol2HAlgSM3:
+		var sm3 [SM3DigestSize]byte
+		err = binary.Read(buf, binary.LittleEndian, &sm3)
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+		pol2.PolicyHash.sm3 = &sm3
+		break
+	}
+
+	return &pol2, nil
+}
+
+func ParsePolicy(policy []byte) (*LCPPolicy, *LCPPolicy2, error) {
+	var version Uint16
+	buf := bytes.NewReader(policy)
+	err := binary.Read(buf, binary.LittleEndian, &version)
+	if err != nil {
+		return nil, nil, err
+	}
+	if version <= 204 {
+		pol, err := parsePolicy(policy)
+		return pol, nil, err
+	} else if version >= 300 {
+		pol, err := parsePolicy2(policy)
+		return nil, pol, err
+	}
+
+	return nil, nil, fmt.Errorf("Can't parse LCP Policy\n")
 }
 
 func parsePolicyElement(buf *bytes.Reader, element *LCPPolicyElement) error {
@@ -505,7 +734,7 @@ func parseLCPHash(buf *bytes.Reader, hash *LCPHash, alg uint8) error {
 func parseLCPHash2(buf *bytes.Reader, hash *LCPHash, alg tpm2.Algorithm) error {
 	switch alg {
 	case tpm2.AlgSHA1:
-		var sha1 [20]byte
+		var sha1 [SHA1DigestSize]byte
 
 		err := binary.Read(buf, binary.LittleEndian, &sha1)
 		if err != nil {
@@ -514,7 +743,7 @@ func parseLCPHash2(buf *bytes.Reader, hash *LCPHash, alg tpm2.Algorithm) error {
 		hash.sha1 = &sha1
 
 	case tpm2.AlgSHA256:
-		var sha256 [32]byte
+		var sha256 [SHA256DigestSize]byte
 
 		err := binary.Read(buf, binary.LittleEndian, &sha256)
 		if err != nil {
@@ -523,7 +752,7 @@ func parseLCPHash2(buf *bytes.Reader, hash *LCPHash, alg tpm2.Algorithm) error {
 		hash.sha256 = &sha256
 
 	case tpm2.AlgSHA384:
-		var sha384 [48]byte
+		var sha384 [SHA384DigestSize]byte
 
 		err := binary.Read(buf, binary.LittleEndian, &sha384)
 		if err != nil {
@@ -532,7 +761,7 @@ func parseLCPHash2(buf *bytes.Reader, hash *LCPHash, alg tpm2.Algorithm) error {
 		hash.sha384 = &sha384
 
 	case tpm2.AlgSHA512:
-		var sha512 [64]byte
+		var sha512 [SHA512DigestSize]byte
 
 		err := binary.Read(buf, binary.LittleEndian, &sha512)
 		if err != nil {
@@ -579,7 +808,10 @@ func ParsePolicyData(policyData []byte) (*LCPPolicyData, error) {
 	for i := 0; i < int(polData.NumLists); i++ {
 		err = parsePolicyList(buf, &polData.PolicyLists[i].TPM12PolicyList)
 		if err != nil {
-			return nil, err
+			err = parsePolicyList2(buf, &polData.PolicyLists[i].TPM20PolicyList)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -600,10 +832,6 @@ func (p *LCPHash) PrettyPrint() string {
 	} else {
 		return fmt.Sprintf("(Invalid)")
 	}
-}
-
-func (p *LCPPolicy) PrettyPrint() {
-	log.Printf("0x%04x\n", p.Version)
 }
 
 func (pd *LCPPolicyData) PrettyPrint() {
@@ -676,6 +904,5 @@ func (pd *LCPPolicyData) PrettyPrint() {
 		} else {
 			log.Printf("\t\tSignature: (None)\n")
 		}
-
 	}
 }

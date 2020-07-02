@@ -258,9 +258,18 @@ func TestLCPPolicyIsValid() (bool, error, error) {
 		return false, nil, err
 	}
 
-	if lcp.Version >= 0x300 {
+	if tpm12Connection != nil {
+		if lcp.Policy.Version > 0x204 || lcp.Policy.Version < 0x200 {
+			return false, fmt.Errorf("LCP-Version invalid"), nil
+		}
+	} else if tpm20Connection != nil {
+		if lcp.Policy2.Version > 0x302 || lcp.Policy2.Version < 0x300 {
+			return false, fmt.Errorf("LCP-Version invalid"), nil
+		}
+	} else {
 		return false, fmt.Errorf("LCP-Version invalid"), nil
 	}
+
 	return true, nil, nil
 }
 
