@@ -277,49 +277,6 @@ func PSIndexConfig() (bool, error, error) {
 
 }
 
-// AUXIndexIsSet has a valid AUX index
-func AUXIndexIsSet() (bool, error, error) {
-	if tpm12Connection != nil {
-		buf, err := tpm1.NVReadValue(*tpm12Connection, tpm12AUXIndex, 0, 1, nil)
-		err = binary.Read(buf, binary.BigEndian, &d2.NameAlg)
-		if err != nil {
-			return false, nil, err
-		}
-		err = binary.Read(buf, binary.BigEndian, &d2.Attributes)
-		if err != nil {
-			return false, nil, err
-		}
-		// Helper valiable hashSize- go-tpm2 does not implement proper structure
-		var hashSize uint16
-		err = binary.Read(buf, binary.BigEndian, &hashSize)
-		if err != nil {
-			return false, nil, err
-		}
-		// Uses hashSize to make the right sized slice to read the hash
-		hashData := make([]byte, hashSize)
-		err = binary.Read(buf, binary.BigEndian, &hashData)
-		if err != nil {
-			return false, nil, err
-		}
-		err = binary.Read(buf, binary.BigEndian, &d2.DataSize)
-		if err != nil {
-			return false, nil, err
-		}
-
-		if (1 >> d2.Attributes & (tpm20PSIndexAttr | tpm2.AttrWritten)) != 0 {
-			return false, fmt.Errorf("Attributes incorrect! Have: %v - Want: %v", d2.Attributes.String(), tpm20PSIndexAttr.String()), nil
-		}
-
-		size := uint16(crypto.Hash(d2.NameAlg).Size()) + tpm20PSIndexBaseSize
-		if d2.DataSize != size {
-			return false, fmt.Errorf("Size of TPM 2.0 PS Index incorrect. Have: %v - Want: %v", d2.DataSize, size), nil
-		}
-		return true, nil, nil
-
-	}
-	return false, fmt.Errorf("not supported TPM device"), nil
-}
-
 // AUXIndexConfig tests if the AUX Index has the correct configuration
 func AUXIndexConfig() (bool, error, error) {
 	var d1 tpm1.NVDataPublic
