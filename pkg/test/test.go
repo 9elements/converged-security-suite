@@ -1,39 +1,69 @@
 package test
 
-type TestResult int
-type TestStatus int
-type TXTSpec int
+// Result exposes the type for test results
+type Result int
 
 const (
-	ResultNotRun TestResult = iota
+	// ResultNotRun indicates that a test was skipped
+	ResultNotRun Result = iota
+
+	// ResultDependencyFailed indicates that the previous dependency test failed
 	ResultDependencyFailed
+
+	// ResultInternalError indicates that a library function failed at some point in the test
 	ResultInternalError
+
+	// ResultFail indicates that the test failed
 	ResultFail
+
+	// ResultWarn indicates that the test failed for the standard configuration but can still be valid in a different configuration of TXT
 	ResultWarn
+
+	// ResultPass indicates that the test succeeded.
 	ResultPass
 )
 
+func (t Result) String() string {
+	return [...]string{"TESTNOTRUN", "DEPENDENCY_FAILED", "INTERNAL_ERROR", "FAIL", "WARN", "PASS"}[t]
+}
+
+// Status exposes the type for test status
+type Status int
+
 const (
-	TestImplemented TestStatus = iota
-	TestNotImplemented
-	TestPartlyImplemented
+	// Implemented indicates that a test is implemented completly
+	Implemented Status = iota
+
+	// NotImplemented indicates that test is NOT implemented
+	NotImplemented
+
+	// PartlyImplemented indicates that a test implements a certain aspect
+	PartlyImplemented
 )
+
+func (t Status) String() string {
+	return [...]string{"Implemented", "Not implemented", "Partly implemented"}[t]
+}
+
+// TXTSpec exposes the type to differentiate between TXT specs
+type TXTSpec int
+
 const (
+	// TXT indicates
 	TXT TXTSpec = iota
+
+	// CBnT indicates
 	CBnT
+
+	// Common indicates
 	Common
 )
 
 func (t TXTSpec) String() string {
 	return [...]string{"TXT", "CBnT", "Common"}[t]
 }
-func (t TestStatus) String() string {
-	return [...]string{"Implemented", "Not implemented", "Partly implemented"}[t]
-}
-func (t TestResult) String() string {
-	return [...]string{"TESTNOTRUN", "DEPENDENCY_FAILED", "INTERNAL_ERROR", "FAIL", "WARN", "PASS"}[t]
-}
 
+// Test exposes the structure in which information about TXT tests are held
 type Test struct {
 	Name     string
 	Required bool
@@ -43,50 +73,51 @@ type Test struct {
 	//The return call in test functions shall return only one of the errors,
 	//while the other is nil.
 	function     func() (bool, error, error)
-	Result       TestResult
+	Result       Result
 	dependencies []*Test
 	ErrorText    string
-	Status       TestStatus
+	Status       Status
 	Spec         TXTSpec
 	NonCritical  bool
 }
 
-func (self *Test) Run() bool {
+// Run implements the genereal test function and exposes it.
+func (t *Test) Run() bool {
 	var DepsPassed = true
 	// Make sure all dependencies have run and passed
-	for idx, _ := range self.dependencies {
-		if self.dependencies[idx].Status == TestNotImplemented {
+	for idx := range t.dependencies {
+		if t.dependencies[idx].Status == NotImplemented {
 			continue
 		}
-		if self.dependencies[idx].Result == ResultNotRun {
-			self.dependencies[idx].Run()
+		if t.dependencies[idx].Result == ResultNotRun {
+			t.dependencies[idx].Run()
 		}
-		if self.dependencies[idx].Result != ResultPass {
-			self.ErrorText = self.dependencies[idx].Name + " failed"
-			self.Result = ResultDependencyFailed
+		if t.dependencies[idx].Result != ResultPass {
+			t.ErrorText = t.dependencies[idx].Name + " failed"
+			t.Result = ResultDependencyFailed
 			DepsPassed = false
 		}
 	}
 
 	if DepsPassed {
 		// Now run the test itself
-		rc, testerror, internalerror := self.function()
+		rc, testerror, internalerror := t.function()
 		if internalerror != nil && testerror == nil {
-			self.Result = ResultInternalError
-			self.ErrorText = internalerror.Error()
+			t.Result = ResultInternalError
+			t.ErrorText = internalerror.Error()
 		} else if testerror != nil && internalerror == nil {
-			self.ErrorText = testerror.Error()
-			if self.NonCritical {
-				self.Result = ResultWarn
+			t.ErrorText = testerror.Error()
+			if t.NonCritical {
+				t.Result = ResultWarn
 			} else {
-				self.Result = ResultFail
+				t.Result = ResultFail
 			}
 		} else if rc {
-			self.Result = ResultPass
+			t.Result = ResultPass
 		} else {
-			self.Result = ResultFail
+			t.Result = ResultFail
 		}
 	}
 
-	return self.Result == ResultPass
+	return t.Result == ResultPass
 }

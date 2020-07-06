@@ -10,133 +10,123 @@ var (
 	testtxtmemoryrangevalid = Test{
 		Name:     "TXT memory ranges valid",
 		Required: true,
-		function: TestTXTRegisterSpaceValid,
-		Status:   TestImplemented,
+		function: TXTRegisterSpaceValid,
+		Status:   Implemented,
 	}
 	testmemoryisreserved = Test{
 		Name:         "TXT memory reserved in e820",
 		Required:     true,
-		function:     TestTXTReservedInE820,
+		function:     TXTReservedInE820,
 		dependencies: []*Test{&testtxtmemoryrangevalid},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testtxtmemoryisdpr = Test{
 		Name:         "TXT memory in a DMA protected range",
 		Required:     true,
-		function:     TestTXTMemoryIsDPR,
+		function:     TXTMemoryIsDPR,
 		dependencies: []*Test{&testtxtmemoryrangevalid},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testtxtdprislocked = Test{
 		Name:     "TXT DPR register locked",
 		Required: true,
-		function: TestTXTDPRisLock,
-		Status:   TestImplemented,
+		function: TXTDPRisLock,
+		Status:   Implemented,
 	}
 	testhostbridgeDPRcorrect = Test{
 		Name:     "CPU DPR equals hostbridge DPR",
 		Required: false,
-		function: TestHostbridgeDPRCorrect,
-		Status:   TestImplemented,
+		function: HostbridgeDPRCorrect,
+		Status:   Implemented,
 	}
 	testhostbridgeDPRislocked = Test{
-		Name:     "CPU hostbridge DPR register locked",
-		Required: true,
-		function: TestHostbridgeDPRisLocked,
-		Status:   TestImplemented,
+		Name:         "CPU hostbridge DPR register locked",
+		Required:     true,
+		function:     HostbridgeDPRisLocked,
+		dependencies: []*Test{&testhostbridgeDPRcorrect},
+		Status:       Implemented,
 	}
 	testsinitintxt = Test{
 		Name:     "TXT region contains SINIT ACM",
 		Required: false,
-		function: TestSINITInTXT,
-		Status:   TestImplemented,
+		function: SINITInTXT,
+		Status:   Implemented,
 	}
 	testsinitmatcheschipset = Test{
 		Name:         "SINIT ACM matches chipset",
 		Required:     true,
-		function:     TestSINITMatchesChipset,
+		function:     SINITMatchesChipset,
 		dependencies: []*Test{&testsinitintxt},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testsinitmatchescpu = Test{
 		Name:         "SINIT ACM matches CPU",
 		Required:     true,
-		function:     TestSINITMatchesCPU,
+		function:     SINITMatchesCPU,
 		dependencies: []*Test{&testsinitintxt},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testnosiniterrors = Test{
 		Name:        "SINIT ACM startup successful",
 		Required:    false,
 		NonCritical: true,
-		function:    TestNoSINITErrors,
-		Status:      TestImplemented,
+		function:    NoSINITErrors,
+		Status:      Implemented,
 	}
 	testbiosdataregionpresent = Test{
 		Name:     "BIOS DATA REGION present",
 		Required: true,
-		function: TestBIOSDATAREGIONPresent,
-		Status:   TestImplemented,
+		function: BIOSDATAREGIONPresent,
+		Status:   Implemented,
 	}
 	testbiosdataregionvalid = Test{
 		Name:         "BIOS DATA REGION valid",
 		Required:     true,
-		function:     TestBIOSDATAREGIONValid,
+		function:     BIOSDATAREGIONValid,
 		dependencies: []*Test{&testbiosdataregionpresent},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testhasmtrr = Test{
 		Name:     "CPU supports MTRRs",
 		Required: true,
-		function: TestHasMTRR,
-		Status:   TestImplemented,
+		function: HasMTRR,
+		Status:   Implemented,
 	}
 	testhassmrr = Test{
 		Name:         "CPU supports SMRRs",
 		Required:     true,
-		function:     TestHasSMRR,
+		function:     HasSMRR,
 		dependencies: []*Test{&testservermodetext},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testvalidsmrr = Test{
 		Name:         "SMRR covers SMM memory",
 		Required:     true,
-		function:     TestValidSMRR,
+		function:     ValidSMRR,
 		dependencies: []*Test{&testhassmrr},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testactivesmrr = Test{
 		Name:         "SMRR protection active",
 		Required:     true,
-		function:     TestActiveSMRR,
+		function:     ActiveSMRR,
 		dependencies: []*Test{&testhassmrr},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testactiveiommi = Test{
 		Name:     "IOMMU/VT-d active",
 		Required: false,
-		function: TestActiveIOMMU,
-		Status:   TestImplemented,
-	}
-	testactivetboot = Test{
-		Name:     "TBOOT hypervisor active",
-		Required: false,
-		function: TestActiveTBOOT,
-		Status:   TestNotImplemented,
+		function: ActiveIOMMU,
+		Status:   Implemented,
 	}
 	testservermodetext = Test{
 		Name:     "TXT server mode enabled",
 		Required: false,
-		function: TestServerModeTXT,
-		Status:   TestImplemented,
-	}
-	testreleasefusedfsbi = Test{
-		Name:     "FSB interface release fused",
-		Required: false,
-		function: TestReleaseFusedFSBI,
-		Status:   TestNotImplemented,
+		function: ServerModeTXT,
+		Status:   Implemented,
 	}
 
+	// TestsMemory exposes the slice for memory related txt tests
 	TestsMemory = [...]*Test{
 		&testtxtmemoryrangevalid,
 		&testmemoryisreserved,
@@ -155,9 +145,7 @@ var (
 		&testvalidsmrr,
 		&testactivesmrr,
 		&testactiveiommi,
-		&testactivetboot,
 		&testservermodetext,
-		&testreleasefusedfsbi,
 	}
 )
 
@@ -170,7 +158,8 @@ var (
 	legacyMinHeapSize = uint32(0xE0000)
 )
 
-func TestTXTRegisterSpaceValid() (bool, error, error) {
+// TXTRegisterSpaceValid checks if the registers indicates the correct sizes
+func TXTRegisterSpaceValid() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
@@ -220,7 +209,8 @@ func TestTXTRegisterSpaceValid() (bool, error, error) {
 	return true, nil, nil
 }
 
-func TestTXTReservedInE820() (bool, error, error) {
+// TXTReservedInE820 checks if the HEAP/MSEG/SINIT TXT regions are marked reserved in e820 map.
+func TXTReservedInE820() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
@@ -243,7 +233,8 @@ func TestTXTReservedInE820() (bool, error, error) {
 	return heapReserved && sinitReserved, nil, nil
 }
 
-func TestTXTMemoryIsDPR() (bool, error, error) {
+// TXTMemoryIsDPR checks if the TXT DPR protects TXT memory.
+func TXTMemoryIsDPR() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
@@ -286,7 +277,8 @@ func TestTXTMemoryIsDPR() (bool, error, error) {
 	return true, nil, nil
 }
 
-func TestTXTDPRisLock() (bool, error, error) {
+// TXTDPRisLock checks the TXTRegister in memory about the status of DPR if it's locked.
+func TXTDPRisLock() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
@@ -302,7 +294,8 @@ func TestTXTDPRisLock() (bool, error, error) {
 	return true, nil, nil
 }
 
-func TestHostbridgeDPRCorrect() (bool, error, error) {
+// HostbridgeDPRCorrect checks if TXT DPR equals PCI Hostbridge DPR
+func HostbridgeDPRCorrect() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
 		return false, fmt.Errorf("Cannot read DPR registers: %s", err), nil
@@ -331,7 +324,8 @@ func TestHostbridgeDPRCorrect() (bool, error, error) {
 	return true, nil, nil
 }
 
-func TestHostbridgeDPRisLocked() (bool, error, error) {
+// HostbridgeDPRisLocked checks if the Hostbridge DPR is marked as locked
+func HostbridgeDPRisLocked() (bool, error, error) {
 	hostbridgeDpr, err := api.ReadHostBridgeDPR()
 
 	if err != nil {
@@ -345,7 +339,8 @@ func TestHostbridgeDPRisLocked() (bool, error, error) {
 	return true, nil, nil
 }
 
-func TestSINITInTXT() (bool, error, error) {
+// SINITInTXT checks the TXT region on containing a valid SINIT ACM.
+func SINITInTXT() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
@@ -376,7 +371,8 @@ func TestSINITInTXT() (bool, error, error) {
 
 }
 
-func TestSINITMatchesChipset() (bool, error, error) {
+// SINITMatchesChipset checks if the SINIT ACM matches the chipset.
+func SINITMatchesChipset() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
@@ -414,7 +410,8 @@ func TestSINITMatchesChipset() (bool, error, error) {
 	return false, fmt.Errorf("SINIT doesn't match chipset"), nil
 }
 
-func TestSINITMatchesCPU() (bool, error, error) {
+// SINITMatchesCPU checks if the SINITACM matches the CPU
+func SINITMatchesCPU() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
@@ -449,7 +446,8 @@ func TestSINITMatchesCPU() (bool, error, error) {
 	return false, fmt.Errorf("Sinit doesn't match CPU"), nil
 }
 
-func TestNoSINITErrors() (bool, error, error) {
+// NoSINITErrors checks if the SINITACM was executed without any errors
+func NoSINITErrors() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
@@ -465,7 +463,8 @@ func TestNoSINITErrors() (bool, error, error) {
 	return true, nil, nil
 }
 
-func TestBIOSDATAREGIONPresent() (bool, error, error) {
+// BIOSDATAREGIONPresent checks is the BIOSDATA Region is present in TXT Register Space
+func BIOSDATAREGIONPresent() (bool, error, error) {
 	buf, err := api.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
@@ -489,7 +488,8 @@ func TestBIOSDATAREGIONPresent() (bool, error, error) {
 	return true, nil, nil
 }
 
-func TestBIOSDATAREGIONValid() (bool, error, error) {
+// BIOSDATAREGIONValid checks if the BIOSDATA Region in TXT Register Space is valid
+func BIOSDATAREGIONValid() (bool, error, error) {
 	if biosdata.Version < 2 {
 		return false, fmt.Errorf("BIOS DATA regions version < 2 are not supperted"), nil
 	}
@@ -504,14 +504,16 @@ func TestBIOSDATAREGIONValid() (bool, error, error) {
 	return true, nil, nil
 }
 
-func TestHasMTRR() (bool, error, error) {
+// HasMTRR checks if MTRR is supported by CPU
+func HasMTRR() (bool, error, error) {
 	if api.HasMTRR() != true {
 		return false, fmt.Errorf("CPU does not have MTRR"), nil
 	}
 	return true, nil, nil
 }
 
-func TestHasSMRR() (bool, error, error) {
+// HasSMRR checks if SMRR is supported
+func HasSMRR() (bool, error, error) {
 	ret, err := api.HasSMRR()
 	if err != nil {
 		return false, nil, err
@@ -522,7 +524,8 @@ func TestHasSMRR() (bool, error, error) {
 	return true, nil, nil
 }
 
-func TestValidSMRR() (bool, error, error) {
+// ValidSMRR checks if SMRR is valid
+func ValidSMRR() (bool, error, error) {
 	smrr, err := api.GetSMRRInfo()
 	if err != nil {
 		return false, nil, err
@@ -562,7 +565,8 @@ func TestValidSMRR() (bool, error, error) {
 	return true, nil, nil
 }
 
-func TestActiveSMRR() (bool, error, error) {
+// ActiveSMRR checks if SMMR is set active
+func ActiveSMRR() (bool, error, error) {
 	smrr, err := api.GetSMRRInfo()
 	if err != nil {
 		return false, nil, err
@@ -574,7 +578,8 @@ func TestActiveSMRR() (bool, error, error) {
 	return true, nil, nil
 }
 
-func TestActiveIOMMU() (bool, error, error) {
+// ActiveIOMMU checks if IOMMU is active
+func ActiveIOMMU() (bool, error, error) {
 	smrr, err := api.GetSMRRInfo()
 	if err != nil {
 		return false, nil, err
@@ -590,11 +595,8 @@ func TestActiveIOMMU() (bool, error, error) {
 	return true, nil, nil
 }
 
-func TestActiveTBOOT() (bool, error, error) {
-	return false, nil, fmt.Errorf("TestActiveTBOOT: Unimplemented")
-}
-
-func TestServerModeTXT() (bool, error, error) {
+// ServerModeTXT checks if TXT runs in Servermode
+func ServerModeTXT() (bool, error, error) {
 	// FIXME: Query GetSec[Parameters] ebx = 5
 	// Assume yes if dependencies are satisfied
 	val, err := api.HasSMRR()

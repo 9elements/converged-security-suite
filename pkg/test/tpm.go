@@ -13,81 +13,86 @@ import (
 )
 
 const (
-	tpm12PSIndex     = 0x50000001
-	tpm12AUXIndex    = 0x50000003
-	tpm12OldAUXIndex = 0x50000002
-	tpm12POIndex     = 0x40000001
-	tpm20PSIndex     = 0x1C10103
-	tpm20OldPSIndex  = 0x1800001
-	tpm20AUXIndex    = 0x1C10102
-	tpm20OldAUXIndex = 0x1800003
-	tpm20POIndex     = 0x1C10106
-	tpm20OldPOIndex  = 0x1400001
+	tpm12PSIndex        = 0x50000001
+	tpm12AUXIndex       = 0x50000003
+	tpm12nvPerOwnerAuth = 0x00100000
+	tpm12nvPerReadAuth  = 0x00200000
+	tpm12OldAUXIndex    = 0x50000002
+	tpm12POIndex        = 0x40000001
+	tpm20PSIndex        = 0x1C10103
+	tpm20OldPSIndex     = 0x1800001
+	tpm20AUXIndex       = 0x1C10102
+	tpm20OldAUXIndex    = 0x1800003
+	tpm20POIndex        = 0x1C10106
+	tpm20OldPOIndex     = 0x1400001
+
 	tpm2LockedResult = "error code 0x22"
 )
 
 var (
-	tpm12Connection   *io.ReadWriteCloser = nil
-	tpm20Connection   *io.ReadWriteCloser = nil
-	TpmPath           string              = "/dev/tpm0"
-	testtpmconnection                     = Test{
+	tpm12Connection *io.ReadWriteCloser = nil
+	tpm20Connection *io.ReadWriteCloser = nil
+	// TpmPath exposes the used path for tpm device
+	TpmPath           string = "/dev/tpm0"
+	testtpmconnection        = Test{
 		Name:     "TPM connection",
 		Required: true,
-		function: TestTPMConnect,
-		Status:   TestImplemented,
+		function: TPMConnect,
+		Status:   Implemented,
 	}
 	testtpm12present = Test{
 		Name:         "TPM 1.2 present",
 		Required:     false,
 		NonCritical:  true,
-		function:     TestTPM12Present,
+		function:     TPM12Present,
 		dependencies: []*Test{&testtpmconnection},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testtpm2present = Test{
 		Name:         "TPM 2 is present",
 		Required:     false,
 		NonCritical:  true,
-		function:     TestTPM2Present,
+		function:     TPM2Present,
 		dependencies: []*Test{&testtpmconnection},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testtpmispresent = Test{
 		Name:         "TPM is present",
 		Required:     true,
-		function:     TestTPMIsPresent,
+		function:     TPMIsPresent,
 		dependencies: []*Test{&testtpmconnection},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testtpmnvramislocked = Test{
 		Name:         "TPM NVRAM is locked",
-		function:     TestTPMNVRAMIsLocked,
+		function:     TPMNVRAMIsLocked,
 		Required:     true,
 		dependencies: []*Test{&testtpmispresent},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testpsindexisset = Test{
 		Name:         "PS index set in NVRAM",
-		function:     TestPSIndexIsSet,
+		function:     PSIndexIsSet,
 		Required:     true,
 		dependencies: []*Test{&testtpmispresent},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testauxindexisset = Test{
 		Name:         "AUX index set in NVRAM",
-		function:     TestAUXIndexIsSet,
+		function:     AUXIndexIsSet,
 		Required:     true,
 		dependencies: []*Test{&testtpmispresent},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testlcppolicyisvalid = Test{
 		Name:         "PS index has valid LCP Policy",
-		function:     TestLCPPolicyIsValid,
+		function:     LCPPolicyIsValid,
 		Required:     true,
 		dependencies: []*Test{&testtpmispresent, &testpsindexisset},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 
+	// TestsTPM exposes the slice of pointers to tests regarding tpm functionality for txt
 	TestsTPM = [...]*Test{
 		&testtpmconnection,
 		&testtpm12present,
@@ -100,15 +105,15 @@ var (
 	}
 )
 
-// Connects to a TPM device (virtual or real) at the given path
-func TestTPMConnect() (bool, error, error) {
+// TPMConnect Connects to a TPM device (virtual or real) at the given path
+func TPMConnect() (bool, error, error) {
 	conn, err := tpm2.OpenTPM(TpmPath)
 
 	if err != nil {
 		conn, err = tpm1.OpenTPM(TpmPath)
 
 		if err != nil {
-			return false, nil, fmt.Errorf("Cannot connect to TPM: %s\n", err)
+			return false, nil, fmt.Errorf("cannot connect to TPM: %s", err)
 		}
 
 		tpm12Connection = &conn
@@ -119,8 +124,8 @@ func TestTPMConnect() (bool, error, error) {
 	return true, nil, nil
 }
 
-// Checks if TPM 1.2 is present and answers to GetCapability
-func TestTPM12Present() (bool, error, error) {
+// TPM12Present Checks if TPM 1.2 is present and answers to GetCapability
+func TPM12Present() (bool, error, error) {
 	if tpm12Connection == nil {
 		return false, fmt.Errorf("No TPM 1.2 connection"), nil
 	}
@@ -135,7 +140,8 @@ func TestTPM12Present() (bool, error, error) {
 
 }
 
-func TestTPM2Present() (bool, error, error) {
+// TPM2Present Checks if TPM 2.0 is present and answers to GetCapability
+func TPM2Present() (bool, error, error) {
 	if tpm20Connection == nil {
 		return false, fmt.Errorf("No TPM 2 connection"), nil
 	}
@@ -149,15 +155,16 @@ func TestTPM2Present() (bool, error, error) {
 	return true, nil, nil
 }
 
-func TestTPMIsPresent() (bool, error, error) {
+// TPMIsPresent validates if one of the two previous tests succeeded
+func TPMIsPresent() (bool, error, error) {
 	if (testtpm12present.Result == ResultPass) || (testtpm2present.Result == ResultPass) {
 		return true, nil, nil
 	}
 	return false, fmt.Errorf("No TPM present"), nil
 }
 
-// TestTPMNVRAMIsLocked checks if NVRAM indexes are write protected
-func TestTPMNVRAMIsLocked() (bool, error, error) {
+// TPMNVRAMIsLocked Checks if NVRAM indexes are write protected
+func TPMNVRAMIsLocked() (bool, error, error) {
 	if tpm12Connection != nil {
 		flags, err := tpm1.GetPermanentFlags(*tpm12Connection)
 
@@ -166,16 +173,15 @@ func TestTPMNVRAMIsLocked() (bool, error, error) {
 		err := tpm2.HierarchyChangeAuth(*tpm20Connection, tpm2.HandlePlatform, tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession}, string(tpm2.EmptyAuth))
 		if err != nil && strings.Contains(err.Error(), tpm2LockedResult) {
 			return true, nil, nil
-		} else {
-			return false, fmt.Errorf("Platform hierarchy not defined or auth is empty buffer"), nil
 		}
+		return false, fmt.Errorf("Platform hierarchy not defined or auth is empty buffer"), nil
 	} else {
 		return false, nil, fmt.Errorf("No TPM connection")
 	}
 }
 
-// TPM NVRAM has a valid PS index
-func TestPSIndexIsSet() (bool, error, error) {
+// PSIndexIsSet TPM NVRAM has a valid PS index
+func PSIndexIsSet() (bool, error, error) {
 	if tpm12Connection != nil {
 		data, err := tpm1.NVReadValue(*tpm12Connection, tpm12PSIndex, 0, 54, nil)
 		if err != nil {
@@ -206,8 +212,8 @@ func TestPSIndexIsSet() (bool, error, error) {
 	}
 }
 
-// TPM NVRAM has a valid AUX index
-func TestAUXIndexIsSet() (bool, error, error) {
+// AUXIndexIsSet has a valid AUX index
+func AUXIndexIsSet() (bool, error, error) {
 	if tpm12Connection != nil {
 		buf, err := tpm1.NVReadValue(*tpm12Connection, tpm12AUXIndex, 0, 1, nil)
 		if err != nil {
@@ -232,8 +238,8 @@ func TestAUXIndexIsSet() (bool, error, error) {
 	}
 }
 
-// PS index contains a valid LCP policy
-func TestLCPPolicyIsValid() (bool, error, error) {
+// LCPPolicyIsValid Validates LCPPolicy against PS index
+func LCPPolicyIsValid() (bool, error, error) {
 	var data []byte
 	var err error
 
@@ -273,8 +279,8 @@ func TestLCPPolicyIsValid() (bool, error, error) {
 	return true, nil, nil
 }
 
-// Reads PCR-00 and checks whether if it's not the EmptyDigest
-func TestPCR0IsSet() (bool, error, error) {
+// PCR0IsSet Reads PCR-00 and checks whether if it's not the EmptyDigest
+func PCR0IsSet() (bool, error, error) {
 	if tpm12Connection != nil {
 		pcr, err := tpm1.ReadPCR(*tpm12Connection, 0)
 		if err != nil {
