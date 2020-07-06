@@ -38,11 +38,11 @@ type ApiInterfaces interface {
 	TXTLeavesAreEnabled() (bool, error)
 	IA32DebugInterfaceEnabledOrLocked() (bool, bool, bool, error)
 
-	PCIReadConfigSpace(bus int, device int, dev_fn int, off int, buf interface{}) error
-	PCIReadConfig16(bus int, device int, dev_fn int, off int) (uint16, error)
-	PCIReadConfig32(bus int, device int, dev_fn int, off int) (uint32, error)
-	PCIReadVendorID(bus int, device int, dev_fn int) (uint16, error)
-	PCIReadDeviceID(bus int, device int, dev_fn int) (uint16, error)
+	PCIReadConfigSpace(bus int, device int, devFn int, off int, buf interface{}) error
+	PCIReadConfig16(bus int, device int, devFn int, off int) (uint16, error)
+	PCIReadConfig32(bus int, device int, devFn int, off int) (uint32, error)
+	PCIReadVendorID(bus int, device int, devFn int) (uint16, error)
+	PCIReadDeviceID(bus int, device int, devFn int) (uint16, error)
 	ReadHostBridgeTseg() (uint32, uint32, error)
 	ReadHostBridgeDPR() (DMAProtectedRange, error)
 
