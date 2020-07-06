@@ -34,7 +34,7 @@ func run() bool {
 
 	tests = getTests()
 
-	for idx, _ := range tests {
+	for idx := range tests {
 		if len(testnos) > 0 {
 			// SearchInt returns an index where to "insert" idx
 			i := sort.SearchInts(testnos, idx)
@@ -56,8 +56,8 @@ func run() bool {
 
 	if !flagInteractive() {
 		var t []temptest
-		for index, _ := range tests {
-			if tests[index].Status != test.TestNotImplemented {
+		for index := range tests {
+			if tests[index].Status != test.NotImplemented {
 				ttemp := temptest{index, tests[index].Name, tests[index].Result.String(), tests[index].ErrorText, tests[index].Status.String()}
 				t = append(t, ttemp)
 			}
@@ -66,8 +66,8 @@ func run() bool {
 		ioutil.WriteFile(logfile, data, 0664)
 	}
 
-	for index, _ := range tests {
-		if tests[index].Status == test.TestNotImplemented {
+	for index := range tests {
+		if tests[index].Status == test.NotImplemented {
 			continue
 		}
 		if tests[index].Result == test.ResultNotRun {

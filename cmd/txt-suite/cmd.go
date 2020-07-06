@@ -75,9 +75,9 @@ func listTestsAsMarkdown() {
 	tests := getTests()
 
 	for i, _ := range tests {
-		if tests[i].Status == test.TestImplemented {
+		if tests[i].Status == test.Implemented {
 			teststate = ":white_check_mark:"
-		} else if tests[i].Status == test.TestNotImplemented {
+		} else if tests[i].Status == test.NotImplemented {
 			teststate = ":x:"
 		} else {
 			teststate = ":clock1:"

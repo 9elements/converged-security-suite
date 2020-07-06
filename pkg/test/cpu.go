@@ -12,98 +12,93 @@ var (
 	testcheckforintelcpu                       = Test{
 		Name:     "Intel CPU",
 		Required: true,
-		function: TestCheckForIntelCPU,
-		Status:   TestImplemented,
+		function: CheckForIntelCPU,
+		Status:   Implemented,
 	}
 	testwaybridgeorlater = Test{
 		Name:         "Weybridge or later",
-		function:     TestWeybridgeOrLater,
+		function:     WeybridgeOrLater,
 		Required:     true,
 		dependencies: []*Test{&testcheckforintelcpu},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testcpusupportstxt = Test{
 		Name:         "CPU supports TXT",
-		function:     TestCPUSupportsTXT,
+		function:     CPUSupportsTXT,
 		Required:     true,
 		dependencies: []*Test{&testcheckforintelcpu},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testtxtregisterspaceaccessible = Test{
 		Name:     "TXT register space accessible",
-		function: TestTXTRegisterSpaceAccessible,
+		function: TXTRegisterSpaceAccessible,
 		Required: true,
-		Status:   TestImplemented,
+		Status:   Implemented,
 	}
 	testsupportssmx = Test{
 		Name:         "CPU supports SMX",
-		function:     TestSupportsSMX,
+		function:     SupportsSMX,
 		Required:     true,
 		dependencies: []*Test{&testcheckforintelcpu},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testsupportvmx = Test{
 		Name:         "CPU supports VMX",
-		function:     TestSupportVMX,
+		function:     SupportVMX,
 		Required:     true,
 		dependencies: []*Test{&testcheckforintelcpu},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testia32featurectrl = Test{
 		Name:         "IA32_FEATURE_CONTROL",
-		function:     TestIa32FeatureCtrl,
+		function:     Ia32FeatureCtrl,
 		Required:     true,
 		dependencies: []*Test{&testcheckforintelcpu},
-		Status:       TestImplemented,
-	}
-	testhasgetsecleaves = Test{
-		Name:         "GETSEC leaves are enabled",
-		function:     TestHasGetSecLeaves,
-		Required:     false,
-		dependencies: []*Test{&testia32featurectrl},
-		Status:       TestNotImplemented,
+		Status:       Implemented,
 	}
 	testsmxisenabled = Test{
 		Name:     "SMX enabled",
-		function: TestSMXIsEnabled,
+		function: SMXIsEnabled,
 		Required: false,
-		Status:   TestNotImplemented,
+		Status:   NotImplemented,
 	}
 	testtxtnotdisabled = Test{
 		Name:     "TXT not disabled by BIOS",
-		function: TestTXTNotDisabled,
+		function: TXTNotDisabled,
 		Required: true,
-		Status:   TestImplemented,
+		Status:   Implemented,
 	}
 	testibbmeasured = Test{
 		Name:         "BIOS ACM has run",
-		function:     TestIBBMeasured,
+		function:     IBBMeasured,
 		Required:     true,
 		dependencies: []*Test{&testtxtregisterspaceaccessible},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testibbistrusted = Test{
 		Name:         "IBB is trusted",
-		function:     TestIBBIsTrusted,
+		function:     IBBIsTrusted,
 		Required:     false,
 		NonCritical:  true,
 		dependencies: []*Test{&testtxtregisterspaceaccessible},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testtxtregisterslocked = Test{
 		Name:         "TXT registers are locked",
-		function:     TestTXTRegistersLocked,
+		function:     TXTRegistersLocked,
 		Required:     true,
 		dependencies: []*Test{&testtxtregisterspaceaccessible},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
 	testia32debuginterfacelockeddisabled = Test{
 		Name:         "IA32 debug interface isn't disabled",
-		function:     TestIA32DebugInterfaceLockedDisabled,
+		function:     IA32DebugInterfaceLockedDisabled,
 		Required:     true,
 		dependencies: []*Test{&testcheckforintelcpu},
-		Status:       TestImplemented,
+		Status:       Implemented,
 	}
+
+	// TestsCPU exports slice with CPU related tests
 	TestsCPU = [...]*Test{
 		&testcheckforintelcpu,
 		&testwaybridgeorlater,
@@ -112,7 +107,6 @@ var (
 		&testsupportssmx,
 		&testsupportvmx,
 		&testia32featurectrl,
-		&testhasgetsecleaves,
 		&testtxtnotdisabled,
 		&testibbmeasured,
 		&testibbistrusted,
@@ -138,18 +132,18 @@ func getTxtRegisters() (*api.TXTRegisterSpace, error) {
 	return txtRegisterValues, nil
 }
 
-// Check we're running on a Intel CPU
-func TestCheckForIntelCPU() (bool, error, error) {
+// CheckForIntelCPU Check we're running on a Intel CPU
+func CheckForIntelCPU() (bool, error, error) {
 	return api.VersionString() == "GenuineIntel", nil, nil
 }
 
-// Check we're running on Weybridge
-func TestWeybridgeOrLater() (bool, error, error) {
+// WeybridgeOrLater Check we're running on Weybridge
+func WeybridgeOrLater() (bool, error, error) {
 	return cpuid.DisplayFamily == 6, nil, nil
 }
 
-// Check if the CPU supports TXT
-func TestCPUSupportsTXT() (bool, error, error) {
+// CPUSupportsTXT Check if the CPU supports TXT
+func CPUSupportsTXT() (bool, error, error) {
 	if api.CPUWhitelistTXTSupport() {
 		return true, nil, nil
 	}
@@ -159,8 +153,8 @@ func TestCPUSupportsTXT() (bool, error, error) {
 	return true, nil, nil
 }
 
-// Check if the TXT register space is accessible
-func TestTXTRegisterSpaceAccessible() (bool, error, error) {
+// TXTRegisterSpaceAccessible Check if the TXT register space is accessible
+func TXTRegisterSpaceAccessible() (bool, error, error) {
 	regs, err := getTxtRegisters()
 	if err != nil {
 		return false, nil, err
@@ -184,18 +178,18 @@ func TestTXTRegisterSpaceAccessible() (bool, error, error) {
 	return true, nil, nil
 }
 
-// Check if CPU supports SMX
-func TestSupportsSMX() (bool, error, error) {
+// SupportsSMX Check if CPU supports SMX
+func SupportsSMX() (bool, error, error) {
 	return api.HasSMX(), nil, nil
 }
 
-// Check if CPU supports VMX
-func TestSupportVMX() (bool, error, error) {
+// SupportVMX Check if CPU supports VMX
+func SupportVMX() (bool, error, error) {
 	return api.HasVMX(), nil, nil
 }
 
-// Check IA_32FEATURE_CONTROL
-func TestIa32FeatureCtrl() (bool, error, error) {
+// Ia32FeatureCtrl Check IA_32FEATURE_CONTROL
+func Ia32FeatureCtrl() (bool, error, error) {
 	vmxInSmx, err := api.AllowsVMXInSMX()
 	if err != nil || !vmxInSmx {
 		return vmxInSmx, nil, err
@@ -212,7 +206,8 @@ func TestIa32FeatureCtrl() (bool, error, error) {
 	return true, nil, nil
 }
 
-func TestSMXIsEnabled() (bool, error, error) {
+// SMXIsEnabled not implemented
+func SMXIsEnabled() (bool, error, error) {
 	return false, nil, fmt.Errorf("Unimplemented: no comment")
 }
 
@@ -221,13 +216,8 @@ func TestSMXIsEnabled() (bool, error, error) {
 //	return api.SMXIsEnabled(), nil
 //}
 
-// Check for needed GETSEC leaves
-func TestHasGetSecLeaves() (bool, error, error) {
-	return false, nil, fmt.Errorf("Unimplemented: Linux disables GETSEC by clearing CR4.SMXE")
-}
-
-// Check TXT_DISABLED bit in TXT_ACM_STATUS
-func TestTXTNotDisabled() (bool, error, error) {
+// TXTNotDisabled Check TXT_DISABLED bit in TXT_ACM_STATUS
+func TXTNotDisabled() (bool, error, error) {
 	ret, err := api.TXTLeavesAreEnabled()
 	if err != nil {
 		return false, nil, err
@@ -238,8 +228,8 @@ func TestTXTNotDisabled() (bool, error, error) {
 	return true, nil, nil
 }
 
-// Verify that the IBB has been measured
-func TestIBBMeasured() (bool, error, error) {
+// IBBMeasured Verify that the IBB has been measured
+func IBBMeasured() (bool, error, error) {
 	regs, err := getTxtRegisters()
 	if err != nil {
 		return false, nil, err
@@ -252,9 +242,9 @@ func TestIBBMeasured() (bool, error, error) {
 	return false, fmt.Errorf("Bootstatus register incorrect"), nil
 }
 
-// Check that the IBB was deemed trusted
+// IBBIsTrusted Check that the IBB was deemed trusted
 // Only set in Signed Policy mode
-func TestIBBIsTrusted() (bool, error, error) {
+func IBBIsTrusted() (bool, error, error) {
 	regs, err := getTxtRegisters()
 
 	if err != nil {
@@ -267,8 +257,8 @@ func TestIBBIsTrusted() (bool, error, error) {
 	return false, fmt.Errorf("IBB not trusted"), err
 }
 
-// Verify that the TXT register space is locked
-func TestTXTRegistersLocked() (bool, error, error) {
+// TXTRegistersLocked Verify that the TXT register space is locked
+func TXTRegistersLocked() (bool, error, error) {
 	regs, err := getTxtRegisters()
 	if err != nil {
 		return false, nil, err
@@ -277,8 +267,8 @@ func TestTXTRegistersLocked() (bool, error, error) {
 	return regs.Sts.PrivateOpen, nil, nil
 }
 
-// Check that the BIOS ACM has no startup error
-func TestNoBIOSACMErrors() (bool, error, error) {
+// NoBIOSACMErrors Check that the BIOS ACM has no startup error
+func NoBIOSACMErrors() (bool, error, error) {
 	regs, err := getTxtRegisters()
 	if err != nil {
 		return false, nil, err
@@ -287,18 +277,17 @@ func TestNoBIOSACMErrors() (bool, error, error) {
 	return !regs.ErrorCode.ValidInvalid, nil, nil
 }
 
-// TestIA32DebugInterfaceLockedDisabled checks if IA32 debug interface is locked
-func TestIA32DebugInterfaceLockedDisabled() (bool, error, error) {
-	enabled, locked, pchStrap, err := api.IA32DebugInterfaceEnabledOrLocked()
+// IA32DebugInterfaceLockedDisabled checks if IA32 debug interface is locked
+func IA32DebugInterfaceLockedDisabled() (bool, error, error) {
+	locked, pchStrap, enabled, err := api.IA32DebugInterfaceEnabledOrLocked()
 	if err != nil {
 		return false, nil, err
 	}
 	if !pchStrap {
 		if locked && !enabled {
 			return true, nil, nil
-		} else {
-			return false, fmt.Errorf("ia32 jtag isn't locked or disabled"), nil
 		}
+		return false, fmt.Errorf("ia32 jtag isn't locked or disabled"), nil
 	}
 	return false, fmt.Errorf("ia32 jtag is force enabled by a hardware strap"), nil
 }
