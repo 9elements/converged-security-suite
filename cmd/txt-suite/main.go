@@ -101,10 +101,6 @@ func main() {
 		testnos, _ = deconstructFlag()
 	}
 
-	if *tpmdev != "" {
-		test.TpmPath = *tpmdev
-	}
-
 	if *logpath != "" {
 		logfile = *logpath
 	}
