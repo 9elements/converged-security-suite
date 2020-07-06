@@ -9,7 +9,7 @@ func TestTXT(t *testing.T) {
 
 	txtAPI := GetApi()
 
-	got, err := txtAPI.FetchTXTRegs()
+	got, err := FetchTXTRegs(txtAPI)
 
 	if err != nil {
 		t.Errorf("ReadTXTRegs() failed: %v", err)

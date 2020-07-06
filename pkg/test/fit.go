@@ -206,7 +206,7 @@ func HasFIT(txtAPI api.ApiInterfaces) (bool, error, error) {
 		return false, nil, err
 	}
 
-	hdr, err := txtAPI.GetFitHeader(fithdr)
+	hdr, err := api.GetFitHeader(fithdr)
 	if err != nil {
 		return false, nil, err
 	}
@@ -218,7 +218,7 @@ func HasFIT(txtAPI api.ApiInterfaces) (bool, error, error) {
 	fitblob := make([]byte, hdr.Size())
 	err = txtAPI.ReadPhysBuf(int64(fitPointer), fitblob)
 
-	fit, err = txtAPI.ExtractFit(fitblob)
+	fit, err = api.ExtractFit(fitblob)
 	if err != nil {
 		return false, nil, err
 	}
@@ -434,11 +434,11 @@ func BIOSACMMatchesChipset(txtAPI api.ApiInterfaces) (bool, error, error) {
 	if err != nil {
 		return false, nil, err
 	}
-	buf, err := txtAPI.FetchTXTRegs()
+	buf, err := api.FetchTXTRegs(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
-	txt, err := txtAPI.ParseTXTRegs(buf)
+	txt, err := api.ParseTXTRegs(buf)
 	if err != nil {
 		return false, nil, err
 	}
@@ -501,12 +501,12 @@ func biosACM(txtAPI api.ApiInterfaces, fit []api.FitEntry) (*api.ACM, *api.Chips
 				return nil, nil, nil, nil, fmt.Errorf("ReadPhysBuf failed at %v with error: %v", ent.Address, err)
 			}
 
-			acm, err := txtAPI.ParseACMHeader(buf1)
+			acm, err := api.ParseACMHeader(buf1)
 			if err != nil {
 				return nil, nil, nil, nil, fmt.Errorf("Can't Parse BIOS ACM header correctly")
 			}
 
-			ret, err := txtAPI.ValidateACMHeader(acm)
+			ret, err := api.ValidateACMHeader(acm)
 
 			if ret == false {
 				return nil, nil, nil, nil, fmt.Errorf("Validating BIOS ACM Header failed: %v", err)
@@ -519,7 +519,7 @@ func biosACM(txtAPI api.ApiInterfaces, fit []api.FitEntry) (*api.ACM, *api.Chips
 				return nil, nil, nil, nil, fmt.Errorf("Cant read BIOS ACM completly")
 			}
 
-			return txtAPI.ParseACM(buf2)
+			return api.ParseACM(buf2)
 		}
 	}
 
