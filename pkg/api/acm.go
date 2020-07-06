@@ -95,6 +95,7 @@ type TPMs struct {
 	AlgID        []uint16
 }
 
+// ACMHeader exports the structure of ACM Header found in the firemware interface table
 type ACMHeader struct {
 	ModuleType      uint16
 	ModuleSubType   uint16
@@ -120,14 +121,15 @@ type ACMHeader struct {
 	PubExp          uint32
 	Signatur        [256]uint8
 }
+
+// ACM exports the structure of Authenticated Code Modules found in the Firmware Interface Table(FIT)
 type ACM struct {
 	Header  ACMHeader
 	Scratch []byte
 	Info    ACMInfo
 }
 
-// ParseACMHeader
-
+// ParseACMHeader exports the functionality of parsing an ACM Header
 func ParseACMHeader(data []byte) (*ACMHeader, error) {
 	var acm ACMHeader
 	buf := bytes.NewReader(data)
@@ -140,7 +142,7 @@ func ParseACMHeader(data []byte) (*ACMHeader, error) {
 	return &acm, nil
 }
 
-// ValidateACMHeader
+// ValidateACMHeader validates an ACM Header found in the Firmware Interface Table (FIT)
 func ValidateACMHeader(acmheader *ACMHeader) (bool, error) {
 	if acmheader.ModuleType != uint16(2) {
 		return false, fmt.Errorf("BIOS ACM ModuleType is not 2, this is not specified - Intel TXT Software Development Guide, Document: 315168-013, P. 84")
@@ -152,7 +154,7 @@ func ValidateACMHeader(acmheader *ACMHeader) (bool, error) {
 		return false, fmt.Errorf("BIOS ACM HeaderLength is smaller than 4*161 Byte - Intel TXT Software Development Guide, Document: 315168-013, P. 83")
 	}
 	if acmheader.Size == 0 {
-		return false, fmt.Errorf("BIOS ACM Size can't be zero!")
+		return false, fmt.Errorf("BIOS ACM Size can't be zero")
 	}
 	if acmheader.ModuleVendor != vendorIntel {
 		return false, fmt.Errorf("AC Module Vendor is not Intel. Only Intel as Vendor is allowed")
