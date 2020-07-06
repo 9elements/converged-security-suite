@@ -5,7 +5,10 @@ import (
 )
 
 func TestVersionString(t *testing.T) {
-	got := VersionString()
+
+	txtAPI := GetApi()
+
+	got := txtAPI.VersionString()
 
 	if got == "" {
 		t.Error("VersionString() returned the empty string.")

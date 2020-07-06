@@ -376,7 +376,7 @@ func parsePolicy2(policy []byte) (*LCPPolicy2, error) {
 	return &pol2, nil
 }
 
-func ParsePolicy(policy []byte) (*LCPPolicy, *LCPPolicy2, error) {
+func (t TxtApi) ParsePolicy(policy []byte) (*LCPPolicy, *LCPPolicy2, error) {
 	var version uint16
 	buf := bytes.NewReader(policy)
 	err := binary.Read(buf, binary.LittleEndian, &version)
@@ -798,7 +798,7 @@ func parseLCPHash2(buf *bytes.Reader, hash *LCPHash, alg tpm2.Algorithm) error {
 	return nil
 }
 
-func ParsePolicyData(policyData []byte) (*LCPPolicyData, error) {
+func (t TxtApi) ParsePolicyData(policyData []byte) (*LCPPolicyData, error) {
 	var polData LCPPolicyData
 
 	buf := bytes.NewReader(policyData)

@@ -156,7 +156,7 @@ var (
 )
 
 // TPMConnect Connects to a TPM device (virtual or real) at the given path
-func TPMConnect() (bool, error, error) {
+func TPMConnect(txtAPI api.ApiInterfaces) (bool, error, error) {
 
 	t, err := tss.NewTPM()
 	if err != nil {
@@ -167,7 +167,7 @@ func TPMConnect() (bool, error, error) {
 }
 
 // TPM12Present Checks if TPM 1.2 is present and answers to GetCapability
-func TPM12Present() (bool, error, error) {
+func TPM12Present(txtAPI api.ApiInterfaces) (bool, error, error) {
 
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
@@ -179,7 +179,7 @@ func TPM12Present() (bool, error, error) {
 }
 
 // TPM2Present Checks if TPM 2.0 is present and answers to GetCapability
-func TPM2Present() (bool, error, error) {
+func TPM2Present(txtAPI api.ApiInterfaces) (bool, error, error) {
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
 		return false, nil, nil
@@ -190,7 +190,7 @@ func TPM2Present() (bool, error, error) {
 }
 
 // TPMIsPresent validates if one of the two previous tests succeeded
-func TPMIsPresent() (bool, error, error) {
+func TPMIsPresent(txtAPI api.ApiInterfaces) (bool, error, error) {
 	if (testtpm12present.Result == ResultPass) || (testtpm2present.Result == ResultPass) {
 		return true, nil, nil
 	}
@@ -198,7 +198,7 @@ func TPMIsPresent() (bool, error, error) {
 }
 
 // TPMNVRAMIsLocked Checks if NVRAM indexes are write protected
-func TPMNVRAMIsLocked() (bool, error, error) {
+func TPMNVRAMIsLocked(txtAPI api.ApiInterfaces) (bool, error, error) {
 	var res bool
 	var err error
 	var flags tpm1.PermanentFlags
@@ -219,7 +219,7 @@ func TPMNVRAMIsLocked() (bool, error, error) {
 }
 
 // PSIndexConfig tests if PS Index has correct configuration
-func PSIndexConfig() (bool, error, error) {
+func PSIndexConfig(txtAPI api.ApiInterfaces) (bool, error, error) {
 	var d1 tpm1.NVDataPublic
 	var d2 tpm2.NVPublic
 	var err error
@@ -278,7 +278,7 @@ func PSIndexConfig() (bool, error, error) {
 }
 
 // AUXIndexConfig tests if the AUX Index has the correct configuration
-func AUXIndexConfig() (bool, error, error) {
+func AUXIndexConfig(txtAPI api.ApiInterfaces) (bool, error, error) {
 	var d1 tpm1.NVDataPublic
 	var d2 tpm2.NVPublic
 	var err error
@@ -370,7 +370,7 @@ func AUXIndexConfig() (bool, error, error) {
 }
 
 // POIndexConfig checks the PO index configuration
-func POIndexConfig() (bool, error, error) {
+func POIndexConfig(txtAPI api.ApiInterfaces) (bool, error, error) {
 	var d1 tpm1.NVDataPublic
 	var d2 tpm2.NVPublic
 	var err error
@@ -447,7 +447,7 @@ func POIndexConfig() (bool, error, error) {
 }
 
 // PSIndexHasValidLCP checks if PS Index has a valid LCP
-func PSIndexHasValidLCP() (bool, error, error) {
+func PSIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
 	var pol1 *api.LCPPolicy
 	var pol2 *api.LCPPolicy2
 	emptyHash := make([]byte, 20)
@@ -457,7 +457,7 @@ func PSIndexHasValidLCP() (bool, error, error) {
 		if err != nil {
 			return false, nil, err
 		}
-		pol1, pol2, err = api.ParsePolicy(data)
+		pol1, pol2, err = txtAPI.ParsePolicy(data)
 		if err != nil {
 			return false, nil, err
 		}
@@ -506,7 +506,7 @@ func PSIndexHasValidLCP() (bool, error, error) {
 			}
 			return false, nil, fmt.Errorf("error: %v, pubdata: %v", err, d)
 		}
-		pol1, pol2, err = api.ParsePolicy(data)
+		pol1, pol2, err = txtAPI.ParsePolicy(data)
 		if err != nil {
 			return false, nil, err
 		}
@@ -566,7 +566,7 @@ func PSIndexHasValidLCP() (bool, error, error) {
 }
 
 // POIndexHasValidLCP checks if PO Index holds a valid LCP
-func POIndexHasValidLCP() (bool, error, error) {
+func POIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
 	var pol1 *api.LCPPolicy
 	var pol2 *api.LCPPolicy2
 	emptyHash := make([]byte, 20)
@@ -577,7 +577,7 @@ func POIndexHasValidLCP() (bool, error, error) {
 		if err != nil {
 			return false, nil, err
 		}
-		pol1, pol2, err = api.ParsePolicy(data)
+		pol1, pol2, err = txtAPI.ParsePolicy(data)
 		if err != nil {
 			return false, nil, err
 		}
@@ -624,7 +624,7 @@ func POIndexHasValidLCP() (bool, error, error) {
 		size := uint16(crypto.Hash(d.NameAlg).Size()) + tpm20POIndexBaseSize
 
 		data, err := tpmCon.NVReadValue(tpm20POIndex, "", uint32(size), tpm20POIndex)
-		pol1, pol2, err = api.ParsePolicy(data)
+		pol1, pol2, err = txtAPI.ParsePolicy(data)
 		if err != nil {
 			return false, nil, err
 		}
@@ -684,7 +684,7 @@ func POIndexHasValidLCP() (bool, error, error) {
 }
 
 // PCR0IsSet Reads PCR-00 and checks whether if it's not the EmptyDigest
-func PCR0IsSet() (bool, error, error) {
+func PCR0IsSet(txtAPI api.ApiInterfaces) (bool, error, error) {
 	pcr, err := tpmCon.ReadPCR(0)
 	if err != nil {
 		return false, nil, err

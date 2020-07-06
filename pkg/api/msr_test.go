@@ -6,7 +6,10 @@ import (
 
 func TestSMRR(t *testing.T) {
 	t.Skip()
-	has, err := HasSMRR()
+
+	txtAPI := GetApi()
+
+	has, err := txtAPI.HasSMRR()
 	if err != nil {
 		t.Errorf("HasSMRR() failed: %v", err)
 	}
@@ -14,7 +17,7 @@ func TestSMRR(t *testing.T) {
 	if has {
 		t.Log("System has SMRR")
 
-		got, err := GetSMRRInfo()
+		got, err := txtAPI.GetSMRRInfo()
 
 		if err != nil {
 			t.Errorf("GetSMRRInfo() failed: %v", err)

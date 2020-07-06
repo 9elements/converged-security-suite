@@ -6,7 +6,10 @@ import (
 
 func TestTXT(t *testing.T) {
 	t.Skip()
-	got, err := FetchTXTRegs()
+
+	txtAPI := GetApi()
+
+	got, err := txtAPI.FetchTXTRegs()
 
 	if err != nil {
 		t.Errorf("ReadTXTRegs() failed: %v", err)

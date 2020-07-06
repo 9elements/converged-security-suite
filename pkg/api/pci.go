@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func PCIReadConfigSpace(bus int, device int, dev_fn int, off int, buf interface{}) error {
+func (t TxtApi) PCIReadConfigSpace(bus int, device int, dev_fn int, off int, buf interface{}) error {
 	var path string
 	path = fmt.Sprintf("/sys/bus/pci/devices/0000:%02x:%02x.%1x/config", bus, device, dev_fn)
 
@@ -23,10 +23,10 @@ func PCIReadConfigSpace(bus int, device int, dev_fn int, off int, buf interface{
 	return binary.Read(f, binary.LittleEndian, buf)
 }
 
-func PCIReadConfig16(bus int, device int, dev_fn int, off int) (uint16, error) {
+func (t TxtApi) PCIReadConfig16(bus int, device int, dev_fn int, off int) (uint16, error) {
 	var reg16 uint16
 
-	err := PCIReadConfigSpace(bus, device, dev_fn, off, &reg16)
+	err := t.PCIReadConfigSpace(bus, device, dev_fn, off, &reg16)
 	if err != nil {
 		return 0, err
 	}
@@ -34,10 +34,10 @@ func PCIReadConfig16(bus int, device int, dev_fn int, off int) (uint16, error) {
 	return reg16, nil
 }
 
-func PCIReadConfig32(bus int, device int, dev_fn int, off int) (uint32, error) {
+func (t TxtApi) PCIReadConfig32(bus int, device int, dev_fn int, off int) (uint32, error) {
 	var reg32 uint32
 
-	err := PCIReadConfigSpace(bus, device, dev_fn, off, &reg32)
+	err := t.PCIReadConfigSpace(bus, device, dev_fn, off, &reg32)
 	if err != nil {
 		return 0, err
 	}
@@ -45,8 +45,8 @@ func PCIReadConfig32(bus int, device int, dev_fn int, off int) (uint32, error) {
 	return reg32, nil
 }
 
-func PCIReadVendorID(bus int, device int, dev_fn int) (uint16, error) {
-	id, err := PCIReadConfig16(bus, device, dev_fn, 0)
+func (t TxtApi) PCIReadVendorID(bus int, device int, dev_fn int) (uint16, error) {
+	id, err := t.PCIReadConfig16(bus, device, dev_fn, 0)
 	if err != nil {
 		return 0, err
 	}
@@ -54,8 +54,8 @@ func PCIReadVendorID(bus int, device int, dev_fn int) (uint16, error) {
 	return id, nil
 }
 
-func PCIReadDeviceID(bus int, device int, dev_fn int) (uint16, error) {
-	id, err := PCIReadConfig16(bus, device, dev_fn, 2)
+func (t TxtApi) PCIReadDeviceID(bus int, device int, dev_fn int) (uint16, error) {
+	id, err := t.PCIReadConfig16(bus, device, dev_fn, 2)
 	if err != nil {
 		return 0, err
 	}
@@ -158,20 +158,20 @@ var (
 	}
 )
 
-func ReadHostBridgeTseg() (uint32, uint32, error) {
+func (t TxtApi) ReadHostBridgeTseg() (uint32, uint32, error) {
 	var tsegBaseOff int
 	var tsegLimitOff int
 	var tsegBroadwellDEfix bool
 	var devicenum int
 
-	vendorid, err := PCIReadVendorID(0, 0, 0)
+	vendorid, err := t.PCIReadVendorID(0, 0, 0)
 	if err != nil {
 		return 0, 0, err
 	}
 	if vendorid != 0x8086 {
 		return 0, 0, fmt.Errorf("Hostbridge is not made by Intel")
 	}
-	deviceid, err := PCIReadDeviceID(0, 0, 0)
+	deviceid, err := t.PCIReadDeviceID(0, 0, 0)
 
 	var found bool = false
 	for _, id := range HostbridgeIDsSandyCompatible {
@@ -203,12 +203,12 @@ func ReadHostBridgeTseg() (uint32, uint32, error) {
 	var tsegbase uint32
 	var tseglimit uint32
 
-	tsegbase, err = PCIReadConfig32(0, devicenum, 0, tsegBaseOff)
+	tsegbase, err = t.PCIReadConfig32(0, devicenum, 0, tsegBaseOff)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	tseglimit, err = PCIReadConfig32(0, devicenum, 0, tsegLimitOff)
+	tseglimit, err = t.PCIReadConfig32(0, devicenum, 0, tsegLimitOff)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -221,19 +221,19 @@ func ReadHostBridgeTseg() (uint32, uint32, error) {
 	return tsegbase, tseglimit, nil
 }
 
-func ReadHostBridgeDPR() (DMAProtectedRange, error) {
+func (t TxtApi) ReadHostBridgeDPR() (DMAProtectedRange, error) {
 	var dprOff int
 	var devicenum int
 	var ret DMAProtectedRange
 
-	vendorid, err := PCIReadVendorID(0, 0, 0)
+	vendorid, err := t.PCIReadVendorID(0, 0, 0)
 	if err != nil {
 		return ret, err
 	}
 	if vendorid != 0x8086 {
 		return ret, fmt.Errorf("Hostbridge is not made by Intel")
 	}
-	deviceid, err := PCIReadDeviceID(0, 0, 0)
+	deviceid, err := t.PCIReadDeviceID(0, 0, 0)
 
 	var found bool = false
 	for _, id := range HostbridgeIDsSandyCompatible {
@@ -261,7 +261,7 @@ func ReadHostBridgeDPR() (DMAProtectedRange, error) {
 
 	var u32 uint32
 
-	u32, err = PCIReadConfig32(0, devicenum, 0, dprOff)
+	u32, err = t.PCIReadConfig32(0, devicenum, 0, dprOff)
 	if err != nil {
 		return ret, err
 	}

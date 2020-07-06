@@ -115,13 +115,14 @@ var (
 	}
 )
 
-func getTxtRegisters() (*api.TXTRegisterSpace, error) {
+func getTxtRegisters(txtApi api.ApiInterfaces) (*api.TXTRegisterSpace, error) {
+
 	if txtRegisterValues == nil {
-		buf, err := api.FetchTXTRegs()
+		buf, err := txtApi.FetchTXTRegs()
 		if err != nil {
 			return nil, err
 		}
-		regs, err := api.ParseTXTRegs(buf)
+		regs, err := txtApi.ParseTXTRegs(buf)
 		if err != nil {
 			return nil, err
 		}
@@ -133,29 +134,29 @@ func getTxtRegisters() (*api.TXTRegisterSpace, error) {
 }
 
 // CheckForIntelCPU Check we're running on a Intel CPU
-func CheckForIntelCPU() (bool, error, error) {
-	return api.VersionString() == "GenuineIntel", nil, nil
+func CheckForIntelCPU(txtAPI api.ApiInterfaces) (bool, error, error) {
+	return txtAPI.VersionString() == "GenuineIntel", nil, nil
 }
 
 // WeybridgeOrLater Check we're running on Weybridge
-func WeybridgeOrLater() (bool, error, error) {
+func WeybridgeOrLater(txtAPI api.ApiInterfaces) (bool, error, error) {
 	return cpuid.DisplayFamily == 6, nil, nil
 }
 
 // CPUSupportsTXT Check if the CPU supports TXT
-func CPUSupportsTXT() (bool, error, error) {
-	if api.CPUWhitelistTXTSupport() {
+func CPUSupportsTXT(txtAPI api.ApiInterfaces) (bool, error, error) {
+	if txtAPI.CPUWhitelistTXTSupport() {
 		return true, nil, nil
 	}
-	if api.CPUBlacklistTXTSupport() {
+	if txtAPI.CPUBlacklistTXTSupport() {
 		return false, fmt.Errorf("CPU does not support TXT - on blacklist"), nil
 	}
 	return true, nil, nil
 }
 
 // TXTRegisterSpaceAccessible Check if the TXT register space is accessible
-func TXTRegisterSpaceAccessible() (bool, error, error) {
-	regs, err := getTxtRegisters()
+func TXTRegisterSpaceAccessible(txtAPI api.ApiInterfaces) (bool, error, error) {
+	regs, err := getTxtRegisters(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
@@ -179,23 +180,23 @@ func TXTRegisterSpaceAccessible() (bool, error, error) {
 }
 
 // SupportsSMX Check if CPU supports SMX
-func SupportsSMX() (bool, error, error) {
-	return api.HasSMX(), nil, nil
+func SupportsSMX(txtAPI api.ApiInterfaces) (bool, error, error) {
+	return txtAPI.HasSMX(), nil, nil
 }
 
 // SupportVMX Check if CPU supports VMX
-func SupportVMX() (bool, error, error) {
-	return api.HasVMX(), nil, nil
+func SupportVMX(txtAPI api.ApiInterfaces) (bool, error, error) {
+	return txtAPI.HasVMX(), nil, nil
 }
 
 // Ia32FeatureCtrl Check IA_32FEATURE_CONTROL
-func Ia32FeatureCtrl() (bool, error, error) {
-	vmxInSmx, err := api.AllowsVMXInSMX()
+func Ia32FeatureCtrl(txtAPI api.ApiInterfaces) (bool, error, error) {
+	vmxInSmx, err := txtAPI.AllowsVMXInSMX()
 	if err != nil || !vmxInSmx {
 		return vmxInSmx, nil, err
 	}
 
-	locked, err := api.IA32FeatureControlIsLocked()
+	locked, err := txtAPI.IA32FeatureControlIsLocked()
 	if err != nil {
 		return false, nil, err
 	}
@@ -207,7 +208,7 @@ func Ia32FeatureCtrl() (bool, error, error) {
 }
 
 // SMXIsEnabled not implemented
-func SMXIsEnabled() (bool, error, error) {
+func SMXIsEnabled(txtAPI api.ApiInterfaces) (bool, error, error) {
 	return false, nil, fmt.Errorf("Unimplemented: no comment")
 }
 
@@ -217,8 +218,8 @@ func SMXIsEnabled() (bool, error, error) {
 //}
 
 // TXTNotDisabled Check TXT_DISABLED bit in TXT_ACM_STATUS
-func TXTNotDisabled() (bool, error, error) {
-	ret, err := api.TXTLeavesAreEnabled()
+func TXTNotDisabled(txtAPI api.ApiInterfaces) (bool, error, error) {
+	ret, err := txtAPI.TXTLeavesAreEnabled()
 	if err != nil {
 		return false, nil, err
 	}
@@ -229,8 +230,8 @@ func TXTNotDisabled() (bool, error, error) {
 }
 
 // IBBMeasured Verify that the IBB has been measured
-func IBBMeasured() (bool, error, error) {
-	regs, err := getTxtRegisters()
+func IBBMeasured(txtAPI api.ApiInterfaces) (bool, error, error) {
+	regs, err := getTxtRegisters(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
@@ -244,8 +245,8 @@ func IBBMeasured() (bool, error, error) {
 
 // IBBIsTrusted Check that the IBB was deemed trusted
 // Only set in Signed Policy mode
-func IBBIsTrusted() (bool, error, error) {
-	regs, err := getTxtRegisters()
+func IBBIsTrusted(txtAPI api.ApiInterfaces) (bool, error, error) {
+	regs, err := getTxtRegisters(txtAPI)
 
 	if err != nil {
 		return false, nil, err
@@ -258,8 +259,8 @@ func IBBIsTrusted() (bool, error, error) {
 }
 
 // TXTRegistersLocked Verify that the TXT register space is locked
-func TXTRegistersLocked() (bool, error, error) {
-	regs, err := getTxtRegisters()
+func TXTRegistersLocked(txtAPI api.ApiInterfaces) (bool, error, error) {
+	regs, err := getTxtRegisters(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
@@ -268,8 +269,8 @@ func TXTRegistersLocked() (bool, error, error) {
 }
 
 // NoBIOSACMErrors Check that the BIOS ACM has no startup error
-func NoBIOSACMErrors() (bool, error, error) {
-	regs, err := getTxtRegisters()
+func NoBIOSACMErrors(txtAPI api.ApiInterfaces) (bool, error, error) {
+	regs, err := getTxtRegisters(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
@@ -278,8 +279,8 @@ func NoBIOSACMErrors() (bool, error, error) {
 }
 
 // IA32DebugInterfaceLockedDisabled checks if IA32 debug interface is locked
-func IA32DebugInterfaceLockedDisabled() (bool, error, error) {
-	locked, pchStrap, enabled, err := api.IA32DebugInterfaceEnabledOrLocked()
+func IA32DebugInterfaceLockedDisabled(txtAPI api.ApiInterfaces) (bool, error, error) {
+	locked, pchStrap, enabled, err := txtAPI.IA32DebugInterfaceEnabledOrLocked()
 	if err != nil {
 		return false, nil, err
 	}

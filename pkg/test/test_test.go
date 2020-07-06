@@ -3,6 +3,8 @@ package test
 import (
 	"fmt"
 	"testing"
+
+	"github.com/9elements/txt-suite/pkg/api"
 )
 
 func TestTest_Run(t *testing.T) {
@@ -172,6 +174,8 @@ func TestTest_Run(t *testing.T) {
 			ResultFail,
 		},
 	}
+
+	txtAPI := api.GetApi()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tr := &Test{
@@ -185,7 +189,7 @@ func TestTest_Run(t *testing.T) {
 				Spec:         tt.fields.Spec,
 				NonCritical:  tt.fields.NonCritical,
 			}
-			if got := tr.Run(); got != tt.wantReturn {
+			if got := tr.Run(txtAPI); got != tt.wantReturn {
 				t.Errorf("Test.Run() = %v, want %v", got, tt.wantReturn)
 			}
 			if tr.Result != tt.wantResult {

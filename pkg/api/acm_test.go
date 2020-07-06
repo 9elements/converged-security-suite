@@ -12,12 +12,14 @@ func TestParseandValidateACMHeader(t *testing.T) {
 		t.Errorf("Failed to read file: %v", err)
 	}
 
-	header, err := ParseACMHeader(file)
+	txtAPI := GetApi()
+
+	header, err := txtAPI.ParseACMHeader(file)
 	if err != nil {
 		t.Errorf("ParseACMHeader() failed: %v", err)
 	}
 
-	valid, err := ValidateACMHeader(header)
+	valid, err := txtAPI.ValidateACMHeader(header)
 	if err != nil {
 		t.Errorf("ValidateACMHeader() failed: %v", err)
 	}
@@ -33,8 +35,9 @@ func TestACMParser(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to read file: %v", err)
 	}
+	txtAPI := GetApi()
 
-	acm, chipsets, processors, tpms, err := ParseACM(file)
+	acm, chipsets, processors, tpms, err := txtAPI.ParseACM(file)
 	if err != nil {
 		t.Errorf("ParseACM() failed: %v", err)
 	}
@@ -50,7 +53,9 @@ func TestACMSize(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to read file: %v", err)
 	}
-	size, err := LookupSize(file)
+	txtAPI := GetApi()
+
+	size, err := txtAPI.LookupSize(file)
 	if err != nil {
 		t.Errorf("ACMSize() failed: %v", err)
 	}
@@ -69,8 +74,9 @@ func TestACMParser2(t *testing.T) {
 	if err != nil {
 		t.Errorf("ACMParser() failed: %v", err)
 	}
+	txtAPI := GetApi()
 
-	acm, chipsets, processors, tpms, err := ParseACM(file)
+	acm, chipsets, processors, tpms, err := txtAPI.ParseACM(file)
 	if err != nil {
 		t.Errorf("ACMParser() failed: %v", err)
 	}
@@ -86,7 +92,9 @@ func TestACMSize2(t *testing.T) {
 	if err != nil {
 		t.Errorf("ACMSize() failed: %v", err)
 	}
-	size, err := LookupSize(file)
+	txtAPI := GetApi()
+
+	size, err := txtAPI.LookupSize(file)
 	if err != nil {
 		t.Errorf("ACMSize() failed: %v", err)
 	}

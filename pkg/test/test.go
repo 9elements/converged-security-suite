@@ -1,5 +1,7 @@
 package test
 
+import "github.com/9elements/txt-suite/pkg/api"
+
 // Result exposes the type for test results
 type Result int
 
@@ -72,7 +74,7 @@ type Test struct {
 	//-> mostly api errors, but not directly testrelated problem.
 	//The return call in test functions shall return only one of the errors,
 	//while the other is nil.
-	function     func() (bool, error, error)
+	function     func(api.ApiInterfaces) (bool, error, error)
 	Result       Result
 	dependencies []*Test
 	ErrorText    string
@@ -82,7 +84,7 @@ type Test struct {
 }
 
 // Run implements the genereal test function and exposes it.
-func (t *Test) Run() bool {
+func (t *Test) Run(TxtApi api.ApiInterfaces) bool {
 	var DepsPassed = true
 	// Make sure all dependencies have run and passed
 	for idx := range t.dependencies {
@@ -90,7 +92,7 @@ func (t *Test) Run() bool {
 			continue
 		}
 		if t.dependencies[idx].Result == ResultNotRun {
-			t.dependencies[idx].Run()
+			t.dependencies[idx].Run(TxtApi)
 		}
 		if t.dependencies[idx].Result != ResultPass {
 			t.ErrorText = t.dependencies[idx].Name + " failed"
@@ -101,7 +103,7 @@ func (t *Test) Run() bool {
 
 	if DepsPassed {
 		// Now run the test itself
-		rc, testerror, internalerror := t.function()
+		rc, testerror, internalerror := t.function(TxtApi)
 		if internalerror != nil && testerror == nil {
 			t.Result = ResultInternalError
 			t.ErrorText = internalerror.Error()

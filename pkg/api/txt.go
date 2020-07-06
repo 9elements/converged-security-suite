@@ -104,31 +104,31 @@ type TXTBiosMLEFlags struct {
 	IsClientState   bool
 }
 
-func FetchTXTRegs() ([]byte, error) {
+func (t TxtApi) FetchTXTRegs() ([]byte, error) {
 	data := make([]byte, 0x1000)
-	if err := ReadPhysBuf(txtPublicSpace, data); err != nil {
+	if err := t.ReadPhysBuf(txtPublicSpace, data); err != nil {
 		return nil, err
 	}
 	return data, nil
 }
 
-func ParseTXTRegs(data []byte) (TXTRegisterSpace, error) {
+func (t TxtApi) ParseTXTRegs(data []byte) (TXTRegisterSpace, error) {
 	var regSpace TXTRegisterSpace
 	var err error
 
-	regSpace.Sts, err = readTXTStatus(data)
+	regSpace.Sts, err = t.readTXTStatus(data)
 	if err != nil {
 		return regSpace, err
 
 	}
 
-	regSpace.ErrorCode, regSpace.ErrorCodeRaw, err = readTXTErrorCode(data)
+	regSpace.ErrorCode, regSpace.ErrorCodeRaw, err = t.readTXTErrorCode(data)
 	if err != nil {
 		return regSpace, err
 
 	}
 
-	regSpace.Dpr, err = readDMAProtectedRange(data)
+	regSpace.Dpr, err = t.readDMAProtectedRange(data)
 	if err != nil {
 		return regSpace, err
 
@@ -236,7 +236,7 @@ func ParseTXTRegs(data []byte) (TXTRegisterSpace, error) {
 	return regSpace, nil
 }
 
-func ParseBIOSDataRegion(heap []byte) (TXTBiosData, error) {
+func (t TxtApi) ParseBIOSDataRegion(heap []byte) (TXTBiosData, error) {
 	var ret TXTBiosData
 	var biosDataSize uint64
 
@@ -298,7 +298,7 @@ func ParseBIOSDataRegion(heap []byte) (TXTBiosData, error) {
 	return ret, nil
 }
 
-func readTXTStatus(data []byte) (TXTStatus, error) {
+func (t TxtApi) readTXTStatus(data []byte) (TXTStatus, error) {
 	var ret TXTStatus
 	var u64 uint64
 	buf := bytes.NewReader(data)
@@ -318,7 +318,7 @@ func readTXTStatus(data []byte) (TXTStatus, error) {
 	return ret, nil
 }
 
-func readTXTErrorCode(data []byte) (TXTErrorCode, uint32, error) {
+func (t TxtApi) readTXTErrorCode(data []byte) (TXTErrorCode, uint32, error) {
 	var ret TXTErrorCode
 	var u32 uint32
 	buf := bytes.NewReader(data[txtErrorCode:])
@@ -340,7 +340,7 @@ func readTXTErrorCode(data []byte) (TXTErrorCode, uint32, error) {
 	return ret, uint32(u32), nil
 }
 
-func readDMAProtectedRange(data []byte) (DMAProtectedRange, error) {
+func (t TxtApi) readDMAProtectedRange(data []byte) (DMAProtectedRange, error) {
 	var ret DMAProtectedRange
 	var u32 uint32
 	buf := bytes.NewReader(data[txtDMAProtectedRange:])
@@ -357,7 +357,7 @@ func readDMAProtectedRange(data []byte) (DMAProtectedRange, error) {
 	return ret, nil
 }
 
-func ReadACMStatus(data []byte) (ACMStatus, error) {
+func (t TxtApi) ReadACMStatus(data []byte) (ACMStatus, error) {
 	var ret ACMStatus
 	var u64 uint64
 	buf := bytes.NewReader(data[txtACMStatus:])

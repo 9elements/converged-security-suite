@@ -10,8 +10,9 @@ func TestLCPParser(t *testing.T) {
 	if err != nil {
 		t.Errorf("LCPParser() read failed: %v", err)
 	}
+	txtAPI := GetApi()
 
-	_, _, err = ParsePolicy(file)
+	_, _, err = txtAPI.ParsePolicy(file)
 	if err != nil {
 		t.Errorf("LCPParser() failed: %v", err)
 	}
@@ -22,8 +23,9 @@ func TestLCPParser2(t *testing.T) {
 	if err != nil {
 		t.Errorf("LCPParser() read failed: %v", err)
 	}
+	txtAPI := GetApi()
 
-	_, _, err = ParsePolicy(file)
+	_, _, err = txtAPI.ParsePolicy(file)
 	if err != nil {
 		t.Errorf("LCPParser() failed: %v", err)
 	}
@@ -34,8 +36,9 @@ func TestLCPParser3(t *testing.T) {
 	if err != nil {
 		t.Errorf("LCPDataParser() failed: %v", err)
 	}
+	txtAPI := GetApi()
 
-	_, _, err = ParsePolicy(file)
+	_, _, err = txtAPI.ParsePolicy(file)
 	if err != nil {
 		t.Errorf("LCPDataParser() failed: %v", err)
 	}
@@ -46,8 +49,9 @@ func TestLCPDataParser(t *testing.T) {
 	if err != nil {
 		t.Errorf("LCPDataParser() failed: %v", err)
 	}
+	txtAPI := GetApi()
 
-	poldata, err := ParsePolicyData(file)
+	poldata, err := txtAPI.ParsePolicyData(file)
 	if err != nil {
 		t.Errorf("LCPDataParser() failed: %v", err)
 	}
@@ -60,8 +64,9 @@ func TestLCPDataParser2(t *testing.T) {
 	if err != nil {
 		t.Errorf("LCPDataParser() failed: %v", err)
 	}
+	txtAPI := GetApi()
 
-	poldata, err := ParsePolicyData(file)
+	poldata, err := txtAPI.ParsePolicyData(file)
 	if err != nil {
 		t.Errorf("LCPDataParser() failed: %v", err)
 	}
