@@ -10,9 +10,21 @@ import (
 	"github.com/google/go-tpm/tpm2"
 )
 
+type LCPPol2Hash uint16
+
 const (
-	LCPPolicyTypeAny         uint   = 1
-	LCPPolicyTypeList        uint   = 0
+	LCPPol2HAlgSHA1   LCPPol2Hash = 0x04
+	LCPPol2HAlgSHA256 LCPPol2Hash = 0x0B
+	LCPPol2HAlgSHA384 LCPPol2Hash = 0x0C
+	LCPPol2HAlgNULL   LCPPol2Hash = 0x10
+	LCPPol2HAlgSM3    LCPPol2Hash = 0x12
+)
+
+const (
+	LCPPolicyVersion2        uint16 = 0x0204
+	LCPPolicyVersion3        uint16 = 0x0300
+	LCPPolicyTypeAny         uint8  = 1
+	LCPPolicyTypeList        uint8  = 0
 	LCPMaxLists              uint   = 8
 	SHA1DigestSize           uint   = 20
 	SHA256DigestSize         uint   = 32
@@ -31,11 +43,6 @@ const (
 	LCPPolicyElementSBIOS2   uint32 = 0x12
 	LCPPolicyElementSTM2     uint32 = 0x14
 	LCPPolHAlgSHA1           uint8  = 0
-	LCPPol2HAlgSHA1          uint16 = 0x04
-	LCPPol2HAlgSHA256        uint16 = 0x0B
-	LCPPol2HAlgSHA384        uint16 = 0x0C
-	LCPPol2HAlgNULL          uint16 = 0x10
-	LCPPol2HAlgSM3           uint16 = 0x12
 )
 
 type LCPHash struct {
@@ -168,13 +175,13 @@ type LCPPolicy struct {
 
 type LCPPolicy2 struct {
 	Version                uint16 // < 0x0302
-	HashAlg                uint16
+	HashAlg                LCPPol2Hash
 	PolicyType             uint8
 	SINITMinVersion        uint8
 	DataRevocationCounters [LCPMaxLists]uint16
 	PolicyControl          uint32
-	MaxSINITMinVersion     uint8 // v2.0
-	Reserved               uint8 // v2.0
+	MaxSINITMinVersion     uint8 // v2.0 - Only PO index, reserved for PS
+	Reserved               uint8 // v2.0 - Only PO index, reserved for PS
 	LcpHashAlgMask         uint16
 	LcpSignAlgMask         uint32
 	Reserved2              uint32
@@ -370,21 +377,21 @@ func parsePolicy2(policy []byte) (*LCPPolicy2, error) {
 }
 
 func ParsePolicy(policy []byte) (*LCPPolicy, *LCPPolicy2, error) {
-	var version Uint16
+	var version uint16
 	buf := bytes.NewReader(policy)
 	err := binary.Read(buf, binary.LittleEndian, &version)
 	if err != nil {
 		return nil, nil, err
 	}
-	if version <= 204 {
+	if version <= LCPPolicyVersion2 {
 		pol, err := parsePolicy(policy)
 		return pol, nil, err
-	} else if version >= 300 {
+	} else if version >= LCPPolicyVersion3 {
 		pol, err := parsePolicy2(policy)
 		return nil, pol, err
 	}
 
-	return nil, nil, fmt.Errorf("Can't parse LCP Policy\n")
+	return nil, nil, fmt.Errorf("Can't parse LCP Policy")
 }
 
 func parsePolicyElement(buf *bytes.Reader, element *LCPPolicyElement) error {
