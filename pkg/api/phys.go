@@ -14,7 +14,7 @@ import (
 	"unsafe"
 )
 
-var memPaths = [...]string{"/dev/fmem","/dev/mem"}
+var memPaths = [...]string{"/dev/fmem", "/dev/mem"}
 
 // UintN is a wrapper around uint types and provides a few io-related
 // functions.
@@ -155,7 +155,7 @@ func selectDevMem() (string, error) {
 
 // Read reads data from physical memory at address addr. On x86 platforms,
 // this uses the seek+read syscalls. On arm platforms, this uses mmap.
-func ReadPhys(addr int64, data UintN) error {
+func (t TxtApi) ReadPhys(addr int64, data UintN) error {
 	devMem, err := selectDevMem()
 	if err != nil {
 		return err
@@ -164,7 +164,7 @@ func ReadPhys(addr int64, data UintN) error {
 	return pathRead(devMem, addr, data)
 }
 
-func ReadPhysBuf(addr int64, buf []byte) error {
+func (t TxtApi) ReadPhysBuf(addr int64, buf []byte) error {
 	devMem, err := selectDevMem()
 	if err != nil {
 		return err
@@ -197,7 +197,7 @@ func pathWrite(path string, addr int64, data UintN) error {
 
 // Write writes data to physical memory at address addr. On x86 platforms, this
 // uses the seek+read syscalls. On arm platforms, this uses mmap.
-func WritePhys(addr int64, data UintN) error {
+func (t TxtApi) WritePhys(addr int64, data UintN) error {
 	devMem, err := selectDevMem()
 	if err != nil {
 		return err

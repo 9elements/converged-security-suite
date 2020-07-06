@@ -1020,8 +1020,9 @@ var (
 	}
 )
 
-func CPUBlacklistTXTSupport() bool {
-	cpuName := ProcessorBrandName()
+func (t TxtApi) CPUBlacklistTXTSupport() bool {
+
+	cpuName := t.ProcessorBrandName()
 
 	for i := range TXTUnSupportedCPUs {
 		if TXTUnSupportedCPUs[i].xeon && !strings.Contains(cpuName, "Xeon") {

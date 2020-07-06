@@ -9,6 +9,7 @@ import (
 	"os"
 	"sort"
 
+	"github.com/9elements/txt-suite/pkg/api"
 	"github.com/9elements/txt-suite/pkg/test"
 	a "github.com/logrusorgru/aurora"
 )
@@ -32,6 +33,8 @@ func run() bool {
 	var tests []*test.Test
 	f := bufio.NewWriter(os.Stdout)
 
+	txtAPI := api.GetApi()
+
 	tests = getTests()
 
 	for idx := range tests {
@@ -47,7 +50,7 @@ func run() bool {
 			}
 		}
 
-		if !tests[idx].Run() && tests[idx].Required && flagInteractive() {
+		if !tests[idx].Run(txtAPI) && tests[idx].Required && flagInteractive() {
 			result = true
 			break
 		}

@@ -790,8 +790,8 @@ var (
 	}
 )
 
-func CPUWhitelistTXTSupport() bool {
-	cpuName := ProcessorBrandName()
+func (t TxtApi) CPUWhitelistTXTSupport() bool {
+	cpuName := t.ProcessorBrandName()
 
 	for i := range TXTSupportedCPUs {
 		if TXTSupportedCPUs[i].xeon && !strings.Contains(cpuName, "Xeon") {

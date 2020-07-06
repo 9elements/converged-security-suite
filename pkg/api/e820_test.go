@@ -14,9 +14,10 @@ func TestE820ReservedCheck(t *testing.T) {
 		{0x8c000, 0x8ffff},
 		{0x7bef5000, 0x7bef5010},
 	}
+	txtAPI := GetApi()
 
 	for _, s := range ranges {
-		reserved, err := IsReservedInE810(s.start, s.end)
+		reserved, err := txtAPI.IsReservedInE810(s.start, s.end)
 		if err != nil {
 			t.Errorf("Checking range %x-%x failed: %s", s.start, s.end, err)
 		}

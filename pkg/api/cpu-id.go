@@ -1,9 +1,5 @@
 package api
 
-import (
-	"github.com/intel-go/cpuid"
-)
-
 // #include <stdint.h>
 //
 // uint32_t cpuid_leaf1_eax(void) {
@@ -21,31 +17,32 @@ import (
 //   return ret;
 // }
 import "C"
+import "github.com/intel-go/cpuid"
 
-func VersionString() string {
+func (t TxtApi) VersionString() string {
 	return cpuid.VendorIdentificatorString
 }
 
-func HasSMX() bool {
+func (t TxtApi) HasSMX() bool {
 	return cpuid.HasFeature(cpuid.SMX)
 }
 
-func HasVMX() bool {
+func (t TxtApi) HasVMX() bool {
 	return cpuid.HasFeature(cpuid.VMX)
 }
 
-func HasMTRR() bool {
+func (t TxtApi) HasMTRR() bool {
 	return cpuid.HasFeature(cpuid.MTRR) || cpuid.HasExtraFeature(cpuid.MTRR_2)
 }
 
-func ProcessorBrandName() string {
+func (t TxtApi) ProcessorBrandName() string {
 	return cpuid.ProcessorBrandString
 }
 
-func CPUSignature() uint32 {
+func (t TxtApi) CPUSignature() uint32 {
 	return uint32(C.cpuid_leaf1_eax())
 }
 
-func CPULogCount() uint32 {
+func (t TxtApi) CPULogCount() uint32 {
 	return uint32(cpuid.MaxLogocalCPUId)
 }

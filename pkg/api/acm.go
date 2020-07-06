@@ -130,7 +130,7 @@ type ACM struct {
 }
 
 // ParseACMHeader exports the functionality of parsing an ACM Header
-func ParseACMHeader(data []byte) (*ACMHeader, error) {
+func (t TxtApi) ParseACMHeader(data []byte) (*ACMHeader, error) {
 	var acm ACMHeader
 	buf := bytes.NewReader(data)
 	err := binary.Read(buf, binary.LittleEndian, &acm)
@@ -143,7 +143,7 @@ func ParseACMHeader(data []byte) (*ACMHeader, error) {
 }
 
 // ValidateACMHeader validates an ACM Header found in the Firmware Interface Table (FIT)
-func ValidateACMHeader(acmheader *ACMHeader) (bool, error) {
+func (t TxtApi) ValidateACMHeader(acmheader *ACMHeader) (bool, error) {
 	if acmheader.ModuleType != uint16(2) {
 		return false, fmt.Errorf("BIOS ACM ModuleType is not 2, this is not specified - Intel TXT Software Development Guide, Document: 315168-013, P. 84")
 	}
@@ -163,7 +163,7 @@ func ValidateACMHeader(acmheader *ACMHeader) (bool, error) {
 }
 
 // ParseACM
-func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
+func (t TxtApi) ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
 	var acmheader ACMHeader
 	var acminfo ACMInfo
 	var processors Processors
@@ -235,7 +235,7 @@ func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
 	return &acm, &chipsets, &processors, &tpms, nil
 }
 
-func LookupSize(header []byte) (int64, error) {
+func (t TxtApi) LookupSize(header []byte) (int64, error) {
 	var acmSize uint32
 
 	buf := bytes.NewReader(header[:32])

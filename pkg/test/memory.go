@@ -159,13 +159,13 @@ var (
 )
 
 // TXTRegisterSpaceValid checks if the registers indicates the correct sizes
-func TXTRegisterSpaceValid() (bool, error, error) {
-	buf, err := api.FetchTXTRegs()
+func TXTRegisterSpaceValid(txtAPI api.ApiInterfaces) (bool, error, error) {
+	buf, err := txtAPI.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
 	}
 
-	regs, err := api.ParseTXTRegs(buf)
+	regs, err := txtAPI.ParseTXTRegs(buf)
 	if err != nil {
 		return false, nil, err
 	}
@@ -210,22 +210,22 @@ func TXTRegisterSpaceValid() (bool, error, error) {
 }
 
 // TXTReservedInE820 checks if the HEAP/MSEG/SINIT TXT regions are marked reserved in e820 map.
-func TXTReservedInE820() (bool, error, error) {
-	buf, err := api.FetchTXTRegs()
+func TXTReservedInE820(txtAPI api.ApiInterfaces) (bool, error, error) {
+	buf, err := txtAPI.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
 	}
-	regs, err := api.ParseTXTRegs(buf)
-	if err != nil {
-		return false, nil, err
-	}
-
-	heapReserved, err := api.IsReservedInE810(uint64(regs.HeapBase), uint64(regs.HeapBase+regs.HeapSize))
+	regs, err := txtAPI.ParseTXTRegs(buf)
 	if err != nil {
 		return false, nil, err
 	}
 
-	sinitReserved, err := api.IsReservedInE810(uint64(regs.SinitBase), uint64(regs.SinitBase+regs.SinitSize))
+	heapReserved, err := txtAPI.IsReservedInE810(uint64(regs.HeapBase), uint64(regs.HeapBase+regs.HeapSize))
+	if err != nil {
+		return false, nil, err
+	}
+
+	sinitReserved, err := txtAPI.IsReservedInE810(uint64(regs.SinitBase), uint64(regs.SinitBase+regs.SinitSize))
 	if err != nil {
 		return false, nil, err
 	}
@@ -234,12 +234,12 @@ func TXTReservedInE820() (bool, error, error) {
 }
 
 // TXTMemoryIsDPR checks if the TXT DPR protects TXT memory.
-func TXTMemoryIsDPR() (bool, error, error) {
-	buf, err := api.FetchTXTRegs()
+func TXTMemoryIsDPR(txtAPI api.ApiInterfaces) (bool, error, error) {
+	buf, err := txtAPI.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
 	}
-	regs, err := api.ParseTXTRegs(buf)
+	regs, err := txtAPI.ParseTXTRegs(buf)
 	if err != nil {
 		return false, nil, err
 	}
@@ -278,12 +278,12 @@ func TXTMemoryIsDPR() (bool, error, error) {
 }
 
 // TXTDPRisLock checks the TXTRegister in memory about the status of DPR if it's locked.
-func TXTDPRisLock() (bool, error, error) {
-	buf, err := api.FetchTXTRegs()
+func TXTDPRisLock(txtAPI api.ApiInterfaces) (bool, error, error) {
+	buf, err := txtAPI.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
 	}
-	regs, err := api.ParseTXTRegs(buf)
+	regs, err := txtAPI.ParseTXTRegs(buf)
 	if err != nil {
 		return false, nil, err
 	}
@@ -295,17 +295,17 @@ func TXTDPRisLock() (bool, error, error) {
 }
 
 // HostbridgeDPRCorrect checks if TXT DPR equals PCI Hostbridge DPR
-func HostbridgeDPRCorrect() (bool, error, error) {
-	buf, err := api.FetchTXTRegs()
+func HostbridgeDPRCorrect(txtAPI api.ApiInterfaces) (bool, error, error) {
+	buf, err := txtAPI.FetchTXTRegs()
 	if err != nil {
 		return false, fmt.Errorf("Cannot read DPR registers: %s", err), nil
 	}
-	regs, err := api.ParseTXTRegs(buf)
+	regs, err := txtAPI.ParseTXTRegs(buf)
 	if err != nil {
 		return false, fmt.Errorf("Cannot parse DPR registers: %s", err), nil
 	}
 
-	hostbridgeDpr, err := api.ReadHostBridgeDPR()
+	hostbridgeDpr, err := txtAPI.ReadHostBridgeDPR()
 	if err != nil {
 		return false, fmt.Errorf("Cannot read hostbridge DPR registers: %s", err), nil
 	}
@@ -325,8 +325,8 @@ func HostbridgeDPRCorrect() (bool, error, error) {
 }
 
 // HostbridgeDPRisLocked checks if the Hostbridge DPR is marked as locked
-func HostbridgeDPRisLocked() (bool, error, error) {
-	hostbridgeDpr, err := api.ReadHostBridgeDPR()
+func HostbridgeDPRisLocked(txtAPI api.ApiInterfaces) (bool, error, error) {
+	hostbridgeDpr, err := txtAPI.ReadHostBridgeDPR()
 
 	if err != nil {
 		return false, nil, err
@@ -340,23 +340,23 @@ func HostbridgeDPRisLocked() (bool, error, error) {
 }
 
 // SINITInTXT checks the TXT region on containing a valid SINIT ACM.
-func SINITInTXT() (bool, error, error) {
-	buf, err := api.FetchTXTRegs()
+func SINITInTXT(txtAPI api.ApiInterfaces) (bool, error, error) {
+	buf, err := txtAPI.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
 	}
-	regs, err := api.ParseTXTRegs(buf)
+	regs, err := txtAPI.ParseTXTRegs(buf)
 	if err != nil {
 		return false, nil, err
 	}
 
 	sinitBuf := make([]byte, regs.SinitSize)
-	err = api.ReadPhysBuf(int64(regs.SinitBase), sinitBuf)
+	err = txtAPI.ReadPhysBuf(int64(regs.SinitBase), sinitBuf)
 	if err != nil {
 		return false, nil, err
 	}
 
-	acm, _, _, _, err := api.ParseACM(sinitBuf)
+	acm, _, _, _, err := txtAPI.ParseACM(sinitBuf)
 	if err != nil {
 		return false, nil, err
 	}
@@ -372,17 +372,17 @@ func SINITInTXT() (bool, error, error) {
 }
 
 // SINITMatchesChipset checks if the SINIT ACM matches the chipset.
-func SINITMatchesChipset() (bool, error, error) {
-	buf, err := api.FetchTXTRegs()
+func SINITMatchesChipset(txtAPI api.ApiInterfaces) (bool, error, error) {
+	buf, err := txtAPI.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
 	}
-	regs, err := api.ParseTXTRegs(buf)
+	regs, err := txtAPI.ParseTXTRegs(buf)
 	if err != nil {
 		return false, nil, err
 	}
 
-	acm, chps, _, _, err := sinitACM(regs)
+	acm, chps, _, _, err := sinitACM(txtAPI, regs)
 	if err != nil {
 		return false, nil, err
 	}
@@ -411,28 +411,28 @@ func SINITMatchesChipset() (bool, error, error) {
 }
 
 // SINITMatchesCPU checks if the SINITACM matches the CPU
-func SINITMatchesCPU() (bool, error, error) {
-	buf, err := api.FetchTXTRegs()
+func SINITMatchesCPU(txtAPI api.ApiInterfaces) (bool, error, error) {
+	buf, err := txtAPI.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
 	}
-	regs, err := api.ParseTXTRegs(buf)
+	regs, err := txtAPI.ParseTXTRegs(buf)
 	if err != nil {
 		return false, nil, err
 	}
 
-	_, _, cpus, _, err := sinitACM(regs)
+	_, _, cpus, _, err := sinitACM(txtAPI, regs)
 	if err != nil {
 		return false, nil, err
 	}
 
 	// IA32_PLATFORM_ID
-	platform, err := api.IA32PlatformID()
+	platform, err := txtAPI.IA32PlatformID()
 	if err != nil {
 		return false, nil, err
 	}
 
-	fms := api.CPUSignature()
+	fms := txtAPI.CPUSignature()
 
 	for _, cpu := range cpus.IDList {
 		a := fms&cpu.FMSMask == cpu.FMS
@@ -447,12 +447,12 @@ func SINITMatchesCPU() (bool, error, error) {
 }
 
 // NoSINITErrors checks if the SINITACM was executed without any errors
-func NoSINITErrors() (bool, error, error) {
-	buf, err := api.FetchTXTRegs()
+func NoSINITErrors(txtAPI api.ApiInterfaces) (bool, error, error) {
+	buf, err := txtAPI.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
 	}
-	regs, err := api.ParseTXTRegs(buf)
+	regs, err := txtAPI.ParseTXTRegs(buf)
 	if err != nil {
 		return false, nil, err
 	}
@@ -464,23 +464,23 @@ func NoSINITErrors() (bool, error, error) {
 }
 
 // BIOSDATAREGIONPresent checks is the BIOSDATA Region is present in TXT Register Space
-func BIOSDATAREGIONPresent() (bool, error, error) {
-	buf, err := api.FetchTXTRegs()
+func BIOSDATAREGIONPresent(txtAPI api.ApiInterfaces) (bool, error, error) {
+	buf, err := txtAPI.FetchTXTRegs()
 	if err != nil {
 		return false, nil, err
 	}
-	regs, err := api.ParseTXTRegs(buf)
+	regs, err := txtAPI.ParseTXTRegs(buf)
 	if err != nil {
 		return false, nil, err
 	}
 
 	txtHeap := make([]byte, regs.HeapSize)
-	err = api.ReadPhysBuf(int64(regs.HeapBase), txtHeap)
+	err = txtAPI.ReadPhysBuf(int64(regs.HeapBase), txtHeap)
 	if err != nil {
 		return false, nil, err
 	}
 
-	biosdata, err = api.ParseBIOSDataRegion(txtHeap)
+	biosdata, err = txtAPI.ParseBIOSDataRegion(txtHeap)
 	if err != nil {
 		return false, nil, err
 	}
@@ -489,7 +489,7 @@ func BIOSDATAREGIONPresent() (bool, error, error) {
 }
 
 // BIOSDATAREGIONValid checks if the BIOSDATA Region in TXT Register Space is valid
-func BIOSDATAREGIONValid() (bool, error, error) {
+func BIOSDATAREGIONValid(txtAPI api.ApiInterfaces) (bool, error, error) {
 	if biosdata.Version < 2 {
 		return false, fmt.Errorf("BIOS DATA regions version < 2 are not supperted"), nil
 	}
@@ -505,16 +505,16 @@ func BIOSDATAREGIONValid() (bool, error, error) {
 }
 
 // HasMTRR checks if MTRR is supported by CPU
-func HasMTRR() (bool, error, error) {
-	if api.HasMTRR() != true {
+func HasMTRR(txtAPI api.ApiInterfaces) (bool, error, error) {
+	if txtAPI.HasMTRR() != true {
 		return false, fmt.Errorf("CPU does not have MTRR"), nil
 	}
 	return true, nil, nil
 }
 
 // HasSMRR checks if SMRR is supported
-func HasSMRR() (bool, error, error) {
-	ret, err := api.HasSMRR()
+func HasSMRR(txtAPI api.ApiInterfaces) (bool, error, error) {
+	ret, err := txtAPI.HasSMRR()
 	if err != nil {
 		return false, nil, err
 	}
@@ -525,8 +525,8 @@ func HasSMRR() (bool, error, error) {
 }
 
 // ValidSMRR checks if SMRR is valid
-func ValidSMRR() (bool, error, error) {
-	smrr, err := api.GetSMRRInfo()
+func ValidSMRR(txtAPI api.ApiInterfaces) (bool, error, error) {
+	smrr, err := txtAPI.GetSMRRInfo()
 	if err != nil {
 		return false, nil, err
 	}
@@ -538,7 +538,7 @@ func ValidSMRR() (bool, error, error) {
 		return false, fmt.Errorf("SMRR PhysBase isn't set"), nil
 	}
 
-	tsegbase, tseglimit, err := api.ReadHostBridgeTseg()
+	tsegbase, tseglimit, err := txtAPI.ReadHostBridgeTseg()
 	if err != nil {
 		return false, nil, err
 	}
@@ -566,8 +566,8 @@ func ValidSMRR() (bool, error, error) {
 }
 
 // ActiveSMRR checks if SMMR is set active
-func ActiveSMRR() (bool, error, error) {
-	smrr, err := api.GetSMRRInfo()
+func ActiveSMRR(txtAPI api.ApiInterfaces) (bool, error, error) {
+	smrr, err := txtAPI.GetSMRRInfo()
 	if err != nil {
 		return false, nil, err
 	}
@@ -579,13 +579,13 @@ func ActiveSMRR() (bool, error, error) {
 }
 
 // ActiveIOMMU checks if IOMMU is active
-func ActiveIOMMU() (bool, error, error) {
-	smrr, err := api.GetSMRRInfo()
+func ActiveIOMMU(txtAPI api.ApiInterfaces) (bool, error, error) {
+	smrr, err := txtAPI.GetSMRRInfo()
 	if err != nil {
 		return false, nil, err
 	}
 	smrrPhysEnd := (smrr.PhysBase | ^smrr.PhysMask) & 0xfffff
-	ret, err := api.AddressRangesIsDMAProtected(smrr.PhysBase, smrrPhysEnd)
+	ret, err := txtAPI.AddressRangesIsDMAProtected(smrr.PhysBase, smrrPhysEnd)
 	if err != nil {
 		return false, fmt.Errorf("Failed to check SMRR DMA protection: %s", err), nil
 	}
@@ -596,29 +596,29 @@ func ActiveIOMMU() (bool, error, error) {
 }
 
 // ServerModeTXT checks if TXT runs in Servermode
-func ServerModeTXT() (bool, error, error) {
+func ServerModeTXT(txtAPI api.ApiInterfaces) (bool, error, error) {
 	// FIXME: Query GetSec[Parameters] ebx = 5
 	// Assume yes if dependencies are satisfied
-	val, err := api.HasSMRR()
+	val, err := txtAPI.HasSMRR()
 	if err != nil {
 		return false, nil, err
 	}
-	if api.HasSMX() && api.HasVMX() && val {
+	if txtAPI.HasSMX() && txtAPI.HasVMX() && val {
 		return true, nil, nil
 	}
 	return false, fmt.Errorf("Servermode not active"), nil
 }
 
-func TestReleaseFusedFSBI() (bool, error, error) {
+func TestReleaseFusedFSBI(txtAPI api.ApiInterfaces) (bool, error, error) {
 	return false, nil, fmt.Errorf("TestReleaseFusedFSBI: Unimplemented")
 }
 
-func sinitACM(regs api.TXTRegisterSpace) (*api.ACM, *api.Chipsets, *api.Processors, *api.TPMs, error) {
+func sinitACM(txtAPI api.ApiInterfaces, regs api.TXTRegisterSpace) (*api.ACM, *api.Chipsets, *api.Processors, *api.TPMs, error) {
 	sinitBuf := make([]byte, regs.SinitSize)
-	err := api.ReadPhysBuf(int64(regs.SinitBase), sinitBuf)
+	err := txtAPI.ReadPhysBuf(int64(regs.SinitBase), sinitBuf)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
 
-	return api.ParseACM(sinitBuf)
+	return txtAPI.ParseACM(sinitBuf)
 }

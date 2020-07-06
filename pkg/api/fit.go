@@ -74,7 +74,7 @@ func (fit *FitEntry) Type() FitEntryType {
 }
 
 // getFitPointer returns the ROM-Address of FitPointer
-func GetFitPointer(data []byte) (uint64, error) {
+func (t TxtApi) GetFitPointer(data []byte) (uint64, error) {
 	var fitPointer uint32
 
 	fitPtrAddress := len(data) - 0x40
@@ -122,7 +122,7 @@ func readFit(data []byte, fitSize uint32) ([]FitEntry, error) {
 	return ret, nil
 }
 
-func GetFitHeader(data []byte) (FitEntry, error) {
+func (t TxtApi) GetFitHeader(data []byte) (FitEntry, error) {
 	fit := bytes.NewReader(data)
 
 	// read FIT header
@@ -148,10 +148,10 @@ func GetFitHeader(data []byte) (FitEntry, error) {
 }
 
 // ExtractFit Gets the bios file blob and extracts the FIT-Part
-func ExtractFit(data []byte) ([]FitEntry, error) {
+func (t TxtApi) ExtractFit(data []byte) ([]FitEntry, error) {
 
 	// read FIT header
-	hdr, err := GetFitHeader(data)
+	hdr, err := t.GetFitHeader(data)
 	if err != nil {
 		return nil, err
 	}
