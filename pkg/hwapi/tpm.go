@@ -6,7 +6,7 @@ import (
 	tpm1 "github.com/google/go-tpm/tpm"
 )
 
-func (t TxtApi) NVReadAll(conn io.ReadWriteCloser, index uint32) []byte {
+func (t TxtAPI) NVReadAll(conn io.ReadWriteCloser, index uint32) []byte {
 	ret := []byte{}
 
 	for i := uint32(0); ; i += 1 {

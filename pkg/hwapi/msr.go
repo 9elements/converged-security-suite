@@ -39,7 +39,7 @@ func readMSR(msr int64) (uint64, error) {
 	return data, nil
 }
 
-func (t TxtApi) HasSMRR() (bool, error) {
+func (t TxtAPI) HasSMRR() (bool, error) {
 	mtrrcap, err := readMSR(msrMTRRCap)
 	if err != nil {
 		return false, fmt.Errorf("Cannot access MSR IA32_MTRRCAP: %s", err)
@@ -56,7 +56,7 @@ type SMRR struct {
 }
 
 // Returns SMRR config of the platform
-func (t TxtApi) GetSMRRInfo() (SMRR, error) {
+func (t TxtAPI) GetSMRRInfo() (SMRR, error) {
 	var ret SMRR
 
 	smrrPhysbase, err := readMSR(msrSMRRPhysBase)
@@ -76,7 +76,7 @@ func (t TxtApi) GetSMRRInfo() (SMRR, error) {
 	return ret, nil
 }
 
-func (t TxtApi) IA32FeatureControlIsLocked() (bool, error) {
+func (t TxtAPI) IA32FeatureControlIsLocked() (bool, error) {
 	featCtrl, err := readMSR(msrFeatureControl)
 	if err != nil {
 		return false, fmt.Errorf("Cannot access MSR IA32_FEATURE_CONTROL: %s", err)
@@ -85,7 +85,7 @@ func (t TxtApi) IA32FeatureControlIsLocked() (bool, error) {
 	return featCtrl&1 != 0, nil
 }
 
-func (t TxtApi) IA32PlatformID() (uint64, error) {
+func (t TxtAPI) IA32PlatformID() (uint64, error) {
 	pltID, err := readMSR(msrPlatformID)
 	if err != nil {
 		return 0, fmt.Errorf("Cannot access MSR IA32_PLATFORM_ID: %s", err)
@@ -94,7 +94,7 @@ func (t TxtApi) IA32PlatformID() (uint64, error) {
 	return pltID, nil
 }
 
-func (t TxtApi) AllowsVMXInSMX() (bool, error) {
+func (t TxtAPI) AllowsVMXInSMX() (bool, error) {
 	featCtrl, err := readMSR(msrFeatureControl)
 	if err != nil {
 		return false, fmt.Errorf("Cannot access MSR IA32_FEATURE_CONTROL: %s", err)
@@ -104,7 +104,7 @@ func (t TxtApi) AllowsVMXInSMX() (bool, error) {
 	return (mask & featCtrl) == mask, nil
 }
 
-func (t TxtApi) TXTLeavesAreEnabled() (bool, error) {
+func (t TxtAPI) TXTLeavesAreEnabled() (bool, error) {
 	featCtrl, err := readMSR(msrFeatureControl)
 	if err != nil {
 		return false, fmt.Errorf("Cannot access MSR IA32_FEATURE_CONTROL: %s", err)
@@ -114,7 +114,7 @@ func (t TxtApi) TXTLeavesAreEnabled() (bool, error) {
 	return (txt_bits&0xff == 0xff) || (txt_bits&0x100 == 0x100), nil
 }
 
-func (t TxtApi) IA32DebugInterfaceEnabledOrLocked() (bool, bool, bool, error) {
+func (t TxtAPI) IA32DebugInterfaceEnabledOrLocked() (bool, bool, bool, error) {
 	debugInterfaceCtrl, err := readMSR(msrIA32DebugInterface)
 	if err != nil {
 		return false, false, false, fmt.Errorf("Cannot access MSR IA32_DEBUG_INTERFACE: %s", err)

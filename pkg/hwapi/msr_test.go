@@ -7,7 +7,7 @@ import (
 func TestSMRR(t *testing.T) {
 	t.Skip()
 
-	txtAPI := GetApi()
+	txtAPI := GetAPI()
 
 	has, err := txtAPI.HasSMRR()
 	if err != nil {

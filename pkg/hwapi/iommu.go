@@ -95,7 +95,7 @@ type VTdRegisters struct {
 	Reserved12                              uint64 // Reserved for future expansion of Virtual Command Response Register.
 }
 
-func (t TxtApi) readVTdRegs() (VTdRegisters, error) {
+func (t TxtAPI) readVTdRegs() (VTdRegisters, error) {
 	var regs VTdRegisters
 
 	dir, err := os.Open("/sys/class/iommu/")
@@ -138,7 +138,7 @@ func (t TxtApi) readVTdRegs() (VTdRegisters, error) {
 	return regs, fmt.Errorf("No IOMMU found: /sys/class/iommu/*/intel-iommu/address does not exists or is malformed")
 }
 
-func (t TxtApi) LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, error) {
+func (t TxtAPI) LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, error) {
 	rootTblAddr := regs.RootTableAddress & 0xffffffffffff000
 	ttm := (regs.RootTableAddress >> 10) & 3
 
@@ -151,7 +151,7 @@ func (t TxtApi) LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, error
 	}
 }
 
-func (t TxtApi) lookupIOLegacy(addr, rootTblAddr uint64) ([]uint64, error) {
+func (t TxtAPI) lookupIOLegacy(addr, rootTblAddr uint64) ([]uint64, error) {
 	ret := []uint64{}
 
 	for bus := int64(0); bus < 256; bus += 1 {
@@ -296,7 +296,7 @@ func lookupIOScalable(addr, rootTblAddr uint64) ([]uint64, error) {
 	// make sure 2-pass translation isnt on
 }
 
-func (t TxtApi) AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
+func (t TxtAPI) AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
 	regs, err := t.readVTdRegs()
 	if err != nil {
 		return false, err

@@ -790,7 +790,7 @@ var (
 	}
 )
 
-func (t TxtApi) CPUWhitelistTXTSupport() bool {
+func (t TxtAPI) CPUWhitelistTXTSupport() bool {
 	cpuName := t.ProcessorBrandName()
 
 	for i := range TXTSupportedCPUs {

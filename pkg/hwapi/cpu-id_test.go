@@ -6,7 +6,7 @@ import (
 
 func TestVersionString(t *testing.T) {
 
-	txtAPI := GetApi()
+	txtAPI := GetAPI()
 
 	got := txtAPI.VersionString()
 

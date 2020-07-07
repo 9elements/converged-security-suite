@@ -175,7 +175,7 @@ func TestTest_Run(t *testing.T) {
 		},
 	}
 
-	txtAPI := hwapi.GetApi()
+	txtAPI := hwapi.GetAPI()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tr := &Test{

@@ -106,7 +106,7 @@ import (
 )
 
 func main() {
-	hwAPI := hwapi.GetApi()
+	hwAPI := hwapi.GetAPI()
 
 	success, failureMsg, err := test.RunTestsSilent(hwAPI, test.TestsTXTReady)
 	if err != nil {
@@ -134,7 +134,7 @@ import (
 )
 
 func main() {
-	hwAPI := hwapi.GetApi()
+	hwAPI := hwapi.GetAPI()
 
 	success, failureMsg, err := test.RunTestsSilent(hwAPI, test.TestsTXTLegacyBoot)
 	if err != nil {
