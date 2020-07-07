@@ -11,12 +11,13 @@ jobs:
     working_directory: /go/src/github.com/9elements/txt-suite
     steps:
       - checkout
-
+      - run: sudo apt install -y golint
       # specify any bash command here prefixed with `run: `
-      - run: gofmt -e ./pkg/hwapi/
-      - run: gofmt -e ./pkg/tools/  
-      - run: gofmt -e ./pkg/test/
-      - run: gofmt -e ./cmd/txt-suite/
+      - run: if [ "$(gofmt -l .)" != "" ]; then exit 1; fi
+      - run: golint -set_exit_status ./pkg/test
+      - run: golint -set_exit_status ./pkg/tools
+      - run: golint -set_exit_status ./pkg/hwapi
+      - run: golint -set_exit_status ./cmd/txt-suite
       - run: go mod download
       - run: go mod verify
       - run: go build -o txt-suite cmd/txt-suite/*.go
