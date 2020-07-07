@@ -124,6 +124,7 @@ func (n nullmock) NVReadAll(conn io.ReadWriteCloser, index uint32) []byte {
 	return []byte{}
 }
 
+//GetNullMock returns an ApiInterfaces stub
 func GetNullMock() ApiInterfaces {
 	return nullmock{}
 }
