@@ -199,7 +199,7 @@ var TestsTXTLegacyBoot = []*Test{
 }
 
 // Run implements the genereal test function and exposes it.
-func (t *Test) Run(TxtApi hwapi.ApiInterfaces) bool {
+func (t *Test) Run(TxtAPI hwapi.ApiInterfaces) bool {
 	var DepsPassed = true
 	// Make sure all dependencies have run and passed
 	for idx := range t.dependencies {
@@ -207,7 +207,7 @@ func (t *Test) Run(TxtApi hwapi.ApiInterfaces) bool {
 			continue
 		}
 		if t.dependencies[idx].Result == ResultNotRun {
-			t.dependencies[idx].Run(TxtApi)
+			t.dependencies[idx].Run(TxtAPI)
 		}
 		if t.dependencies[idx].Result != ResultPass {
 			t.ErrorText = t.dependencies[idx].Name + " failed"
@@ -218,7 +218,7 @@ func (t *Test) Run(TxtApi hwapi.ApiInterfaces) bool {
 
 	if DepsPassed {
 		// Now run the test itself
-		rc, testerror, internalerror := t.function(TxtApi)
+		rc, testerror, internalerror := t.function(TxtAPI)
 		if internalerror != nil && testerror == nil {
 			t.Result = ResultInternalError
 			t.ErrorText = internalerror.Error()

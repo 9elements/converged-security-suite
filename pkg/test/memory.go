@@ -606,8 +606,9 @@ func ServerModeTXT(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	return false, fmt.Errorf("Servermode not active"), nil
 }
 
-func TestReleaseFusedFSBI(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
-	return false, nil, fmt.Errorf("TestReleaseFusedFSBI: Unimplemented")
+//ReleaseFusedFSBI checks if the FSBI is release fused
+func ReleaseFusedFSBI(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+	return false, nil, fmt.Errorf("ReleaseFusedFSBI: Unimplemented")
 }
 
 func sinitACM(txtAPI hwapi.ApiInterfaces, regs tools.TXTRegisterSpace) (*tools.ACM, *tools.Chipsets, *tools.Processors, *tools.TPMs, error) {

@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	txtRegisterValues    *tools.TXTRegisterSpace = nil
-	testcheckforintelcpu                         = Test{
+	txtRegisterValues    *tools.TXTRegisterSpace
+	testcheckforintelcpu = Test{
 		Name:     "Intel CPU",
 		Required: true,
 		function: CheckForIntelCPU,
