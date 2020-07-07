@@ -5,7 +5,7 @@ import (
 )
 
 func TestTXT(t *testing.T) {
-	txtAPI := GetPcMock(func(addr int64) byte { return MockPCReadMemory(addr) })
+	txtAPI := GetPcMock(func(addr uint64) byte { return MockPCReadMemory(addr) })
 
 	got, err := FetchTXTRegs(txtAPI)
 
@@ -17,7 +17,7 @@ func TestTXT(t *testing.T) {
 }
 
 func TestTxtApi_ParseTXTRegs(t *testing.T) {
-	txtAPI := GetPcMock(func(addr int64) byte { return MockPCReadMemory(addr) })
+	txtAPI := GetPcMock(func(addr uint64) byte { return MockPCReadMemory(addr) })
 
 	data, err := FetchTXTRegs(txtAPI)
 
@@ -97,8 +97,8 @@ func TestReadACMStatus(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			txtAPI := GetPcMock(func(addr int64) byte {
-				if addr >= (txtPublicSpace+txtACMStatus) && addr < int64(txtPublicSpace+txtACMStatus+len(tt.fields.ACMStatus)) {
+			txtAPI := GetPcMock(func(addr uint64) byte {
+				if addr >= (txtPublicSpace+txtACMStatus) && addr < uint64(txtPublicSpace+txtACMStatus+len(tt.fields.ACMStatus)) {
 					addr -= (txtPublicSpace + txtACMStatus)
 					t.Logf("%x\n", tt.fields.ACMStatus[addr])
 					return tt.fields.ACMStatus[addr]

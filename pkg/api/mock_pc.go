@@ -8,7 +8,7 @@ import (
 )
 
 type pcmock struct {
-	ReadMemoryFunc func(int64) byte
+	ReadMemoryFunc func(uint64) byte
 }
 
 func (n pcmock) CPUBlacklistTXTSupport() bool {
@@ -120,10 +120,9 @@ func (n pcmock) ReadHostBridgeDPR() (DMAProtectedRange, error) {
 	return DMAProtectedRange{}, fmt.Errorf("Not implemented")
 }
 
-func MockPCReadMemory(addr int64) byte {
-	if addr >= txtPublicSpace && addr < txtPublicSpace+0x400 {
-		addr -= txtPublicSpace
-		data := []byte{
+func MockPCReadMemory(addr uint64) byte {
+	mem := map[uint64][]byte{
+		txtPublicSpace: []byte{
 			0x01, 0xa7, 0x86, 0x80, 0x6b, 0xc8, 0x7b, 0x02, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -210,8 +209,13 @@ func MockPCReadMemory(addr int64) byte {
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00,
+		},
+	}
+	for k, v := range mem {
+		if addr >= k && addr < k+uint64(len(v)) {
+			addr -= k
+			return v[addr]
 		}
-		return data[addr]
 	}
 
 	return 0xff
@@ -221,7 +225,7 @@ func MockPCReadMemory(addr int64) byte {
 func (n pcmock) ReadPhys(addr int64, data UintN) error {
 	buf := make([]byte, int(data.Size()))
 	for i := int64(0); i < data.Size(); i++ {
-		buf[i] = n.ReadMemoryFunc(addr + i)
+		buf[i] = n.ReadMemoryFunc(uint64(addr + i))
 	}
 	r := bytes.NewReader(buf)
 
@@ -235,7 +239,7 @@ func (n pcmock) ReadPhys(addr int64, data UintN) error {
 func (n pcmock) ReadPhysBuf(addr int64, buf []byte) error {
 	buffer := make([]byte, len(buf))
 	for i := 0; i < len(buf); i++ {
-		buffer[i] = n.ReadMemoryFunc(addr + int64(i))
+		buffer[i] = n.ReadMemoryFunc(uint64(addr + int64(i)))
 	}
 	r := bytes.NewReader(buffer)
 
@@ -254,7 +258,7 @@ func (n pcmock) NVReadAll(conn io.ReadWriteCloser, index uint32) []byte {
 	return []byte{}
 }
 
-func GetPcMock(ReadMemoryFunc func(int64) byte) ApiInterfaces {
+func GetPcMock(ReadMemoryFunc func(uint64) byte) ApiInterfaces {
 	return pcmock{
 		ReadMemoryFunc,
 	}
