@@ -213,22 +213,24 @@ func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
 		return nil, nil, nil, nil, err
 	}
 
-	buf.Seek(int64(acm.Info.TPMInfoList), io.SeekStart)
-	err = binary.Read(buf, binary.LittleEndian, &tpms.Capabilities)
-	if err != nil {
-		return nil, nil, nil, nil, err
-	}
-
-	err = binary.Read(buf, binary.LittleEndian, &tpms.Count)
-	if err != nil {
-		return nil, nil, nil, nil, err
-	}
-
-	tpms.AlgID = make([]uint16, tpms.Count)
-	for i := 0; i < int(tpms.Count); i++ {
-		err = binary.Read(buf, binary.LittleEndian, &tpms.AlgID[i])
+	if acm.Info.ACMVersion >= 5 {
+		buf.Seek(int64(acm.Info.TPMInfoList), io.SeekStart)
+		err = binary.Read(buf, binary.LittleEndian, &tpms.Capabilities)
 		if err != nil {
 			return nil, nil, nil, nil, err
+		}
+
+		err = binary.Read(buf, binary.LittleEndian, &tpms.Count)
+		if err != nil {
+			return nil, nil, nil, nil, err
+		}
+
+		tpms.AlgID = make([]uint16, tpms.Count)
+		for i := 0; i < int(tpms.Count); i++ {
+			err = binary.Read(buf, binary.LittleEndian, &tpms.AlgID[i])
+			if err != nil {
+				return nil, nil, nil, nil, err
+			}
 		}
 	}
 
