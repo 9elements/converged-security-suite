@@ -21,30 +21,56 @@ const (
 )
 
 const (
-	LCPPolicyVersion2        uint16 = 0x0204
-	LCPPolicyVersion3        uint16 = 0x0300
-	LCPPolicyTypeAny         uint8  = 1
-	LCPPolicyTypeList        uint8  = 0
-	LCPMaxLists              uint   = 8
-	SHA1DigestSize           uint   = 20
-	SHA256DigestSize         uint   = 32
-	SHA384DigestSize         uint   = 48
-	SHA512DigestSize         uint   = 64
-	SM3DigestSize            uint   = 32
-	LCPDataFileSignature     string = "Intel(R) TXT LCP_POLICY_DATA\x00\x00\x00\x00"
-	LCPSignatureAlgNone      uint8  = 0
-	LCPSignatureAlgRSAPKCS15 uint8  = 1
-	LCPPolicyElementMLE      uint32 = 0
-	LCPPolicyElementPCONF    uint32 = 1
-	LCPPolicyElementSBIOS    uint32 = 2
-	LCPPolicyElementCustom   uint32 = 3
-	LCPPolicyElementMLE2     uint32 = 0x10
-	LCPPolicyElementPCONF2   uint32 = 0x11
-	LCPPolicyElementSBIOS2   uint32 = 0x12
-	LCPPolicyElementSTM2     uint32 = 0x14
-	LCPPolHAlgSHA1           uint8  = 0
+	//LCPPolicyVersion2 as defined in Document 315168-016 Chapter 3.2.1 LCP Policy
+	LCPPolicyVersion2 uint16 = 0x0204
+	//LCPPolicyVersion3 as defined in Document 315168-016 Chapter 3.2.1 LCP Policy
+	LCPPolicyVersion3 uint16 = 0x0300
+	//LCPPolicyTypeAny as defined in Document 315168-016 Chapter D LCP Data Structures
+	LCPPolicyTypeAny uint8 = 1
+	//LCPPolicyTypeList as defined in Document 315168-016 Chapter D LCP Data Structures
+	LCPPolicyTypeList uint8 = 0
+	//LCPMaxLists as defined in Document 315168-016 Chapter D LCP Data Structures
+	LCPMaxLists uint = 8
+	//SHA1DigestSize as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	SHA1DigestSize uint = 20
+	//SHA256DigestSize as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	SHA256DigestSize uint = 32
+	//SHA384DigestSize as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	SHA384DigestSize uint = 48
+	//SHA512DigestSize FIXME
+	SHA512DigestSize uint = 64
+	//SM3DigestSize as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	SM3DigestSize uint = 32
+	//LCPDataFileSignature as defined in Document 315168-016 Chapter D.2 LCP_POLICY_DATA
+	LCPDataFileSignature string = "Intel(R) TXT LCP_POLICY_DATA\x00\x00\x00\x00"
+
+	//LCPSignatureAlgNone FIXME
+	LCPSignatureAlgNone uint8 = 0
+	//LCPSignatureAlgRSAPKCS15 FIXME
+	LCPSignatureAlgRSAPKCS15 uint8 = 1
+
+	//LCPPolicyElementMLE as defined in Document 315168-016 Chapter D.4.4 LCP_MLE_ELEMENT
+	LCPPolicyElementMLE uint32 = 0
+	//LCPPolicyElementPCONF as defined in Document 315168-016 Chapter D.4.5 LCP_PCONF_ELEMENT
+	LCPPolicyElementPCONF uint32 = 1
+	//LCPPolicyElementSBIOS FIXME
+	LCPPolicyElementSBIOS uint32 = 2
+	//LCPPolicyElementCustom as defined in Document 315168-016 Chapter D.4.6 LCP_CUSTOM_ELEMENT
+	LCPPolicyElementCustom uint32 = 3
+	//LCPPolicyElementMLE2 as defined in Document 315168-016 Chapter D.4.7 LCP_MLE_ELEMENT2
+	LCPPolicyElementMLE2 uint32 = 0x10
+	//LCPPolicyElementPCONF2 as defined in Document 315168-016 Chapter D.4.8 LCP_PCONF_ELEMENT2
+	LCPPolicyElementPCONF2 uint32 = 0x11
+	//LCPPolicyElementSBIOS2 FIXME
+	LCPPolicyElementSBIOS2 uint32 = 0x12
+	//LCPPolicyElementSTM2 as defined in Document 315168-016 Chapter D.4.9 LCP_STM_ELEMENT2
+	LCPPolicyElementSTM2 uint32 = 0x14
+
+	// LCPPolHAlgSHA1 FIXME
+	LCPPolHAlgSHA1 uint8 = 0
 )
 
+//LCPHash holds one of the supported hashes
 type LCPHash struct {
 	sha1   *[SHA1DigestSize]uint8
 	sha256 *[SHA256DigestSize]uint8
@@ -53,6 +79,7 @@ type LCPHash struct {
 	sm3    *[SM3DigestSize]uint8
 }
 
+//LCPPolicyElement represents a policy element as defined in Document 315168-016 Chapter D.4 LCP_POLICY_ELEMENT
 type LCPPolicyElement struct {
 	Size             uint32
 	Type             uint32
@@ -63,6 +90,7 @@ type LCPPolicyElement struct {
 	Custom           *LCPPolicyCustom
 }
 
+//LCPPolicyMLE represents a MLE policy element as defined in Document 315168-016 Chapter D.4.4 LCP_MLE_ELEMENT
 type LCPPolicyMLE struct {
 	SINITMinVersion uint8
 	HashAlg         uint8
@@ -70,6 +98,7 @@ type LCPPolicyMLE struct {
 	Hashes          [][20]byte
 }
 
+//LCPPolicySBIOS represents a SBIOS policy element
 type LCPPolicySBIOS struct {
 	HashAlg      uint8
 	Reserved1    [3]uint8
@@ -79,11 +108,13 @@ type LCPPolicySBIOS struct {
 	Hashes       []LCPHash
 }
 
+//LCPPolicyPCONF represents a PCONF policy element
 type LCPPolicyPCONF struct {
 	NumPCRInfos uint16
 	PCRInfos    []TPMPCRInfoShort
 }
 
+//TPMPCRInfoShort rFIXME
 type TPMPCRInfoShort struct {
 	// TPM_PCR_SELECTION
 	PCRSelect []int
@@ -93,6 +124,7 @@ type TPMPCRInfoShort struct {
 	DigestAtRelease [20]byte
 }
 
+//LCPPolicyCustom represents a custom policy element
 type LCPPolicyCustom struct {
 	UUID LCPUUID
 	Data []byte
@@ -195,7 +227,7 @@ type LCPPolicyData struct {
 	PolicyLists   []LCPList
 }
 
-// TODO needs to be reverse engineered
+// ParsePolicyControl TODO needs to be reverse engineered
 func (p *LCPPolicy) ParsePolicyControl() PolicyControl {
 	var polCtrl PolicyControl
 	polCtrl.NPW = (p.PolicyControl>>1)&1 != 0
@@ -205,7 +237,7 @@ func (p *LCPPolicy) ParsePolicyControl() PolicyControl {
 	return polCtrl
 }
 
-// TODO needs to be reverse engineered
+// ParsePolicyControl2 TODO needs to be reverse engineered
 func (p *LCPPolicy2) ParsePolicyControl2() PolicyControl {
 	var polCtrl PolicyControl
 	polCtrl.NPW = (p.PolicyControl>>1)&1 != 0
@@ -215,6 +247,7 @@ func (p *LCPPolicy2) ParsePolicyControl2() PolicyControl {
 	return polCtrl
 }
 
+// ParseApprovedHashAlgorithm returns the supported hash algorithms
 func (p *LCPPolicy2) ParseApprovedHashAlgorithm() ApprovedHashAlgorithm {
 	var hashAlgs ApprovedHashAlgorithm
 	hashAlgs.SHA1 = (p.LcpHashAlgMask>>0)&1 != 0
@@ -224,6 +257,7 @@ func (p *LCPPolicy2) ParseApprovedHashAlgorithm() ApprovedHashAlgorithm {
 	return hashAlgs
 }
 
+// ParseApprovedSignatureAlgorithm returns the supported signature algorithms
 func (p *LCPPolicy2) ParseApprovedSignatureAlgorithm() ApprovedSignatureAlogrithm {
 	var signatureAlgs ApprovedSignatureAlogrithm
 	signatureAlgs.RSA2048SHA1 = (p.LcpSignAlgMask>>2)&1 != 0
