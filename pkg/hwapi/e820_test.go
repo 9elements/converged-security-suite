@@ -14,7 +14,7 @@ func TestE820ReservedCheck(t *testing.T) {
 		{0x8c000, 0x8ffff},
 		{0x7bef5000, 0x7bef5010},
 	}
-	txtAPI := GetApi()
+	txtAPI := GetAPI()
 
 	for _, s := range ranges {
 		reserved, err := txtAPI.IsReservedInE820(s.start, s.end)

@@ -32,7 +32,7 @@ func run(tests []*test.Test) bool {
 	var result = false
 	f := bufio.NewWriter(os.Stdout)
 
-	hwAPI := hwapi.GetApi()
+	hwAPI := hwapi.GetAPI()
 
 	for idx := range tests {
 		if len(testnos) > 0 {

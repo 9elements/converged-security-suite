@@ -50,10 +50,10 @@ type ApiInterfaces interface {
 	NVReadAll(conn io.ReadWriteCloser, index uint32) []byte
 }
 
-//TxtApi The context object for TXT Api
-type TxtApi struct{}
+//TxtAPI The context object for TXT Api
+type TxtAPI struct{}
 
-//GetApi Returns an initialized TxtApi object
-func GetApi() ApiInterfaces {
-	return TxtApi{}
+//GetAPI Returns an initialized TxtApi object
+func GetAPI() ApiInterfaces {
+	return TxtAPI{}
 }

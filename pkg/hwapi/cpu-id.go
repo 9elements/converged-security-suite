@@ -19,30 +19,30 @@ package hwapi
 import "C"
 import "github.com/intel-go/cpuid"
 
-func (t TxtApi) VersionString() string {
+func (t TxtAPI) VersionString() string {
 	return cpuid.VendorIdentificatorString
 }
 
-func (t TxtApi) HasSMX() bool {
+func (t TxtAPI) HasSMX() bool {
 	return cpuid.HasFeature(cpuid.SMX)
 }
 
-func (t TxtApi) HasVMX() bool {
+func (t TxtAPI) HasVMX() bool {
 	return cpuid.HasFeature(cpuid.VMX)
 }
 
-func (t TxtApi) HasMTRR() bool {
+func (t TxtAPI) HasMTRR() bool {
 	return cpuid.HasFeature(cpuid.MTRR) || cpuid.HasExtraFeature(cpuid.MTRR_2)
 }
 
-func (t TxtApi) ProcessorBrandName() string {
+func (t TxtAPI) ProcessorBrandName() string {
 	return cpuid.ProcessorBrandString
 }
 
-func (t TxtApi) CPUSignature() uint32 {
+func (t TxtAPI) CPUSignature() uint32 {
 	return uint32(C.cpuid_leaf1_eax())
 }
 
-func (t TxtApi) CPULogCount() uint32 {
+func (t TxtAPI) CPULogCount() uint32 {
 	return uint32(cpuid.MaxLogocalCPUId)
 }

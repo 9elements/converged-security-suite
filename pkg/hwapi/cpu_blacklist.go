@@ -1020,7 +1020,7 @@ var (
 	}
 )
 
-func (t TxtApi) CPUBlacklistTXTSupport() bool {
+func (t TxtAPI) CPUBlacklistTXTSupport() bool {
 
 	cpuName := t.ProcessorBrandName()
 
