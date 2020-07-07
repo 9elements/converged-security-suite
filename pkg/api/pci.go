@@ -7,9 +7,9 @@ import (
 	"os"
 )
 
-func (t TxtApi) PCIReadConfigSpace(bus int, device int, dev_fn int, off int, buf interface{}) error {
+func (t TxtApi) PCIReadConfigSpace(bus int, device int, devFn int, off int, buf interface{}) error {
 	var path string
-	path = fmt.Sprintf("/sys/bus/pci/devices/0000:%02x:%02x.%1x/config", bus, device, dev_fn)
+	path = fmt.Sprintf("/sys/bus/pci/devices/0000:%02x:%02x.%1x/config", bus, device, devFn)
 
 	f, err := os.OpenFile(path, os.O_RDONLY, 0)
 	if err != nil {
@@ -23,10 +23,10 @@ func (t TxtApi) PCIReadConfigSpace(bus int, device int, dev_fn int, off int, buf
 	return binary.Read(f, binary.LittleEndian, buf)
 }
 
-func (t TxtApi) PCIReadConfig16(bus int, device int, dev_fn int, off int) (uint16, error) {
+func (t TxtApi) PCIReadConfig16(bus int, device int, devFn int, off int) (uint16, error) {
 	var reg16 uint16
 
-	err := t.PCIReadConfigSpace(bus, device, dev_fn, off, &reg16)
+	err := t.PCIReadConfigSpace(bus, device, devFn, off, &reg16)
 	if err != nil {
 		return 0, err
 	}
@@ -34,10 +34,10 @@ func (t TxtApi) PCIReadConfig16(bus int, device int, dev_fn int, off int) (uint1
 	return reg16, nil
 }
 
-func (t TxtApi) PCIReadConfig32(bus int, device int, dev_fn int, off int) (uint32, error) {
+func (t TxtApi) PCIReadConfig32(bus int, device int, devFn int, off int) (uint32, error) {
 	var reg32 uint32
 
-	err := t.PCIReadConfigSpace(bus, device, dev_fn, off, &reg32)
+	err := t.PCIReadConfigSpace(bus, device, devFn, off, &reg32)
 	if err != nil {
 		return 0, err
 	}
@@ -45,8 +45,8 @@ func (t TxtApi) PCIReadConfig32(bus int, device int, dev_fn int, off int) (uint3
 	return reg32, nil
 }
 
-func (t TxtApi) PCIReadVendorID(bus int, device int, dev_fn int) (uint16, error) {
-	id, err := t.PCIReadConfig16(bus, device, dev_fn, 0)
+func (t TxtApi) PCIReadVendorID(bus int, device int, devFn int) (uint16, error) {
+	id, err := t.PCIReadConfig16(bus, device, devFn, 0)
 	if err != nil {
 		return 0, err
 	}
@@ -54,8 +54,8 @@ func (t TxtApi) PCIReadVendorID(bus int, device int, dev_fn int) (uint16, error)
 	return id, nil
 }
 
-func (t TxtApi) PCIReadDeviceID(bus int, device int, dev_fn int) (uint16, error) {
-	id, err := t.PCIReadConfig16(bus, device, dev_fn, 2)
+func (t TxtApi) PCIReadDeviceID(bus int, device int, devFn int) (uint16, error) {
+	id, err := t.PCIReadConfig16(bus, device, devFn, 2)
 	if err != nil {
 		return 0, err
 	}

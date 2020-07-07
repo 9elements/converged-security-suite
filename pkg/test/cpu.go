@@ -115,14 +115,14 @@ var (
 	}
 )
 
-func getTxtRegisters(txtApi api.ApiInterfaces) (*api.TXTRegisterSpace, error) {
+func getTxtRegisters(txtAPI api.ApiInterfaces) (*api.TXTRegisterSpace, error) {
 
 	if txtRegisterValues == nil {
-		buf, err := txtApi.FetchTXTRegs()
+		buf, err := api.FetchTXTRegs(txtAPI)
 		if err != nil {
 			return nil, err
 		}
-		regs, err := txtApi.ParseTXTRegs(buf)
+		regs, err := api.ParseTXTRegs(buf)
 		if err != nil {
 			return nil, err
 		}

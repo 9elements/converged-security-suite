@@ -457,7 +457,7 @@ func PSIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
 		if err != nil {
 			return false, nil, err
 		}
-		pol1, pol2, err = txtAPI.ParsePolicy(data)
+		pol1, pol2, err = api.ParsePolicy(data)
 		if err != nil {
 			return false, nil, err
 		}
@@ -506,7 +506,7 @@ func PSIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
 			}
 			return false, nil, fmt.Errorf("error: %v, pubdata: %v", err, d)
 		}
-		pol1, pol2, err = txtAPI.ParsePolicy(data)
+		pol1, pol2, err = api.ParsePolicy(data)
 		if err != nil {
 			return false, nil, err
 		}
@@ -577,7 +577,7 @@ func POIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
 		if err != nil {
 			return false, nil, err
 		}
-		pol1, pol2, err = txtAPI.ParsePolicy(data)
+		pol1, pol2, err = api.ParsePolicy(data)
 		if err != nil {
 			return false, nil, err
 		}
@@ -624,7 +624,7 @@ func POIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
 		size := uint16(crypto.Hash(d.NameAlg).Size()) + tpm20POIndexBaseSize
 
 		data, err := tpmCon.NVReadValue(tpm20POIndex, "", uint32(size), tpm20POIndex)
-		pol1, pol2, err = txtAPI.ParsePolicy(data)
+		pol1, pol2, err = api.ParsePolicy(data)
 		if err != nil {
 			return false, nil, err
 		}
