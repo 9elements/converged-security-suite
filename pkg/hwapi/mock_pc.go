@@ -45,7 +45,7 @@ func (n pcmock) CPULogCount() uint32 {
 	return 0
 }
 
-func (n pcmock) IsReservedInE810(start uint64, end uint64) (bool, error) {
+func (n pcmock) IsReservedInE820(start uint64, end uint64) (bool, error) {
 	return false, fmt.Errorf("Not implemented")
 }
 

@@ -221,12 +221,12 @@ func TXTReservedInE820(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 		return false, nil, err
 	}
 
-	heapReserved, err := txtAPI.IsReservedInE810(uint64(regs.HeapBase), uint64(regs.HeapBase+regs.HeapSize))
+	heapReserved, err := txtAPI.IsReservedInE820(uint64(regs.HeapBase), uint64(regs.HeapBase+regs.HeapSize))
 	if err != nil {
 		return false, nil, err
 	}
 
-	sinitReserved, err := txtAPI.IsReservedInE810(uint64(regs.SinitBase), uint64(regs.SinitBase+regs.SinitSize))
+	sinitReserved, err := txtAPI.IsReservedInE820(uint64(regs.SinitBase), uint64(regs.SinitBase+regs.SinitSize))
 	if err != nil {
 		return false, nil, err
 	}
