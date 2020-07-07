@@ -28,14 +28,11 @@ type temptest struct {
 	Status     string
 }
 
-func run() bool {
+func run(tests []*test.Test) bool {
 	var result = false
-	var tests []*test.Test
 	f := bufio.NewWriter(os.Stdout)
 
 	hwAPI := hwapi.GetApi()
-
-	tests = getTests()
 
 	for idx := range tests {
 		if len(testnos) > 0 {
@@ -116,8 +113,12 @@ func main() {
 		showVersion()
 	} else if *teststomarkdown == true {
 		listTestsAsMarkdown()
+	} else if *txtready == true {
+		ret = run(test.TestsTXTReady)
+	} else if *legacyboot == true {
+		ret = run(test.TestsTXTLegacyBoot)
 	} else {
-		ret = run()
+		ret = run(getTests())
 	}
 
 	if ret {
