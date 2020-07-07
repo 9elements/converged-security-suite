@@ -2,7 +2,8 @@ Intel TXT Validation Test Suite
 ===============================
 
 This Golang utility tests whether the platform supports Intel TXT and FIT, TPM
-boot chain has been configured correctly.
+boot chain has been configured correctly under x86_64 linux.
+The only supported architecture is x86_64.
 
 The suite is work in progress.
 
@@ -77,6 +78,7 @@ Run it as root:
 
 Commandline arguments
 ```bash
+-m : Generate markdown
 -l : Lists all tests
 -log : Specify a path/filename.json where test results will be written (only in combination with test enforcing (-i option))
 -i : interactive move - Test will stop if an error occurs. Test results will be written to test_log.json
@@ -84,6 +86,66 @@ Commandline arguments
 -t=<n-m> or -t=<n-m,o-p> : Choose ranges of tests, can be seperated by comma
 -v : Gives information about Licence, Copyright and Version
 -h : Shows this information
+-txtready   : Test if platform is TXTReady
+-legacyboot : Test if platform is TXT Legacy boot enabled
+```
+
+API Usage
+---------
+
+**To test for TXTReady**:
+
+```
+package main
+
+import (
+	"log"
+
+	"github.com/9elements/txt-suite/pkg/hwapi"
+	"github.com/9elements/txt-suite/pkg/test"
+)
+
+func main() {
+	hwAPI := hwapi.GetApi()
+
+	success, failureMsg, err := test.RunTestsSilent(hwAPI, test.TestsTXTReady)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if !success {
+		log.Printf("Platform not TXTReady as of: '%s'\n", failureMsg)
+	} else {
+		log.Printf("Platform is TXTReady!\n")
+	}
+}
+```
+
+
+**To test for TXT legacy boot (Initial Bootblock measured before PoR)**:
+
+```
+package main
+
+import (
+	"log"
+
+	"github.com/9elements/txt-suite/pkg/hwapi"
+	"github.com/9elements/txt-suite/pkg/test"
+)
+
+func main() {
+	hwAPI := hwapi.GetApi()
+
+	success, failureMsg, err := test.RunTestsSilent(hwAPI, test.TestsTXTLegacyBoot)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if !success {
+		log.Printf("Platform not TXTReady as of: '%s'\n", failureMsg)
+	} else {
+		log.Printf("Platform is TXTReady!\n")
+	}
+}
 ```
 
 Tests

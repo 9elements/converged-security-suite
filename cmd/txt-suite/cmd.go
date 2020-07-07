@@ -18,6 +18,8 @@ var teststomarkdown = flag.Bool("m", false, "Output test implementation state as
 var version = flag.Bool("v", false, "Shows Version, copyright info and license")
 var tpmdev = flag.String("tpm", "", "Select TPM-Path. e.g.: -tpm=/dev/tpmX, with X as number of the TPM module")
 var logpath = flag.String("log", "", "Give a path/filename for test result output in JSON format. e.g.: /path/to/filename.json")
+var txtready = flag.Bool("txtready", false, "Test if platform is TXTReady")
+var legacyboot = flag.Bool("legacyboot", false, "Test if platform is TXT Legacy boot enabled")
 
 func flagUsed() bool {
 	return testno != nil
@@ -38,11 +40,13 @@ func showHelp() {
 	fmt.Println("Usage: txt-suite [-l] [-h] [-v] [-i] [-t TESTSPEC]")
 	fmt.Println("")
 	fmt.Println("\t-t TESTSPEC : Only run a subset of tests. TESTSPEC is a comma-separated list of integers or ranges (n-m).")
-	fmt.Println("\t-i : Ignore failing tests. Results are written to test_log.json")
-	fmt.Println("\t-h : Shows this help")
-	fmt.Println("\t-m : Generate markdown")
-	fmt.Println("\t-l : Lists all tests with their test number.")
-	fmt.Println("\t-v : Shows version, license and copyright.")
+	fmt.Println("\t-i          : Ignore failing tests. Results are written to test_log.json")
+	fmt.Println("\t-h          : Shows this help")
+	fmt.Println("\t-m          : Generate markdown")
+	fmt.Println("\t-l          : Lists all tests with their test number.")
+	fmt.Println("\t-v          : Shows version, license and copyright.")
+	fmt.Println("\t-txtready   : Test if platform is TXTReady")
+	fmt.Println("\t-legacyboot : Test if platform is TXT Legacy boot enabled")
 }
 
 func getTests() []*test.Test {

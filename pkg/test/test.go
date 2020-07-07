@@ -1,6 +1,10 @@
 package test
 
-import "github.com/9elements/txt-suite/pkg/hwapi"
+import (
+	"fmt"
+
+	"github.com/9elements/txt-suite/pkg/hwapi"
+)
 
 // Result exposes the type for test results
 type Result int
@@ -83,6 +87,117 @@ type Test struct {
 	NonCritical  bool
 }
 
+// Define tests for API usage
+
+// TestsTXTReady - Summarizes all test for TXT Ready platforms
+var TestsTXTReady = []*Test{
+	// CPU tests
+	&testcheckforintelcpu,
+	&testwaybridgeorlater,
+	&testcpusupportstxt,
+	&testtxtregisterspaceaccessible,
+	&testsupportssmx,
+	&testsupportvmx,
+	&testia32featurectrl,
+	&testtxtnotdisabled,
+	&testtxtregisterslocked,
+	&testia32debuginterfacelockeddisabled,
+
+	// Memory tests
+	&testtxtmemoryrangevalid,
+	&testmemoryisreserved,
+	&testtxtmemoryisdpr,
+	&testtxtdprislocked,
+	&testhostbridgeDPRcorrect,
+	&testhostbridgeDPRislocked,
+	&testsinitintxt,
+	&testsinitmatcheschipset,
+	&testsinitmatchescpu,
+	&testbiosdataregionpresent,
+	&testbiosdataregionvalid,
+	&testhasmtrr,
+	&testhassmrr,
+	&testvalidsmrr,
+	&testactivesmrr,
+
+	// TPM tests
+	&testtpmconnection,
+	&testtpm12present,
+	&testtpm2present,
+	&testtpmispresent,
+
+	&testtpmnvramislocked,
+	&testpsindexconfig,
+	&testauxindexconfig,
+	&testpoindexconfig,
+}
+
+// TestsTXTLegacyBoot - Summarizes all test for TXT legacy boot (not CvBG) platforms
+var TestsTXTLegacyBoot = []*Test{
+	// CPU tests
+	&testcheckforintelcpu,
+	&testwaybridgeorlater,
+	&testcpusupportstxt,
+	&testtxtregisterspaceaccessible,
+	&testsupportssmx,
+	&testsupportvmx,
+	&testia32featurectrl,
+	&testtxtnotdisabled,
+	&testtxtregisterslocked,
+	&testia32debuginterfacelockeddisabled,
+	&testibbmeasured,
+	&testibbistrusted,
+
+	// Memory tests
+	&testtxtmemoryrangevalid,
+	&testmemoryisreserved,
+	&testtxtmemoryisdpr,
+	&testtxtdprislocked,
+	&testhostbridgeDPRcorrect,
+	&testhostbridgeDPRislocked,
+	&testsinitintxt,
+	&testsinitmatcheschipset,
+	&testsinitmatchescpu,
+	&testbiosdataregionpresent,
+	&testbiosdataregionvalid,
+	&testhasmtrr,
+	&testhassmrr,
+	&testvalidsmrr,
+	&testactivesmrr,
+
+	// FIT tests
+	&testfitvectorisset,
+	&testhasfit,
+	&testhasbiosacm,
+	&testhasibb,
+	&testhaslcpTest,
+	&testibbcoversresetvector,
+	&testibbcoversfitvector,
+	&testibbcoversfit,
+	&testnoibboverlap,
+	&testnobiosacmoverlap,
+	&testnobiosacmisbelow4g,
+	&testpolicyallowstxt,
+	&testbiosacmvalid,
+	&testbiosacmsizecorrect,
+	&testbiosacmaligmentcorrect,
+	&testbiosacmmatcheschipset,
+	&testbiosacmmatchescpu,
+
+	// TPM tests
+	&testtpmconnection,
+	&testtpm12present,
+	&testtpm2present,
+	&testtpmispresent,
+	&testtpmnvramislocked,
+	&testpsindexconfig,
+	&testauxindexconfig,
+	&testpoindexconfig,
+	&testpsindexissvalid,
+	&testpoindexissvalid,
+	&testpcr00valid,
+}
+
 // Run implements the genereal test function and exposes it.
 func (t *Test) Run(TxtApi hwapi.ApiInterfaces) bool {
 	var DepsPassed = true
@@ -122,4 +237,23 @@ func (t *Test) Run(TxtApi hwapi.ApiInterfaces) bool {
 	}
 
 	return t.Result == ResultPass
+}
+
+//RunTestsSilent Runs the specified tests and returns false on the first error encountered
+func RunTestsSilent(TxtAPI hwapi.ApiInterfaces, Tests []*Test) (bool, string, error) {
+
+	intErr := fmt.Errorf("Internal error running test")
+
+	for i := range Tests {
+		if !Tests[i].Run(TxtAPI) && Tests[i].Required {
+			if Tests[i].Status == NotImplemented {
+				continue
+			}
+			if Tests[i].Result == ResultInternalError {
+				return false, "", intErr
+			}
+			return false, "Test " + Tests[i].Name + " returned " + Tests[i].Result.String() + ": " + Tests[i].ErrorText, nil
+		}
+	}
+	return true, "", nil
 }
