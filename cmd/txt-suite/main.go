@@ -9,7 +9,7 @@ import (
 	"os"
 	"sort"
 
-	"github.com/9elements/txt-suite/pkg/api"
+	"github.com/9elements/txt-suite/pkg/hwapi"
 	"github.com/9elements/txt-suite/pkg/test"
 	a "github.com/logrusorgru/aurora"
 )
@@ -33,7 +33,7 @@ func run() bool {
 	var tests []*test.Test
 	f := bufio.NewWriter(os.Stdout)
 
-	txtAPI := api.GetApi()
+	hwAPI := hwapi.GetApi()
 
 	tests = getTests()
 
@@ -50,7 +50,7 @@ func run() bool {
 			}
 		}
 
-		if !tests[idx].Run(txtAPI) && tests[idx].Required && flagInteractive() {
+		if !tests[idx].Run(hwAPI) && tests[idx].Required && flagInteractive() {
 			result = true
 			break
 		}

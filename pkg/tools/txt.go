@@ -1,9 +1,11 @@
-package api
+package tools
 
 import (
 	"bytes"
 	"encoding/binary"
 	"io"
+
+	"github.com/9elements/txt-suite/pkg/hwapi"
 )
 
 const (
@@ -48,34 +50,26 @@ type TXTErrorCode struct {
 	ValidInvalid      bool
 }
 
-type DMAProtectedRange struct {
-	Lock bool
-	// Reserved 1-3
-	Size uint8
-	// Reserved 12-19
-	Top uint16
-}
-
 type TXTRegisterSpace struct {
 	Sts          TXTStatus    // TXT.STS (0x0)
 	TxtReset     bool         // TXT.ESTS (0x8)
 	ErrorCode    TXTErrorCode // TXT.ERRORCODE
 	ErrorCodeRaw uint32
-	BootStatus   uint64            // TXT.BOOTSTATUS
-	FsbIf        uint32            // TXT.VER.FSBIF
-	Vid          uint16            // TXT.DIDVID.VID
-	Did          uint16            // TXT.DIDVID.DID
-	Rid          uint16            // TXT.DIDVID.RID
-	IdExt        uint16            // TXT.DIDVID.ID-EXT
-	QpiIf        uint32            // TXT.VER.QPIIF
-	SinitBase    uint32            // TXT.SINIT.BASE
-	SinitSize    uint32            // TXT.SINIT.SIZE
-	MleJoin      uint32            // TXT.MLE.JOIN
-	HeapBase     uint32            // TXT.HEAP.BASE
-	HeapSize     uint32            // TXT.HEAP.SIZE
-	Dpr          DMAProtectedRange // TXT.DPR
-	PublicKey    [4]uint64         // TXT.PUBLIC.KEY
-	E2Sts        uint64            // TXT.E2STS
+	BootStatus   uint64                  // TXT.BOOTSTATUS
+	FsbIf        uint32                  // TXT.VER.FSBIF
+	Vid          uint16                  // TXT.DIDVID.VID
+	Did          uint16                  // TXT.DIDVID.DID
+	Rid          uint16                  // TXT.DIDVID.RID
+	IdExt        uint16                  // TXT.DIDVID.ID-EXT
+	QpiIf        uint32                  // TXT.VER.QPIIF
+	SinitBase    uint32                  // TXT.SINIT.BASE
+	SinitSize    uint32                  // TXT.SINIT.SIZE
+	MleJoin      uint32                  // TXT.MLE.JOIN
+	HeapBase     uint32                  // TXT.HEAP.BASE
+	HeapSize     uint32                  // TXT.HEAP.SIZE
+	Dpr          hwapi.DMAProtectedRange // TXT.DPR
+	PublicKey    [4]uint64               // TXT.PUBLIC.KEY
+	E2Sts        uint64                  // TXT.E2STS
 }
 
 type ACMStatus struct {
@@ -104,7 +98,7 @@ type TXTBiosMLEFlags struct {
 	IsClientState   bool
 }
 
-func FetchTXTRegs(txtAPI ApiInterfaces) ([]byte, error) {
+func FetchTXTRegs(txtAPI hwapi.ApiInterfaces) ([]byte, error) {
 	data := make([]byte, 0x1000)
 	if err := txtAPI.ReadPhysBuf(txtPublicSpace, data); err != nil {
 		return nil, err
@@ -340,8 +334,8 @@ func readTXTErrorCode(data []byte) (TXTErrorCode, uint32, error) {
 	return ret, uint32(u32), nil
 }
 
-func readDMAProtectedRange(data []byte) (DMAProtectedRange, error) {
-	var ret DMAProtectedRange
+func readDMAProtectedRange(data []byte) (hwapi.DMAProtectedRange, error) {
+	var ret hwapi.DMAProtectedRange
 	var u32 uint32
 	buf := bytes.NewReader(data[txtDMAProtectedRange:])
 	err := binary.Read(buf, binary.LittleEndian, &u32)

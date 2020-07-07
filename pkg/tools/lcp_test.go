@@ -1,4 +1,4 @@
-package api
+package tools
 
 import (
 	"io/ioutil"

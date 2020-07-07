@@ -1,4 +1,4 @@
-package api
+package hwapi
 
 // #include <stdint.h>
 //

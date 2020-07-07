@@ -1,4 +1,4 @@
-package api
+package hwapi
 
 import (
 	"encoding/binary"
@@ -219,6 +219,14 @@ func (t TxtApi) ReadHostBridgeTseg() (uint32, uint32, error) {
 	}
 
 	return tsegbase, tseglimit, nil
+}
+
+type DMAProtectedRange struct {
+	Lock bool
+	// Reserved 1-3
+	Size uint8
+	// Reserved 12-19
+	Top uint16
 }
 
 func (t TxtApi) ReadHostBridgeDPR() (DMAProtectedRange, error) {

@@ -4,7 +4,7 @@
 
 // +build !arm,!arm64
 
-package api
+package hwapi
 
 import (
 	"encoding/binary"
