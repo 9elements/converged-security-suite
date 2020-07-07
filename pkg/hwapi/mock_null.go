@@ -1,4 +1,4 @@
-package api
+package hwapi
 
 import (
 	"fmt"
@@ -51,14 +51,6 @@ func (n nullmock) LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, err
 
 func (n nullmock) AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
 	return false, fmt.Errorf("Not implemented")
-}
-
-func (n nullmock) ParsePolicy(policy []byte) (*LCPPolicy, *LCPPolicy2, error) {
-	return nil, nil, fmt.Errorf("Not implemented")
-}
-
-func (n nullmock) ParsePolicyData(policyData []byte) (*LCPPolicyData, error) {
-	return nil, fmt.Errorf("Not implemented")
 }
 
 func (n nullmock) HasSMRR() (bool, error) {

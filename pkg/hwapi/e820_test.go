@@ -1,4 +1,4 @@
-package api
+package hwapi
 
 import (
 	"testing"

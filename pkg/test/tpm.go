@@ -9,7 +9,8 @@ import (
 	"strings"
 
 	tss "github.com/9elements/go-tss"
-	"github.com/9elements/txt-suite/pkg/api"
+	"github.com/9elements/txt-suite/pkg/hwapi"
+	"github.com/9elements/txt-suite/pkg/tools"
 	tpm1 "github.com/google/go-tpm/tpm"
 	tpm2 "github.com/google/go-tpm/tpm2"
 )
@@ -156,7 +157,7 @@ var (
 )
 
 // TPMConnect Connects to a TPM device (virtual or real) at the given path
-func TPMConnect(txtAPI api.ApiInterfaces) (bool, error, error) {
+func TPMConnect(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 
 	t, err := tss.NewTPM()
 	if err != nil {
@@ -167,7 +168,7 @@ func TPMConnect(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // TPM12Present Checks if TPM 1.2 is present and answers to GetCapability
-func TPM12Present(txtAPI api.ApiInterfaces) (bool, error, error) {
+func TPM12Present(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
@@ -179,7 +180,7 @@ func TPM12Present(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // TPM2Present Checks if TPM 2.0 is present and answers to GetCapability
-func TPM2Present(txtAPI api.ApiInterfaces) (bool, error, error) {
+func TPM2Present(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
 		return false, nil, nil
@@ -190,7 +191,7 @@ func TPM2Present(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // TPMIsPresent validates if one of the two previous tests succeeded
-func TPMIsPresent(txtAPI api.ApiInterfaces) (bool, error, error) {
+func TPMIsPresent(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	if (testtpm12present.Result == ResultPass) || (testtpm2present.Result == ResultPass) {
 		return true, nil, nil
 	}
@@ -198,7 +199,7 @@ func TPMIsPresent(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // TPMNVRAMIsLocked Checks if NVRAM indexes are write protected
-func TPMNVRAMIsLocked(txtAPI api.ApiInterfaces) (bool, error, error) {
+func TPMNVRAMIsLocked(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	var res bool
 	var err error
 	var flags tpm1.PermanentFlags
@@ -219,7 +220,7 @@ func TPMNVRAMIsLocked(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // PSIndexConfig tests if PS Index has correct configuration
-func PSIndexConfig(txtAPI api.ApiInterfaces) (bool, error, error) {
+func PSIndexConfig(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	var d1 tpm1.NVDataPublic
 	var d2 tpm2.NVPublic
 	var err error
@@ -278,7 +279,7 @@ func PSIndexConfig(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // AUXIndexConfig tests if the AUX Index has the correct configuration
-func AUXIndexConfig(txtAPI api.ApiInterfaces) (bool, error, error) {
+func AUXIndexConfig(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	var d1 tpm1.NVDataPublic
 	var d2 tpm2.NVPublic
 	var err error
@@ -370,7 +371,7 @@ func AUXIndexConfig(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // POIndexConfig checks the PO index configuration
-func POIndexConfig(txtAPI api.ApiInterfaces) (bool, error, error) {
+func POIndexConfig(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	var d1 tpm1.NVDataPublic
 	var d2 tpm2.NVPublic
 	var err error
@@ -447,9 +448,9 @@ func POIndexConfig(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // PSIndexHasValidLCP checks if PS Index has a valid LCP
-func PSIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
-	var pol1 *api.LCPPolicy
-	var pol2 *api.LCPPolicy2
+func PSIndexHasValidLCP(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+	var pol1 *tools.LCPPolicy
+	var pol2 *tools.LCPPolicy2
 	emptyHash := make([]byte, 20)
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
@@ -457,7 +458,7 @@ func PSIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
 		if err != nil {
 			return false, nil, err
 		}
-		pol1, pol2, err = api.ParsePolicy(data)
+		pol1, pol2, err = tools.ParsePolicy(data)
 		if err != nil {
 			return false, nil, err
 		}
@@ -506,25 +507,25 @@ func PSIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
 			}
 			return false, nil, fmt.Errorf("error: %v, pubdata: %v", err, d)
 		}
-		pol1, pol2, err = api.ParsePolicy(data)
+		pol1, pol2, err = tools.ParsePolicy(data)
 		if err != nil {
 			return false, nil, err
 		}
 	}
 	if pol1 != nil {
-		if pol1.Version >= api.LCPPolicyVersion2 {
-			return false, fmt.Errorf("invalid policy version. Have %v - Want: smaller %v", pol1.Version, api.LCPPolicyVersion2), nil
+		if pol1.Version >= tools.LCPPolicyVersion2 {
+			return false, fmt.Errorf("invalid policy version. Have %v - Want: smaller %v", pol1.Version, tools.LCPPolicyVersion2), nil
 		}
 		if pol1.HashAlg != 0 {
 			return false, fmt.Errorf("HashAlg is invalid. Must be equal 0"), nil
 		}
-		if pol1.PolicyType != api.LCPPolicyTypeAny && pol1.PolicyType != api.LCPPolicyTypeList {
-			return false, fmt.Errorf("PolicyType is invalid. Have: %v - Want: %v or %v", pol1.PolicyType, api.LCPPolicyTypeAny, api.LCPPolicyTypeList), nil
+		if pol1.PolicyType != tools.LCPPolicyTypeAny && pol1.PolicyType != tools.LCPPolicyTypeList {
+			return false, fmt.Errorf("PolicyType is invalid. Have: %v - Want: %v or %v", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
 		}
 		if pol1.SINITMinVersion == 0 {
 			return false, fmt.Errorf("SINITMinVersion is invalid. Must be greater than 0"), nil
 		}
-		if pol1.PolicyType == api.LCPPolicyTypeList && pol1.PolicyControl == 0 {
+		if pol1.PolicyType == tools.LCPPolicyTypeList && pol1.PolicyControl == 0 {
 			return false, fmt.Errorf("PolicyControl is invalid"), nil
 		}
 		if pol1.MaxSINITMinVersion != 0 {
@@ -536,20 +537,20 @@ func PSIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
 		return true, nil, nil
 	}
 	if pol2 != nil {
-		if pol2.Version < api.LCPPolicyVersion3 {
-			return false, fmt.Errorf("wrong policy version. Have %v - Want: %v", pol2.Version, api.LCPPolicyVersion3), nil
+		if pol2.Version < tools.LCPPolicyVersion3 {
+			return false, fmt.Errorf("wrong policy version. Have %v - Want: %v", pol2.Version, tools.LCPPolicyVersion3), nil
 		}
 		switch pol2.HashAlg {
-		case api.LCPPol2HAlgSHA1:
-		case api.LCPPol2HAlgSHA256:
-		case api.LCPPol2HAlgSHA384:
-		case api.LCPPol2HAlgNULL:
-		case api.LCPPol2HAlgSM3:
+		case tools.LCPPol2HAlgSHA1:
+		case tools.LCPPol2HAlgSHA256:
+		case tools.LCPPol2HAlgSHA384:
+		case tools.LCPPol2HAlgNULL:
+		case tools.LCPPol2HAlgSM3:
 		default:
 			return false, fmt.Errorf("HashAlg has invalid value"), nil
 		}
-		if pol2.PolicyType != api.LCPPolicyTypeAny && pol1.PolicyType != api.LCPPolicyTypeList {
-			return false, fmt.Errorf("PolicyType is invalid. Have: %v - Want: %v or %v", pol1.PolicyType, api.LCPPolicyTypeAny, api.LCPPolicyTypeList), nil
+		if pol2.PolicyType != tools.LCPPolicyTypeAny && pol1.PolicyType != tools.LCPPolicyTypeList {
+			return false, fmt.Errorf("PolicyType is invalid. Have: %v - Want: %v or %v", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
 		}
 		if pol2.PolicyControl == 0 {
 			return false, fmt.Errorf("PolicyControl is invalid. Must be greater than 0"), nil
@@ -566,9 +567,9 @@ func PSIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // POIndexHasValidLCP checks if PO Index holds a valid LCP
-func POIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
-	var pol1 *api.LCPPolicy
-	var pol2 *api.LCPPolicy2
+func POIndexHasValidLCP(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+	var pol1 *tools.LCPPolicy
+	var pol2 *tools.LCPPolicy2
 	emptyHash := make([]byte, 20)
 
 	switch tpmCon.Version {
@@ -577,7 +578,7 @@ func POIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
 		if err != nil {
 			return false, nil, err
 		}
-		pol1, pol2, err = api.ParsePolicy(data)
+		pol1, pol2, err = tools.ParsePolicy(data)
 		if err != nil {
 			return false, nil, err
 		}
@@ -624,25 +625,25 @@ func POIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
 		size := uint16(crypto.Hash(d.NameAlg).Size()) + tpm20POIndexBaseSize
 
 		data, err := tpmCon.NVReadValue(tpm20POIndex, "", uint32(size), tpm20POIndex)
-		pol1, pol2, err = api.ParsePolicy(data)
+		pol1, pol2, err = tools.ParsePolicy(data)
 		if err != nil {
 			return false, nil, err
 		}
 	}
 	if pol1 != nil {
-		if pol1.Version >= api.LCPPolicyVersion2 {
-			return false, fmt.Errorf("invalid policy version. Have %v - Want: smaller %v", pol1.Version, api.LCPPolicyVersion2), nil
+		if pol1.Version >= tools.LCPPolicyVersion2 {
+			return false, fmt.Errorf("invalid policy version. Have %v - Want: smaller %v", pol1.Version, tools.LCPPolicyVersion2), nil
 		}
 		if pol1.HashAlg != 0 {
 			return false, fmt.Errorf("HashAlg is invalid. Must be equal 0"), nil
 		}
-		if pol1.PolicyType != api.LCPPolicyTypeAny && pol1.PolicyType != api.LCPPolicyTypeList {
-			return false, fmt.Errorf("PolicyType is invalid. Have: %v - Want: %v or %v", pol1.PolicyType, api.LCPPolicyTypeAny, api.LCPPolicyTypeList), nil
+		if pol1.PolicyType != tools.LCPPolicyTypeAny && pol1.PolicyType != tools.LCPPolicyTypeList {
+			return false, fmt.Errorf("PolicyType is invalid. Have: %v - Want: %v or %v", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
 		}
 		if pol1.SINITMinVersion == 0 {
 			return false, fmt.Errorf("SINITMinVersion is invalid. Must be greater than 0"), nil
 		}
-		if pol1.PolicyType == api.LCPPolicyTypeList && pol1.PolicyControl == 0 {
+		if pol1.PolicyType == tools.LCPPolicyTypeList && pol1.PolicyControl == 0 {
 			return false, fmt.Errorf("PolicyControl is invalid"), nil
 		}
 		if pol1.MaxSINITMinVersion != 0 {
@@ -654,20 +655,20 @@ func POIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
 		return true, nil, nil
 	}
 	if pol2 != nil {
-		if pol2.Version < api.LCPPolicyVersion3 {
-			return false, fmt.Errorf("wrong lcp policy version. Have %v - Want: %v", pol2.Version, api.LCPPolicyVersion3), nil
+		if pol2.Version < tools.LCPPolicyVersion3 {
+			return false, fmt.Errorf("wrong lcp policy version. Have %v - Want: %v", pol2.Version, tools.LCPPolicyVersion3), nil
 		}
 		switch pol2.HashAlg {
-		case api.LCPPol2HAlgSHA1:
-		case api.LCPPol2HAlgSHA256:
-		case api.LCPPol2HAlgSHA384:
-		case api.LCPPol2HAlgNULL:
-		case api.LCPPol2HAlgSM3:
+		case tools.LCPPol2HAlgSHA1:
+		case tools.LCPPol2HAlgSHA256:
+		case tools.LCPPol2HAlgSHA384:
+		case tools.LCPPol2HAlgNULL:
+		case tools.LCPPol2HAlgSM3:
 		default:
 			return false, fmt.Errorf("HashAlg has invalid value"), nil
 		}
-		if pol2.PolicyType != api.LCPPolicyTypeAny && pol1.PolicyType != api.LCPPolicyTypeList {
-			return false, fmt.Errorf("PolicyType is invalid. Have: %v - Want: %v or %v", pol1.PolicyType, api.LCPPolicyTypeAny, api.LCPPolicyTypeList), nil
+		if pol2.PolicyType != tools.LCPPolicyTypeAny && pol1.PolicyType != tools.LCPPolicyTypeList {
+			return false, fmt.Errorf("PolicyType is invalid. Have: %v - Want: %v or %v", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
 		}
 		if pol2.PolicyControl == 0 {
 			return false, fmt.Errorf("PolicyControl is invalid. Must be greater than 0"), nil
@@ -684,7 +685,7 @@ func POIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // PCR0IsSet Reads PCR-00 and checks whether if it's not the EmptyDigest
-func PCR0IsSet(txtAPI api.ApiInterfaces) (bool, error, error) {
+func PCR0IsSet(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	pcr, err := tpmCon.ReadPCR(0)
 	if err != nil {
 		return false, nil, err

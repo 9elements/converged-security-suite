@@ -1,6 +1,6 @@
 package test
 
-import "github.com/9elements/txt-suite/pkg/api"
+import "github.com/9elements/txt-suite/pkg/hwapi"
 
 // Result exposes the type for test results
 type Result int
@@ -74,7 +74,7 @@ type Test struct {
 	//-> mostly api errors, but not directly testrelated problem.
 	//The return call in test functions shall return only one of the errors,
 	//while the other is nil.
-	function     func(api.ApiInterfaces) (bool, error, error)
+	function     func(hwapi.ApiInterfaces) (bool, error, error)
 	Result       Result
 	dependencies []*Test
 	ErrorText    string
@@ -84,7 +84,7 @@ type Test struct {
 }
 
 // Run implements the genereal test function and exposes it.
-func (t *Test) Run(TxtApi api.ApiInterfaces) bool {
+func (t *Test) Run(TxtApi hwapi.ApiInterfaces) bool {
 	var DepsPassed = true
 	// Make sure all dependencies have run and passed
 	for idx := range t.dependencies {

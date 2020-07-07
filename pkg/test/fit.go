@@ -5,7 +5,8 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/9elements/txt-suite/pkg/api"
+	"github.com/9elements/txt-suite/pkg/hwapi"
+	"github.com/9elements/txt-suite/pkg/tools"
 )
 
 // FITSize 16MiB
@@ -28,7 +29,7 @@ var (
 	// set by FITVectorIsSet
 	fitPointer uint32
 	// set by testhasfit
-	fit []api.FitEntry
+	fit []tools.FitEntry
 
 	testfitvectorisset = Test{
 		Name:     "Valid FIT vector",
@@ -174,7 +175,7 @@ var (
 )
 
 // FITVectorIsSet checks if the FIT Vector is set
-func FITVectorIsSet(txtAPI api.ApiInterfaces) (bool, error, error) {
+func FITVectorIsSet(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	fitvec := make([]byte, 4)
 	err := txtAPI.ReadPhysBuf(FITVector, fitvec)
 
@@ -199,14 +200,14 @@ func FITVectorIsSet(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // HasFIT checks if the FIT is present
-func HasFIT(txtAPI api.ApiInterfaces) (bool, error, error) {
+func HasFIT(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	fithdr := make([]byte, 16)
 	err := txtAPI.ReadPhysBuf(int64(fitPointer), fithdr)
 	if err != nil {
 		return false, nil, err
 	}
 
-	hdr, err := api.GetFitHeader(fithdr)
+	hdr, err := tools.GetFitHeader(fithdr)
 	if err != nil {
 		return false, nil, err
 	}
@@ -218,7 +219,7 @@ func HasFIT(txtAPI api.ApiInterfaces) (bool, error, error) {
 	fitblob := make([]byte, hdr.Size())
 	err = txtAPI.ReadPhysBuf(int64(fitPointer), fitblob)
 
-	fit, err = api.ExtractFit(fitblob)
+	fit, err = tools.ExtractFit(fitblob)
 	if err != nil {
 		return false, nil, err
 	}
@@ -230,10 +231,10 @@ func HasFIT(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // HasBIOSACM checks if FIT table has BIOSACM entry
-func HasBIOSACM(txtAPI api.ApiInterfaces) (bool, error, error) {
+func HasBIOSACM(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	count := 0
 	for _, ent := range fit {
-		if ent.Type() == api.StartUpACMod {
+		if ent.Type() == tools.StartUpACMod {
 			count++
 		}
 	}
@@ -244,9 +245,9 @@ func HasBIOSACM(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // HasIBB checks if FIT table has BIOS Startup Module entry
-func HasIBB(txtAPI api.ApiInterfaces) (bool, error, error) {
+func HasIBB(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	for _, ent := range fit {
-		if ent.Type() == api.BIOSStartUpMod {
+		if ent.Type() == tools.BIOSStartUpMod {
 			return true, nil, nil
 		}
 	}
@@ -255,10 +256,10 @@ func HasIBB(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // HasBIOSPolicy checks if FIT table has ONE BIOS Policy Data Record Entry
-func HasBIOSPolicy(txtAPI api.ApiInterfaces) (bool, error, error) {
+func HasBIOSPolicy(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	count := 0
 	for _, ent := range fit {
-		if ent.Type() == api.BIOSPolicyRec {
+		if ent.Type() == tools.BIOSPolicyRec {
 			count++
 		}
 	}
@@ -273,9 +274,9 @@ func HasBIOSPolicy(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // IBBCoversResetVector checks if BIOS Startup Module Entry covers Reset Vector
-func IBBCoversResetVector(txtAPI api.ApiInterfaces) (bool, error, error) {
+func IBBCoversResetVector(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	for _, ent := range fit {
-		if ent.Type() == api.BIOSStartUpMod {
+		if ent.Type() == tools.BIOSStartUpMod {
 			coversRv := ent.Address <= ResetVector && ent.Address+uint64(ent.Size()) >= ResetVector+4
 
 			if coversRv {
@@ -288,9 +289,9 @@ func IBBCoversResetVector(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // IBBCoversFITVector checks if BIOS Startup Module Entry covers FIT vector
-func IBBCoversFITVector(txtAPI api.ApiInterfaces) (bool, error, error) {
+func IBBCoversFITVector(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	for _, ent := range fit {
-		if ent.Type() == api.BIOSStartUpMod {
+		if ent.Type() == tools.BIOSStartUpMod {
 			coversRv := ent.Address <= FITVector && ent.Address+uint64(ent.Size()) >= FITVector+4
 
 			if coversRv {
@@ -303,9 +304,9 @@ func IBBCoversFITVector(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // IBBCoversFIT checks if BIOS Startup Module Entry covers FIT tabel
-func IBBCoversFIT(txtAPI api.ApiInterfaces) (bool, error, error) {
+func IBBCoversFIT(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	for _, ent := range fit {
-		if ent.Type() == api.BIOSStartUpMod {
+		if ent.Type() == tools.BIOSStartUpMod {
 			coversRv := ent.Address <= uint64(fitPointer) && ent.Address+uint64(ent.Size()) >= uint64(fitPointer+uint32(len(fit)*16))
 
 			if coversRv {
@@ -318,11 +319,11 @@ func IBBCoversFIT(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // NoIBBOverlap checks if BIOS Startup Module Entries overlap
-func NoIBBOverlap(txtAPI api.ApiInterfaces) (bool, error, error) {
+func NoIBBOverlap(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	for i, ent1 := range fit {
-		if ent1.Type() == api.BIOSStartUpMod {
+		if ent1.Type() == tools.BIOSStartUpMod {
 			for j, ent2 := range fit {
-				if i < j && ent2.Type() == api.BIOSStartUpMod {
+				if i < j && ent2.Type() == tools.BIOSStartUpMod {
 					a := ent1.Address > ent2.Address+uint64(ent2.Size())
 					b := ent2.Address > ent1.Address+uint64(ent1.Size())
 
@@ -338,11 +339,11 @@ func NoIBBOverlap(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // NoBIOSACMOverlap checks if BIOS ACM Entries Overlap
-func NoBIOSACMOverlap(txtAPI api.ApiInterfaces) (bool, error, error) {
+func NoBIOSACMOverlap(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	for i, ent1 := range fit {
-		if ent1.Type() == api.BIOSStartUpMod {
+		if ent1.Type() == tools.BIOSStartUpMod {
 			for j, ent2 := range fit {
-				if i < j && ent2.Type() == api.StartUpACMod {
+				if i < j && ent2.Type() == tools.StartUpACMod {
 					a := ent1.Address > ent2.Address+uint64(ent2.Size())
 					b := ent2.Address > ent1.Address+uint64(ent1.Size())
 
@@ -358,9 +359,9 @@ func NoBIOSACMOverlap(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // BIOSACMIsBelow4G checks if BIOS ACM is below 4Gb (has a valid address)
-func BIOSACMIsBelow4G(txtAPI api.ApiInterfaces) (bool, error, error) {
+func BIOSACMIsBelow4G(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	for _, ent := range fit {
-		if ent.Type() == api.StartUpACMod {
+		if ent.Type() == tools.StartUpACMod {
 			if ent.Address+uint64(ent.Size()) > uint64(FourGiB) {
 				return false, fmt.Errorf("Startup AC Module Entry is above 4Gib"), nil
 			}
@@ -371,14 +372,14 @@ func BIOSACMIsBelow4G(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // PolicyAllowsTXT checks if Record matches TXT requirements.
-func PolicyAllowsTXT(txtAPI api.ApiInterfaces) (bool, error, error) {
+func PolicyAllowsTXT(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	for _, ent := range fit {
-		if ent.Type() == api.TXTPolicyRec {
+		if ent.Type() == tools.TXTPolicyRec {
 			switch ent.Version {
 			case 0:
 				return false, fmt.Errorf("Indexed IO type pointer are not supported - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 11"), nil
 			case 1:
-				var b api.Uint8
+				var b hwapi.Uint8
 
 				err := txtAPI.ReadPhys(int64(ent.Address), &b)
 				if err != nil {
@@ -397,14 +398,14 @@ func PolicyAllowsTXT(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // BIOSACMValid checks if BIOS ACM is valid
-func BIOSACMValid(txtAPI api.ApiInterfaces) (bool, error, error) {
+func BIOSACMValid(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	acm, _, _, _, err := biosACM(txtAPI, fit)
 
 	return acm != nil, nil, err
 }
 
 // BIOSACMSizeCorrect checks if BIOS ACM size is correct
-func BIOSACMSizeCorrect(txtAPI api.ApiInterfaces) (bool, error, error) {
+func BIOSACMSizeCorrect(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	acm, _, _, _, err := biosACM(txtAPI, fit)
 	if err != nil {
 		return false, nil, err
@@ -417,9 +418,9 @@ func BIOSACMSizeCorrect(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // BIOSACMAlignmentCorrect checks if BIOS ACM alignment is correct
-func BIOSACMAlignmentCorrect(txtAPI api.ApiInterfaces) (bool, error, error) {
+func BIOSACMAlignmentCorrect(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	for _, ent := range fit {
-		if ent.Type() == api.StartUpACMod {
+		if ent.Type() == tools.StartUpACMod {
 			return ent.Address%(128*1024) == 0, nil, nil
 		}
 	}
@@ -428,17 +429,17 @@ func BIOSACMAlignmentCorrect(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // BIOSACMMatchesChipset checks if BIOS ACM matches chipset
-func BIOSACMMatchesChipset(txtAPI api.ApiInterfaces) (bool, error, error) {
+func BIOSACMMatchesChipset(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	_, chp, _, _, err := biosACM(txtAPI, fit)
 
 	if err != nil {
 		return false, nil, err
 	}
-	buf, err := api.FetchTXTRegs(txtAPI)
+	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
-	txt, err := api.ParseTXTRegs(buf)
+	txt, err := tools.ParseTXTRegs(buf)
 	if err != nil {
 		return false, nil, err
 	}
@@ -464,7 +465,7 @@ func BIOSACMMatchesChipset(txtAPI api.ApiInterfaces) (bool, error, error) {
 }
 
 // BIOSACMMatchesCPU checks if BIOS ACM matches CPU
-func BIOSACMMatchesCPU(txtAPI api.ApiInterfaces) (bool, error, error) {
+func BIOSACMMatchesCPU(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 	_, _, cpus, _, err := biosACM(txtAPI, fit)
 	if err != nil {
 		return false, nil, err
@@ -490,10 +491,10 @@ func BIOSACMMatchesCPU(txtAPI api.ApiInterfaces) (bool, error, error) {
 	return false, fmt.Errorf("BIOS Startup Module and CPU doesn't match"), nil
 }
 
-func biosACM(txtAPI api.ApiInterfaces, fit []api.FitEntry) (*api.ACM, *api.Chipsets, *api.Processors, *api.TPMs, error) {
+func biosACM(txtAPI hwapi.ApiInterfaces, fit []tools.FitEntry) (*tools.ACM, *tools.Chipsets, *tools.Processors, *tools.TPMs, error) {
 	for _, ent := range fit {
-		if ent.Type() == api.StartUpACMod {
-			buf1 := make([]byte, api.ACMheaderLen*4)
+		if ent.Type() == tools.StartUpACMod {
+			buf1 := make([]byte, tools.ACMheaderLen*4)
 
 			err := txtAPI.ReadPhysBuf(int64(ent.Address), buf1)
 
@@ -501,12 +502,12 @@ func biosACM(txtAPI api.ApiInterfaces, fit []api.FitEntry) (*api.ACM, *api.Chips
 				return nil, nil, nil, nil, fmt.Errorf("ReadPhysBuf failed at %v with error: %v", ent.Address, err)
 			}
 
-			acm, err := api.ParseACMHeader(buf1)
+			acm, err := tools.ParseACMHeader(buf1)
 			if err != nil {
 				return nil, nil, nil, nil, fmt.Errorf("Can't Parse BIOS ACM header correctly")
 			}
 
-			ret, err := api.ValidateACMHeader(acm)
+			ret, err := tools.ValidateACMHeader(acm)
 
 			if ret == false {
 				return nil, nil, nil, nil, fmt.Errorf("Validating BIOS ACM Header failed: %v", err)
@@ -519,7 +520,7 @@ func biosACM(txtAPI api.ApiInterfaces, fit []api.FitEntry) (*api.ACM, *api.Chips
 				return nil, nil, nil, nil, fmt.Errorf("Cant read BIOS ACM completly")
 			}
 
-			return api.ParseACM(buf2)
+			return tools.ParseACM(buf2)
 		}
 	}
 

@@ -1,4 +1,4 @@
-package api
+package hwapi
 
 import (
 	"bytes"
@@ -55,14 +55,6 @@ func (n pcmock) LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, error
 
 func (n pcmock) AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
 	return false, fmt.Errorf("Not implemented")
-}
-
-func (n pcmock) ParsePolicy(policy []byte) (*LCPPolicy, *LCPPolicy2, error) {
-	return nil, nil, fmt.Errorf("Not implemented")
-}
-
-func (n pcmock) ParsePolicyData(policyData []byte) (*LCPPolicyData, error) {
-	return nil, fmt.Errorf("Not implemented")
 }
 
 func (n pcmock) HasSMRR() (bool, error) {
@@ -122,7 +114,7 @@ func (n pcmock) ReadHostBridgeDPR() (DMAProtectedRange, error) {
 
 func MockPCReadMemory(addr uint64) byte {
 	mem := map[uint64][]byte{
-		txtPublicSpace: []byte{
+		0xFED30000: []byte{
 			0x01, 0xa7, 0x86, 0x80, 0x6b, 0xc8, 0x7b, 0x02, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

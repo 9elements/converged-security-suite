@@ -13,13 +13,16 @@ jobs:
       - checkout
 
       # specify any bash command here prefixed with `run: `
-      - run: gofmt -e ./pkg/api/
+      - run: gofmt -e ./pkg/hwapi/
+      - run: gofmt -e ./pkg/tools/  
       - run: gofmt -e ./pkg/test/
       - run: gofmt -e ./cmd/txt-suite/
       - run: go mod download
       - run: go mod verify
       - run: go build -o txt-suite cmd/txt-suite/*.go
-      - run: go test ./pkg/api/
+      - run: go test ./pkg/hwapi/
+      - run: go test ./pkg/tools/
+      - run: go test ./pkg/test/
       - run: mkdir out
       - run: cp txt-suite out/
 

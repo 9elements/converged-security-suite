@@ -1,4 +1,4 @@
-package api
+package tools
 
 import (
 	"bytes"
@@ -74,7 +74,7 @@ func (fit *FitEntry) Type() FitEntryType {
 }
 
 // getFitPointer returns the ROM-Address of FitPointer
-func (t TxtApi) GetFitPointer(data []byte) (uint64, error) {
+func GetFitPointer(data []byte) (uint64, error) {
 	var fitPointer uint32
 
 	fitPtrAddress := len(data) - 0x40
