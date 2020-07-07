@@ -114,7 +114,7 @@ var (
 		dependencies: []*Test{&testhassmrr},
 		Status:       Implemented,
 	}
-	testactiveiommi = Test{
+	testactiveiommu = Test{
 		Name:     "IOMMU/VT-d active",
 		Required: false,
 		function: ActiveIOMMU,
@@ -145,7 +145,7 @@ var (
 		&testhassmrr,
 		&testvalidsmrr,
 		&testactivesmrr,
-		&testactiveiommi,
+		&testactiveiommu,
 		&testservermodetext,
 	}
 )
