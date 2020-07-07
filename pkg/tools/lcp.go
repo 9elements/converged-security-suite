@@ -798,6 +798,7 @@ func parseLCPHash2(buf *bytes.Reader, hash *LCPHash, alg tpm2.Algorithm) error {
 	return nil
 }
 
+//ParsePolicyData parses a raw copy of the LCP policy
 func ParsePolicyData(policyData []byte) (*LCPPolicyData, error) {
 	var polData LCPPolicyData
 
@@ -831,6 +832,7 @@ func ParsePolicyData(policyData []byte) (*LCPPolicyData, error) {
 	return &polData, nil
 }
 
+//PrettyPrint prints the LCPHash in a human readable format
 func (p *LCPHash) PrettyPrint() string {
 	if p.sha1 != nil {
 		return fmt.Sprintf("%02x [SHA-1]", *p.sha1)
@@ -847,6 +849,7 @@ func (p *LCPHash) PrettyPrint() string {
 	}
 }
 
+//PrettyPrint prints the LCPPolicyData in a human readable format
 func (pd *LCPPolicyData) PrettyPrint() {
 	log.Printf("Launch Control Policy Data\n")
 

@@ -27,6 +27,7 @@ const (
 	txtE2STS             = 0x8f0
 )
 
+//TXTStatus represents serveral configurations within the TXT config space
 type TXTStatus struct {
 	SenterDone bool // SENTER.DONE.STS (0)
 	SexitDone  bool // SEXIT.DONE.STS (1)
@@ -39,6 +40,7 @@ type TXTStatus struct {
 	// Reserved (17-63)
 }
 
+//TXTErrorCode holds the decoded ACM error code read from TXT config space
 type TXTErrorCode struct {
 	ModuleType        uint8 // 0: BIOS ACM, 1: Intel TXT
 	ClassCode         uint8
@@ -50,6 +52,7 @@ type TXTErrorCode struct {
 	ValidInvalid      bool
 }
 
+//TXTRegisterSpace holds the decoded TXT config space
 type TXTRegisterSpace struct {
 	Sts          TXTStatus    // TXT.STS (0x0)
 	TxtReset     bool         // TXT.ESTS (0x8)
@@ -60,7 +63,7 @@ type TXTRegisterSpace struct {
 	Vid          uint16                  // TXT.DIDVID.VID
 	Did          uint16                  // TXT.DIDVID.DID
 	Rid          uint16                  // TXT.DIDVID.RID
-	IdExt        uint16                  // TXT.DIDVID.ID-EXT
+	IDExt        uint16                  // TXT.DIDVID.ID-EXT
 	QpiIf        uint32                  // TXT.VER.QPIIF
 	SinitBase    uint32                  // TXT.SINIT.BASE
 	SinitSize    uint32                  // TXT.SINIT.SIZE
@@ -72,6 +75,7 @@ type TXTRegisterSpace struct {
 	E2Sts        uint64                  // TXT.E2STS
 }
 
+//ACMStatus holds the decoded ACM run state
 type ACMStatus struct {
 	Valid          bool
 	MinorErrorCode uint16
@@ -81,6 +85,7 @@ type ACMStatus struct {
 	ModuleType     uint8
 }
 
+//TXTBiosData holds the decoded BIOSDATA regions as read from TXT config space
 type TXTBiosData struct {
 	Version       uint32
 	BiosSinitSize uint32
@@ -91,6 +96,7 @@ type TXTBiosData struct {
 	MleFlags      *TXTBiosMLEFlags
 }
 
+//TXTBiosMLEFlags holds the decoded BIOSDATA region MLE flags as read from TXT config space
 type TXTBiosMLEFlags struct {
 	SupportsACPIPPI bool
 	IsLegacyState   bool
@@ -98,6 +104,7 @@ type TXTBiosMLEFlags struct {
 	IsClientState   bool
 }
 
+//FetchTXTRegs returns a raw copy of the TXT config space
 func FetchTXTRegs(txtAPI hwapi.ApiInterfaces) ([]byte, error) {
 	data := make([]byte, 0x1000)
 	if err := txtAPI.ReadPhysBuf(txtPublicSpace, data); err != nil {
@@ -106,6 +113,7 @@ func FetchTXTRegs(txtAPI hwapi.ApiInterfaces) ([]byte, error) {
 	return data, nil
 }
 
+//ParseTXTRegs decodes a raw copy of the TXT config space
 func ParseTXTRegs(data []byte) (TXTRegisterSpace, error) {
 	var regSpace TXTRegisterSpace
 	var err error
@@ -165,7 +173,7 @@ func ParseTXTRegs(data []byte) (TXTRegisterSpace, error) {
 	if err != nil {
 		return regSpace, err
 	}
-	err = binary.Read(buf, binary.LittleEndian, &regSpace.IdExt)
+	err = binary.Read(buf, binary.LittleEndian, &regSpace.IDExt)
 	if err != nil {
 		return regSpace, err
 	}
@@ -230,6 +238,7 @@ func ParseTXTRegs(data []byte) (TXTRegisterSpace, error) {
 	return regSpace, nil
 }
 
+//ParseBIOSDataRegion decodes a raw copy of the BIOSDATA region
 func ParseBIOSDataRegion(heap []byte) (TXTBiosData, error) {
 	var ret TXTBiosData
 	var biosDataSize uint64
@@ -351,6 +360,7 @@ func readDMAProtectedRange(data []byte) (hwapi.DMAProtectedRange, error) {
 	return ret, nil
 }
 
+//ReadACMStatus decodes the raw ACM status register bits
 func ReadACMStatus(data []byte) (ACMStatus, error) {
 	var ret ACMStatus
 	var u64 uint64

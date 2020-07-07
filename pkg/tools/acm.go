@@ -9,38 +9,70 @@ import (
 )
 
 const (
-	ACMChipsetTypeBios       uint8  = 0x00
-	ACMChipsetTypeSinit      uint8  = 0x01
-	ACMChipsetTypeBiosRevoc  uint8  = 0x08
-	ACMChipsetTypeSinitRevoc uint8  = 0x09
-	ACMTypeChipset           uint16 = 0x02
-	ACMSubTypeReset          uint16 = 0x01
-	ACMVendorIntel           uint32 = 0x8086
-	TPMExtPolicyIllegal      uint8  = 0x00
-	TPMExtPolicyAlgAgile     uint8  = 0x01
-	TPMExtPolicyEmbeddedAlgs uint8  = 0x10
-	TPMExtPolicyBoth         uint8  = 0x11
-	TPMFamilyIllegal         uint16 = 0x0000
-	TPMFamilyDTPM12          uint16 = 0x0001
-	TPMFamilyDTPM20          uint16 = 0x0010
-	TPMFamilyDTPMBoth        uint16 = 0x0011
-	TPMFamilyPTT20           uint16 = 0x1000
-	ACMUUIDV3                string = "7fc03aaa-46a7-18db-ac2e-698f8d417f5a"
-	ACMSizeOffset            int64  = 24
-	TPMAlgoSHA1              uint16 = 0x0004
-	TPMAlgoSHA256            uint16 = 0x000b
-	TPMAlgoSHA384            uint16 = 0x000c
-	TPMAlgoSHA512            uint16 = 0x000d
-	TPMAlgoNULL              uint16 = 0x0010
-	TPMAlgoSM3_256           uint16 = 0x0012
-	TPMAlgoRSASSA            uint16 = 0x0014
-	TPMAlgoECDSA             uint16 = 0x0018
-	TPMAlgoSM2               uint16 = 0x001B
+	//ACMChipsetTypeBios as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format
+	ACMChipsetTypeBios uint8 = 0x00
+	//ACMChipsetTypeSinit as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format
+	ACMChipsetTypeSinit uint8 = 0x01
+	//ACMChipsetTypeBiosRevoc as defined in Document 315168-016 Chapter A.1 Table 10. Chipset AC Module Information Table
+	ACMChipsetTypeBiosRevoc uint8 = 0x08
+	//ACMChipsetTypeSinitRevoc as defined in Document 315168-016 Chapter A.1 Table 10. Chipset AC Module Information Table
+	ACMChipsetTypeSinitRevoc uint8 = 0x09
+	//ACMTypeChipset as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format
+	ACMTypeChipset uint16 = 0x02
+	//ACMSubTypeReset FIXME
+	ACMSubTypeReset uint16 = 0x01
+	//ACMVendorIntel as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format
+	ACMVendorIntel uint32 = 0x8086
+
+	//TPMExtPolicyIllegal as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
+	TPMExtPolicyIllegal uint8 = 0x00
+	//TPMExtPolicyAlgAgile as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
+	TPMExtPolicyAlgAgile uint8 = 0x01
+	//TPMExtPolicyEmbeddedAlgs as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
+	TPMExtPolicyEmbeddedAlgs uint8 = 0x10
+	//TPMExtPolicyBoth as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
+	TPMExtPolicyBoth uint8 = 0x11
+
+	//TPMFamilyIllegal as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
+	TPMFamilyIllegal uint16 = 0x0000
+	//TPMFamilyDTPM12 as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
+	TPMFamilyDTPM12 uint16 = 0x0001
+	//TPMFamilyDTPM20 as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
+	TPMFamilyDTPM20 uint16 = 0x0010
+	//TPMFamilyDTPMBoth combination out of TPMFamilyDTPM12 and TPMFamilyDTPM20
+	TPMFamilyDTPMBoth uint16 = 0x0011
+	//TPMFamilyPTT20 as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
+	TPMFamilyPTT20 uint16 = 0x1000
+
+	//ACMUUIDV3 as defined in Document 315168-016 Chapter A.1 Table 10. Chipset AC Module Information Table
+	ACMUUIDV3 string = "7fc03aaa-46a7-18db-ac2e-698f8d417f5a"
+	//ACMSizeOffset as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format
+	ACMSizeOffset int64 = 24
+
+	//TPMAlgoSHA1 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	TPMAlgoSHA1 uint16 = 0x0004
+	//TPMAlgoSHA256 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	TPMAlgoSHA256 uint16 = 0x000b
+	//TPMAlgoSHA384 FIXME
+	TPMAlgoSHA384 uint16 = 0x000c
+	//TPMAlgoSHA512 FIXME
+	TPMAlgoSHA512 uint16 = 0x000d
+	//TPMAlgoNULL as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	TPMAlgoNULL uint16 = 0x0010
+	//TPMAlgoSM3_256 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	TPMAlgoSM3_256 uint16 = 0x0012
+	//TPMAlgoRSASSA as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	TPMAlgoRSASSA uint16 = 0x0014
+	//TPMAlgoECDSA as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	TPMAlgoECDSA uint16 = 0x0018
+	//TPMAlgoSM2 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	TPMAlgoSM2 uint16 = 0x001B
+
+	//ACMheaderLen as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format (Version 0.0)
+	ACMheaderLen uint32 = 161
 )
 
-const vendorIntel = 0x00008086
-const ACMheaderLen = uint32(161)
-
+//UUID represents an UUID
 type UUID struct {
 	Field1 uint32
 	Field2 uint16
@@ -49,8 +81,9 @@ type UUID struct {
 	Field5 [6]uint8
 }
 
+// ACMInfo holds the metadata extracted from the ACM header
 type ACMInfo struct {
-	Uuid                UUID
+	UUID                UUID
 	ChipsetACMType      uint8
 	Version             uint8
 	Length              uint16
@@ -64,6 +97,7 @@ type ACMInfo struct {
 	TPMInfoList         uint32
 }
 
+//ChipsetID describes the chipset ID found in the ACM header
 type ChipsetID struct {
 	Flags      uint32
 	VendorID   uint16
@@ -72,11 +106,13 @@ type ChipsetID struct {
 	Reserved   [3]uint16
 }
 
+//Chipsets hold a list of supported chipset IDs as found in the ACM header
 type Chipsets struct {
 	Count  uint32
 	IDList []ChipsetID
 }
 
+//ProcessorID describes the processor ID found in the ACM header
 type ProcessorID struct {
 	FMS          uint32
 	FMSMask      uint32
@@ -84,11 +120,13 @@ type ProcessorID struct {
 	PlatformMask uint64
 }
 
+//Processors hold a list of supported processor IDs as found in the ACM header
 type Processors struct {
 	Count  uint32
 	IDList []ProcessorID
 }
 
+//TPMs describes the required TPM capabilties and algorithm as found in the ACM header
 type TPMs struct {
 	Capabilities uint32
 	Count        uint16
@@ -156,13 +194,13 @@ func ValidateACMHeader(acmheader *ACMHeader) (bool, error) {
 	if acmheader.Size == 0 {
 		return false, fmt.Errorf("BIOS ACM Size can't be zero")
 	}
-	if acmheader.ModuleVendor != vendorIntel {
+	if acmheader.ModuleVendor != ACMVendorIntel {
 		return false, fmt.Errorf("AC Module Vendor is not Intel. Only Intel as Vendor is allowed")
 	}
 	return true, nil
 }
 
-// ParseACM
+//ParseACM deconstructs a byte array containing the raw ACM into it's components
 func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
 	var acmheader ACMHeader
 	var acminfo ACMInfo
@@ -237,6 +275,7 @@ func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
 	return &acm, &chipsets, &processors, &tpms, nil
 }
 
+//LookupSize returns the ACM size
 func LookupSize(header []byte) (int64, error) {
 	var acmSize uint32
 
@@ -250,6 +289,7 @@ func LookupSize(header []byte) (int64, error) {
 	return int64(acmSize * 4), nil
 }
 
+//PrettyPrint prints a human readable representation of the ACMHeader
 func (a *ACMHeader) PrettyPrint() {
 	log.Println("Authenticated Code Module")
 
@@ -286,21 +326,22 @@ func (a *ACMHeader) PrettyPrint() {
 	log.Printf("Scratch Size: 0x%x (%d)\n", a.ScratchSize, a.ScratchSize)
 }
 
+//PrettyPrint prints a human readable representation of the ACM
 func (a *ACM) PrettyPrint() {
 	a.Header.PrettyPrint()
 	log.Println("Info Table:")
 
 	uuidStr := fmt.Sprintf("%08x-%04x-%04x-%04x-%02x%02x%02x%02x%02x%02x",
-		a.Info.Uuid.Field1,
-		a.Info.Uuid.Field2,
-		a.Info.Uuid.Field3,
-		a.Info.Uuid.Field4,
-		a.Info.Uuid.Field5[0],
-		a.Info.Uuid.Field5[1],
-		a.Info.Uuid.Field5[2],
-		a.Info.Uuid.Field5[3],
-		a.Info.Uuid.Field5[4],
-		a.Info.Uuid.Field5[5])
+		a.Info.UUID.Field1,
+		a.Info.UUID.Field2,
+		a.Info.UUID.Field3,
+		a.Info.UUID.Field4,
+		a.Info.UUID.Field5[0],
+		a.Info.UUID.Field5[1],
+		a.Info.UUID.Field5[2],
+		a.Info.UUID.Field5[3],
+		a.Info.UUID.Field5[4],
+		a.Info.UUID.Field5[5])
 
 	if uuidStr == ACMUUIDV3 {
 		log.Println("\tUUID: ACM_UUID_V3")
@@ -332,6 +373,7 @@ func (a *ACM) PrettyPrint() {
 	log.Printf("\tACM Version: %d\n", a.Info.ACMVersion)
 }
 
+//PrettyPrint prints a human readable representation of the Chipsets
 func (c *Chipsets) PrettyPrint() {
 	log.Println("Chipset List:")
 	log.Printf("\tEntries: %d\n", c.Count)
@@ -344,6 +386,7 @@ func (c *Chipsets) PrettyPrint() {
 	}
 }
 
+//PrettyPrint prints a human readable representation of the Processors
 func (p *Processors) PrettyPrint() {
 	log.Println("Processor List:")
 	log.Printf("\tEntries: %d\n", p.Count)
@@ -355,6 +398,8 @@ func (p *Processors) PrettyPrint() {
 		log.Printf("\t\tPlatform Mask: 0x%02x\n", processor.PlatformMask)
 	}
 }
+
+//PrettyPrint prints a human readable representation of the TPMs
 func (t *TPMs) PrettyPrint() {
 	log.Println("TPM Info List:")
 	log.Println("\tCapabilities:")

@@ -7,6 +7,9 @@ import (
 	"log"
 )
 
+// For reference check Document 599500 "Firmware Interface Table"
+
+// FitEntryType the type of FIT entry inside the FIT table
 type FitEntryType uint16
 
 // FitEntryTypes for distiction of Entries
@@ -35,7 +38,8 @@ const (
 const (
 	fitPointer     uint64 = 0xFFFFFFC0
 	type0MagicWord uint64 = 0x2020205f5449465f
-	FourGiB        uint64 = 0x100000000
+	// FourGiB is a constant representing 4GiB
+	FourGiB uint64 = 0x100000000
 )
 
 // FitEntry defines the structure of FitEntries in the Firmware Interface Table
@@ -65,15 +69,17 @@ func (fit *FitEntry) FancyPrint() {
 	}
 }
 
+//CheckSumValid returns true when the fit entry checksum valid bit is set
 func (fit *FitEntry) CheckSumValid() bool {
 	return fit.CVType&0x80 != 0
 }
 
+//Type returns the fit entry type
 func (fit *FitEntry) Type() FitEntryType {
 	return FitEntryType(fit.CVType & 0x7f)
 }
 
-// getFitPointer returns the ROM-Address of FitPointer
+// GetFitPointer returns the ROM-Address of FitPointer
 func GetFitPointer(data []byte) (uint64, error) {
 	var fitPointer uint32
 
@@ -107,7 +113,7 @@ func readFit(data []byte, fitSize uint32) ([]FitEntry, error) {
 		// recommends to clear CheckSumValid bit on all entries
 		if ent.CheckSumValid() {
 			// Validate checksum
-			var cksum byte = 0
+			var cksum byte
 			for j := 0; j < 16; j++ {
 				cksum += data[j+i]
 			}
@@ -122,6 +128,7 @@ func readFit(data []byte, fitSize uint32) ([]FitEntry, error) {
 	return ret, nil
 }
 
+//GetFitHeader extracts the fit header from raw data
 func GetFitHeader(data []byte) (FitEntry, error) {
 	fit := bytes.NewReader(data)
 
@@ -147,7 +154,7 @@ func GetFitHeader(data []byte) (FitEntry, error) {
 	return hdr, nil
 }
 
-// ExtractFit Gets the bios file blob and extracts the FIT-Part
+// ExtractFit extracts all entries from the fit and checks the checksum
 func ExtractFit(data []byte) ([]FitEntry, error) {
 
 	// read FIT header
@@ -166,7 +173,7 @@ func ExtractFit(data []byte) ([]FitEntry, error) {
 	// to set CheckSumValid in the header.
 	// Need to verify the whole table in that case, not only the header
 	if hdr.CheckSumValid() {
-		var cksum byte = 0
+		var cksum byte
 		for j := 0; j < int(hdr.Size()); j++ {
 			cksum += data[j]
 		}
@@ -176,8 +183,8 @@ func ExtractFit(data []byte) ([]FitEntry, error) {
 		}
 	}
 
-	var lasttype int = 0
-	for i, _ := range fitTable {
+	var lasttype int
+	for i := range fitTable {
 		if int(fitTable[i].Type()) < lasttype {
 			return nil, fmt.Errorf("FIT: Entries aren't sorted - See: Firmware Interface Table - BIOS Specification, Document: 338505-001, P.8")
 		}
@@ -187,9 +194,10 @@ func ExtractFit(data []byte) ([]FitEntry, error) {
 	return fitTable, nil
 }
 
-func (entry *FitEntry) Size() uint32 {
+//Size returns the size in bytes of the entry
+func (fit *FitEntry) Size() uint32 {
 	var tmpsize uint32
-	for count, item := range entry.OrigSize {
+	for count, item := range fit.OrigSize {
 		tmpsize += uint32(item)
 		if count < 2 {
 			tmpsize = tmpsize << 4
