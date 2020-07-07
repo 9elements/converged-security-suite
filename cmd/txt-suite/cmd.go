@@ -51,16 +51,16 @@ func showHelp() {
 
 func getTests() []*test.Test {
 	var tests []*test.Test
-	for i, _ := range test.TestsCPU {
+	for i := range test.TestsCPU {
 		tests = append(tests, test.TestsCPU[i])
 	}
-	for i, _ := range test.TestsTPM {
+	for i := range test.TestsTPM {
 		tests = append(tests, test.TestsTPM[i])
 	}
-	for i, _ := range test.TestsFIT {
+	for i := range test.TestsFIT {
 		tests = append(tests, test.TestsFIT[i])
 	}
-	for i, _ := range test.TestsMemory {
+	for i := range test.TestsMemory {
 		tests = append(tests, test.TestsMemory[i])
 	}
 	return tests
@@ -69,7 +69,7 @@ func getTests() []*test.Test {
 func listTests() {
 	tests := getTests()
 
-	for i, _ := range tests {
+	for i := range tests {
 		fmt.Printf("Test No: %v, %v\n", i, tests[i].Name)
 	}
 }
@@ -78,7 +78,7 @@ func listTestsAsMarkdown() {
 	var teststate string
 	tests := getTests()
 
-	for i, _ := range tests {
+	for i := range tests {
 		if tests[i].Status == test.Implemented {
 			teststate = ":white_check_mark:"
 		} else if tests[i].Status == test.NotImplemented {
