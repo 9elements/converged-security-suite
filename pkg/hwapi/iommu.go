@@ -154,7 +154,7 @@ func (t TxtAPI) LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, error
 func (t TxtAPI) lookupIOLegacy(addr, rootTblAddr uint64) ([]uint64, error) {
 	ret := []uint64{}
 
-	for bus := int64(0); bus < 256; bus += 1 {
+	for bus := int64(0); bus < 256; bus++ {
 		// read root table entries
 		var rootTblEnt Uint64
 		err := t.ReadPhys(int64(rootTblAddr)+bus*16+8, &rootTblEnt)
@@ -173,7 +173,7 @@ func (t TxtAPI) lookupIOLegacy(addr, rootTblAddr uint64) ([]uint64, error) {
 		var ctxTblEntHi Uint64
 		var ctxTblEntLo Uint64
 
-		for devfn := int64(0); devfn < 32*8; devfn += 1 {
+		for devfn := int64(0); devfn < 32*8; devfn++ {
 			err = t.ReadPhys(int64(ctxTblAddr)+devfn*16+8, &ctxTblEntLo)
 			if err != nil {
 				return []uint64{}, err

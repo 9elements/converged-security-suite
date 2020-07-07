@@ -243,7 +243,7 @@ func (t TxtAPI) ReadHostBridgeDPR() (DMAProtectedRange, error) {
 	}
 	deviceid, err := t.PCIReadDeviceID(0, 0, 0)
 
-	var found bool = false
+	var found bool
 	for _, id := range HostbridgeIDsSandyCompatible {
 		if id == deviceid {
 			found = true
