@@ -17,7 +17,7 @@ func TestE820ReservedCheck(t *testing.T) {
 	txtAPI := GetApi()
 
 	for _, s := range ranges {
-		reserved, err := txtAPI.IsReservedInE810(s.start, s.end)
+		reserved, err := txtAPI.IsReservedInE820(s.start, s.end)
 		if err != nil {
 			t.Errorf("Checking range %x-%x failed: %s", s.start, s.end, err)
 		}

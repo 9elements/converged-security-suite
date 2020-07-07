@@ -17,7 +17,7 @@ type ApiInterfaces interface {
 	CPULogCount() uint32
 
 	// e820.go
-	IsReservedInE810(start uint64, end uint64) (bool, error)
+	IsReservedInE820(start uint64, end uint64) (bool, error)
 
 	// iommu.go
 	LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, error)
