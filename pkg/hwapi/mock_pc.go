@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"io"
+
+	"github.com/9elements/go-tss"
 )
 
 type pcmock struct {
@@ -247,8 +248,22 @@ func (n pcmock) WritePhys(addr int64, data UintN) error {
 	return nil
 }
 
-func (n pcmock) NVReadAll(conn io.ReadWriteCloser, index uint32) []byte {
-	return []byte{}
+func (n pcmock) NewTPM() (*tss.TPM, error) {
+	return nil, fmt.Errorf("Not implemented")
+}
+
+func (n pcmock) NVLocked(tpmCon *tss.TPM) (bool, error) {
+	return false, nil
+}
+
+func (n pcmock) ReadNVPublic(tpmCon *tss.TPM, index uint32) ([]byte, error) {
+	return []byte{}, fmt.Errorf("Not implemented")
+}
+func (n pcmock) NVReadValue(tpmCon *tss.TPM, index uint32, password string, size, offhandle uint32) ([]byte, error) {
+	return []byte{}, fmt.Errorf("Not implemented")
+}
+func (n pcmock) ReadPCR(tpmCon *tss.TPM, pcr uint32) ([]byte, error) {
+	return []byte{}, fmt.Errorf("Not implemented")
 }
 
 //GetPcMock returns APIInterfaces for mocking the hwapi used in unittests

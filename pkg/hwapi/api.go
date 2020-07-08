@@ -1,6 +1,8 @@
 package hwapi
 
-import "io"
+import (
+	"github.com/9elements/go-tss"
+)
 
 //APIInterfaces provides methods to access hardware found on modern x86_64 platforms
 type APIInterfaces interface {
@@ -48,7 +50,11 @@ type APIInterfaces interface {
 	WritePhys(addr int64, data UintN) error
 
 	// tpm.go
-	NVReadAll(conn io.ReadWriteCloser, index uint32) []byte
+	NewTPM() (*tss.TPM, error)
+	NVLocked(tpmCon *tss.TPM) (bool, error)
+	ReadNVPublic(tpmCon *tss.TPM, index uint32) ([]byte, error)
+	NVReadValue(tpmCon *tss.TPM, index uint32, password string, size, offhandle uint32) ([]byte, error)
+	ReadPCR(tpmCon *tss.TPM, pcr uint32) ([]byte, error)
 }
 
 //TxtAPI The context object for TXT Api
