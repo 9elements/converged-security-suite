@@ -246,6 +246,9 @@ func PSIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 				d1.PCRInfoRead.PCRsAtRelease.Mask, d1.PCRInfoWrite.PCRsAtRelease.Mask), nil
 		}
 
+		// Intel Trusted Execution Technology Software Development Guide - Measured Launched Environment Developer’s Guide
+		// August 2016 - Revision 013 - Document: 315168-013
+		// Appendix J on page. 152, Table J-1. TPM Family 1.2 NV Storage Matrix
 		if d1.Size != tpm12PSIndexSize {
 			return false, fmt.Errorf("Size incorrect: Have: %v - Want: 54 - Data: %v", d1.Size, d1), nil
 		}
@@ -263,14 +266,59 @@ func PSIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		}
 		return true, nil, nil
 	case tss.TPMVersion20:
+		raw, err = tpmCon.ReadNVPublic(tpm20OldPSIndex)
+		if err != nil {
+			if !strings.Contains(err.Error(), tpm2NVPublicNotSet) {
+				return false, nil, err
+			}
+		}
 		raw, err = tpmCon.ReadNVPublic(tpm20PSIndex)
 		if err != nil {
+			if strings.Contains(err.Error(), tpm2NVPublicNotSet) {
+				return false, fmt.Errorf("PS indices not set"), err
+			}
 			return false, nil, err
 		}
 		buf := bytes.NewReader(raw)
 		err = binary.Read(buf, binary.BigEndian, &d2.NVIndex)
 		if err != nil {
 			return false, nil, err
+		}
+		err = binary.Read(buf, binary.BigEndian, &d2.NameAlg)
+		if err != nil {
+			return false, nil, err
+		}
+		err = binary.Read(buf, binary.BigEndian, &d2.Attributes)
+		if err != nil {
+			return false, nil, err
+		}
+		// Helper variable hashSize- go-tpm2 does not implement proper structure
+		var hashSize uint16
+		err = binary.Read(buf, binary.BigEndian, &hashSize)
+		if err != nil {
+			return false, nil, err
+		}
+		// Uses hashSize to make the right sized slice to read the hash
+		hashData := make([]byte, hashSize)
+		err = binary.Read(buf, binary.BigEndian, &hashData)
+		if err != nil {
+			return false, nil, err
+		}
+		err = binary.Read(buf, binary.BigEndian, &d2.DataSize)
+		if err != nil {
+			return false, nil, err
+		}
+
+		// Intel Trusted Execution Technology Software Development Guide - Measured Launched Environment Developer’s Guide
+		// August 2016 - Revision 013 - Document: 315168-013
+		// Appendix J on page. 153, Table J-2. TPM Family 2.0 NV Storage Matrix
+		if !checkTPM2NVAttr(d2.Attributes, tpm20PSIndexAttr, tpm2.AttrWritten) {
+			return false, fmt.Errorf("TPM2 PS Index Attributes not correct. Have %v - Want: %v", d2.Attributes.String(), tpm20PSIndexAttr.String()), nil
+		}
+
+		size := (uint16(crypto.Hash(d2.NameAlg).Size())) + tpm20PSIndexBaseSize
+		if d2.DataSize != size {
+			return false, fmt.Errorf("TPM2 PS Index size incorrect. Have: %v - Want: %v", d2.DataSize, size), nil
 		}
 		return true, nil, nil
 	}
@@ -298,6 +346,9 @@ func AUXIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 			return false, nil, err
 		}
 
+		// Intel Trusted Execution Technology Software Development Guide - Measured Launched Environment Developer’s Guide
+		// August 2016 - Revision 013 - Document: 315168-013
+		// Appendix J on page. 152, Table J-1. TPM Family 1.2 NV Storage Matrix
 		p1 = d1.PCRInfoRead.PCRsAtRelease.Mask
 		p2 = d1.PCRInfoWrite.PCRsAtRelease.Mask
 		if p1 != [3]byte{0, 0, 0} || p2 != [3]byte{0, 0, 0} {
@@ -322,8 +373,17 @@ func AUXIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 		return true, nil, nil
 	case tss.TPMVersion20:
+		raw, err = tpmCon.ReadNVPublic(tpm20OldAUXIndex)
+		if err != nil {
+			if !strings.Contains(err.Error(), tpm20NVIndexNotSet) {
+				return false, nil, err
+			}
+		}
 		raw, err = tpmCon.ReadNVPublic(tpm20AUXIndex)
 		if err != nil {
+			if strings.Contains(err.Error(), tpm20NVIndexNotSet) {
+				return false, fmt.Errorf("PS indices not set"), err
+			}
 			return false, nil, err
 		}
 		buf := bytes.NewReader(raw)
@@ -356,7 +416,10 @@ func AUXIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 			return false, nil, err
 		}
 
-		if (1 >> d2.Attributes & (tpm20AUXIndexAttr | tpm2.AttrWritten)) != 0 {
+		// Intel Trusted Execution Technology Software Development Guide - Measured Launched Environment Developer’s Guide
+		// August 2016 - Revision 013 - Document: 315168-013
+		// Appendix J on page. 153, Table J-2. TPM Family 2.0 NV Storage Matrix
+		if !checkTPM2NVAttr(d2.Attributes, tpm20AUXIndexAttr, tpm2.AttrWritten) {
 			return false, fmt.Errorf("TPM2 AUX Index Attributes not correct. Have %v - Want: %v", d2.Attributes.String(), tpm20AUXIndexAttr.String()), nil
 		}
 
@@ -391,6 +454,9 @@ func POIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 			return false, nil, err
 		}
 
+		// Intel Trusted Execution Technology Software Development Guide - Measured Launched Environment Developer’s Guide
+		// August 2016 - Revision 013 - Document: 315168-013
+		// Appendix J on page. 152, Table J-1. TPM Family 1.2 NV Storage Matrix
 		if d1.Permission.Attributes != 0 {
 			return false, fmt.Errorf("Permissions of AUX Index are invalid - have: %v - want: %v", d1.Permission.Attributes, tpm12POIndexAttr), nil
 		}
@@ -398,6 +464,14 @@ func POIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 			return false, fmt.Errorf("TPM1 PO Index size incorrect. Have: %v - Want: %v", d1.Size, tpm12POIndexSize), nil
 		}
 	case tss.TPMVersion20:
+		raw, err = tpmCon.ReadNVPublic(tpm20OldPOIndex)
+		if err != nil {
+			if !strings.Contains(err.Error(), tpm2NVPublicNotSet) {
+				return false, nil, err
+			}
+		}
+		//reset error
+		err = nil
 		raw, err = tpmCon.ReadNVPublic(tpm20POIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm2NVPublicNotSet) {
@@ -435,7 +509,10 @@ func POIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 			return false, nil, err
 		}
 
-		if (1 >> d2.Attributes & (tpm20POIndexAttr | tpm2.AttrWritten)) != 0 {
+		// Intel Trusted Execution Technology Software Development Guide - Measured Launched Environment Developer’s Guide
+		// August 2016 - Revision 013 - Document: 315168-013
+		// Appendix J on page. 153, Table J-2. TPM Family 2.0 NV Storage Matrix
+		if !checkTPM2NVAttr(d2.Attributes, tpm20POIndexAttr, tpm2.AttrWritten) {
 			return false, fmt.Errorf("TPM2 PO Index Attributes not correct. Have %v - Want: %v", d2.Attributes.String(), tpm20POIndexAttr.String()), nil
 		}
 		size := uint16(crypto.Hash(d2.NameAlg).Size()) + tpm20POIndexBaseSize
@@ -576,6 +653,9 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	case tss.TPMVersion12:
 		data, err := tpmCon.NVReadValue(tpm12POIndex, "", tpm12POIndexSize, 0)
 		if err != nil {
+			if strings.Contains(err.Error(), tpm12NVIndexNotSet) {
+				return true, err, nil
+			}
 			return false, nil, err
 		}
 		pol1, pol2, err = tools.ParsePolicy(data)
@@ -586,6 +666,14 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		var d tpm2.NVPublic
 		var raw []byte
 		var err error
+		raw, err = tpmCon.ReadNVPublic(tpm20OldPOIndex)
+		if err != nil {
+			if !strings.Contains(err.Error(), tpm2NVPublicNotSet) {
+				return false, nil, err
+			}
+		}
+		//reset error
+		err = nil
 		raw, err = tpmCon.ReadNVPublic(tpm20POIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm2NVPublicNotSet) {
@@ -694,4 +782,8 @@ func PCR0IsSet(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		return false, fmt.Errorf("PCR 0 is filled with zeros"), nil
 	}
 	return true, nil, nil
+}
+
+func checkTPM2NVAttr(mask, want, optional tpm2.NVAttr) bool {
+	return (1 >> mask & (want | optional)) == 0
 }
