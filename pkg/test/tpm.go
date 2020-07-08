@@ -634,6 +634,9 @@ func POIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
 	case tss.TPMVersion12:
 		data, err := tpmCon.NVReadValue(tpm12POIndex, "", tpm12POIndexSize, 0)
 		if err != nil {
+			if strings.Contains(err.Error(), tpm12NVIndexNotSet) {
+				return true, err, nil
+			}
 			return false, nil, err
 		}
 		pol1, pol2, err = api.ParsePolicy(data)
