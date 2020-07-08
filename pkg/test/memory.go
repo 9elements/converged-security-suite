@@ -389,9 +389,12 @@ func SINITInTXT(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		return false, nil, err
 	}
 
-	acm, _, _, _, err := tools.ParseACM(sinitBuf)
+	acm, _, _, _, err, internalerr := tools.ParseACM(sinitBuf)
+	if internalerr != nil {
+		return false, nil, internalerr
+	}
 	if err != nil {
-		return false, nil, err
+		return false, err, nil
 	}
 	if acm == nil {
 		return false, fmt.Errorf("ACM is nil"), nil
@@ -415,9 +418,12 @@ func SINITMatchesChipset(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		return false, nil, err
 	}
 
-	acm, chps, _, _, err := sinitACM(txtAPI, regs)
+	acm, chps, _, _, err, internalerr := sinitACM(txtAPI, regs)
+	if internalerr != nil {
+		return false, nil, internalerr
+	}
 	if err != nil {
-		return false, nil, err
+		return false, err, nil
 	}
 	if chps == nil {
 		return false, fmt.Errorf("CHPS is nil"), nil
@@ -454,9 +460,12 @@ func SINITMatchesCPU(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		return false, nil, err
 	}
 
-	_, _, cpus, _, err := sinitACM(txtAPI, regs)
+	_, _, cpus, _, err, internalerr := sinitACM(txtAPI, regs)
+	if internalerr != nil {
+		return false, nil, internalerr
+	}
 	if err != nil {
-		return false, nil, err
+		return false, err, nil
 	}
 
 	// IA32_PLATFORM_ID
@@ -647,11 +656,11 @@ func ReleaseFusedFSBI(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	return false, nil, fmt.Errorf("ReleaseFusedFSBI: Unimplemented")
 }
 
-func sinitACM(txtAPI hwapi.APIInterfaces, regs tools.TXTRegisterSpace) (*tools.ACM, *tools.Chipsets, *tools.Processors, *tools.TPMs, error) {
+func sinitACM(txtAPI hwapi.APIInterfaces, regs tools.TXTRegisterSpace) (*tools.ACM, *tools.Chipsets, *tools.Processors, *tools.TPMs, error, error) {
 	sinitBuf := make([]byte, regs.SinitSize)
 	err := txtAPI.ReadPhysBuf(int64(regs.SinitBase), sinitBuf)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	return tools.ParseACM(sinitBuf)

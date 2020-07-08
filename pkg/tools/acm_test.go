@@ -34,7 +34,10 @@ func TestACMParser(t *testing.T) {
 		t.Errorf("Failed to read file: %v", err)
 	}
 
-	acm, chipsets, processors, tpms, err := ParseACM(file)
+	acm, chipsets, processors, tpms, err, internalerr := ParseACM(file)
+	if internalerr != nil {
+		t.Errorf("ACMParser() failed with internal error: %v", err)
+	}
 	if err != nil {
 		t.Errorf("ParseACM() failed: %v", err)
 	}
@@ -71,7 +74,10 @@ func TestACMParser2(t *testing.T) {
 		t.Errorf("ACMParser() failed: %v", err)
 	}
 
-	acm, chipsets, processors, tpms, err := ParseACM(file)
+	acm, chipsets, processors, tpms, err, internalerr := ParseACM(file)
+	if internalerr != nil {
+		t.Errorf("ACMParser() failed with internal error: %v", err)
+	}
 	if err != nil {
 		t.Errorf("ACMParser() failed: %v", err)
 	}

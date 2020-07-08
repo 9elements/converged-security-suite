@@ -447,16 +447,19 @@ func PolicyAllowsTXT(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 // BIOSACMValid checks if BIOS ACM is valid
 func BIOSACMValid(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	acm, _, _, _, err := biosACM(txtAPI, fit)
+	acm, _, _, _, err, internalerr := biosACM(txtAPI, fit)
 
-	return acm != nil, nil, err
+	return acm != nil, err, internalerr
 }
 
 // BIOSACMSizeCorrect checks if BIOS ACM size is correct
 func BIOSACMSizeCorrect(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	acm, _, _, _, err := biosACM(txtAPI, fit)
+	acm, _, _, _, err, internalerr := biosACM(txtAPI, fit)
+	if internalerr != nil {
+		return false, nil, internalerr
+	}
 	if err != nil {
-		return false, nil, err
+		return false, err, nil
 	}
 
 	if acm.Header.Size%64 != 0 {
@@ -478,10 +481,12 @@ func BIOSACMAlignmentCorrect(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 // BIOSACMMatchesChipset checks if BIOS ACM matches chipset
 func BIOSACMMatchesChipset(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	_, chp, _, _, err := biosACM(txtAPI, fit)
-
+	_, chp, _, _, err, internalerr := biosACM(txtAPI, fit)
+	if internalerr != nil {
+		return false, nil, internalerr
+	}
 	if err != nil {
-		return false, nil, err
+		return false, err, nil
 	}
 	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
@@ -514,9 +519,12 @@ func BIOSACMMatchesChipset(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 // BIOSACMMatchesCPU checks if BIOS ACM matches CPU
 func BIOSACMMatchesCPU(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	_, _, cpus, _, err := biosACM(txtAPI, fit)
+	_, _, cpus, _, err, internalerr := biosACM(txtAPI, fit)
+	if internalerr != nil {
+		return false, nil, internalerr
+	}
 	if err != nil {
-		return false, nil, err
+		return false, err, nil
 	}
 
 	// IA32_PLATFORM_ID
@@ -539,7 +547,7 @@ func BIOSACMMatchesCPU(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	return false, fmt.Errorf("BIOS Startup Module and CPU doesn't match"), nil
 }
 
-func biosACM(txtAPI hwapi.APIInterfaces, fit []tools.FitEntry) (*tools.ACM, *tools.Chipsets, *tools.Processors, *tools.TPMs, error) {
+func biosACM(txtAPI hwapi.APIInterfaces, fit []tools.FitEntry) (*tools.ACM, *tools.Chipsets, *tools.Processors, *tools.TPMs, error, error) {
 	for _, ent := range fit {
 		if ent.Type() == tools.StartUpACMod {
 			buf1 := make([]byte, tools.ACMheaderLen*4)
@@ -547,30 +555,30 @@ func biosACM(txtAPI hwapi.APIInterfaces, fit []tools.FitEntry) (*tools.ACM, *too
 			err := txtAPI.ReadPhysBuf(int64(ent.Address), buf1)
 
 			if err != nil {
-				return nil, nil, nil, nil, fmt.Errorf("ReadPhysBuf failed at %v with error: %v", ent.Address, err)
+				return nil, nil, nil, nil, nil, fmt.Errorf("ReadPhysBuf failed at %v with error: %v", ent.Address, err)
 			}
 
 			acm, err := tools.ParseACMHeader(buf1)
 			if err != nil {
-				return nil, nil, nil, nil, fmt.Errorf("Can't Parse BIOS ACM header correctly")
+				return nil, nil, nil, nil, fmt.Errorf("Can't Parse BIOS ACM header correctly"), nil
 			}
 
 			ret, err := tools.ValidateACMHeader(acm)
 
 			if ret == false {
-				return nil, nil, nil, nil, fmt.Errorf("Validating BIOS ACM Header failed: %v", err)
+				return nil, nil, nil, nil, fmt.Errorf("Validating BIOS ACM Header failed: %v", err), nil
 			}
 
 			buf2 := make([]byte, acm.Size*4)
 			err = txtAPI.ReadPhysBuf(int64(ent.Address), buf2)
 
 			if err != nil {
-				return nil, nil, nil, nil, fmt.Errorf("Cant read BIOS ACM completly")
+				return nil, nil, nil, nil, nil, fmt.Errorf("Cant read BIOS ACM completly")
 			}
 
 			return tools.ParseACM(buf2)
 		}
 	}
 
-	return nil, nil, nil, nil, fmt.Errorf("no BIOS ACM in FIT")
+	return nil, nil, nil, nil, fmt.Errorf("no BIOS ACM in FIT"), nil
 }

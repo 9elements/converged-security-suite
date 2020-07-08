@@ -201,7 +201,7 @@ func ValidateACMHeader(acmheader *ACMHeader) (bool, error) {
 }
 
 //ParseACM deconstructs a byte array containing the raw ACM into it's components
-func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
+func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error, error) {
 	var acmheader ACMHeader
 	var acminfo ACMInfo
 	var processors Processors
@@ -211,18 +211,18 @@ func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
 	buf := bytes.NewReader(data)
 	err := binary.Read(buf, binary.LittleEndian, &acmheader)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 	scratch := make([]byte, acmheader.ScratchSize*4)
 
 	err = binary.Read(buf, binary.LittleEndian, &scratch)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	err = binary.Read(buf, binary.LittleEndian, &acminfo)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	acm := ACM{acmheader, scratch, acminfo}
@@ -230,49 +230,49 @@ func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error) {
 	buf.Seek(int64(acm.Info.ChipsetIDList), io.SeekStart)
 	err = binary.Read(buf, binary.LittleEndian, &chipsets.Count)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	chipsets.IDList = make([]ChipsetID, chipsets.Count)
 	err = binary.Read(buf, binary.LittleEndian, &chipsets.IDList)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	buf.Seek(int64(acm.Info.ProcessorIDList), io.SeekStart)
 	err = binary.Read(buf, binary.LittleEndian, &processors.Count)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	processors.IDList = make([]ProcessorID, processors.Count)
 	err = binary.Read(buf, binary.LittleEndian, &processors.IDList)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	if acm.Info.ACMVersion >= 5 {
 		buf.Seek(int64(acm.Info.TPMInfoList), io.SeekStart)
 		err = binary.Read(buf, binary.LittleEndian, &tpms.Capabilities)
 		if err != nil {
-			return nil, nil, nil, nil, err
+			return nil, nil, nil, nil, nil, err
 		}
 
 		err = binary.Read(buf, binary.LittleEndian, &tpms.Count)
 		if err != nil {
-			return nil, nil, nil, nil, err
+			return nil, nil, nil, nil, nil, err
 		}
 
 		tpms.AlgID = make([]uint16, tpms.Count)
 		for i := 0; i < int(tpms.Count); i++ {
 			err = binary.Read(buf, binary.LittleEndian, &tpms.AlgID[i])
 			if err != nil {
-				return nil, nil, nil, nil, err
+				return nil, nil, nil, nil, nil, err
 			}
 		}
 	}
 
-	return &acm, &chipsets, &processors, &tpms, nil
+	return &acm, &chipsets, &processors, &tpms, nil, nil
 }
 
 //LookupSize returns the ACM size
