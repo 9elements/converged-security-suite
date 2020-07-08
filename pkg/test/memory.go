@@ -485,7 +485,7 @@ func SINITMatchesCPU(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		}
 	}
 
-	return false, fmt.Errorf("Sinit doesn't match CPU"), nil
+	return false, fmt.Errorf("CPU signature not found in SINIT processor ID list"), nil
 }
 
 // NoSINITErrors checks if the SINITACM was executed without any errors

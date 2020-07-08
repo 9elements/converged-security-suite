@@ -602,8 +602,8 @@ func PSIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		if pol1.Version >= tools.LCPPolicyVersion2 {
 			return false, fmt.Errorf("invalid policy version. Have %v - Want: smaller %v", pol1.Version, tools.LCPPolicyVersion2), nil
 		}
-		if pol1.HashAlg != 0 {
-			return false, fmt.Errorf("HashAlg is invalid. Must be equal 0"), nil
+		if pol1.HashAlg != tools.LCPPolHAlgSHA1 {
+			return false, fmt.Errorf("HashAlg is not 0 (SHA1). Must be equal 0"), nil
 		}
 		if pol1.PolicyType != tools.LCPPolicyTypeAny && pol1.PolicyType != tools.LCPPolicyTypeList {
 			return false, fmt.Errorf("PolicyType is invalid. Have: %v - Want: %v or %v", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
