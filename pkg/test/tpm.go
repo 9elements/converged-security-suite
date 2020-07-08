@@ -118,26 +118,35 @@ var (
 		Status:       Implemented,
 	}
 	testpsindexissvalid = Test{
-		Name:         "PS index has valid LCP Policy",
-		function:     PSIndexHasValidLCP,
-		Required:     true,
-		dependencies: []*Test{&testtpmispresent},
-		Status:       Implemented,
+		Name:                    "PS index has valid LCP Policy",
+		function:                PSIndexHasValidLCP,
+		Required:                true,
+		dependencies:            []*Test{&testtpmispresent},
+		Status:                  Implemented,
+		SpecificationChapter:    "D.3 LCP_POLICY_LIST",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testpoindexissvalid = Test{
-		Name:         "PO index has valid LCP Policy",
-		function:     POIndexHasValidLCP,
-		Required:     true,
-		NonCritical:  true,
-		dependencies: []*Test{&testtpmispresent},
-		Status:       Implemented,
+		Name:                    "PO index has valid LCP Policy",
+		function:                POIndexHasValidLCP,
+		Required:                true,
+		NonCritical:             true,
+		dependencies:            []*Test{&testtpmispresent},
+		Status:                  Implemented,
+		SpecificationChapter:    "D.3 LCP_POLICY_LIST",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testpcr00valid = Test{
-		Name:         "PCR 0 is set correctly",
-		function:     PCR0IsSet,
-		Required:     true,
-		dependencies: []*Test{&testtpmispresent},
-		Status:       Implemented,
+		Name:                    "PCR 0 is set correctly",
+		function:                PCR0IsSet,
+		Required:                true,
+		dependencies:            []*Test{&testtpmispresent},
+		Status:                  Implemented,
+		SpecificationChapter:    "BIOS Startup Module (Type 0x07) Entry",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
 
 	// TestsTPM exposes the slice of pointers to tests regarding tpm functionality for txt

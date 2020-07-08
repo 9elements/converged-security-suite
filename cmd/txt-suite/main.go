@@ -84,8 +84,13 @@ func run(tests []*test.Test) bool {
 			fmt.Printf("%-20s\n", a.Bold(a.Red(tests[index].Result)))
 		}
 		if tests[index].ErrorText != "" {
-			fmt.Printf(" %s\n\n", tests[index].ErrorText)
+			fmt.Printf(" %s\n", tests[index].ErrorText)
 		}
+		if tests[index].ErrorTextSpec != "" {
+			fmt.Printf(" %s\n", tests[index].ErrorTextSpec)
+		}
+		fmt.Printf("\n")
+
 		f.Flush()
 	}
 

@@ -27,9 +27,13 @@ func TestTest_Run(t *testing.T) {
 		ResultFail,
 		nil,
 		"",
+		"",
 		NotImplemented,
 		Common,
 		true,
+		"",
+		"",
+		"",
 	}
 
 	BFailed := Test{
@@ -39,9 +43,13 @@ func TestTest_Run(t *testing.T) {
 		ResultFail,
 		nil,
 		"",
+		"",
 		Implemented,
 		Common,
 		true,
+		"",
+		"",
+		"",
 	}
 	BNotRun := Test{
 		"Test B",
@@ -50,9 +58,13 @@ func TestTest_Run(t *testing.T) {
 		ResultNotRun,
 		nil,
 		"",
+		"",
 		Implemented,
 		Common,
 		true,
+		"",
+		"",
+		"",
 	}
 
 	tests := []struct {

@@ -6,6 +6,23 @@ import (
 	"github.com/9elements/txt-suite/pkg/hwapi"
 )
 
+const (
+	//IntelFITSpecificationTitle the title of Intel FIT BIOS Specification
+	IntelFITSpecificationTitle = "Firmware Interface Table BIOS Specification"
+	//IntelFITSpecificationDocumentID the document ID of Intel FIT BIOS Specification
+	IntelFITSpecificationDocumentID = "599500 Revision 1.2"
+
+	//IntelTXTBGSBIOSSpecificationTitle the title of Intel TXT&BG Server BIOS Specification
+	IntelTXTBGSBIOSSpecificationTitle = "Intel Trusted Execution Technology and Boot Guard Server BIOS Specification"
+	//IntelTXTBGSBIOSSpecificationDocumentID the document ID of Intel TXT&BG Server BIOS Specification
+	IntelTXTBGSBIOSSpecificationDocumentID = "558294 Revision 2.0"
+
+	//IntelTXTSpecificationTitle the title of Intel TXT Specification
+	IntelTXTSpecificationTitle = "Intel Trusted Execution Technology (Intel TXT)"
+	//IntelTXTSpecificationDocumentID the document ID of Intel TXT Specification
+	IntelTXTSpecificationDocumentID = "315168-016"
+)
+
 // Result exposes the type for test results
 type Result int
 
@@ -78,13 +95,19 @@ type Test struct {
 	//-> mostly api errors, but not directly testrelated problem.
 	//The return call in test functions shall return only one of the errors,
 	//while the other is nil.
-	function     func(hwapi.APIInterfaces) (bool, error, error)
-	Result       Result
-	dependencies []*Test
-	ErrorText    string
-	Status       Status
-	Spec         TXTSpec
-	NonCritical  bool
+	function      func(hwapi.APIInterfaces) (bool, error, error)
+	Result        Result
+	dependencies  []*Test
+	ErrorText     string
+	ErrorTextSpec string
+	Status        Status
+	Spec          TXTSpec
+	NonCritical   bool
+	// The chapter inside the spec used for this test
+	SpecificationChapter string
+	// The specification used in this test
+	SpecificiationTitle     string
+	SpecificationDocumentID string
 }
 
 // Define tests for API usage
@@ -224,6 +247,20 @@ func (t *Test) Run(TxtAPI hwapi.APIInterfaces) bool {
 			t.ErrorText = internalerror.Error()
 		} else if testerror != nil && internalerror == nil {
 			t.ErrorText = testerror.Error()
+			if t.SpecificiationTitle != "" || t.SpecificationDocumentID != "" {
+				t.ErrorTextSpec = "Please have a look at "
+				if t.SpecificiationTitle != "" {
+					t.ErrorTextSpec += t.SpecificiationTitle + " "
+				}
+				if t.SpecificationDocumentID != "" {
+					t.ErrorTextSpec += "document ID '" + t.SpecificationDocumentID + "' "
+				}
+				if t.SpecificationChapter != "" {
+					t.ErrorTextSpec += "chapter '" + t.SpecificationChapter + "' "
+				}
+				t.ErrorTextSpec += "for implementation details."
+			}
+
 			if t.NonCritical {
 				t.Result = ResultWarn
 			} else {
