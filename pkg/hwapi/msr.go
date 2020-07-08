@@ -39,6 +39,7 @@ func readMSR(msr int64) (uint64, error) {
 	return data, nil
 }
 
+//HasSMRR returns true if the CPU supports SMRR
 func (t TxtAPI) HasSMRR() (bool, error) {
 	mtrrcap, err := readMSR(msrMTRRCap)
 	if err != nil {
@@ -48,14 +49,14 @@ func (t TxtAPI) HasSMRR() (bool, error) {
 	return (mtrrcap>>11)&1 != 0, nil
 }
 
-// MTRR for the SMM code.
+// SMRR for the SMM code.
 type SMRR struct {
 	Active   bool
 	PhysBase uint64
 	PhysMask uint64
 }
 
-// Returns SMRR config of the platform
+// GetSMRRInfo returns SMRR config of the platform
 func (t TxtAPI) GetSMRRInfo() (SMRR, error) {
 	var ret SMRR
 
@@ -76,6 +77,7 @@ func (t TxtAPI) GetSMRRInfo() (SMRR, error) {
 	return ret, nil
 }
 
+//IA32FeatureControlIsLocked returns true if the IA32_FEATURE_CONTROL msr is locked
 func (t TxtAPI) IA32FeatureControlIsLocked() (bool, error) {
 	featCtrl, err := readMSR(msrFeatureControl)
 	if err != nil {
@@ -85,6 +87,7 @@ func (t TxtAPI) IA32FeatureControlIsLocked() (bool, error) {
 	return featCtrl&1 != 0, nil
 }
 
+//IA32PlatformID returns the IA32_PLATFORM_ID msr
 func (t TxtAPI) IA32PlatformID() (uint64, error) {
 	pltID, err := readMSR(msrPlatformID)
 	if err != nil {
@@ -94,6 +97,7 @@ func (t TxtAPI) IA32PlatformID() (uint64, error) {
 	return pltID, nil
 }
 
+//AllowsVMXInSMX returns true if VMX is allowed in SMX
 func (t TxtAPI) AllowsVMXInSMX() (bool, error) {
 	featCtrl, err := readMSR(msrFeatureControl)
 	if err != nil {
@@ -104,16 +108,18 @@ func (t TxtAPI) AllowsVMXInSMX() (bool, error) {
 	return (mask & featCtrl) == mask, nil
 }
 
+//TXTLeavesAreEnabled returns true if all TXT leaves are enabled
 func (t TxtAPI) TXTLeavesAreEnabled() (bool, error) {
 	featCtrl, err := readMSR(msrFeatureControl)
 	if err != nil {
 		return false, fmt.Errorf("Cannot access MSR IA32_FEATURE_CONTROL: %s", err)
 	}
 
-	txt_bits := (featCtrl >> 8) & 0x1ff
-	return (txt_bits&0xff == 0xff) || (txt_bits&0x100 == 0x100), nil
+	txtBits := (featCtrl >> 8) & 0x1ff
+	return (txtBits&0xff == 0xff) || (txtBits&0x100 == 0x100), nil
 }
 
+//IA32DebugInterfaceEnabledOrLocked returns the enabled, locked and pchStrap state of IA32_DEBUG_INTERFACE msr
 func (t TxtAPI) IA32DebugInterfaceEnabledOrLocked() (bool, bool, bool, error) {
 	debugInterfaceCtrl, err := readMSR(msrIA32DebugInterface)
 	if err != nil {

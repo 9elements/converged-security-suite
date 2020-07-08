@@ -105,7 +105,7 @@ type TXTBiosMLEFlags struct {
 }
 
 //FetchTXTRegs returns a raw copy of the TXT config space
-func FetchTXTRegs(txtAPI hwapi.ApiInterfaces) ([]byte, error) {
+func FetchTXTRegs(txtAPI hwapi.APIInterfaces) ([]byte, error) {
 	data := make([]byte, 0x1000)
 	if err := txtAPI.ReadPhysBuf(txtPublicSpace, data); err != nil {
 		return nil, err

@@ -10,14 +10,20 @@ import (
 	"github.com/google/go-tpm/tpm2"
 )
 
+//LCPPol2Hash stores the hashing algorithm used in the LCP policy version 2
 type LCPPol2Hash uint16
 
 const (
-	LCPPol2HAlgSHA1   LCPPol2Hash = 0x04
+	//LCPPol2HAlgSHA1 as defined in Document 315168-016 Chapter D.3.2.1 LCP_POLICY_LIST2 Structure. Same as TPMAlgoSHA1
+	LCPPol2HAlgSHA1 LCPPol2Hash = 0x04
+	//LCPPol2HAlgSHA256 as defined in Document 315168-016 Chapter D.3.2.1 LCP_POLICY_LIST2 Structure. Same as TPMAlgoSHA256
 	LCPPol2HAlgSHA256 LCPPol2Hash = 0x0B
+	//LCPPol2HAlgSHA384 as defined in Document 315168-016 Chapter D.3.2.1 LCP_POLICY_LIST2 Structure. Same as TPMAlgoSHA384
 	LCPPol2HAlgSHA384 LCPPol2Hash = 0x0C
-	LCPPol2HAlgNULL   LCPPol2Hash = 0x10
-	LCPPol2HAlgSM3    LCPPol2Hash = 0x12
+	//LCPPol2HAlgNULL as defined in Document 315168-016 Chapter D.3.2.1 LCP_POLICY_LIST2 Structure. Same as TPMAlgoNULL
+	LCPPol2HAlgNULL LCPPol2Hash = 0x10
+	//LCPPol2HAlgSM3 as defined in Document 315168-016 Chapter D.3.2.1 LCP_POLICY_LIST2 Structure. Same as TPMAlgoSM3_256
+	LCPPol2HAlgSM3 LCPPol2Hash = 0x12
 )
 
 const (
@@ -130,6 +136,7 @@ type LCPPolicyCustom struct {
 	Data []byte
 }
 
+//LCPUUID represents an UUID
 type LCPUUID struct {
 	data1 uint32
 	data2 uint16
@@ -138,6 +145,7 @@ type LCPUUID struct {
 	data5 [6]uint8
 }
 
+//LCPPolicyList2 as defined in Document 315168-016 Chapter D.3.2.1 LCP_POLICY_LIST2 Structure
 type LCPPolicyList2 struct {
 	Version           uint16
 	SignaturAlg       uint16
@@ -145,6 +153,7 @@ type LCPPolicyList2 struct {
 	PolicyElements    []LCPPolicyElement
 }
 
+//LCPSignature as defined in Document 315168-016 Chapter D.3.2.1 LCP_POLICY_LIST2 Structure
 type LCPSignature struct {
 	RevocationCounter uint16
 	PubkeySize        uint16
@@ -152,6 +161,7 @@ type LCPSignature struct {
 	SigBlock          []byte
 }
 
+//LCPPolicyList FIXME not in Document 315168-016
 type LCPPolicyList struct {
 	Version           uint16
 	Reserved          uint8
@@ -161,11 +171,13 @@ type LCPPolicyList struct {
 	Signature         *LCPSignature
 }
 
+//LCPList as defined in Document 315168-016 Chapter D.3.2.3 LCP_LIST
 type LCPList struct {
 	TPM12PolicyList LCPPolicyList
 	TPM20PolicyList LCPPolicyList2
 }
 
+//PolicyControl as defined in Document 315168-016 Chapter D.1.1 PolicyControl
 type PolicyControl struct {
 	NPW           bool
 	OwnerEnforced bool
@@ -173,6 +185,7 @@ type PolicyControl struct {
 	SinitCaps     bool
 }
 
+//ApprovedHashAlgorithm as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
 type ApprovedHashAlgorithm struct {
 	SHA1   bool
 	SHA256 bool
@@ -180,6 +193,7 @@ type ApprovedHashAlgorithm struct {
 	SM3    bool
 }
 
+//ApprovedSignatureAlogrithm as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
 type ApprovedSignatureAlogrithm struct {
 	RSA2048SHA1     bool
 	RSA2048SHA256   bool
@@ -190,6 +204,7 @@ type ApprovedSignatureAlogrithm struct {
 	SM2SM2CurveSM3  bool
 }
 
+//LCPPolicy as defined in Document 315168-016 Chapter D.1.2 LCP_POLICY
 type LCPPolicy struct {
 	Version                uint16 // < 0x0204
 	HashAlg                uint8
@@ -205,6 +220,7 @@ type LCPPolicy struct {
 	PolicyHash             [20]byte
 }
 
+//LCPPolicy2 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
 type LCPPolicy2 struct {
 	Version                uint16 // < 0x0302
 	HashAlg                LCPPol2Hash
@@ -220,6 +236,7 @@ type LCPPolicy2 struct {
 	PolicyHash             LCPHash
 }
 
+//LCPPolicyData FIXME
 type LCPPolicyData struct {
 	FileSignature [32]uint8
 	Reserved      [3]uint8
@@ -410,6 +427,7 @@ func parsePolicy2(policy []byte) (*LCPPolicy2, error) {
 	return &pol2, nil
 }
 
+//ParsePolicy generates one of LCPPolicy or LCPPolicy2
 func ParsePolicy(policy []byte) (*LCPPolicy, *LCPPolicy2, error) {
 	var version uint16
 	buf := bytes.NewReader(policy)

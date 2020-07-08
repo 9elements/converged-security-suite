@@ -78,7 +78,7 @@ type Test struct {
 	//-> mostly api errors, but not directly testrelated problem.
 	//The return call in test functions shall return only one of the errors,
 	//while the other is nil.
-	function     func(hwapi.ApiInterfaces) (bool, error, error)
+	function     func(hwapi.APIInterfaces) (bool, error, error)
 	Result       Result
 	dependencies []*Test
 	ErrorText    string
@@ -199,7 +199,7 @@ var TestsTXTLegacyBoot = []*Test{
 }
 
 // Run implements the genereal test function and exposes it.
-func (t *Test) Run(TxtAPI hwapi.ApiInterfaces) bool {
+func (t *Test) Run(TxtAPI hwapi.APIInterfaces) bool {
 	var DepsPassed = true
 	// Make sure all dependencies have run and passed
 	for idx := range t.dependencies {
@@ -240,7 +240,7 @@ func (t *Test) Run(TxtAPI hwapi.ApiInterfaces) bool {
 }
 
 //RunTestsSilent Runs the specified tests and returns false on the first error encountered
-func RunTestsSilent(TxtAPI hwapi.ApiInterfaces, Tests []*Test) (bool, string, error) {
+func RunTestsSilent(TxtAPI hwapi.APIInterfaces, Tests []*Test) (bool, string, error) {
 
 	intErr := fmt.Errorf("Internal error running test")
 

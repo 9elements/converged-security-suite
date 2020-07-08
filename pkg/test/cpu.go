@@ -116,7 +116,7 @@ var (
 	}
 )
 
-func getTxtRegisters(txtAPI hwapi.ApiInterfaces) (*tools.TXTRegisterSpace, error) {
+func getTxtRegisters(txtAPI hwapi.APIInterfaces) (*tools.TXTRegisterSpace, error) {
 
 	if txtRegisterValues == nil {
 		buf, err := tools.FetchTXTRegs(txtAPI)
@@ -135,17 +135,17 @@ func getTxtRegisters(txtAPI hwapi.ApiInterfaces) (*tools.TXTRegisterSpace, error
 }
 
 // CheckForIntelCPU Check we're running on a Intel CPU
-func CheckForIntelCPU(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+func CheckForIntelCPU(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	return txtAPI.VersionString() == "GenuineIntel", nil, nil
 }
 
 // WeybridgeOrLater Check we're running on Weybridge
-func WeybridgeOrLater(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+func WeybridgeOrLater(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	return cpuid.DisplayFamily == 6, nil, nil
 }
 
 // CPUSupportsTXT Check if the CPU supports TXT
-func CPUSupportsTXT(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+func CPUSupportsTXT(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	if txtAPI.CPUWhitelistTXTSupport() {
 		return true, nil, nil
 	}
@@ -156,7 +156,7 @@ func CPUSupportsTXT(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 }
 
 // TXTRegisterSpaceAccessible Check if the TXT register space is accessible
-func TXTRegisterSpaceAccessible(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+func TXTRegisterSpaceAccessible(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	regs, err := getTxtRegisters(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -181,17 +181,17 @@ func TXTRegisterSpaceAccessible(txtAPI hwapi.ApiInterfaces) (bool, error, error)
 }
 
 // SupportsSMX Check if CPU supports SMX
-func SupportsSMX(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+func SupportsSMX(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	return txtAPI.HasSMX(), nil, nil
 }
 
 // SupportVMX Check if CPU supports VMX
-func SupportVMX(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+func SupportVMX(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	return txtAPI.HasVMX(), nil, nil
 }
 
 // Ia32FeatureCtrl Check IA_32FEATURE_CONTROL
-func Ia32FeatureCtrl(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+func Ia32FeatureCtrl(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	vmxInSmx, err := txtAPI.AllowsVMXInSMX()
 	if err != nil || !vmxInSmx {
 		return vmxInSmx, nil, err
@@ -209,7 +209,7 @@ func Ia32FeatureCtrl(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 }
 
 // SMXIsEnabled not implemented
-func SMXIsEnabled(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+func SMXIsEnabled(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	return false, nil, fmt.Errorf("Unimplemented: no comment")
 }
 
@@ -219,7 +219,7 @@ func SMXIsEnabled(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 //}
 
 // TXTNotDisabled Check TXT_DISABLED bit in TXT_ACM_STATUS
-func TXTNotDisabled(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+func TXTNotDisabled(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	ret, err := txtAPI.TXTLeavesAreEnabled()
 	if err != nil {
 		return false, nil, err
@@ -231,7 +231,7 @@ func TXTNotDisabled(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 }
 
 // IBBMeasured Verify that the IBB has been measured
-func IBBMeasured(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+func IBBMeasured(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	regs, err := getTxtRegisters(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -246,7 +246,7 @@ func IBBMeasured(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 
 // IBBIsTrusted Check that the IBB was deemed trusted
 // Only set in Signed Policy mode
-func IBBIsTrusted(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+func IBBIsTrusted(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	regs, err := getTxtRegisters(txtAPI)
 
 	if err != nil {
@@ -260,7 +260,7 @@ func IBBIsTrusted(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 }
 
 // TXTRegistersLocked Verify that the TXT register space is locked
-func TXTRegistersLocked(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+func TXTRegistersLocked(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	regs, err := getTxtRegisters(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -270,7 +270,7 @@ func TXTRegistersLocked(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 }
 
 // NoBIOSACMErrors Check that the BIOS ACM has no startup error
-func NoBIOSACMErrors(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+func NoBIOSACMErrors(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	regs, err := getTxtRegisters(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -280,7 +280,7 @@ func NoBIOSACMErrors(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
 }
 
 // IA32DebugInterfaceLockedDisabled checks if IA32 debug interface is locked
-func IA32DebugInterfaceLockedDisabled(txtAPI hwapi.ApiInterfaces) (bool, error, error) {
+func IA32DebugInterfaceLockedDisabled(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	locked, pchStrap, enabled, err := txtAPI.IA32DebugInterfaceEnabledOrLocked()
 	if err != nil {
 		return false, nil, err

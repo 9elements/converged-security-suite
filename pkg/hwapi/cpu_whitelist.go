@@ -12,7 +12,8 @@ type brandNameMetaWl struct {
 }
 
 var (
-	TXTSupportedCPUs []brandNameMetaWl = []brandNameMetaWl{
+	//TXTSupportedCPUs is a whitelist of TXT enabled CPUs
+	TXTSupportedCPUs = []brandNameMetaWl{
 		{true, false, false, "3065 "},
 		{false, false, true, "E6550 "},
 		{false, false, true, "E6750 "},
@@ -790,6 +791,7 @@ var (
 	}
 )
 
+//CPUWhitelistTXTSupport returns true if the CPU is whitelisted
 func (t TxtAPI) CPUWhitelistTXTSupport() bool {
 	cpuName := t.ProcessorBrandName()
 

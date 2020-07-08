@@ -6,6 +6,7 @@ import (
 	tpm1 "github.com/google/go-tpm/tpm"
 )
 
+//NVReadAll returns the contents of the TPM NVRAM index
 func (t TxtAPI) NVReadAll(conn io.ReadWriteCloser, index uint32) []byte {
 	ret := []byte{}
 

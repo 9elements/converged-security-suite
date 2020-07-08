@@ -15,7 +15,8 @@ type brandNameMetaBl struct {
 }
 
 var (
-	TXTUnSupportedCPUs []brandNameMetaBl = []brandNameMetaBl{
+	//TXTUnSupportedCPUs is a lookup table for CPUs not supporting TXT
+	TXTUnSupportedCPUs = []brandNameMetaBl{
 		{false, false, false, false, true, false, "310 "},
 		{false, false, false, false, true, false, "315 "},
 		{false, false, false, false, true, false, "315J "},
@@ -1020,6 +1021,7 @@ var (
 	}
 )
 
+//CPUBlacklistTXTSupport - Returns true if the CPU is blacklisted
 func (t TxtAPI) CPUBlacklistTXTSupport() bool {
 
 	cpuName := t.ProcessorBrandName()

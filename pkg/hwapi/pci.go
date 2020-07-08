@@ -7,6 +7,7 @@ import (
 	"os"
 )
 
+//PCIReadConfigSpace reads from PCI config space into buf
 func (t TxtAPI) PCIReadConfigSpace(bus int, device int, devFn int, off int, buf interface{}) error {
 	var path string
 	path = fmt.Sprintf("/sys/bus/pci/devices/0000:%02x:%02x.%1x/config", bus, device, devFn)
@@ -23,6 +24,7 @@ func (t TxtAPI) PCIReadConfigSpace(bus int, device int, devFn int, off int, buf 
 	return binary.Read(f, binary.LittleEndian, buf)
 }
 
+//PCIReadConfig16 reads 16bits from PCI config space
 func (t TxtAPI) PCIReadConfig16(bus int, device int, devFn int, off int) (uint16, error) {
 	var reg16 uint16
 
@@ -34,6 +36,7 @@ func (t TxtAPI) PCIReadConfig16(bus int, device int, devFn int, off int) (uint16
 	return reg16, nil
 }
 
+//PCIReadConfig32 reads 32bits from PCI config space
 func (t TxtAPI) PCIReadConfig32(bus int, device int, devFn int, off int) (uint32, error) {
 	var reg32 uint32
 
@@ -45,6 +48,7 @@ func (t TxtAPI) PCIReadConfig32(bus int, device int, devFn int, off int) (uint32
 	return reg32, nil
 }
 
+//PCIReadVendorID reads the device vendor ID from PCI config space
 func (t TxtAPI) PCIReadVendorID(bus int, device int, devFn int) (uint16, error) {
 	id, err := t.PCIReadConfig16(bus, device, devFn, 0)
 	if err != nil {
@@ -54,6 +58,7 @@ func (t TxtAPI) PCIReadVendorID(bus int, device int, devFn int) (uint16, error) 
 	return id, nil
 }
 
+//PCIReadDeviceID reads the device ID from PCI config space
 func (t TxtAPI) PCIReadDeviceID(bus int, device int, devFn int) (uint16, error) {
 	id, err := t.PCIReadConfig16(bus, device, devFn, 2)
 	if err != nil {
@@ -64,30 +69,28 @@ func (t TxtAPI) PCIReadDeviceID(bus int, device int, devFn int) (uint16, error) 
 }
 
 const (
-	// TSEG
-	// Since SandyBridge it's 0xb8
-	TSEG_PCI_REG_SANDY_AND_NEW = 0xb8
-	// BroadwellDE
-	TSEG_PCI_REG_BROADWELLDE = 0xa8
+	// TsegPCIRegSandyAndNewer is the offset withing the MCH PCI config space since SandyBridge
+	TsegPCIRegSandyAndNewer = 0xb8
+	// TSEGPCIBroadwellde is the offset withing the MCH PCI config space
+	TSEGPCIBroadwellde = 0xa8
 
-	// DPR
-	// Since SandyBridge it's 0x5c
-	DPR_PCI_REG_SANDY_AND_NEW = 0x5c
-	// BroadwellDE
-	DPR_PCI_REG_BROADWELLDE = 0x290
+	// DPRPCIRegSandyAndNewer is the offset withing the MCH PCI config space since SandyBridge
+	DPRPCIRegSandyAndNewer = 0x5c
+	// DPRPciRegBroadwellDE offset withing the VTd PCI config space
+	DPRPciRegBroadwellDE = 0x290
 )
 
 var (
 	// FIXME: Baytrail and Braswell have TSEG in IOSF BUNIT
 
-	// BroadwellDE is special...
-	HostbridgeIDsBroadwellDE []uint16 = []uint16{
+	// HostbridgeIDsBroadwellDE lookup table is special...
+	HostbridgeIDsBroadwellDE = []uint16{
 		0x2F00,
 		0x6F00,
 	}
 
-	// Most stuff seems compatible with Sandy Bridge
-	HostbridgeIDsSandyCompatible []uint16 = []uint16{
+	// HostbridgeIDsSandyCompatible lookup table for most stuff that seems compatible with Sandy Bridge
+	HostbridgeIDsSandyCompatible = []uint16{
 		/* Sandy bridge */
 		0x0100,
 		0x0104,
@@ -158,6 +161,7 @@ var (
 	}
 )
 
+//ReadHostBridgeTseg returns TSEG base and TSEG limit
 func (t TxtAPI) ReadHostBridgeTseg() (uint32, uint32, error) {
 	var tsegBaseOff int
 	var tsegLimitOff int
@@ -173,12 +177,12 @@ func (t TxtAPI) ReadHostBridgeTseg() (uint32, uint32, error) {
 	}
 	deviceid, err := t.PCIReadDeviceID(0, 0, 0)
 
-	var found bool = false
+	var found bool
 	for _, id := range HostbridgeIDsSandyCompatible {
 		if id == deviceid {
 			found = true
-			tsegBaseOff = TSEG_PCI_REG_SANDY_AND_NEW
-			tsegLimitOff = TSEG_PCI_REG_SANDY_AND_NEW + 4
+			tsegBaseOff = TsegPCIRegSandyAndNewer
+			tsegLimitOff = TsegPCIRegSandyAndNewer + 4
 			devicenum = 0
 			break
 		}
@@ -188,8 +192,8 @@ func (t TxtAPI) ReadHostBridgeTseg() (uint32, uint32, error) {
 			if id == deviceid {
 				found = true
 				tsegBroadwellDEfix = true
-				tsegBaseOff = TSEG_PCI_REG_BROADWELLDE
-				tsegLimitOff = TSEG_PCI_REG_BROADWELLDE + 4
+				tsegBaseOff = TSEGPCIBroadwellde
+				tsegLimitOff = TSEGPCIBroadwellde + 4
 				devicenum = 5
 				break
 			}
@@ -221,6 +225,7 @@ func (t TxtAPI) ReadHostBridgeTseg() (uint32, uint32, error) {
 	return tsegbase, tseglimit, nil
 }
 
+//DMAProtectedRange encodes the DPR register
 type DMAProtectedRange struct {
 	Lock bool
 	// Reserved 1-3
@@ -229,6 +234,7 @@ type DMAProtectedRange struct {
 	Top uint16
 }
 
+//ReadHostBridgeDPR reads the DPR register from PCI config space
 func (t TxtAPI) ReadHostBridgeDPR() (DMAProtectedRange, error) {
 	var dprOff int
 	var devicenum int
@@ -247,7 +253,7 @@ func (t TxtAPI) ReadHostBridgeDPR() (DMAProtectedRange, error) {
 	for _, id := range HostbridgeIDsSandyCompatible {
 		if id == deviceid {
 			found = true
-			dprOff = DPR_PCI_REG_SANDY_AND_NEW
+			dprOff = DPRPCIRegSandyAndNewer
 			devicenum = 0
 			break
 		}
@@ -256,7 +262,7 @@ func (t TxtAPI) ReadHostBridgeDPR() (DMAProtectedRange, error) {
 		for _, id := range HostbridgeIDsBroadwellDE {
 			if id == deviceid {
 				found = true
-				dprOff = DPR_PCI_REG_BROADWELLDE
+				dprOff = DPRPciRegBroadwellDE
 				devicenum = 5
 				break
 			}
