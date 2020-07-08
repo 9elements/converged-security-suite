@@ -93,6 +93,15 @@ Commandline arguments
 API Usage
 ---------
 
+**Requirements for the Kernel configuration**
+
+```
+CONFIG_DEVMEM=y
+CONFIG_STRICT_DEVMEM=n
+CONFIG_TCG_TIS=y
+CONFIG_TCG_CRB=y
+```
+
 **To test for TXTReady**:
 
 ```
