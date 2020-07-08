@@ -262,8 +262,17 @@ func PSIndexConfig(txtAPI api.ApiInterfaces) (bool, error, error) {
 		}
 		return true, nil, nil
 	case tss.TPMVersion20:
+		raw, err = tpmCon.ReadNVPublic(tpm20OldPSIndex)
+		if err != nil {
+			if !strings.Contains(err.Error(), tpm2NVPublicNotSet) {
+				return false, nil, err
+			}
+		}
 		raw, err = tpmCon.ReadNVPublic(tpm20PSIndex)
 		if err != nil {
+			if strings.Contains(err.Error(), tpm2NVPublicNotSet) {
+				return false, fmt.Errorf("PS indices not set"), err
+			}
 			return false, nil, err
 		}
 		buf := bytes.NewReader(raw)
@@ -321,8 +330,17 @@ func AUXIndexConfig(txtAPI api.ApiInterfaces) (bool, error, error) {
 
 		return true, nil, nil
 	case tss.TPMVersion20:
+		raw, err = tpmCon.ReadNVPublic(tpm20OldAUXIndex)
+		if err != nil {
+			if !strings.Contains(err.Error(), tpm20NVIndexNotSet) {
+				return false, nil, err
+			}
+		}
 		raw, err = tpmCon.ReadNVPublic(tpm20AUXIndex)
 		if err != nil {
+			if strings.Contains(err.Error(), tpm20NVIndexNotSet) {
+				return false, fmt.Errorf("PS indices not set"), err
+			}
 			return false, nil, err
 		}
 		buf := bytes.NewReader(raw)
@@ -397,6 +415,14 @@ func POIndexConfig(txtAPI api.ApiInterfaces) (bool, error, error) {
 			return false, fmt.Errorf("TPM1 PO Index size incorrect. Have: %v - Want: %v", d1.Size, tpm12POIndexSize), nil
 		}
 	case tss.TPMVersion20:
+		raw, err = tpmCon.ReadNVPublic(tpm20OldPOIndex)
+		if err != nil {
+			if !strings.Contains(err.Error(), tpm2NVPublicNotSet) {
+				return false, nil, err
+			}
+		}
+		//reset error
+		err = nil
 		raw, err = tpmCon.ReadNVPublic(tpm20POIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm2NVPublicNotSet) {
@@ -585,6 +611,14 @@ func POIndexHasValidLCP(txtAPI api.ApiInterfaces) (bool, error, error) {
 		var d tpm2.NVPublic
 		var raw []byte
 		var err error
+		raw, err = tpmCon.ReadNVPublic(tpm20OldPOIndex)
+		if err != nil {
+			if !strings.Contains(err.Error(), tpm2NVPublicNotSet) {
+				return false, nil, err
+			}
+		}
+		//reset error
+		err = nil
 		raw, err = tpmCon.ReadNVPublic(tpm20POIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm2NVPublicNotSet) {
