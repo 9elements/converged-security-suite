@@ -23,7 +23,7 @@ lines of "cannot read from /dev/mem: operation not permitted" you may have to
 add the following to the kernel command line:
 
 ```bash
-iomem=relaxed strict-devmem=0 mem.devmem=1 intel_iommu=on
+iomem=relaxed intel_iommu=on
 ```
 
 If that does not help get, compile and load the
@@ -101,6 +101,8 @@ CONFIG_STRICT_DEVMEM=n
 CONFIG_TCG_TIS=y
 CONFIG_TCG_CRB=y
 CONFIG_X86_MSR=y
+CONFIG_INTEL_IOMMU=y
+CONFIG_INTEL_IOMMU_DEFAULT_ON=y
 ```
 
 **To test for TXTReady**:
