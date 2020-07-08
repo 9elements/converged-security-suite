@@ -280,6 +280,39 @@ func PSIndexConfig(txtAPI api.ApiInterfaces) (bool, error, error) {
 		if err != nil {
 			return false, nil, err
 		}
+		err = binary.Read(buf, binary.BigEndian, &d2.NameAlg)
+		if err != nil {
+			return false, nil, err
+		}
+		err = binary.Read(buf, binary.BigEndian, &d2.Attributes)
+		if err != nil {
+			return false, nil, err
+		}
+		// Helper variable hashSize- go-tpm2 does not implement proper structure
+		var hashSize uint16
+		err = binary.Read(buf, binary.BigEndian, &hashSize)
+		if err != nil {
+			return false, nil, err
+		}
+		// Uses hashSize to make the right sized slice to read the hash
+		hashData := make([]byte, hashSize)
+		err = binary.Read(buf, binary.BigEndian, &hashData)
+		if err != nil {
+			return false, nil, err
+		}
+		err = binary.Read(buf, binary.BigEndian, &d2.DataSize)
+		if err != nil {
+			return false, nil, err
+		}
+
+		if (1 >> d2.Attributes & (tpm20PSIndexAttr | tpm2.AttrWritten)) != 0 {
+			return false, fmt.Errorf("TPM2 AUX Index Attributes not correct. Have %v - Want: %v", d2.Attributes.String(), tpm20AUXIndexAttr.String()), nil
+		}
+
+		size := (uint16(crypto.Hash(d2.NameAlg).Size())) + tpm20PSIndexBaseSize
+		if d2.DataSize != size {
+			return false, fmt.Errorf("TPM2 AUX Index size incorrect. Have: %v - Want: %v", d2.DataSize, size), nil
+		}
 		return true, nil, nil
 	}
 	return false, fmt.Errorf("Not connected to TPM"), nil
