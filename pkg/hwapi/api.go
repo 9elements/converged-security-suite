@@ -2,7 +2,8 @@ package hwapi
 
 import "io"
 
-type ApiInterfaces interface {
+//APIInterfaces provides methods to access hardware found on modern x86_64 platforms
+type APIInterfaces interface {
 	// cpu_whitelist.go - cpu_blacklist.go
 	CPUBlacklistTXTSupport() bool
 	CPUWhitelistTXTSupport() bool
@@ -54,6 +55,6 @@ type ApiInterfaces interface {
 type TxtAPI struct{}
 
 //GetAPI Returns an initialized TxtApi object
-func GetAPI() ApiInterfaces {
+func GetAPI() APIInterfaces {
 	return TxtAPI{}
 }

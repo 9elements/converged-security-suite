@@ -10,6 +10,7 @@ import (
 	"unsafe"
 )
 
+//VTdRegisters represents the IOMMIO space
 type VTdRegisters struct {
 	Version                                 uint32 // Architecture version supported by the implementation.
 	Reserved1                               uint32 // Reserved
@@ -56,17 +57,17 @@ type VTdRegisters struct {
 	PageRequestEventUpperAddress            uint32 // Page request event message upper address register.
 	MTRRCapability                          uint64 // Register for MTRR capability reporting.
 	MTRRDefaultType                         uint64 // Register to configure MTRR default type.
-	FixedRangeMTRR64K_00000                 uint64 // Fixed-range memory type range register for 64K range starting at 00000h.
-	FixedRangeMTRR16K_80000                 uint64 // Fixed-range memory type range register for 16K range starting at 80000h.
-	FixedRangeMTRR16K_A0000                 uint64 // Fixed-range memory type range register for 16K range starting at A0000h.
-	FixedRangeMTRR4K_C0000                  uint64 // Fixed-range memory type range register for 4K range starting at C0000h.
-	FixedRangeMTRR4K_C8000                  uint64 // Fixed-range memory type range register for 4K range starting at C8000h.
-	FixedRangeMTRR4K_D0000                  uint64 // Fixed-range memory type range register for 4K range starting at D0000h.
-	FixedRangeMTRR4K_D8000                  uint64 // Fixed-range memory type range register for 4K range starting at D8000h.
-	FixedRangeMTRR4K_E0000                  uint64 // Fixed-range memory type range register for 4K range starting at E0000h.
-	FixedRangeMTRR4K_E8000                  uint64 // Fixed-range memory type range register for 4K range starting at E8000h.
-	FixedRangeMTRR4K_F0000                  uint64 // Fixed-range memory type range register for 4K range starting at F0000h.
-	FixedRangeMTRR4K_F8000                  uint64 // Fixed-range memory type range register for 4K range starting at F8000h.
+	FixedRangeMTRR64K00000                  uint64 // Fixed-range memory type range register for 64K range starting at 00000h.
+	FixedRangeMTRR16K80000                  uint64 // Fixed-range memory type range register for 16K range starting at 80000h.
+	FixedRangeMTRR16KA0000                  uint64 // Fixed-range memory type range register for 16K range starting at A0000h.
+	FixedRangeMTRR4KC0000                   uint64 // Fixed-range memory type range register for 4K range starting at C0000h.
+	FixedRangeMTRR4KC8000                   uint64 // Fixed-range memory type range register for 4K range starting at C8000h.
+	FixedRangeMTRR4KD0000                   uint64 // Fixed-range memory type range register for 4K range starting at D0000h.
+	FixedRangeMTRR4KD8000                   uint64 // Fixed-range memory type range register for 4K range starting at D8000h.
+	FixedRangeMTRR4KE0000                   uint64 // Fixed-range memory type range register for 4K range starting at E0000h.
+	FixedRangeMTRR4KE8000                   uint64 // Fixed-range memory type range register for 4K range starting at E8000h.
+	FixedRangeMTRR4KF0000                   uint64 // Fixed-range memory type range register for 4K range starting at F0000h.
+	FixedRangeMTRR4KF8000                   uint64 // Fixed-range memory type range register for 4K range starting at F8000h.
 	VariableRangeMTRRBase0                  uint64 // Variable-range memory type range0 base register.
 	VariableRangeMTRRMask0                  uint64 // Variable-range memory type range0 mask register.
 	VariableRangeMTRRBase1                  uint64 // Variable-range memory type range1 base register.
@@ -138,6 +139,7 @@ func (t TxtAPI) readVTdRegs() (VTdRegisters, error) {
 	return regs, fmt.Errorf("No IOMMU found: /sys/class/iommu/*/intel-iommu/address does not exists or is malformed")
 }
 
+//LookupIOAddress returns the address of the root Tbl
 func (t TxtAPI) LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, error) {
 	rootTblAddr := regs.RootTableAddress & 0xffffffffffff000
 	ttm := (regs.RootTableAddress >> 10) & 3
@@ -296,6 +298,7 @@ func lookupIOScalable(addr, rootTblAddr uint64) ([]uint64, error) {
 	// make sure 2-pass translation isnt on
 }
 
+//AddressRangesIsDMAProtected returns true if the address is DMA protected by the IOMMU
 func (t TxtAPI) AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
 	regs, err := t.readVTdRegs()
 	if err != nil {

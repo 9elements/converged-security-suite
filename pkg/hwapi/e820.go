@@ -19,7 +19,7 @@ func isReservedType(regionType string) bool {
 	}
 }
 
-// Reads the e820 table exported via /sys/firmware/memmap and checks whether
+//IsReservedInE820 reads the e820 table exported via /sys/firmware/memmap and checks whether
 // the range [start; end] is marked as reserved. Returns true if it is reserved,
 // false if not.
 func (t TxtAPI) IsReservedInE820(start uint64, end uint64) (bool, error) {
@@ -48,18 +48,18 @@ func (t TxtAPI) IsReservedInE820(start uint64, end uint64) (bool, error) {
 
 			if isReservedType(string(buf)) {
 				path := fmt.Sprintf("/sys/firmware/memmap/%s/start", subdir.Name())
-				this_start, err := readHexInteger(path)
+				thisStart, err := readHexInteger(path)
 				if err != nil {
 					continue
 				}
 
 				path = fmt.Sprintf("/sys/firmware/memmap/%s/end", subdir.Name())
-				this_end, err := readHexInteger(path)
+				thisEnd, err := readHexInteger(path)
 				if err != nil {
 					continue
 				}
 
-				if this_start <= start && this_end >= end {
+				if thisStart <= start && thisEnd >= end {
 					return true, nil
 				}
 			}
@@ -78,7 +78,7 @@ func readHexInteger(path string) (uint64, error) {
 	ret, err := strconv.ParseUint(string(buf[:len(buf)-1]), 0, 64)
 	if err != nil {
 		return 0, err
-	} else {
-		return ret, nil
 	}
+
+	return ret, nil
 }

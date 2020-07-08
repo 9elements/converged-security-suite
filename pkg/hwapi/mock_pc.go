@@ -112,6 +112,7 @@ func (n pcmock) ReadHostBridgeDPR() (DMAProtectedRange, error) {
 	return DMAProtectedRange{}, fmt.Errorf("Not implemented")
 }
 
+//MockPCReadMemory emulates a x86_64 platform memory map
 func MockPCReadMemory(addr uint64) byte {
 	mem := map[uint64][]byte{
 		0xFED30000: []byte{
@@ -250,7 +251,8 @@ func (n pcmock) NVReadAll(conn io.ReadWriteCloser, index uint32) []byte {
 	return []byte{}
 }
 
-func GetPcMock(ReadMemoryFunc func(uint64) byte) ApiInterfaces {
+//GetPcMock returns APIInterfaces for mocking the hwapi used in unittests
+func GetPcMock(ReadMemoryFunc func(uint64) byte) APIInterfaces {
 	return pcmock{
 		ReadMemoryFunc,
 	}

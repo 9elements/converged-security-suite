@@ -153,8 +153,8 @@ func selectDevMem() (string, error) {
 	return "", fmt.Errorf("No suitable /dev/mem device found. Tried %#v", memPaths)
 }
 
-// Read reads data from physical memory at address addr. On x86 platforms,
-// this uses the seek+read syscalls. On arm platforms, this uses mmap.
+// ReadPhys reads data from physical memory at address addr. On x86 platforms,
+// this uses the seek+read syscalls.
 func (t TxtAPI) ReadPhys(addr int64, data UintN) error {
 	devMem, err := selectDevMem()
 	if err != nil {
@@ -164,6 +164,8 @@ func (t TxtAPI) ReadPhys(addr int64, data UintN) error {
 	return pathRead(devMem, addr, data)
 }
 
+// ReadPhysBuf reads data from physical memory at address addr. On x86 platforms,
+// this uses the seek+read syscalls.
 func (t TxtAPI) ReadPhysBuf(addr int64, buf []byte) error {
 	devMem, err := selectDevMem()
 	if err != nil {
@@ -195,8 +197,8 @@ func pathWrite(path string, addr int64, data UintN) error {
 	return binary.Write(f, binary.LittleEndian, data)
 }
 
-// Write writes data to physical memory at address addr. On x86 platforms, this
-// uses the seek+read syscalls. On arm platforms, this uses mmap.
+// WritePhys writes data to physical memory at address addr. On x86 platforms, this
+// uses the seek+read syscalls.
 func (t TxtAPI) WritePhys(addr int64, data UintN) error {
 	devMem, err := selectDevMem()
 	if err != nil {
