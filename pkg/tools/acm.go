@@ -183,13 +183,13 @@ func ParseACMHeader(data []byte) (*ACMHeader, error) {
 // ValidateACMHeader validates an ACM Header found in the Firmware Interface Table (FIT)
 func ValidateACMHeader(acmheader *ACMHeader) (bool, error) {
 	if acmheader.ModuleType != uint16(2) {
-		return false, fmt.Errorf("BIOS ACM ModuleType is not 2, this is not specified - Intel TXT Software Development Guide, Document: 315168-013, P. 84")
+		return false, fmt.Errorf("BIOS ACM ModuleType is not 2, this is not specified")
 	}
 	if acmheader.ModuleSubType >= uint16(2) {
-		return false, fmt.Errorf("BIOS ACM ModuleSubType is greater 1, this is not specified - Intel TXT Software Development Guide, Document: 315168-013, P. 84")
+		return false, fmt.Errorf("BIOS ACM ModuleSubType is greater 1, this is not specified")
 	}
 	if acmheader.HeaderLen < uint32(ACMheaderLen) {
-		return false, fmt.Errorf("BIOS ACM HeaderLength is smaller than 4*161 Byte - Intel TXT Software Development Guide, Document: 315168-013, P. 83")
+		return false, fmt.Errorf("BIOS ACM HeaderLength is smaller than 4*161 Byte")
 	}
 	if acmheader.Size == 0 {
 		return false, fmt.Errorf("BIOS ACM Size can't be zero")

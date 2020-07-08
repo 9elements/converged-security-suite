@@ -235,10 +235,10 @@ func FITVectorIsSet(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	}
 
 	if fitPointer < ValidFitRange {
-		return false, fmt.Errorf("FitPointer must be in ValidFitRange - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 6"), nil
+		return false, fmt.Errorf("FitPointer must be in ValidFitRange"), nil
 	}
-	if fitPointer >= ResetVector {
-		return false, fmt.Errorf("FitPointer must be smaller than ResetVector - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 6"), nil
+	if fitPointer >= FITVector {
+		return false, fmt.Errorf("FitPointer must be smaller than FITVector"), nil
 	}
 
 	return true, nil, nil
@@ -258,7 +258,10 @@ func HasFIT(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	}
 
 	if int64(fitPointer)+int64(hdr.Size()) > FourGiB {
-		return false, fmt.Errorf("FIT isn't part of 32bit address-space - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 6"), nil
+		return false, fmt.Errorf("FIT isn't part of 32bit address-space"), nil
+	}
+	if int64(fitPointer)+int64(hdr.Size()) > FITVector {
+		return false, fmt.Errorf("FIT isn't in the range (4 GB - 16 MB) to (4 GB - 40h)"), nil
 	}
 
 	fitblob := make([]byte, hdr.Size())
@@ -284,7 +287,7 @@ func HasBIOSACM(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		}
 	}
 	if count == 0 {
-		return false, fmt.Errorf("Fit has no Startup AC Module Entry, but at least one is required - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 9"), nil
+		return false, fmt.Errorf("Fit has no Startup AC Module Entry, but at least one is required"), nil
 	}
 	return true, nil, nil
 }
@@ -297,7 +300,7 @@ func HasIBB(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		}
 	}
 
-	return false, fmt.Errorf("Fit has no BIOS Startup Module Entry, but at least one is required - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 10"), nil
+	return false, fmt.Errorf("Fit has no BIOS Startup Module Entry, but at least one is required"), nil
 }
 
 // HasBIOSPolicy checks if FIT table has ONE BIOS Policy Data Record Entry
