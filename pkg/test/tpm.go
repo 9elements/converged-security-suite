@@ -310,9 +310,9 @@ func PSIndexConfig(txtAPI api.ApiInterfaces) (bool, error, error) {
 
 		// Intel Trusted Execution Technology Software Development Guide - Measured Launched Environment Developer’s Guide
 		// August 2016 - Revision 013 - Document: 315168-013
-		// Appendix J on page. 153, Table Table J-2. TPM Family 2.0 NV Storage Matrix
-		if (1 >> d2.Attributes & (tpm20PSIndexAttr | tpm2.AttrWritten)) != 0 {
-			return false, fmt.Errorf("TPM2 PS Index Attributes not correct. Have %v - Want: %v", d2.Attributes.String(), tpm20AUXIndexAttr.String()), nil
+		// Appendix J on page. 153, Table J-2. TPM Family 2.0 NV Storage Matrix
+		if !checkTPM2NVAttr(d2.Attributes, tpm20PSIndexAttr, tpm2.AttrWritten) {
+			return false, fmt.Errorf("TPM2 PS Index Attributes not correct. Have %v - Want: %v", d2.Attributes.String(), tpm20PSIndexAttr.String()), nil
 		}
 
 		size := (uint16(crypto.Hash(d2.NameAlg).Size())) + tpm20PSIndexBaseSize
@@ -418,7 +418,7 @@ func AUXIndexConfig(txtAPI api.ApiInterfaces) (bool, error, error) {
 		// Intel Trusted Execution Technology Software Development Guide - Measured Launched Environment Developer’s Guide
 		// August 2016 - Revision 013 - Document: 315168-013
 		// Appendix J on page. 153, Table J-2. TPM Family 2.0 NV Storage Matrix
-		if (1 >> d2.Attributes & (tpm20AUXIndexAttr | tpm2.AttrWritten)) != 0 {
+		if !checkTPM2NVAttr(d2.Attributes, tpm20AUXIndexAttr, tpm2.AttrWritten) {
 			return false, fmt.Errorf("TPM2 AUX Index Attributes not correct. Have %v - Want: %v", d2.Attributes.String(), tpm20AUXIndexAttr.String()), nil
 		}
 
@@ -511,7 +511,7 @@ func POIndexConfig(txtAPI api.ApiInterfaces) (bool, error, error) {
 		// Intel Trusted Execution Technology Software Development Guide - Measured Launched Environment Developer’s Guide
 		// August 2016 - Revision 013 - Document: 315168-013
 		// Appendix J on page. 153, Table J-2. TPM Family 2.0 NV Storage Matrix
-		if (1 >> d2.Attributes & (tpm20POIndexAttr | tpm2.AttrWritten)) != 0 {
+		if !checkTPM2NVAttr(d2.Attributes, tpm20POIndexAttr, tpm2.AttrWritten) {
 			return false, fmt.Errorf("TPM2 PO Index Attributes not correct. Have %v - Want: %v", d2.Attributes.String(), tpm20POIndexAttr.String()), nil
 		}
 		size := uint16(crypto.Hash(d2.NameAlg).Size()) + tpm20POIndexBaseSize
@@ -781,4 +781,8 @@ func PCR0IsSet(txtAPI api.ApiInterfaces) (bool, error, error) {
 		return false, fmt.Errorf("PCR 0 is filled with zeros"), nil
 	}
 	return true, nil, nil
+}
+
+func checkTPM2NVAttr(mask, want, optional tpm2.NVAttr) bool {
+	return (1 >> mask & (want | optional)) == 0
 }
