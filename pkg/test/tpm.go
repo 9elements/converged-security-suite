@@ -183,10 +183,9 @@ var (
 	}
 )
 
-// TPMConnect Connects to a TPM device (virtual or real) at the given path
+// TPMConnect Connects to a TPM device (virtual or real)
 func TPMConnect(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-
-	t, err := tss.NewTPM()
+	t, err := txtAPI.NewTPM()
 	if err != nil {
 		return false, nil, err
 	}
@@ -227,23 +226,8 @@ func TPMIsPresent(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 // TPMNVRAMIsLocked Checks if NVRAM indexes are write protected
 func TPMNVRAMIsLocked(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	var res bool
-	var err error
-	var flags tpm1.PermanentFlags
-	switch tpmCon.Version {
-	case tss.TPMVersion12:
-		flags, err = tpm1.GetPermanentFlags(tpmCon.RWC)
-		res = flags.NVLocked
-	case tss.TPMVersion20:
-		err = tpm2.HierarchyChangeAuth(tpmCon.RWC, tpm2.HandlePlatform, tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession}, string(tpm2.EmptyAuth))
-		res = strings.Contains(err.Error(), tpm2LockedResult)
-	default:
-		return false, nil, fmt.Errorf("unknown TPM version: %v ", tpmCon.Version)
-	}
-	if res != true {
-		return false, nil, fmt.Errorf("%v  - - %v ", err, strings.Contains(err.Error(), tpm2LockedResult))
-	}
-	return res, nil, nil
+	res, err := txtAPI.NVLocked(tpmCon)
+	return res, nil, err
 }
 
 // PSIndexConfig tests if PS Index has correct configuration
@@ -256,7 +240,7 @@ func PSIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	var p2 [3]byte
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
-		raw, err = tpmCon.ReadNVPublic(tpm12PSIndex)
+		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm12PSIndex)
 		if err != nil {
 			return false, nil, err
 		}
@@ -293,13 +277,7 @@ func PSIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		}
 		return true, nil, nil
 	case tss.TPMVersion20:
-		raw, err = tpmCon.ReadNVPublic(tpm20OldPSIndex)
-		if err != nil {
-			if !strings.Contains(err.Error(), tpm2NVPublicNotSet) {
-				return false, nil, err
-			}
-		}
-		raw, err = tpmCon.ReadNVPublic(tpm20PSIndex)
+		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm20PSIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm2NVPublicNotSet) {
 				return false, fmt.Errorf("PS indices not set"), err
@@ -363,7 +341,7 @@ func AUXIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	var p2 [3]byte
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
-		raw, err = tpmCon.ReadNVPublic(tpm12AUXIndex)
+		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm12AUXIndex)
 		if err != nil {
 			return false, nil, err
 		}
@@ -400,13 +378,7 @@ func AUXIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 		return true, nil, nil
 	case tss.TPMVersion20:
-		raw, err = tpmCon.ReadNVPublic(tpm20OldAUXIndex)
-		if err != nil {
-			if !strings.Contains(err.Error(), tpm20NVIndexNotSet) {
-				return false, nil, err
-			}
-		}
-		raw, err = tpmCon.ReadNVPublic(tpm20AUXIndex)
+		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm20AUXIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm20NVIndexNotSet) {
 				return false, fmt.Errorf("PS indices not set"), err
@@ -468,7 +440,7 @@ func POIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	var raw []byte
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
-		raw, err = tpmCon.ReadNVPublic(tpm12POIndex)
+		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm12POIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm12NVIndexNotSet) {
 				return true, err, nil
@@ -491,15 +463,7 @@ func POIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 			return false, fmt.Errorf("TPM1 PO Index size incorrect. Have: %v - Want: %v", d1.Size, tpm12POIndexSize), nil
 		}
 	case tss.TPMVersion20:
-		raw, err = tpmCon.ReadNVPublic(tpm20OldPOIndex)
-		if err != nil {
-			if !strings.Contains(err.Error(), tpm2NVPublicNotSet) {
-				return false, nil, err
-			}
-		}
-		//reset error
-		err = nil
-		raw, err = tpmCon.ReadNVPublic(tpm20POIndex)
+		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm20POIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm2NVPublicNotSet) {
 				return true, fmt.Errorf("PO index not set"), nil
@@ -558,7 +522,7 @@ func PSIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	emptyHash := make([]byte, 20)
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
-		data, err := tpmCon.NVReadValue(tpm12PSIndex, "", tpm12PSIndexSize, 0)
+		data, err := txtAPI.NVReadValue(tpmCon, tpm12PSIndex, "", tpm12PSIndexSize, 0)
 		if err != nil {
 			return false, nil, err
 		}
@@ -570,7 +534,7 @@ func PSIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		var d tpm2.NVPublic
 		var raw []byte
 		var err error
-		raw, err = tpmCon.ReadNVPublic(tpm20PSIndex)
+		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm20PSIndex)
 		if err != nil {
 			return false, nil, err
 		}
@@ -604,7 +568,7 @@ func PSIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 			return false, nil, err
 		}
 
-		data, err := tpmCon.NVReadValue(tpm20PSIndex, "", uint32(d.DataSize), tpm20PSIndex)
+		data, err := txtAPI.NVReadValue(tpmCon, tpm20PSIndex, "", uint32(d.DataSize), tpm20PSIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm20NVIndexNotSet) {
 				return true, fmt.Errorf("PS index not set"), nil
@@ -678,7 +642,7 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
-		data, err := tpmCon.NVReadValue(tpm12POIndex, "", tpm12POIndexSize, 0)
+		data, err := txtAPI.NVReadValue(tpmCon, tpm12POIndex, "", tpm12POIndexSize, 0)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm12NVIndexNotSet) {
 				return true, err, nil
@@ -693,15 +657,7 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		var d tpm2.NVPublic
 		var raw []byte
 		var err error
-		raw, err = tpmCon.ReadNVPublic(tpm20OldPOIndex)
-		if err != nil {
-			if !strings.Contains(err.Error(), tpm2NVPublicNotSet) {
-				return false, nil, err
-			}
-		}
-		//reset error
-		err = nil
-		raw, err = tpmCon.ReadNVPublic(tpm20POIndex)
+		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm20POIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm2NVPublicNotSet) {
 				return true, fmt.Errorf("PO index not set"), nil
@@ -739,7 +695,7 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		}
 		size := uint16(crypto.Hash(d.NameAlg).Size()) + tpm20POIndexBaseSize
 
-		data, err := tpmCon.NVReadValue(tpm20POIndex, "", uint32(size), tpm20POIndex)
+		data, err := txtAPI.NVReadValue(tpmCon, tpm20POIndex, "", uint32(size), tpm20POIndex)
 		pol1, pol2, err = tools.ParsePolicy(data)
 		if err != nil {
 			return false, nil, err
@@ -801,7 +757,7 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 // PCR0IsSet Reads PCR-00 and checks whether if it's not the EmptyDigest
 func PCR0IsSet(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	pcr, err := tpmCon.ReadPCR(0)
+	pcr, err := txtAPI.ReadPCR(tpmCon, 0)
 	if err != nil {
 		return false, nil, err
 	}

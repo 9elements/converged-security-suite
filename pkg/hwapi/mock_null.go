@@ -2,7 +2,8 @@ package hwapi
 
 import (
 	"fmt"
-	"io"
+
+	"github.com/9elements/go-tss"
 )
 
 type nullmock struct{}
@@ -120,8 +121,22 @@ func (n nullmock) WritePhys(addr int64, data UintN) error {
 	return fmt.Errorf("Not implemented")
 }
 
-func (n nullmock) NVReadAll(conn io.ReadWriteCloser, index uint32) []byte {
-	return []byte{}
+func (n nullmock) NewTPM() (*tss.TPM, error) {
+	return nil, fmt.Errorf("Not implemented")
+}
+
+func (n nullmock) NVLocked(tpmCon *tss.TPM) (bool, error) {
+	return false, nil
+}
+
+func (n nullmock) ReadNVPublic(tpmCon *tss.TPM, index uint32) ([]byte, error) {
+	return []byte{}, fmt.Errorf("Not implemented")
+}
+func (n nullmock) NVReadValue(tpmCon *tss.TPM, index uint32, password string, size, offhandle uint32) ([]byte, error) {
+	return []byte{}, fmt.Errorf("Not implemented")
+}
+func (n nullmock) ReadPCR(tpmCon *tss.TPM, pcr uint32) ([]byte, error) {
+	return []byte{}, fmt.Errorf("Not implemented")
 }
 
 //GetNullMock returns an APIInterfaces stub
