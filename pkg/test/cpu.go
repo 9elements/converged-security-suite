@@ -37,11 +37,14 @@ var (
 		Status:   Implemented,
 	}
 	testsupportssmx = Test{
-		Name:         "CPU supports SMX",
-		function:     SupportsSMX,
-		Required:     true,
-		dependencies: []*Test{&testcheckforintelcpu},
-		Status:       Implemented,
+		Name:                    "CPU supports SMX",
+		function:                SupportsSMX,
+		Required:                true,
+		dependencies:            []*Test{&testcheckforintelcpu},
+		Status:                  Implemented,
+		SpecificationChapter:    "5.4.2 GETSEC Capability Control",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
 	testsupportvmx = Test{
 		Name:         "CPU supports VMX",
@@ -51,38 +54,54 @@ var (
 		Status:       Implemented,
 	}
 	testia32featurectrl = Test{
-		Name:         "IA32_FEATURE_CONTROL",
-		function:     Ia32FeatureCtrl,
-		Required:     true,
-		dependencies: []*Test{&testcheckforintelcpu},
-		Status:       Implemented,
+		Name:                    "IA32_FEATURE_CONTROL",
+		function:                Ia32FeatureCtrl,
+		Required:                true,
+		dependencies:            []*Test{&testcheckforintelcpu},
+		Status:                  Implemented,
+		SpecificationChapter:    "5.4.1 Intel TXT Opt-In Control",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
 	testsmxisenabled = Test{
-		Name:     "SMX enabled",
-		function: SMXIsEnabled,
-		Required: false,
-		Status:   NotImplemented,
+		Name:                    "SMX enabled",
+		function:                SMXIsEnabled,
+		Required:                false,
+		Status:                  NotImplemented,
+		SpecificationChapter:    "5.4.2 GETSEC Capability Control",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
+
 	testtxtnotdisabled = Test{
-		Name:     "TXT not disabled by BIOS",
-		function: TXTNotDisabled,
-		Required: true,
-		Status:   Implemented,
+		Name:                    "TXT not disabled by BIOS",
+		function:                TXTNotDisabled,
+		Required:                true,
+		Status:                  Implemented,
+		SpecificationChapter:    "5.4.1 Intel TXT Opt-In Control",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
 	testibbmeasured = Test{
-		Name:         "BIOS ACM has run",
-		function:     IBBMeasured,
-		Required:     true,
-		dependencies: []*Test{&testtxtregisterspaceaccessible},
-		Status:       Implemented,
+		Name:                    "BIOS ACM has run",
+		function:                IBBMeasured,
+		Required:                true,
+		dependencies:            []*Test{&testtxtregisterspaceaccessible},
+		Status:                  Implemented,
+		SpecificationChapter:    "B.1.6 TXT.SPAD – BOOTSTATUS",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testibbistrusted = Test{
-		Name:         "IBB is trusted",
-		function:     IBBIsTrusted,
-		Required:     false,
-		NonCritical:  true,
-		dependencies: []*Test{&testtxtregisterspaceaccessible},
-		Status:       Implemented,
+		Name:                    "IBB is trusted",
+		function:                IBBIsTrusted,
+		Required:                false,
+		NonCritical:             true,
+		dependencies:            []*Test{&testtxtregisterspaceaccessible},
+		Status:                  Implemented,
+		SpecificationChapter:    "B.1.6 TXT.SPAD – BOOTSTATUS",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testtxtregisterslocked = Test{
 		Name:         "TXT registers are locked",

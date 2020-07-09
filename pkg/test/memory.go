@@ -18,11 +18,14 @@ var (
 		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testmemoryisreserved = Test{
-		Name:         "TXT memory reserved in e820",
-		Required:     true,
-		function:     TXTReservedInE820,
-		dependencies: []*Test{&testtxtmemoryrangevalid},
-		Status:       Implemented,
+		Name:                    "TXT memory reserved in e820",
+		Required:                true,
+		function:                TXTReservedInE820,
+		dependencies:            []*Test{&testtxtmemoryrangevalid},
+		Status:                  Implemented,
+		SpecificationChapter:    "5.5.4 TPM Decode Area",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
 	testtxtmemoryisdpr = Test{
 		Name:                    "TXT memory in a DMA protected range",
