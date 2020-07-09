@@ -30,17 +30,20 @@ func (t TxtAPI) NVLocked(tpmCon *tss.TPM) (bool, error) {
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
 		flags, err = tpm1.GetPermanentFlags(tpmCon.RWC)
+		if err != nil {
+			return res, err
+		}
 		res = flags.NVLocked
+		return res, nil
 	case tss.TPMVersion20:
 		err = tpm2.HierarchyChangeAuth(tpmCon.RWC, tpm2.HandlePlatform, tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession}, string(tpm2.EmptyAuth))
 		res = strings.Contains(err.Error(), tpm2LockedResult)
-	default:
-		return false, fmt.Errorf("unknown TPM version: %v ", tpmCon.Version)
+		if res != true {
+			return res, err
+		}
+		return res, nil
 	}
-	if err != nil {
-		return false, err
-	}
-	return res, nil
+	return false, fmt.Errorf("unknown TPM version: %v ", tpmCon.Version)
 }
 
 // ReadNVPublic reads public data about an NV index

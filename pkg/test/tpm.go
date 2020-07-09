@@ -80,10 +80,10 @@ var (
 		Status:       Implemented,
 	}
 	testtpm2present = Test{
-		Name:         "TPM 2 is present",
+		Name:         "TPM 2.0 is present",
 		Required:     false,
 		NonCritical:  true,
-		function:     TPM2Present,
+		function:     TPM20Present,
 		dependencies: []*Test{&testtpmconnection},
 		Status:       Implemented,
 	}
@@ -98,6 +98,7 @@ var (
 		Name:                    "TPM NVRAM is locked",
 		function:                TPMNVRAMIsLocked,
 		Required:                true,
+		NonCritical:             true,
 		dependencies:            []*Test{&testtpmispresent},
 		Status:                  Implemented,
 		SpecificationChapter:    "5.6.3.1 Failsafe Hash",
@@ -200,16 +201,16 @@ func TPM12Present(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	case tss.TPMVersion12:
 		return true, nil, nil
 	case tss.TPMVersion20:
-		return false, nil, nil
+		return false, fmt.Errorf("No TPM 2.0 device"), nil
 	}
 	return false, nil, fmt.Errorf("unknown TPM version: %v ", tpmCon.Version)
 }
 
-// TPM2Present Checks if TPM 2.0 is present and answers to GetCapability
-func TPM2Present(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+// TPM20Present Checks if TPM 2.0 is present and answers to GetCapability
+func TPM20Present(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
-		return false, nil, nil
+		return false, fmt.Errorf("No TPM 1.2 device"), nil
 	case tss.TPMVersion20:
 		return true, nil, nil
 	}
@@ -227,7 +228,7 @@ func TPMIsPresent(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 // TPMNVRAMIsLocked Checks if NVRAM indexes are write protected
 func TPMNVRAMIsLocked(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	res, err := txtAPI.NVLocked(tpmCon)
-	return res, nil, err
+	return res, err, nil
 }
 
 // PSIndexConfig tests if PS Index has correct configuration
@@ -443,7 +444,7 @@ func POIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm12POIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm12NVIndexNotSet) {
-				return true, err, nil
+				return true, fmt.Errorf("PO Index not set"), nil
 			}
 			return false, nil, err
 		}
@@ -642,12 +643,16 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
-		data, err := txtAPI.NVReadValue(tpmCon, tpm12POIndex, "", tpm12POIndexSize, 0)
+		_, err := txtAPI.ReadNVPublic(tpmCon, tpm12POIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm12NVIndexNotSet) {
-				return true, err, nil
+				return true, fmt.Errorf("PO Index not set"), nil
 			}
 			return false, nil, err
+		}
+		data, err := txtAPI.NVReadValue(tpmCon, tpm12POIndex, "", tpm12POIndexSize, 0)
+		if err != nil {
+			return true, err, nil
 		}
 		pol1, pol2, err = tools.ParsePolicy(data)
 		if err != nil {
