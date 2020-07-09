@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"math"
 
 	"github.com/9elements/txt-suite/pkg/hwapi"
 	"github.com/9elements/txt-suite/pkg/tools"
@@ -472,11 +473,33 @@ func BIOSACMSizeCorrect(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 func BIOSACMAlignmentCorrect(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	for _, ent := range fit {
 		if ent.Type() == tools.StartUpACMod {
-			return ent.Address%(128*1024) == 0, nil, nil
+			buf1 := make([]byte, tools.ACMheaderLen*4)
+
+			err := txtAPI.ReadPhysBuf(int64(ent.Address), buf1)
+
+			if err != nil {
+				return false, nil, fmt.Errorf("ReadPhysBuf failed at %v with error: %v", ent.Address, err)
+			}
+
+			acm, err := tools.ParseACMHeader(buf1)
+			if err != nil {
+				return false, nil, fmt.Errorf("Can't Parse BIOS ACM header correctly")
+			}
+
+			ret, err := tools.ValidateACMHeader(acm)
+
+			if ret == false {
+				return false, nil, fmt.Errorf("Validating BIOS ACM Header failed: %v", err)
+			}
+
+			size := uint64(math.Pow(2, math.Ceil(math.Log(float64(acm.Size*4))/math.Log(2))))
+			if ent.Address&(size-1) > 0 {
+				return false, fmt.Errorf("BIOSACM not aligned at %x", size), nil
+			}
 		}
 	}
 
-	return false, fmt.Errorf("no BIOS ACM in FIT"), nil
+	return true, nil, nil
 }
 
 // BIOSACMMatchesChipset checks if BIOS ACM matches chipset
