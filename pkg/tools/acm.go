@@ -70,6 +70,13 @@ const (
 
 	//ACMheaderLen as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format (Version 0.0)
 	ACMheaderLen uint32 = 161
+
+	//ACMModuleSubtypeSinitACM is an enum
+	ACMModuleSubtypeSinitACM uint16 = 0
+	//ACMModuleSubtypeCapableOfExecuteAtReset is a flag and enum Based on EDK2 Silicon/Intel/Tools/FitGen/FitGen.c
+	ACMModuleSubtypeCapableOfExecuteAtReset uint16 = 1
+	//ACMModuleSubtypeAncModule is a flag Based on EDK2 Silicon/Intel/Tools/FitGen/FitGen.c
+	ACMModuleSubtypeAncModule uint16 = 2
 )
 
 //UUID represents an UUID
@@ -185,8 +192,10 @@ func ValidateACMHeader(acmheader *ACMHeader) (bool, error) {
 	if acmheader.ModuleType != uint16(2) {
 		return false, fmt.Errorf("BIOS ACM ModuleType is not 2, this is not specified")
 	}
-	if acmheader.ModuleSubType >= uint16(2) {
-		return false, fmt.Errorf("BIOS ACM ModuleSubType is greater 1, this is not specified")
+	// Early version of TXT used an enum in ModuleSubType
+	// That was changed to flags. Check if unsupported flags are present
+	if acmheader.ModuleSubType > (ACMModuleSubtypeAncModule | ACMModuleSubtypeCapableOfExecuteAtReset) {
+		return false, fmt.Errorf("BIOS ACM ModuleSubType contains unknown flags")
 	}
 	if acmheader.HeaderLen < uint32(ACMheaderLen) {
 		return false, fmt.Errorf("BIOS ACM HeaderLength is smaller than 4*161 Byte")
@@ -196,6 +205,12 @@ func ValidateACMHeader(acmheader *ACMHeader) (bool, error) {
 	}
 	if acmheader.ModuleVendor != ACMVendorIntel {
 		return false, fmt.Errorf("AC Module Vendor is not Intel. Only Intel as Vendor is allowed")
+	}
+	if acmheader.KeySize*4 != uint32(len(acmheader.PubKey)) {
+		return false, fmt.Errorf("ACM keysize of 0x%x not supported yet", acmheader.KeySize*4)
+	}
+	if acmheader.ScratchSize > acmheader.Size {
+		return false, fmt.Errorf("ACM ScratchSize is bigger than ACM module size")
 	}
 	return true, nil
 }
@@ -218,6 +233,12 @@ func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error, error) {
 	err = binary.Read(buf, binary.LittleEndian, &scratch)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
+	}
+
+	if (acmheader.ModuleSubType & ACMModuleSubtypeAncModule) > 0 {
+		// ANC modules do not have an ACMINFO header
+		acm := ACM{acmheader, scratch, acminfo}
+		return &acm, &chipsets, &processors, &tpms, nil, nil
 	}
 
 	err = binary.Read(buf, binary.LittleEndian, &acminfo)
