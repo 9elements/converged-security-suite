@@ -9,63 +9,90 @@ import (
 
 var (
 	testtxtmemoryrangevalid = Test{
-		Name:     "TXT memory ranges valid",
-		Required: true,
-		function: TXTRegisterSpaceValid,
-		Status:   Implemented,
+		Name:                    "TXT memory ranges valid",
+		Required:                true,
+		function:                TXTRegisterSpaceValid,
+		Status:                  Implemented,
+		SpecificationChapter:    "B.1",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testmemoryisreserved = Test{
-		Name:         "TXT memory reserved in e820",
-		Required:     true,
-		function:     TXTReservedInE820,
-		dependencies: []*Test{&testtxtmemoryrangevalid},
-		Status:       Implemented,
+		Name:                    "TXT memory reserved in e820",
+		Required:                true,
+		function:                TXTReservedInE820,
+		dependencies:            []*Test{&testtxtmemoryrangevalid},
+		Status:                  Implemented,
+		SpecificationChapter:    "5.5.4 TPM Decode Area",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
 	testtxtmemoryisdpr = Test{
-		Name:         "TXT memory in a DMA protected range",
-		Required:     true,
-		function:     TXTMemoryIsDPR,
-		dependencies: []*Test{&testtxtmemoryrangevalid},
-		Status:       Implemented,
+		Name:                    "TXT memory in a DMA protected range",
+		Required:                true,
+		function:                TXTMemoryIsDPR,
+		dependencies:            []*Test{&testtxtmemoryrangevalid},
+		Status:                  Implemented,
+		SpecificationChapter:    "1.11.1 DMA Protected Range (DPR)",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testtxtdprislocked = Test{
-		Name:     "TXT DPR register locked",
-		Required: true,
-		function: TXTDPRisLock,
-		Status:   Implemented,
+		Name:                    "TXT DPR register locked",
+		Required:                true,
+		function:                TXTDPRisLock,
+		Status:                  Implemented,
+		SpecificationChapter:    "1.11.1 DMA Protected Range (DPR)",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testhostbridgeDPRcorrect = Test{
-		Name:     "CPU DPR equals hostbridge DPR",
-		Required: false,
-		function: HostbridgeDPRCorrect,
-		Status:   Implemented,
+		Name:                    "CPU DPR equals hostbridge DPR",
+		Required:                false,
+		function:                HostbridgeDPRCorrect,
+		Status:                  Implemented,
+		SpecificationChapter:    "B 1.15 TXT.DPR – DMA Protected Range",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testhostbridgeDPRislocked = Test{
-		Name:         "CPU hostbridge DPR register locked",
-		Required:     true,
-		function:     HostbridgeDPRisLocked,
-		dependencies: []*Test{&testhostbridgeDPRcorrect},
-		Status:       Implemented,
+		Name:                    "CPU hostbridge DPR register locked",
+		Required:                true,
+		function:                HostbridgeDPRisLocked,
+		dependencies:            []*Test{&testhostbridgeDPRcorrect},
+		Status:                  Implemented,
+		SpecificationChapter:    "B 1.15 TXT.DPR – DMA Protected Range",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testsinitintxt = Test{
-		Name:     "TXT region contains SINIT ACM",
-		Required: false,
-		function: SINITInTXT,
-		Status:   Implemented,
+		Name:                    "TXT region contains SINIT ACM",
+		Required:                false,
+		function:                SINITInTXT,
+		Status:                  Implemented,
+		SpecificationChapter:    "B 1.10 TXT.SINIT.BASE – SINIT Base Address",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testsinitmatcheschipset = Test{
-		Name:         "SINIT ACM matches chipset",
-		Required:     true,
-		function:     SINITMatchesChipset,
-		dependencies: []*Test{&testsinitintxt},
-		Status:       Implemented,
+		Name:                    "SINIT ACM matches chipset",
+		Required:                true,
+		function:                SINITMatchesChipset,
+		dependencies:            []*Test{&testsinitintxt},
+		Status:                  Implemented,
+		SpecificationChapter:    "2.2.3.1 Matching an AC Module to the Platform",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testsinitmatchescpu = Test{
-		Name:         "SINIT ACM matches CPU",
-		Required:     true,
-		function:     SINITMatchesCPU,
-		dependencies: []*Test{&testsinitintxt},
-		Status:       Implemented,
+		Name:                    "SINIT ACM matches CPU",
+		Required:                true,
+		function:                SINITMatchesCPU,
+		dependencies:            []*Test{&testsinitintxt},
+		Status:                  Implemented,
+		SpecificationChapter:    "2.2.3.1 Matching an AC Module to the Platform",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testnosiniterrors = Test{
 		Name:        "SINIT ACM startup successful",
@@ -75,23 +102,32 @@ var (
 		Status:      Implemented,
 	}
 	testbiosdataregionpresent = Test{
-		Name:     "BIOS DATA REGION present",
-		Required: true,
-		function: BIOSDATAREGIONPresent,
-		Status:   Implemented,
+		Name:                    "BIOS DATA REGION present",
+		Required:                true,
+		function:                BIOSDATAREGIONPresent,
+		Status:                  Implemented,
+		SpecificationChapter:    "C.2 BIOS Data Format",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testbiosdataregionvalid = Test{
-		Name:         "BIOS DATA REGION valid",
-		Required:     true,
-		function:     BIOSDATAREGIONValid,
-		dependencies: []*Test{&testbiosdataregionpresent},
-		Status:       Implemented,
+		Name:                    "BIOS DATA REGION valid",
+		Required:                true,
+		function:                BIOSDATAREGIONValid,
+		dependencies:            []*Test{&testbiosdataregionpresent},
+		Status:                  Implemented,
+		SpecificationChapter:    "C.2 BIOS Data Format",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testhasmtrr = Test{
-		Name:     "CPU supports MTRRs",
-		Required: true,
-		function: HasMTRR,
-		Status:   Implemented,
+		Name:                    "CPU supports MTRRs",
+		Required:                true,
+		function:                HasMTRR,
+		Status:                  Implemented,
+		SpecificationChapter:    "2.2.5.1 MTRR Setup Prior to GETSEC[SENTER] Execution",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testhassmrr = Test{
 		Name:         "CPU supports SMRRs",
@@ -115,10 +151,13 @@ var (
 		Status:       Implemented,
 	}
 	testactiveiommu = Test{
-		Name:     "IOMMU/VT-d active",
-		Required: false,
-		function: ActiveIOMMU,
-		Status:   Implemented,
+		Name:                    "IOMMU/VT-d active",
+		Required:                false,
+		function:                ActiveIOMMU,
+		Status:                  Implemented,
+		SpecificationChapter:    "1.11.2 Protected Memory Regions (PMRs)",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testservermodetext = Test{
 		Name:     "TXT server mode enabled",
@@ -353,9 +392,12 @@ func SINITInTXT(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		return false, nil, err
 	}
 
-	acm, _, _, _, err := tools.ParseACM(sinitBuf)
+	acm, _, _, _, err, internalerr := tools.ParseACM(sinitBuf)
+	if internalerr != nil {
+		return false, nil, internalerr
+	}
 	if err != nil {
-		return false, nil, err
+		return false, err, nil
 	}
 	if acm == nil {
 		return false, fmt.Errorf("ACM is nil"), nil
@@ -379,9 +421,12 @@ func SINITMatchesChipset(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		return false, nil, err
 	}
 
-	acm, chps, _, _, err := sinitACM(txtAPI, regs)
+	acm, chps, _, _, err, internalerr := sinitACM(txtAPI, regs)
+	if internalerr != nil {
+		return false, nil, internalerr
+	}
 	if err != nil {
-		return false, nil, err
+		return false, err, nil
 	}
 	if chps == nil {
 		return false, fmt.Errorf("CHPS is nil"), nil
@@ -418,9 +463,12 @@ func SINITMatchesCPU(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		return false, nil, err
 	}
 
-	_, _, cpus, _, err := sinitACM(txtAPI, regs)
+	_, _, cpus, _, err, internalerr := sinitACM(txtAPI, regs)
+	if internalerr != nil {
+		return false, nil, internalerr
+	}
 	if err != nil {
-		return false, nil, err
+		return false, err, nil
 	}
 
 	// IA32_PLATFORM_ID
@@ -440,7 +488,7 @@ func SINITMatchesCPU(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		}
 	}
 
-	return false, fmt.Errorf("Sinit doesn't match CPU"), nil
+	return false, fmt.Errorf("CPU signature not found in SINIT processor ID list"), nil
 }
 
 // NoSINITErrors checks if the SINITACM was executed without any errors
@@ -611,11 +659,11 @@ func ReleaseFusedFSBI(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	return false, nil, fmt.Errorf("ReleaseFusedFSBI: Unimplemented")
 }
 
-func sinitACM(txtAPI hwapi.APIInterfaces, regs tools.TXTRegisterSpace) (*tools.ACM, *tools.Chipsets, *tools.Processors, *tools.TPMs, error) {
+func sinitACM(txtAPI hwapi.APIInterfaces, regs tools.TXTRegisterSpace) (*tools.ACM, *tools.Chipsets, *tools.Processors, *tools.TPMs, error, error) {
 	sinitBuf := make([]byte, regs.SinitSize)
 	err := txtAPI.ReadPhysBuf(int64(regs.SinitBase), sinitBuf)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	return tools.ParseACM(sinitBuf)

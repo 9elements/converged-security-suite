@@ -32,31 +32,43 @@ var (
 	fit []tools.FitEntry
 
 	testfitvectorisset = Test{
-		Name:     "Valid FIT vector",
-		Required: true,
-		function: FITVectorIsSet,
-		Status:   Implemented,
+		Name:                    "Valid FIT vector",
+		Required:                true,
+		function:                FITVectorIsSet,
+		Status:                  Implemented,
+		SpecificationChapter:    "3.0 FIT Pointer",
+		SpecificiationTitle:     IntelFITSpecificationTitle,
+		SpecificationDocumentID: IntelFITSpecificationDocumentID,
 	}
 	testhasfit = Test{
-		Name:         "Valid FIT",
-		Required:     true,
-		function:     HasFIT,
-		dependencies: []*Test{&testfitvectorisset},
-		Status:       Implemented,
+		Name:                    "Valid FIT",
+		Required:                true,
+		function:                HasFIT,
+		dependencies:            []*Test{&testfitvectorisset},
+		Status:                  Implemented,
+		SpecificationChapter:    "4.0 Firmware Interface Table",
+		SpecificiationTitle:     IntelFITSpecificationTitle,
+		SpecificationDocumentID: IntelFITSpecificationDocumentID,
 	}
 	testhasbiosacm = Test{
-		Name:         "BIOS ACM entry in FIT",
-		Required:     true,
-		function:     HasBIOSACM,
-		dependencies: []*Test{&testhasfit},
-		Status:       Implemented,
+		Name:                    "BIOS ACM entry in FIT",
+		Required:                true,
+		function:                HasBIOSACM,
+		dependencies:            []*Test{&testhasfit},
+		Status:                  Implemented,
+		SpecificationChapter:    "4.4 Startup ACM (Type 2) Rules",
+		SpecificiationTitle:     IntelFITSpecificationTitle,
+		SpecificationDocumentID: IntelFITSpecificationDocumentID,
 	}
 	testhasibb = Test{
-		Name:         "IBB entry in FIT",
-		Required:     true,
-		function:     HasIBB,
-		dependencies: []*Test{&testhasfit},
-		Status:       Implemented,
+		Name:                    "IBB entry in FIT",
+		Required:                true,
+		function:                HasIBB,
+		dependencies:            []*Test{&testhasfit},
+		Status:                  Implemented,
+		SpecificationChapter:    "4.6 BIOS Startup Module (Type 7) Rules",
+		SpecificiationTitle:     IntelFITSpecificationTitle,
+		SpecificationDocumentID: IntelFITSpecificationDocumentID,
 	}
 	// Not mandatory, LCP_POLICY_DATA file may be supplied by GRUB to TBOOT
 	testhaslcpTest = Test{
@@ -68,18 +80,24 @@ var (
 		Status:       Implemented,
 	}
 	testibbcoversresetvector = Test{
-		Name:         "IBB covers reset vector",
-		Required:     true,
-		function:     IBBCoversResetVector,
-		dependencies: []*Test{&testhasfit, &testhasibb},
-		Status:       Implemented,
+		Name:                    "IBB covers reset vector",
+		Required:                true,
+		function:                IBBCoversResetVector,
+		dependencies:            []*Test{&testhasfit, &testhasibb},
+		Status:                  Implemented,
+		SpecificationChapter:    "4.6 BIOS Startup Module (Type 7) Rules",
+		SpecificiationTitle:     IntelFITSpecificationTitle,
+		SpecificationDocumentID: IntelFITSpecificationDocumentID,
 	}
 	testibbcoversfitvector = Test{
-		Name:         "IBB covers FIT vector",
-		Required:     true,
-		function:     IBBCoversFITVector,
-		dependencies: []*Test{&testhasfit, &testhasibb},
-		Status:       Implemented,
+		Name:                    "IBB covers FIT vector",
+		Required:                true,
+		function:                IBBCoversFITVector,
+		dependencies:            []*Test{&testhasfit, &testhasibb},
+		Status:                  Implemented,
+		SpecificationChapter:    "4.6 BIOS Startup Module (Type 7) Rules",
+		SpecificiationTitle:     IntelFITSpecificationTitle,
+		SpecificationDocumentID: IntelFITSpecificationDocumentID,
 	}
 	testibbcoversfit = Test{
 		Name:         "IBB covers FIT",
@@ -89,67 +107,94 @@ var (
 		Status:       Implemented,
 	}
 	testnoibboverlap = Test{
-		Name:         "IBB does not overlap",
-		Required:     true,
-		function:     NoIBBOverlap,
-		dependencies: []*Test{&testhasfit, &testhasibb},
-		Status:       Implemented,
+		Name:                    "IBBs doesn't overlap each other",
+		Required:                true,
+		function:                NoIBBOverlap,
+		dependencies:            []*Test{&testhasfit, &testhasibb},
+		Status:                  Implemented,
+		SpecificationChapter:    "4.6 BIOS Startup Module (Type 7) Rules",
+		SpecificiationTitle:     IntelFITSpecificationTitle,
+		SpecificationDocumentID: IntelFITSpecificationDocumentID,
 	}
 	testnobiosacmoverlap = Test{
-		Name:         "BIOS ACM does not overlap",
-		Required:     true,
-		function:     NoBIOSACMOverlap,
-		dependencies: []*Test{&testhasfit, &testhasbiosacm},
-		Status:       Implemented,
+		Name:                    "BIOS ACM does not overlap IBBs",
+		Required:                true,
+		function:                NoBIOSACMOverlap,
+		dependencies:            []*Test{&testhasfit, &testhasbiosacm},
+		Status:                  Implemented,
+		SpecificationChapter:    "4.6 BIOS Startup Module (Type 7) Rules",
+		SpecificiationTitle:     IntelFITSpecificationTitle,
+		SpecificationDocumentID: IntelFITSpecificationDocumentID,
 	}
 	testnobiosacmisbelow4g = Test{
-		Name:         "IBB and BIOS ACM below 4GiB",
-		Required:     true,
-		function:     BIOSACMIsBelow4G,
-		dependencies: []*Test{&testhasfit, &testhasbiosacm},
-		Status:       Implemented,
+		Name:                    "IBB and BIOS ACM below 4GiB",
+		Required:                true,
+		function:                BIOSACMIsBelow4G,
+		dependencies:            []*Test{&testhasfit, &testhasbiosacm},
+		Status:                  Implemented,
+		SpecificationChapter:    "2.2 FIT Pointer Rules",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
 	testpolicyallowstxt = Test{
-		Name:         "TXT not disabled by LCP Policy",
-		Required:     true,
-		function:     PolicyAllowsTXT,
-		dependencies: []*Test{&testhasfit},
-		Status:       Implemented,
+		Name:                    "TXT not disabled by LCP Policy",
+		Required:                true,
+		function:                PolicyAllowsTXT,
+		dependencies:            []*Test{&testhasfit},
+		Status:                  Implemented,
+		SpecificationChapter:    "B.1.6 TXT.SPAD – BOOTSTATUS",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testbiosacmvalid = Test{
-		Name:         "BIOSACM header valid",
-		Required:     true,
-		function:     BIOSACMValid,
-		dependencies: []*Test{&testhasfit, &testhasbiosacm},
-		Status:       Implemented,
+		Name:                    "BIOSACM header valid",
+		Required:                true,
+		function:                BIOSACMValid,
+		dependencies:            []*Test{&testhasfit, &testhasbiosacm},
+		Status:                  Implemented,
+		SpecificationChapter:    "A.1 Authenticated Code Module Format",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testbiosacmsizecorrect = Test{
-		Name:         "BIOSACM size check",
-		Required:     true,
-		function:     BIOSACMSizeCorrect,
-		dependencies: []*Test{&testhasfit, &testhasbiosacm},
-		Status:       Implemented,
+		Name:                    "BIOSACM size check",
+		Required:                true,
+		function:                BIOSACMSizeCorrect,
+		dependencies:            []*Test{&testhasfit, &testhasbiosacm},
+		Status:                  Implemented,
+		SpecificationChapter:    "A.1 Authenticated Code Module Format",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testbiosacmaligmentcorrect = Test{
-		Name:         "BIOSACM alignment check",
-		Required:     true,
-		function:     BIOSACMAlignmentCorrect,
-		dependencies: []*Test{&testhasfit, &testhasbiosacm},
-		Status:       Implemented,
+		Name:                    "BIOSACM alignment check",
+		Required:                true,
+		function:                BIOSACMAlignmentCorrect,
+		dependencies:            []*Test{&testhasfit, &testhasbiosacm},
+		Status:                  Implemented,
+		SpecificationChapter:    "A.1.1 Memory Type Cacheability Restrictions",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testbiosacmmatcheschipset = Test{
-		Name:         "BIOSACM matches chipset",
-		Required:     true,
-		function:     BIOSACMMatchesChipset,
-		dependencies: []*Test{&testhasfit, &testhasbiosacm},
-		Status:       Implemented,
+		Name:                    "BIOSACM matches chipset",
+		Required:                true,
+		function:                BIOSACMMatchesChipset,
+		dependencies:            []*Test{&testhasfit, &testhasbiosacm},
+		Status:                  Implemented,
+		SpecificationChapter:    "2.2.3.1 Matching an AC Module to the Platform",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testbiosacmmatchescpu = Test{
-		Name:         "BIOSACM matches processor",
-		Required:     true,
-		function:     BIOSACMMatchesCPU,
-		dependencies: []*Test{&testhasfit, &testhasbiosacm},
-		Status:       Implemented,
+		Name:                    "BIOSACM matches processor",
+		Required:                true,
+		function:                BIOSACMMatchesCPU,
+		dependencies:            []*Test{&testhasfit, &testhasbiosacm},
+		Status:                  Implemented,
+		SpecificationChapter:    "2.2.3.1 Matching an AC Module to the Platform",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 
 	// TestsFIT exports the Slice with FIT tests
@@ -190,10 +235,10 @@ func FITVectorIsSet(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	}
 
 	if fitPointer < ValidFitRange {
-		return false, fmt.Errorf("FitPointer must be in ValidFitRange - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 6"), nil
+		return false, fmt.Errorf("FitPointer must be in ValidFitRange"), nil
 	}
-	if fitPointer >= ResetVector {
-		return false, fmt.Errorf("FitPointer must be smaller than ResetVector - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 6"), nil
+	if fitPointer >= FITVector {
+		return false, fmt.Errorf("FitPointer must be smaller than FITVector"), nil
 	}
 
 	return true, nil, nil
@@ -213,7 +258,10 @@ func HasFIT(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	}
 
 	if int64(fitPointer)+int64(hdr.Size()) > FourGiB {
-		return false, fmt.Errorf("FIT isn't part of 32bit address-space - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 6"), nil
+		return false, fmt.Errorf("FIT isn't part of 32bit address-space"), nil
+	}
+	if int64(fitPointer)+int64(hdr.Size()) > FITVector {
+		return false, fmt.Errorf("FIT isn't in the range (4 GB - 16 MB) to (4 GB - 40h)"), nil
 	}
 
 	fitblob := make([]byte, hdr.Size())
@@ -239,7 +287,7 @@ func HasBIOSACM(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		}
 	}
 	if count == 0 {
-		return false, fmt.Errorf("Fit has no Startup AC Module Entry, but at least one is required - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 9"), nil
+		return false, fmt.Errorf("Fit has no Startup AC Module Entry, but at least one is required"), nil
 	}
 	return true, nil, nil
 }
@@ -252,7 +300,7 @@ func HasIBB(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		}
 	}
 
-	return false, fmt.Errorf("Fit has no BIOS Startup Module Entry, but at least one is required - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 10"), nil
+	return false, fmt.Errorf("Fit has no BIOS Startup Module Entry, but at least one is required"), nil
 }
 
 // HasBIOSPolicy checks if FIT table has ONE BIOS Policy Data Record Entry
@@ -399,16 +447,19 @@ func PolicyAllowsTXT(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 // BIOSACMValid checks if BIOS ACM is valid
 func BIOSACMValid(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	acm, _, _, _, err := biosACM(txtAPI, fit)
+	acm, _, _, _, err, internalerr := biosACM(txtAPI, fit)
 
-	return acm != nil, nil, err
+	return acm != nil, err, internalerr
 }
 
 // BIOSACMSizeCorrect checks if BIOS ACM size is correct
 func BIOSACMSizeCorrect(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	acm, _, _, _, err := biosACM(txtAPI, fit)
+	acm, _, _, _, err, internalerr := biosACM(txtAPI, fit)
+	if internalerr != nil {
+		return false, nil, internalerr
+	}
 	if err != nil {
-		return false, nil, err
+		return false, err, nil
 	}
 
 	if acm.Header.Size%64 != 0 {
@@ -430,10 +481,12 @@ func BIOSACMAlignmentCorrect(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 // BIOSACMMatchesChipset checks if BIOS ACM matches chipset
 func BIOSACMMatchesChipset(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	_, chp, _, _, err := biosACM(txtAPI, fit)
-
+	_, chp, _, _, err, internalerr := biosACM(txtAPI, fit)
+	if internalerr != nil {
+		return false, nil, internalerr
+	}
 	if err != nil {
-		return false, nil, err
+		return false, err, nil
 	}
 	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
@@ -466,9 +519,12 @@ func BIOSACMMatchesChipset(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 // BIOSACMMatchesCPU checks if BIOS ACM matches CPU
 func BIOSACMMatchesCPU(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	_, _, cpus, _, err := biosACM(txtAPI, fit)
+	_, _, cpus, _, err, internalerr := biosACM(txtAPI, fit)
+	if internalerr != nil {
+		return false, nil, internalerr
+	}
 	if err != nil {
-		return false, nil, err
+		return false, err, nil
 	}
 
 	// IA32_PLATFORM_ID
@@ -491,7 +547,7 @@ func BIOSACMMatchesCPU(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	return false, fmt.Errorf("BIOS Startup Module and CPU doesn't match"), nil
 }
 
-func biosACM(txtAPI hwapi.APIInterfaces, fit []tools.FitEntry) (*tools.ACM, *tools.Chipsets, *tools.Processors, *tools.TPMs, error) {
+func biosACM(txtAPI hwapi.APIInterfaces, fit []tools.FitEntry) (*tools.ACM, *tools.Chipsets, *tools.Processors, *tools.TPMs, error, error) {
 	for _, ent := range fit {
 		if ent.Type() == tools.StartUpACMod {
 			buf1 := make([]byte, tools.ACMheaderLen*4)
@@ -499,30 +555,30 @@ func biosACM(txtAPI hwapi.APIInterfaces, fit []tools.FitEntry) (*tools.ACM, *too
 			err := txtAPI.ReadPhysBuf(int64(ent.Address), buf1)
 
 			if err != nil {
-				return nil, nil, nil, nil, fmt.Errorf("ReadPhysBuf failed at %v with error: %v", ent.Address, err)
+				return nil, nil, nil, nil, nil, fmt.Errorf("ReadPhysBuf failed at %v with error: %v", ent.Address, err)
 			}
 
 			acm, err := tools.ParseACMHeader(buf1)
 			if err != nil {
-				return nil, nil, nil, nil, fmt.Errorf("Can't Parse BIOS ACM header correctly")
+				return nil, nil, nil, nil, fmt.Errorf("Can't Parse BIOS ACM header correctly"), nil
 			}
 
 			ret, err := tools.ValidateACMHeader(acm)
 
 			if ret == false {
-				return nil, nil, nil, nil, fmt.Errorf("Validating BIOS ACM Header failed: %v", err)
+				return nil, nil, nil, nil, fmt.Errorf("Validating BIOS ACM Header failed: %v", err), nil
 			}
 
 			buf2 := make([]byte, acm.Size*4)
 			err = txtAPI.ReadPhysBuf(int64(ent.Address), buf2)
 
 			if err != nil {
-				return nil, nil, nil, nil, fmt.Errorf("Cant read BIOS ACM completly")
+				return nil, nil, nil, nil, nil, fmt.Errorf("Cant read BIOS ACM completly")
 			}
 
 			return tools.ParseACM(buf2)
 		}
 	}
 
-	return nil, nil, nil, nil, fmt.Errorf("no BIOS ACM in FIT")
+	return nil, nil, nil, nil, fmt.Errorf("no BIOS ACM in FIT"), nil
 }

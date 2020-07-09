@@ -86,8 +86,11 @@ func listTestsAsMarkdown() {
 		} else {
 			teststate = ":clock1:"
 		}
-
-		fmt.Printf("| %02d | %-48s | %-22s |\n", i, tests[i].Name, teststate)
+		docID := tests[i].SpecificationDocumentID
+		if docID != "" {
+			docID = "Document " + docID
+		}
+		fmt.Printf("| %02d | %-48s | %-22s | %-28s | %-56s |\n", i, tests[i].Name, teststate, docID, tests[i].SpecificationChapter)
 	}
 }
 

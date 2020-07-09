@@ -16,6 +16,9 @@ import (
 )
 
 const (
+	// Intel Trusted Execution Technology Software Development Guide - Measured Launched Environment Developer’s Guide
+	// August 2016 - Revision 013 - Document: 315168-013
+	// Appendix J on page. 152, Table J-1. TPM Family 1.2 NV Storage Matrix
 	tpm12PSIndex     = uint32(0x50000001)
 	tpm12PSIndexSize = uint32(54)
 	tpm12PSIndexAttr = tpm1.NVPerWriteSTClear // No attributes are set for TPM12 PS Index
@@ -30,6 +33,9 @@ const (
 	tpm12POIndexSize = uint32(54)
 	tpm12POIndexAttr = tpm1.NVPerOwnerWrite
 
+	// Intel Trusted Execution Technology Software Development Guide - Measured Launched Environment Developer’s Guide
+	// August 2016 - Revision 013 - Document: 315168-013
+	// Appendix J on page. 152, Table J-1. TPM Family 2.0 NV Storage Matrix
 	tpm20PSIndex         = 0x1C10103
 	tpm20PSIndexBaseSize = uint16(38)
 	tpm20PSIndexAttr     = tpm2.AttrPolicyWrite + tpm2.AttrPolicyDelete +
@@ -89,55 +95,76 @@ var (
 		Status:       Implemented,
 	}
 	testtpmnvramislocked = Test{
-		Name:         "TPM NVRAM is locked",
-		function:     TPMNVRAMIsLocked,
-		Required:     true,
-		dependencies: []*Test{&testtpmispresent},
-		Status:       Implemented,
+		Name:                    "TPM NVRAM is locked",
+		function:                TPMNVRAMIsLocked,
+		Required:                true,
+		dependencies:            []*Test{&testtpmispresent},
+		Status:                  Implemented,
+		SpecificationChapter:    "5.6.3.1 Failsafe Hash",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
 	testpsindexconfig = Test{
-		Name:         "PS Index has correct config",
-		function:     PSIndexConfig,
-		Required:     true,
-		dependencies: []*Test{&testtpmispresent},
-		Status:       Implemented,
+		Name:                    "PS Index has correct config",
+		function:                PSIndexConfig,
+		Required:                true,
+		dependencies:            []*Test{&testtpmispresent},
+		Status:                  Implemented,
+		SpecificationChapter:    "I TPM NV",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testauxindexconfig = Test{
-		Name:         "AUX Index has correct config",
-		function:     AUXIndexConfig,
-		Required:     true,
-		dependencies: []*Test{&testtpmispresent},
-		Status:       Implemented,
+		Name:                    "AUX Index has correct config",
+		function:                AUXIndexConfig,
+		Required:                true,
+		dependencies:            []*Test{&testtpmispresent},
+		Status:                  Implemented,
+		SpecificationChapter:    "I TPM NV",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testpoindexconfig = Test{
-		Name:         "PO Index has correct config",
-		function:     POIndexConfig,
-		Required:     false,
-		NonCritical:  true,
-		dependencies: []*Test{&testtpmispresent},
-		Status:       Implemented,
+		Name:                    "PO Index has correct config",
+		function:                POIndexConfig,
+		Required:                false,
+		NonCritical:             true,
+		dependencies:            []*Test{&testtpmispresent},
+		Status:                  Implemented,
+		SpecificationChapter:    "I TPM NV",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testpsindexissvalid = Test{
-		Name:         "PS index has valid LCP Policy",
-		function:     PSIndexHasValidLCP,
-		Required:     true,
-		dependencies: []*Test{&testtpmispresent},
-		Status:       Implemented,
+		Name:                    "PS index has valid LCP Policy",
+		function:                PSIndexHasValidLCP,
+		Required:                true,
+		dependencies:            []*Test{&testtpmispresent},
+		Status:                  Implemented,
+		SpecificationChapter:    "D.3 LCP_POLICY_LIST",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testpoindexissvalid = Test{
-		Name:         "PO index has valid LCP Policy",
-		function:     POIndexHasValidLCP,
-		Required:     true,
-		NonCritical:  true,
-		dependencies: []*Test{&testtpmispresent},
-		Status:       Implemented,
+		Name:                    "PO index has valid LCP Policy",
+		function:                POIndexHasValidLCP,
+		Required:                true,
+		NonCritical:             true,
+		dependencies:            []*Test{&testtpmispresent},
+		Status:                  Implemented,
+		SpecificationChapter:    "D.3 LCP_POLICY_LIST",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testpcr00valid = Test{
-		Name:         "PCR 0 is set correctly",
-		function:     PCR0IsSet,
-		Required:     true,
-		dependencies: []*Test{&testtpmispresent},
-		Status:       Implemented,
+		Name:                    "PCR 0 is set correctly",
+		function:                PCR0IsSet,
+		Required:                true,
+		dependencies:            []*Test{&testtpmispresent},
+		Status:                  Implemented,
+		SpecificationChapter:    "BIOS Startup Module (Type 0x07) Entry",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
 
 	// TestsTPM exposes the slice of pointers to tests regarding tpm functionality for txt
@@ -593,8 +620,8 @@ func PSIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		if pol1.Version >= tools.LCPPolicyVersion2 {
 			return false, fmt.Errorf("invalid policy version. Have %v - Want: smaller %v", pol1.Version, tools.LCPPolicyVersion2), nil
 		}
-		if pol1.HashAlg != 0 {
-			return false, fmt.Errorf("HashAlg is invalid. Must be equal 0"), nil
+		if pol1.HashAlg != tools.LCPPolHAlgSHA1 {
+			return false, fmt.Errorf("HashAlg is not 0 (SHA1). Must be equal 0"), nil
 		}
 		if pol1.PolicyType != tools.LCPPolicyTypeAny && pol1.PolicyType != tools.LCPPolicyTypeList {
 			return false, fmt.Errorf("PolicyType is invalid. Have: %v - Want: %v or %v", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil

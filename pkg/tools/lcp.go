@@ -72,7 +72,7 @@ const (
 	//LCPPolicyElementSTM2 as defined in Document 315168-016 Chapter D.4.9 LCP_STM_ELEMENT2
 	LCPPolicyElementSTM2 uint32 = 0x14
 
-	// LCPPolHAlgSHA1 FIXME
+	// LCPPolHAlgSHA1 Document 315168-016 Chapter D.1 LCP_POLICY
 	LCPPolHAlgSHA1 uint8 = 0
 )
 
