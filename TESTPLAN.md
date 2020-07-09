@@ -14,7 +14,7 @@ Id | Test | Implemented | Document | Chapter
 11 | IA32 debug interface isn't disabled              | :white_check_mark:     |                              |                                                         
 12 | TPM connection                                   | :white_check_mark:     |                              |                                                         
 13 | TPM 1.2 present                                  | :white_check_mark:     |                              |                                                         
-14 | TPM 2 is present                                 | :white_check_mark:     |                              |                                                         
+14 | TPM 2.0 is present                               | :white_check_mark:     |                              |                                                         
 15 | TPM is present                                   | :white_check_mark:     |                              |                                                         
 16 | TPM NVRAM is locked                              | :white_check_mark:     | Document 558294 Revision 2.0 | 5.6.3.1 Failsafe Hash                                   
 17 | PS Index has correct config                      | :white_check_mark:     | Document 315168-016          | I TPM NV                                                
