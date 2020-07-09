@@ -167,6 +167,38 @@ var (
 		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
 		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
+	testpsnpwmodenotactive = Test{
+		Name:                    "NPW mode is deactivated in PS policy",
+		function:                NPWModeIsNotSetInPS,
+		Required:                true,
+		dependencies:            []*Test{&testpsindexissvalid},
+		Status:                  Implemented,
+		SpecificationChapter:    "4.1.4 Supported Platform Configurations",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
+	}
+	testtxtmodeauto = Test{
+		Name:                    "Auto-promotion mode is active",
+		function:                AutoPromotionModeIsActive,
+		Required:                true,
+		dependencies:            []*Test{&testpsindexissvalid},
+		Status:                  Implemented,
+		NonCritical:             true,
+		SpecificationChapter:    "5.6.2 Autopromotion Hash and Signed BIOS Policy",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
+	}
+	testtxtmodesignedpolicy = Test{
+		Name:                    "Signed policy mode is active",
+		function:                SignedPolicyModeIsActive,
+		Required:                true,
+		dependencies:            []*Test{&testpsindexissvalid},
+		Status:                  Implemented,
+		NonCritical:             true,
+		SpecificationChapter:    "5.6.2 Autopromotion Hash and Signed BIOS Policy",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
+	}
 
 	// TestsTPM exposes the slice of pointers to tests regarding tpm functionality for txt
 	TestsTPM = [...]*Test{
@@ -181,6 +213,9 @@ var (
 		&testpsindexissvalid,
 		&testpoindexissvalid,
 		&testpcr00valid,
+		&testpsnpwmodenotactive,
+		&testtxtmodeauto,
+		&testtxtmodesignedpolicy,
 	}
 )
 
@@ -518,68 +553,10 @@ func POIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 // PSIndexHasValidLCP checks if PS Index has a valid LCP
 func PSIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	var pol1 *tools.LCPPolicy
-	var pol2 *tools.LCPPolicy2
 	emptyHash := make([]byte, 20)
-	switch tpmCon.Version {
-	case tss.TPMVersion12:
-		data, err := txtAPI.NVReadValue(tpmCon, tpm12PSIndex, "", tpm12PSIndexSize, 0)
-		if err != nil {
-			return false, nil, err
-		}
-		pol1, pol2, err = tools.ParsePolicy(data)
-		if err != nil {
-			return false, nil, err
-		}
-	case tss.TPMVersion20:
-		var d tpm2.NVPublic
-		var raw []byte
-		var err error
-		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm20PSIndex)
-		if err != nil {
-			return false, nil, err
-		}
-		buf := bytes.NewReader(raw)
-		err = binary.Read(buf, binary.BigEndian, &d.NVIndex)
-		if err != nil {
-			return false, nil, err
-		}
-		err = binary.Read(buf, binary.BigEndian, &d.NameAlg)
-		if err != nil {
-			return false, nil, err
-		}
-		err = binary.Read(buf, binary.BigEndian, &d.Attributes)
-		if err != nil {
-			return false, nil, err
-		}
-		// Helper valiable hashSize- go-tpm2 does not implement proper structure
-		var hashSize uint16
-		err = binary.Read(buf, binary.BigEndian, &hashSize)
-		if err != nil {
-			return false, nil, err
-		}
-		// Uses hashSize to make the right sized slice to read the hash
-		hashData := make([]byte, hashSize)
-		err = binary.Read(buf, binary.BigEndian, &hashData)
-		if err != nil {
-			return false, nil, err
-		}
-		err = binary.Read(buf, binary.BigEndian, &d.DataSize)
-		if err != nil {
-			return false, nil, err
-		}
-
-		data, err := txtAPI.NVReadValue(tpmCon, tpm20PSIndex, "", uint32(d.DataSize), tpm20PSIndex)
-		if err != nil {
-			if strings.Contains(err.Error(), tpm20NVIndexNotSet) {
-				return true, fmt.Errorf("PS index not set"), nil
-			}
-			return false, nil, fmt.Errorf("error: %v, pubdata: %v", err, d)
-		}
-		pol1, pol2, err = tools.ParsePolicy(data)
-		if err != nil {
-			return false, nil, err
-		}
+	pol1, pol2, err := readPSLCPPolicy(txtAPI)
+	if err != nil {
+		return false, err, nil
 	}
 	if pol1 != nil {
 		if pol1.Version >= tools.LCPPolicyVersion2 {
@@ -620,9 +597,6 @@ func PSIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		}
 		if pol2.PolicyType != tools.LCPPolicyTypeAny && pol1.PolicyType != tools.LCPPolicyTypeList {
 			return false, fmt.Errorf("PolicyType is invalid. Have: %v - Want: %v or %v", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
-		}
-		if pol2.PolicyControl == 0 {
-			return false, fmt.Errorf("PolicyControl is invalid. Must be greater than 0"), nil
 		}
 		if pol2.LcpHashAlgMask == 0 {
 			return false, fmt.Errorf("LcpHashAlgMask is invalid. Must be greater than 0"), nil
@@ -746,9 +720,6 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		if pol2.PolicyType != tools.LCPPolicyTypeAny && pol1.PolicyType != tools.LCPPolicyTypeList {
 			return false, fmt.Errorf("PolicyType is invalid. Have: %v - Want: %v or %v", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
 		}
-		if pol2.PolicyControl == 0 {
-			return false, fmt.Errorf("PolicyControl is invalid. Must be greater than 0"), nil
-		}
 		if pol2.LcpHashAlgMask == 0 {
 			return false, fmt.Errorf("LcpHashAlgMask is invalid. Must be greater than 0"), nil
 		}
@@ -774,4 +745,129 @@ func PCR0IsSet(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 func checkTPM2NVAttr(mask, want, optional tpm2.NVAttr) bool {
 	return (1 >> mask & (want | optional)) == 0
+}
+
+func readPSLCPPolicy(txtAPI hwapi.APIInterfaces) (*tools.LCPPolicy, *tools.LCPPolicy2, error) {
+	var pol1 *tools.LCPPolicy
+	var pol2 *tools.LCPPolicy2
+
+	switch tpmCon.Version {
+	case tss.TPMVersion12:
+		data, err := txtAPI.NVReadValue(tpmCon, tpm12PSIndex, "", tpm12PSIndexSize, 0)
+		if err != nil {
+			if strings.Contains(err.Error(), tpm12NVIndexNotSet) {
+				return nil, nil, err
+			}
+			return nil, nil, err
+		}
+		pol1, pol2, err = tools.ParsePolicy(data)
+		if err != nil {
+			return nil, nil, err
+		}
+	case tss.TPMVersion20:
+		var d tpm2.NVPublic
+		var raw []byte
+		var err error
+		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm20PSIndex)
+		if err != nil {
+			if strings.Contains(err.Error(), tpm2NVPublicNotSet) {
+				return nil, nil, fmt.Errorf("PS index not set")
+			}
+			return nil, nil, err
+		}
+		buf := bytes.NewReader(raw)
+		err = binary.Read(buf, binary.BigEndian, &d.NVIndex)
+		if err != nil {
+			return nil, nil, err
+		}
+		err = binary.Read(buf, binary.BigEndian, &d.NameAlg)
+		if err != nil {
+			return nil, nil, err
+		}
+		err = binary.Read(buf, binary.BigEndian, &d.Attributes)
+		if err != nil {
+			return nil, nil, err
+		}
+		// Helper valiable hashSize- go-tpm2 does not implement proper structure
+		var hashSize uint16
+		err = binary.Read(buf, binary.BigEndian, &hashSize)
+		if err != nil {
+			return nil, nil, err
+		}
+		// Uses hashSize to make the right sized slice to read the hash
+		hashData := make([]byte, hashSize)
+		err = binary.Read(buf, binary.BigEndian, &hashData)
+		if err != nil {
+			return nil, nil, err
+		}
+		err = binary.Read(buf, binary.BigEndian, &d.DataSize)
+		if err != nil {
+			return nil, nil, err
+		}
+		size := uint16(crypto.Hash(d.NameAlg).Size()) + tpm20PSIndexBaseSize
+
+		data, err := txtAPI.NVReadValue(tpmCon, tpm20PSIndex, "", uint32(size), tpm20PSIndex)
+		pol1, pol2, err = tools.ParsePolicy(data)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	return pol1, pol2, nil
+}
+
+// NPWModeIsNotSetInPS checks if NPW is activated or not
+func NPWModeIsNotSetInPS(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	pol1, pol2, err := readPSLCPPolicy(txtAPI)
+	if err != nil {
+		return false, err, nil
+	}
+	if pol1 != nil {
+		if pol1.ParsePolicyControl().NPW {
+			return false, fmt.Errorf("NPW mode is activated"), nil
+		}
+	}
+	if pol2 != nil {
+		if pol2.ParsePolicyControl2().NPW {
+			return false, fmt.Errorf("NPW mode is activated"), nil
+		}
+	}
+	return true, nil, nil
+}
+
+// AutoPromotionModeIsActive checks if TXT is in auto-promotion mode
+func AutoPromotionModeIsActive(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	pol1, pol2, err := readPSLCPPolicy(txtAPI)
+	if err != nil {
+		return false, err, nil
+	}
+	if pol1 != nil {
+		if pol1.PolicyType != tools.LCPPolicyTypeAny {
+			return false, fmt.Errorf("Signed Policy mode active"), nil
+		}
+	}
+	if pol2 != nil {
+		if pol2.PolicyType != tools.LCPPolicyTypeAny {
+			return false, fmt.Errorf("Signed Policy mode active"), nil
+		}
+	}
+	return true, nil, nil
+}
+
+// SignedPolicyModeIsActive checks if TXT is in signed policy mode
+func SignedPolicyModeIsActive(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	pol1, pol2, err := readPSLCPPolicy(txtAPI)
+	if err != nil {
+		return false, err, nil
+	}
+	if pol1 != nil {
+		if pol1.PolicyType != tools.LCPPolicyTypeList {
+			return false, fmt.Errorf("Auto-promotion mode active"), nil
+		}
+	}
+	if pol2 != nil {
+		if pol2.PolicyType != tools.LCPPolicyTypeList {
+			return false, fmt.Errorf("Auto-promotion mode active"), nil
+		}
+	}
+	return true, nil, nil
 }

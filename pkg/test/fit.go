@@ -71,13 +71,11 @@ var (
 		SpecificiationTitle:     IntelFITSpecificationTitle,
 		SpecificationDocumentID: IntelFITSpecificationDocumentID,
 	}
-	// Not mandatory, LCP_POLICY_DATA file may be supplied by GRUB to TBOOT
 	testhaslcpTest = Test{
-		Name:         "LCP Policy entry in FIT",
+		Name:         "BIOS Policy entry in FIT",
 		Required:     false,
-		NonCritical:  true,
 		function:     HasBIOSPolicy,
-		dependencies: []*Test{&testhasfit},
+		dependencies: []*Test{&testhasfit, &testtxtmodesignedpolicy},
 		Status:       Implemented,
 	}
 	testibbcoversresetvector = Test{
@@ -197,6 +195,16 @@ var (
 		SpecificiationTitle:     IntelTXTSpecificationTitle,
 		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
+	testacmsfornpw = Test{
+		Name:                    "SINIT/BIOS ACM has no NPW flag set",
+		Required:                true,
+		function:                SINITandBIOSACMnoNPW,
+		dependencies:            []*Test{&testhasfit, &testhasbiosacm},
+		Status:                  Implemented,
+		SpecificationChapter:    "4.1.4 Supported Platform Configurations",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
+	}
 
 	// TestsFIT exports the Slice with FIT tests
 	TestsFIT = [...]*Test{
@@ -217,6 +225,7 @@ var (
 		&testbiosacmaligmentcorrect,
 		&testbiosacmmatcheschipset,
 		&testbiosacmmatchescpu,
+		&testacmsfornpw,
 	}
 )
 
@@ -604,4 +613,39 @@ func biosACM(txtAPI hwapi.APIInterfaces, fit []tools.FitEntry) (*tools.ACM, *too
 	}
 
 	return nil, nil, nil, nil, fmt.Errorf("no BIOS ACM in FIT"), nil
+}
+
+// SINITandBIOSACMnoNPW checks that in BIOS integrated ACMs (SINIT, BIOS) are production worthy
+func SINITandBIOSACMnoNPW(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	biosACMs, _, _, _, err, internalerr := biosACM(txtAPI, fit)
+	if internalerr != nil {
+		return false, nil, internalerr
+	}
+	if err != nil {
+		return false, err, nil
+	}
+	biosACMFlags := biosACMs.Header.ParseACMFlags()
+	if biosACMFlags.PreProduction || biosACMFlags.DebugSigned {
+		return false, fmt.Errorf("BIOS ACM is either debug signed or NPW"), nil
+	}
+	buf, err := tools.FetchTXTRegs(txtAPI)
+	if err != nil {
+		return false, nil, err
+	}
+	regs, err := tools.ParseTXTRegs(buf)
+	if err != nil {
+		return false, nil, err
+	}
+	sinitACMs, _, _, _, err, internalerr := sinitACM(txtAPI, regs)
+	if internalerr != nil {
+		return false, nil, internalerr
+	}
+	if err != nil {
+		return false, err, nil
+	}
+	sinitACMFlags := sinitACMs.Header.ParseACMFlags()
+	if sinitACMFlags.PreProduction || sinitACMFlags.DebugSigned {
+		return false, fmt.Errorf("SINIT ACM is either debug signed or NPW"), nil
+	}
+	return true, nil, nil
 }
