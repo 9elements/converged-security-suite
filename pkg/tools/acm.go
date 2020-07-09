@@ -174,6 +174,13 @@ type ACM struct {
 	Info    ACMInfo
 }
 
+// ACMFlags exports the ACM header flags
+type ACMFlags struct {
+	Production    bool
+	PreProduction bool
+	DebugSigned   bool
+}
+
 // ParseACMHeader exports the functionality of parsing an ACM Header
 func ParseACMHeader(data []byte) (*ACMHeader, error) {
 	var acm ACMHeader
@@ -308,6 +315,15 @@ func LookupSize(header []byte) (int64, error) {
 	}
 
 	return int64(acmSize * 4), nil
+}
+
+// ParseACMFlags parses the ACM Header flags
+func (a *ACMHeader) ParseACMFlags() *ACMFlags {
+	var flags ACMFlags
+	flags.Production = (a.Flags>>15)&1 == 0 && (a.Flags>>14)&1 == 0
+	flags.PreProduction = (a.Flags>>14)&1 != 0
+	flags.DebugSigned = (a.Flags>>15)&1 != 0
+	return &flags
 }
 
 //PrettyPrint prints a human readable representation of the ACMHeader
