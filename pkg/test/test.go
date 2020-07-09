@@ -21,6 +21,16 @@ const (
 	IntelTXTSpecificationTitle = "Intel Trusted Execution Technology (Intel TXT)"
 	//IntelTXTSpecificationDocumentID the document ID of Intel TXT Specification
 	IntelTXTSpecificationDocumentID = "315168-016"
+
+	//ServerGrantleyPlatformSpecificationTitle is the title of the ACM_Errors.xls
+	ServerGrantleyPlatformSpecificationTitle = "TXT error description file for Server Grantley Platform"
+	//ServerGrantleyPlatformDocumentID is an empty string
+	ServerGrantleyPlatformDocumentID = ""
+
+	//CBtGTXTPlatformSpecificationTitle is the title of the ACM_Errors.xls
+	CBtGTXTPlatformSpecificationTitle = "TXT error description file for Converged BtG / TXT  platform"
+	//CBtGTXTPlatformDocumentID is an empty string
+	CBtGTXTPlatformDocumentID = ""
 )
 
 // Result exposes the type for test results
