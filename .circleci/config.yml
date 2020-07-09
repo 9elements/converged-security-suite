@@ -25,6 +25,12 @@ jobs:
       - run: go test ./pkg/tools/
       - run: go test ./pkg/test/
       - run: mkdir out
+      - run: git config user.email "circleci@circleci.com"
+      - run: git config user.name "CI"
+      - run: ./txt-suite -m > TESTPLAN.md
+      - run: git add TESTPLAN.md
+      - run: git commit -m "Update testplan file" || true
+      - run: git push --set-upstream origin ${CIRCLE_BRANCH} 
       - run: cp txt-suite out/
 
       - persist_to_workspace:
