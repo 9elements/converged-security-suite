@@ -80,10 +80,10 @@ var (
 		Status:       Implemented,
 	}
 	testtpm2present = Test{
-		Name:         "TPM 2 is present",
+		Name:         "TPM 2.0 is present",
 		Required:     false,
 		NonCritical:  true,
-		function:     TPM2Present,
+		function:     TPM20Present,
 		dependencies: []*Test{&testtpmconnection},
 		Status:       Implemented,
 	}
@@ -206,8 +206,8 @@ func TPM12Present(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	return false, nil, fmt.Errorf("unknown TPM version: %v ", tpmCon.Version)
 }
 
-// TPM2Present Checks if TPM 2.0 is present and answers to GetCapability
-func TPM2Present(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+// TPM20Present Checks if TPM 2.0 is present and answers to GetCapability
+func TPM20Present(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
 		return false, fmt.Errorf("No TPM 1.2 device"), nil
