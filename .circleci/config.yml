@@ -38,6 +38,41 @@ jobs:
           paths:
             - txt-suite
 
+  create_deb_rpm:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.13
+
+    working_directory: /go/src/github.com/9elements/txt-suite
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/out
+      - run: go get github.com/goreleaser/nfpm/cmd/nfpm@v1.3.2
+      - run: go build github.com/goreleaser/nfpm/cmd/nfpm
+      - run: cp /tmp/out/txt-suite .
+      - run: if [ -z "$CIRCLE_TAG" ]; then echo "export CIRCLE_TAG=$(git describe --tags|cut -d'-' -f1);" >> $BASH_ENV; fi
+      - run: if [ -z "$CIRCLE_BUILD_NUM" ]; then echo "export CIRCLE_BUILD_NUM=$(git describe --tags|cut -d'-' -f2);" >> $BASH_ENV; fi
+      - run: MY_APP_VERSION=${CIRCLE_TAG} MY_APP_BUILDNUMBER=${CIRCLE_BUILD_NUM} go run github.com/goreleaser/nfpm/cmd/nfpm pkg --config nfpm_rpm.yaml --target golang-txt-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}.x86_64.rpm
+      - run: MY_APP_VERSION=${CIRCLE_TAG} MY_APP_BUILDNUMBER=${CIRCLE_BUILD_NUM} go run github.com/goreleaser/nfpm/cmd/nfpm pkg --config nfpm_deb.yaml --target go_txt-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}_amd64.deb
+      - run: mkdir -p out && cp *.rpm ./out/ && cp *.deb ./out/
+      - run: cp txt-suite ./out/
+      - run: cp golang-txt-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}.x86_64.rpm artifact.rpm
+      - run: cp go_txt-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}_amd64.deb artifact.deb
+      - persist_to_workspace:
+          root: out
+          paths:
+            - golang-txt-suite*.rpm
+            - go_txt-suite*.deb
+            - txt-suite
+      - store_artifacts:
+          path: artifact.rpm
+          destination: golang-txt-suite.rpm
+      - store_artifacts:
+          path: artifact.deb
+          destination: golang-txt-suite.deb
+
+
   publish-github-release:
     docker:
       - image: cibuilds/github:0.10
@@ -49,7 +84,7 @@ jobs:
       - run:
           name: "Publish Release on GitHub"
           command: |
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete 1.0 /tmp/out/txt-suite
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete 1.0 /tmp/out/txt-suite /tmp/out/*.deb /tmp/out/*.rpm
 
 workflows:
   version: 2
@@ -59,9 +94,13 @@ workflows:
           filters:
             branches:
               only: /.*/
+      - create_deb_rpm:
+          requires:
+            - build
       - publish-github-release:
           requires:
             - build
+            - create_deb_rpm
           filters:
             tags:
               # vX.Y.Z

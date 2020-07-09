@@ -1,0 +1,22 @@
+name: "txtsuite"
+arch: "x86_64"
+platform: "linux"
+version: "${MY_APP_VERSION}"
+release: "${MY_APP_BUILDNUMBER}"
+section: "default"
+priority: "extra"
+replaces:
+- golang-github-txtsuite
+provides:
+- golang-github-txtsuite
+maintainer: "9elements GmbH <cybersecurity@9elements.com>"
+description: |
+  This Golang utility tests whether the platform supports Intel TXT and FIT, TPM
+  boot chain has been configured correctly under x86_64 linux.
+  The only supported architecture is x86_64.
+
+vendor: "9elements GmbH"
+homepage: "https://9esec.io"
+license: "MIT"
+files:
+  ./txt-suite: "/usr/bin/txt-suite"
