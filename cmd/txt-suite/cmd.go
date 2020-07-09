@@ -78,6 +78,8 @@ func listTestsAsMarkdown() {
 	var teststate string
 	tests := getTests()
 
+	fmt.Println("Id | Test | Implemented | Document | Chapter")
+	fmt.Println("------------|------------|------------|------------|------------")
 	for i := range tests {
 		if tests[i].Status == test.Implemented {
 			teststate = ":white_check_mark:"
@@ -90,7 +92,7 @@ func listTestsAsMarkdown() {
 		if docID != "" {
 			docID = "Document " + docID
 		}
-		fmt.Printf("| %02d | %-48s | %-22s | %-28s | %-56s |\n", i, tests[i].Name, teststate, docID, tests[i].SpecificationChapter)
+		fmt.Printf("%02d | %-48s | %-22s | %-28s | %-56s\n", i, tests[i].Name, teststate, docID, tests[i].SpecificationChapter)
 	}
 }
 
