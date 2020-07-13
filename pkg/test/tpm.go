@@ -63,7 +63,8 @@ const (
 )
 
 var (
-	tpmCon *tss.TPM
+	tpmCon                *tss.TPM
+	tpm20AUXIndexHashData = []byte{0xEF, 0x9A, 0x26, 0xFC, 0x22, 0xD1, 0xAE, 0x8C, 0xEC, 0xFF, 0x59, 0xE9, 0x48, 0x1A, 0xC1, 0xEC, 0x53, 0x3D, 0xBE, 0x22, 0x8B, 0xEC, 0x6D, 0x17, 0x93, 0x0F, 0x4C, 0xB2, 0xCC, 0x5B, 0x97, 0x24}
 
 	testtpmconnection = Test{
 		Name:     "TPM connection",
@@ -119,6 +120,17 @@ var (
 		Name:                    "AUX Index has correct config",
 		function:                AUXIndexConfig,
 		Required:                true,
+		dependencies:            []*Test{&testtpmispresent},
+		Status:                  Implemented,
+		SpecificationChapter:    "I TPM NV",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
+	}
+	testauxindexhashdata = Test{
+		Name:                    "AUX Index has the correct hash",
+		function:                AUXTPM2IndexCheckHash,
+		Required:                true,
+		NonCritical:             false,
 		dependencies:            []*Test{&testtpmispresent},
 		Status:                  Implemented,
 		SpecificationChapter:    "I TPM NV",
@@ -209,6 +221,7 @@ var (
 		&testtpmnvramislocked,
 		&testpsindexconfig,
 		&testauxindexconfig,
+		&testauxindexhashdata,
 		&testpoindexconfig,
 		&testpsindexissvalid,
 		&testpoindexissvalid,
@@ -466,6 +479,58 @@ func AUXIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		return true, nil, nil
 	}
 	return false, fmt.Errorf("not supported TPM device"), nil
+}
+
+// AUXTPM2IndexCheckHash checks the PolicyHash of AUX index
+func AUXTPM2IndexCheckHash(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	switch tpmCon.Version {
+	case tss.TPMVersion12:
+		return false, fmt.Errorf("Only valid for TPM 2.0"), nil
+	case tss.TPMVersion20:
+		var d tpm2.NVPublic
+		raw, err := txtAPI.ReadNVPublic(tpmCon, tpm20AUXIndex)
+		if err != nil {
+			if strings.Contains(err.Error(), tpm20NVIndexNotSet) {
+				return false, fmt.Errorf("PS indices not set"), err
+			}
+			return false, nil, err
+		}
+		buf := bytes.NewReader(raw)
+		err = binary.Read(buf, binary.BigEndian, &d.NVIndex)
+		if err != nil {
+			return false, nil, err
+		}
+		err = binary.Read(buf, binary.BigEndian, &d.NameAlg)
+		if err != nil {
+			return false, nil, err
+		}
+		err = binary.Read(buf, binary.BigEndian, &d.Attributes)
+		if err != nil {
+			return false, nil, err
+		}
+		// Helper valiable hashSize- go-tpm2 does not implement proper structure
+		var hashSize uint16
+		err = binary.Read(buf, binary.BigEndian, &hashSize)
+		if err != nil {
+			return false, nil, err
+		}
+		// Uses hashSize to make the right sized slice to read the hash
+		hashData := make([]byte, hashSize)
+		err = binary.Read(buf, binary.BigEndian, &hashData)
+		if err != nil {
+			return false, nil, err
+		}
+		err = binary.Read(buf, binary.BigEndian, &d.DataSize)
+		if err != nil {
+			return false, nil, err
+		}
+
+		if bytes.Equal(hashData, tpm20AUXIndexHashData) {
+			return true, nil, nil
+		}
+		return false, nil, nil
+	}
+	return false, fmt.Errorf("Unknown TPM device version"), nil
 }
 
 // POIndexConfig checks the PO index configuration
