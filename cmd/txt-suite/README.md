@@ -9,9 +9,9 @@ The only supported architecture is x86_64.
 
 Prerequisites for Usage
 -----------------------
-**Supported OS:** Any Linux distribution
+Supported OS: Any Linux distribution
 
-**Hardware Config:** Provisionend Trusted Platform Module, JTAG disabled
+Hardware Config: Provisionend Trusted Platform Module, JTAG disabled
 
 **1. Get the kernel command-line right and enable relaxed memory access on /dev/mem and IOMMU.**
 
