@@ -15,6 +15,8 @@ Hardware Config: Provisionend Trusted Platform Module, JTAG disabled
 
 **1. Get the kernel command-line right and enable relaxed memory access on /dev/mem and IOMMU.**
 
+Add this line to your kernel configuration and then reboot.
+
 ```bash
 iomem=relaxed intel_iommu=on
 ```
