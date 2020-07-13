@@ -7,27 +7,28 @@ The only supported architecture is x86_64.
 
 [![GitHub Releases](https://img.shields.io/github/downloads/9elements/converged-security-suite/v2.0/total?label=Download%20v2.0&style=for-the-badge)](https://github.com/9elements/converged-security-suite/releases/latest/download/txt-suite)
 
-Prequesites
------------
+Prerequisites for Usage
+-----------------------
+**Supported OS:** Any Linux distribution
+**Hardware Config:** Provisionend Trusted Platform Module, JTAG disabled
 
-The test suite runs on GNU/Linux and needs access to physical memory. Nowadays
-most GNU/Linux distributions limit of forbid that. If you get an error on the
-lines of "cannot read from /dev/mem: operation not permitted" you may have to
-add the following to the kernel command line:
+1. Get the kernel command-line right and enable relaxed memory access on /dev/mem and IOMMU.
 
 ```bash
 iomem=relaxed intel_iommu=on
 ```
 
-If that does not help get, compile and load the
+If that does not work get, compile and load the
 [`fmem`](https://github.com/9elements/fmem) kernel module.
 
-Prepare the environment:
+2. Load the MSR kernel module.
 
 Load the *msr* kernel module:
 ```bash
 modprobe msr
 ```
+
+3. Check TPM driver is running and TSS is disabled.
 
 If /dev/tpm0 doesn't exist, load the *TPM* kernel module:
 ```bash
@@ -37,6 +38,12 @@ modprobe tpm_tis
 Stop the *tpm2-abrmd.service* if running:
 ```bash
 systemctl stop tpm2-abrmd.service
+```
+
+4. Execute the txt-suite.
+
+```bash
+sudo chmod +x txt-suite && sudo ./txt-suite
 ```
 
 How to Compile
