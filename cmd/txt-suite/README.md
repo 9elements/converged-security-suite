@@ -5,12 +5,10 @@ This Golang utility tests whether the platform supports Intel TXT and FIT, TPM
 boot chain has been configured correctly under x86_64 linux.
 The only supported architecture is x86_64.
 
-Using Go Modules => needs GO Version >= 1.11
-
 [![GitHub Releases](https://img.shields.io/github/downloads/9elements/converged-security-suite/v2.0/total?label=Download%20v2.0&style=for-the-badge)](https://github.com/9elements/converged-security-suite/releases/latest/download/txt-suite)
 
-Usage
------
+Prequesites
+-----------
 
 The test suite runs on GNU/Linux and needs access to physical memory. Nowadays
 most GNU/Linux distributions limit of forbid that. If you get an error on the
@@ -41,7 +39,10 @@ Stop the *tpm2-abrmd.service* if running:
 systemctl stop tpm2-abrmd.service
 ```
 
-For GO 1.11 you need to:
+How to Compile
+--------------
+
+Get Golang >=1.11 and export:
 ```
 export GO111MODULE=on
 ```
