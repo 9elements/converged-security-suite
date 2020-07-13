@@ -10,4 +10,4 @@ Build Status
 Tooling & API
 -------------
 
-[Intel TXT Test Suite](cmd/txt-suite/README.md) - Test Suite for Intel Trusted Execution Technology validation.
+[Intel TXT Test Suite](cmd/txt-suite) - Test Suite for Intel Trusted Execution Technology validation.
