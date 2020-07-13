@@ -7,6 +7,8 @@ The only supported architecture is x86_64.
 
 Using Go Modules => needs GO Version >= 1.11
 
+[![GitHub Releases](https://img.shields.io/github/downloads/9elements/converged-security-suite/v2.0/total?label=Download%20v2.0&style=for-the-badge)](https://github.com/9elements/converged-security-suite/releases/latest/download/txt-suite)
+
 Usage
 -----
 
