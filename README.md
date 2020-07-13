@@ -7,7 +7,7 @@ Build Status
 ------------
 [![CircleCI](https://circleci.com/gh/9elements/converged-security-suite.svg?style=svg)](https://circleci.com/gh/9elements/converged-security-suite)
 
-Tooling
--------
+Tooling & API
+-------------
 
 [Intel TXT Test Suite](cmd/txt-suite/README.md) - Test Suite for Intel Trusted Execution Technology validation.
