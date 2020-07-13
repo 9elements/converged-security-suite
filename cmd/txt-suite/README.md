@@ -10,9 +10,10 @@ The only supported architecture is x86_64.
 Prerequisites for Usage
 -----------------------
 **Supported OS:** Any Linux distribution
+
 **Hardware Config:** Provisionend Trusted Platform Module, JTAG disabled
 
-1. Get the kernel command-line right and enable relaxed memory access on /dev/mem and IOMMU.
+**1. Get the kernel command-line right and enable relaxed memory access on /dev/mem and IOMMU.**
 
 ```bash
 iomem=relaxed intel_iommu=on
@@ -21,14 +22,14 @@ iomem=relaxed intel_iommu=on
 If that does not work get, compile and load the
 [`fmem`](https://github.com/9elements/fmem) kernel module.
 
-2. Load the MSR kernel module.
+**2. Load the MSR kernel module.**
 
 Load the *msr* kernel module:
 ```bash
 modprobe msr
 ```
 
-3. Check TPM driver is running and TSS is disabled.
+**3. Check TPM driver is running and TSS is disabled.**
 
 If /dev/tpm0 doesn't exist, load the *TPM* kernel module:
 ```bash
@@ -40,7 +41,7 @@ Stop the *tpm2-abrmd.service* if running:
 systemctl stop tpm2-abrmd.service
 ```
 
-4. Execute the txt-suite.
+**4. Execute the txt-suite.**
 
 ```bash
 sudo chmod +x txt-suite && sudo ./txt-suite
