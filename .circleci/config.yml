@@ -29,8 +29,7 @@ jobs:
       - run: git config user.name "CI"
       - run: ./txt-suite -m > TESTPLAN.md
       - run: git add TESTPLAN.md
-      - run: git commit -m "Update testplan file" || true
-      - run: git push --set-upstream origin ${CIRCLE_BRANCH} 
+      - run: (git commit -m "Update testplan file" && git push --set-upstream origin ${CIRCLE_BRANCH}) || true
       - run: cp txt-suite out/
 
       - persist_to_workspace:
@@ -84,7 +83,7 @@ jobs:
       - run:
           name: "Publish Release on GitHub"
           command: |
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete 1.0 /tmp/out/txt-suite /tmp/out/*.deb /tmp/out/*.rpm
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -draft -delete ${CIRCLE_TAG} /tmp/out/
 
 workflows:
   version: 2
@@ -94,9 +93,16 @@ workflows:
           filters:
             branches:
               only: /.*/
+            tags:
+              only: /.*/
       - create_deb_rpm:
           requires:
             - build
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              only: /.*/
       - publish-github-release:
           requires:
             - build
