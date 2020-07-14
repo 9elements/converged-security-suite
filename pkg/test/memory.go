@@ -3,8 +3,8 @@ package test
 import (
 	"fmt"
 
-	"github.com/9elements/txt-suite/pkg/hwapi"
-	"github.com/9elements/txt-suite/pkg/tools"
+	"github.com/9elements/converged-security-suite/pkg/hwapi"
+	"github.com/9elements/converged-security-suite/pkg/tools"
 )
 
 var (

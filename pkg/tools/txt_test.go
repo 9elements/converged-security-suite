@@ -3,7 +3,7 @@ package tools
 import (
 	"testing"
 
-	"github.com/9elements/txt-suite/pkg/hwapi"
+	"github.com/9elements/converged-security-suite/pkg/hwapi"
 )
 
 func TestTXT(t *testing.T) {

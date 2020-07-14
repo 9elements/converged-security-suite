@@ -9,8 +9,8 @@ import (
 	"os"
 	"sort"
 
-	"github.com/9elements/txt-suite/pkg/hwapi"
-	"github.com/9elements/txt-suite/pkg/test"
+	"github.com/9elements/converged-security-suite/pkg/hwapi"
+	"github.com/9elements/converged-security-suite/pkg/test"
 	a "github.com/logrusorgru/aurora"
 )
 

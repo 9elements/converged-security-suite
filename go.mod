@@ -1,4 +1,4 @@
-module github.com/9elements/txt-suite
+module github.com/9elements/converged-security-suite
 
 go 1.11
 

@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/9elements/converged-security-suite/pkg/hwapi"
+	"github.com/9elements/converged-security-suite/pkg/tools"
 	tss "github.com/9elements/go-tss"
-	"github.com/9elements/txt-suite/pkg/hwapi"
-	"github.com/9elements/txt-suite/pkg/tools"
 	tpm1 "github.com/google/go-tpm/tpm"
 	tpm2 "github.com/google/go-tpm/tpm2"
 )
