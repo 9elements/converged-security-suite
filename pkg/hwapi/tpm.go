@@ -37,6 +37,9 @@ func (t TxtAPI) NVLocked(tpmCon *tss.TPM) (bool, error) {
 		return res, nil
 	case tss.TPMVersion20:
 		err = tpm2.HierarchyChangeAuth(tpmCon.RWC, tpm2.HandlePlatform, tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession}, string(tpm2.EmptyAuth))
+		if err == nil {
+			return false, err
+		}
 		res = strings.Contains(err.Error(), tpm2LockedResult)
 		if res != true {
 			return res, err
