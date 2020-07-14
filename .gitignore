@@ -1,3 +1,5 @@
 /txt-suite
+/txt-prov
+cmd/txt-prov/txt-prov
 cmd/txt-suite/test_log.json
 cmd/txt-suite/txt-suite
