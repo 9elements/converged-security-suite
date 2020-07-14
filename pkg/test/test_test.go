@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/9elements/txt-suite/pkg/hwapi"
+	"github.com/9elements/converged-security-suite/pkg/hwapi"
 )
 
 func TestTest_Run(t *testing.T) {
