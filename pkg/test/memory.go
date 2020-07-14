@@ -270,7 +270,10 @@ func TXTReservedInE820(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		return false, nil, err
 	}
 
-	return heapReserved && sinitReserved, nil, nil
+	if heapReserved && sinitReserved {
+		return true, nil, nil
+	}
+	return false, fmt.Errorf("HEAP/;SEG/SINIT TXT regions are NOT marked as reserved. HeapReserve: %v - SINITReserved: %v", heapReserved, sinitReserved), nil
 }
 
 // TXTMemoryIsDPR checks if the TXT DPR protects TXT memory.
@@ -371,7 +374,6 @@ func HostbridgeDPRisLocked(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	if !hostbridgeDpr.Lock {
 		return false, fmt.Errorf("Hostbridge DPR isn't locked"), nil
 	}
-
 	return true, nil, nil
 }
 
