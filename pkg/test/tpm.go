@@ -248,21 +248,17 @@ func TPM12Present(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
 		return true, nil, nil
-	case tss.TPMVersion20:
-		return false, fmt.Errorf("No TPM 2.0 device"), nil
 	}
-	return false, nil, fmt.Errorf("unknown TPM version: %v ", tpmCon.Version)
+	return false, fmt.Errorf("No TPM1.2 device detected"), nil
 }
 
 // TPM20Present Checks if TPM 2.0 is present and answers to GetCapability
 func TPM20Present(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	switch tpmCon.Version {
-	case tss.TPMVersion12:
-		return false, fmt.Errorf("No TPM 1.2 device"), nil
 	case tss.TPMVersion20:
 		return true, nil, nil
 	}
-	return false, nil, fmt.Errorf("unknown TPM version: %v ", tpmCon.Version)
+	return false, fmt.Errorf("No TPM2.0 device detected"), nil
 }
 
 // TPMIsPresent validates if one of the two previous tests succeeded
@@ -528,7 +524,7 @@ func AUXTPM2IndexCheckHash(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		if bytes.Equal(hashData, tpm20AUXIndexHashData) {
 			return true, nil, nil
 		}
-		return false, nil, nil
+		return false, fmt.Errorf("AUX index has a incorrect PolicyHash. Have: %v - Want: %v", hashData, tpm20AUXIndexHashData), nil
 	}
 	return false, fmt.Errorf("Unknown TPM device version"), nil
 }
@@ -567,7 +563,7 @@ func POIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm20POIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm2NVPublicNotSet) {
-				return true, fmt.Errorf("PO index not set"), nil
+				return false, fmt.Errorf("PO index not set"), nil
 			}
 			return false, nil, err
 		}
@@ -613,7 +609,7 @@ func POIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 			return false, fmt.Errorf("TPM2 PO Index incorrect. Have: %v - Want: %v", d2.DataSize, size), nil
 		}
 	}
-	return false, nil, nil
+	return false, fmt.Errorf("Unknown TPM device version"), nil
 }
 
 // PSIndexHasValidLCP checks if PS Index has a valid LCP
@@ -903,7 +899,7 @@ func NPWModeIsNotSetInPS(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 func AutoPromotionModeIsActive(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	pol1, pol2, err := readPSLCPPolicy(txtAPI)
 	if err != nil {
-		return false, err, nil
+		return false, nil, err
 	}
 	if pol1 != nil {
 		if pol1.PolicyType != tools.LCPPolicyTypeAny {
@@ -922,7 +918,7 @@ func AutoPromotionModeIsActive(txtAPI hwapi.APIInterfaces) (bool, error, error) 
 func SignedPolicyModeIsActive(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	pol1, pol2, err := readPSLCPPolicy(txtAPI)
 	if err != nil {
-		return false, err, nil
+		return false, nil, err
 	}
 	if pol1 != nil {
 		if pol1.PolicyType != tools.LCPPolicyTypeList {

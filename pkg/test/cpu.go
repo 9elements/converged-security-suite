@@ -155,12 +155,18 @@ func getTxtRegisters(txtAPI hwapi.APIInterfaces) (*tools.TXTRegisterSpace, error
 
 // CheckForIntelCPU Check we're running on a Intel CPU
 func CheckForIntelCPU(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	return txtAPI.VersionString() == "GenuineIntel", nil, nil
+	if txtAPI.VersionString() == "GenuineIntel" {
+		return true, nil, nil
+	}
+	return false, fmt.Errorf("No Intel CPU detected"), nil
 }
 
 // WeybridgeOrLater Check we're running on Weybridge
 func WeybridgeOrLater(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	return cpuid.DisplayFamily == 6, nil, nil
+	if cpuid.DisplayFamily == 6 {
+		return true, nil, nil
+	}
+	return false, fmt.Errorf("Platform is not Weybridge or later"), nil
 }
 
 // CPUSupportsTXT Check if the CPU supports TXT
@@ -171,7 +177,7 @@ func CPUSupportsTXT(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	if txtAPI.CPUBlacklistTXTSupport() {
 		return false, fmt.Errorf("CPU does not support TXT - on blacklist"), nil
 	}
-	return true, nil, nil
+	return false, fmt.Errorf("CPU is not listed in any Intel CPU list"), nil
 }
 
 // TXTRegisterSpaceAccessible Check if the TXT register space is accessible
@@ -201,12 +207,18 @@ func TXTRegisterSpaceAccessible(txtAPI hwapi.APIInterfaces) (bool, error, error)
 
 // SupportsSMX Check if CPU supports SMX
 func SupportsSMX(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	return txtAPI.HasSMX(), nil, nil
+	if txtAPI.HasSMX() {
+		return true, nil, nil
+	}
+	return false, fmt.Errorf("CPU does not support SMX"), nil
 }
 
 // SupportVMX Check if CPU supports VMX
 func SupportVMX(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	return txtAPI.HasVMX(), nil, nil
+	if txtAPI.HasVMX() {
+		return true, nil, nil
+	}
+	return false, fmt.Errorf("CPU does not support VMX"), nil
 }
 
 // Ia32FeatureCtrl Check IA_32FEATURE_CONTROL
@@ -284,8 +296,10 @@ func TXTRegistersLocked(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	if err != nil {
 		return false, nil, err
 	}
-
-	return regs.Sts.PrivateOpen, nil, nil
+	if regs.Sts.PrivateOpen {
+		return true, nil, nil
+	}
+	return false, fmt.Errorf("TXT register space is NOT locked"), nil
 }
 
 // NoBIOSACMErrors Check that the BIOS ACM has no startup error
@@ -294,8 +308,11 @@ func NoBIOSACMErrors(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	if err != nil {
 		return false, nil, err
 	}
+	if !regs.ErrorCode.ValidInvalid {
+		return true, nil, nil
+	}
+	return false, fmt.Errorf("BIOS ACM had start up errors"), nil
 
-	return !regs.ErrorCode.ValidInvalid, nil, nil
 }
 
 // IA32DebugInterfaceLockedDisabled checks if IA32 debug interface is locked
