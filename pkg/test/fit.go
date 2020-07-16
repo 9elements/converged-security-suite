@@ -51,6 +51,17 @@ var (
 		SpecificiationTitle:     IntelFITSpecificationTitle,
 		SpecificationDocumentID: IntelFITSpecificationDocumentID,
 	}
+	testhasmcupdate = Test{
+		Name:                    "Microcode update entry in FIT",
+		Required:                true,
+		NonCritical:             true,
+		function:                HasMicroCode,
+		dependencies:            []*Test{&testhasfit},
+		Status:                  Implemented,
+		SpecificationChapter:    "4.4 Startup ACM (Type 2) Rules",
+		SpecificiationTitle:     IntelFITSpecificationTitle,
+		SpecificationDocumentID: IntelFITSpecificationDocumentID,
+	}
 	testhasbiosacm = Test{
 		Name:                    "BIOS ACM entry in FIT",
 		Required:                true,
@@ -210,6 +221,7 @@ var (
 	TestsFIT = [...]*Test{
 		&testfitvectorisset,
 		&testhasfit,
+		&testhasmcupdate,
 		&testhasbiosacm,
 		&testhasibb,
 		&testhaslcpTest,
@@ -286,6 +298,16 @@ func HasFIT(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		return false, fmt.Errorf("FIT-Error: Referenz is nil"), nil
 	}
 	return true, nil, nil
+}
+
+// HasMicroCode checks if FIT table indicates a Microcode update for the CPU
+func HasMicroCode(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	for _, ent := range fit {
+		if ent.Type() == tools.MCUpdate {
+			return true, nil, nil
+		}
+	}
+	return false, fmt.Errorf("No microcode update entries found in fit"), nil
 }
 
 // HasBIOSACM checks if FIT table has BIOSACM entry
