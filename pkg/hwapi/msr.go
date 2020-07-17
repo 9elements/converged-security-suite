@@ -18,6 +18,13 @@ const (
 	msrIA32DebugInterface int64 = 0xC80
 )
 
+// IA32Debug feature msr
+type IA32Debug struct {
+	Enabled  bool
+	Locked   bool
+	PCHStrap bool
+}
+
 func readMSR(msr int64) (uint64, error) {
 	var data uint64
 	for i := 0; i < runtime.NumCPU(); i++ {
@@ -120,14 +127,15 @@ func (t TxtAPI) TXTLeavesAreEnabled() (bool, error) {
 }
 
 //IA32DebugInterfaceEnabledOrLocked returns the enabled, locked and pchStrap state of IA32_DEBUG_INTERFACE msr
-func (t TxtAPI) IA32DebugInterfaceEnabledOrLocked() (bool, bool, bool, error) {
+func (t TxtAPI) IA32DebugInterfaceEnabledOrLocked() (*IA32Debug, error) {
+	var debugMSR IA32Debug
 	debugInterfaceCtrl, err := readMSR(msrIA32DebugInterface)
 	if err != nil {
-		return false, false, false, fmt.Errorf("Cannot access MSR IA32_DEBUG_INTERFACE: %s", err)
+		return nil, fmt.Errorf("Cannot access MSR IA32_DEBUG_INTERFACE: %s", err)
 	}
 
-	enabled := (debugInterfaceCtrl>>0)&1 != 0
-	locked := (debugInterfaceCtrl>>30)&1 != 0
-	pchStrap := (debugInterfaceCtrl>>31)&1 != 0
-	return enabled, locked, pchStrap, nil
+	debugMSR.Enabled = (debugInterfaceCtrl>>0)&1 != 0
+	debugMSR.Locked = (debugInterfaceCtrl>>30)&1 != 0
+	debugMSR.PCHStrap = (debugInterfaceCtrl>>31)&1 != 0
+	return &debugMSR, nil
 }

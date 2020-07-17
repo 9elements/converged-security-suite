@@ -77,8 +77,8 @@ func (n nullmock) AllowsVMXInSMX() (bool, error) {
 func (n nullmock) TXTLeavesAreEnabled() (bool, error) {
 	return false, fmt.Errorf("Not implemented")
 }
-func (n nullmock) IA32DebugInterfaceEnabledOrLocked() (bool, bool, bool, error) {
-	return false, false, false, fmt.Errorf("Not implemented")
+func (n nullmock) IA32DebugInterfaceEnabledOrLocked() (*IA32Debug, error) {
+	return nil, fmt.Errorf("Not implemented")
 }
 
 func (n nullmock) PCIReadConfigSpace(bus int, device int, devFn int, off int, buf interface{}) error {
