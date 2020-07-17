@@ -9,10 +9,12 @@ import (
 )
 
 const (
-	txtPublicSpace = 0xFED30000
-
 	// TxtTPMDecode for external use
-	TxtTPMDecode         = 0xFED40000
+	TxtTPMDecode = 0xFED40000
+	// TxtPublicSpace for external use
+	TxtPublicSpace = 0xFED30000
+	// TxtPublicSpaceSize exports the size of TXTPublicSpace in memory map
+	TxtPublicSpaceSize   = 0x10000
 	txtEsts              = 0x8
 	txtErrorCode         = 0x30
 	txtBootStatus        = 0xa0
@@ -110,7 +112,7 @@ type TXTBiosMLEFlags struct {
 //FetchTXTRegs returns a raw copy of the TXT config space
 func FetchTXTRegs(txtAPI hwapi.APIInterfaces) ([]byte, error) {
 	data := make([]byte, 0x1000)
-	if err := txtAPI.ReadPhysBuf(txtPublicSpace, data); err != nil {
+	if err := txtAPI.ReadPhysBuf(TxtPublicSpace, data); err != nil {
 		return nil, err
 	}
 	return data, nil

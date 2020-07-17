@@ -100,8 +100,8 @@ func TestReadACMStatus(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			txtAPI := hwapi.GetPcMock(func(addr uint64) byte {
-				if addr >= (txtPublicSpace+txtACMStatus) && addr < uint64(txtPublicSpace+txtACMStatus+len(tt.fields.ACMStatus)) {
-					addr -= (txtPublicSpace + txtACMStatus)
+				if addr >= (TxtPublicSpace+txtACMStatus) && addr < uint64(TxtPublicSpace+txtACMStatus+len(tt.fields.ACMStatus)) {
+					addr -= (TxtPublicSpace + txtACMStatus)
 					t.Logf("%x\n", tt.fields.ACMStatus[addr])
 					return tt.fields.ACMStatus[addr]
 				}

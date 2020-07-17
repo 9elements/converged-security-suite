@@ -17,6 +17,16 @@ var (
 		SpecificiationTitle:     IntelTXTSpecificationTitle,
 		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
+	testtxtpublicisreserved = Test{
+		Name:                    "TXT public area reserved in e820",
+		Required:                true,
+		function:                TXTPublicReservedInE820,
+		dependencies:            []*Test{&testtxtmemoryrangevalid},
+		Status:                  Implemented,
+		SpecificationChapter:    "5.5.3 Intel TXT Public Space",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
+	}
 	testmemoryisreserved = Test{
 		Name:                    "TXT memory reserved in e820",
 		Required:                true,
@@ -179,6 +189,7 @@ var (
 	// TestsMemory exposes the slice for memory related txt tests
 	TestsMemory = [...]*Test{
 		&testtxtmemoryrangevalid,
+		&testtxtpublicisreserved,
 		&testmemoryisreserved,
 		&testtpmdecodereserved,
 		&testtxtmemoryisdpr,
@@ -258,6 +269,19 @@ func TXTRegisterSpaceValid(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	}
 
 	return true, nil, nil
+}
+
+// TXTPublicReservedInE820 checks if TXTPublic area is marked reserved in e820 map
+func TXTPublicReservedInE820(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	res, err := txtAPI.IsReservedInE820(uint64(tools.TxtPublicSpace), uint64(tools.TxtPublicSpace+tools.TxtPublicSpaceSize))
+	if err != nil {
+		return false, nil, err
+	}
+	if res != true {
+		return false, fmt.Errorf("TXTPublic area is not marked reserved in e820 map"), nil
+	}
+	return true, nil, nil
+
 }
 
 // TXTReservedInE820 checks if the HEAP/MSEG/SINIT TXT regions are marked reserved in e820 map.
