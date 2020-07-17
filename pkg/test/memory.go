@@ -27,6 +27,16 @@ var (
 		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
 		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
+	testtpmdecodereserved = Test{
+		Name:                    "MMIO TPMDecode space reserved in e820",
+		Required:                true,
+		function:                TXTTPMDecodeSpaceIn820,
+		dependencies:            []*Test{&testtxtmemoryrangevalid},
+		Status:                  Implemented,
+		SpecificationChapter:    "5.5.4 TPM Decode Area",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
+	}
 	testtxtmemoryisdpr = Test{
 		Name:                    "TXT memory in a DMA protected range",
 		Required:                true,
@@ -170,6 +180,7 @@ var (
 	TestsMemory = [...]*Test{
 		&testtxtmemoryrangevalid,
 		&testmemoryisreserved,
+		&testtpmdecodereserved,
 		&testtxtmemoryisdpr,
 		&testtxtdprislocked,
 		&testhostbridgeDPRcorrect,
@@ -274,6 +285,18 @@ func TXTReservedInE820(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		return true, nil, nil
 	}
 	return false, fmt.Errorf("HEAP/;SEG/SINIT TXT regions are NOT marked as reserved. HeapReserve: %v - SINITReserved: %v", heapReserved, sinitReserved), nil
+}
+
+// TXTTPMDecodeSpaceIn820 checks if TPMDecode area is marked as reserved in e820 map
+func TXTTPMDecodeSpaceIn820(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	res, err := txtAPI.IsReservedInE820(uint64(tools.TxtTPMDecode), uint64(tools.TxtTPMDecode+0x10000))
+	if err != nil {
+		return false, nil, err
+	}
+	if res != true {
+		return false, fmt.Errorf("TPMDecode area not reserved in e820"), nil
+	}
+	return true, nil, nil
 }
 
 // TXTMemoryIsDPR checks if the TXT DPR protects TXT memory.
