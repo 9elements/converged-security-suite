@@ -81,8 +81,8 @@ func (n pcmock) AllowsVMXInSMX() (bool, error) {
 func (n pcmock) TXTLeavesAreEnabled() (bool, error) {
 	return false, fmt.Errorf("Not implemented")
 }
-func (n pcmock) IA32DebugInterfaceEnabledOrLocked() (bool, bool, bool, error) {
-	return false, false, false, fmt.Errorf("Not implemented")
+func (n pcmock) IA32DebugInterfaceEnabledOrLocked() (*IA32Debug, error) {
+	return nil, fmt.Errorf("Not implemented")
 }
 
 func (n pcmock) PCIReadConfigSpace(bus int, device int, devFn int, off int, buf interface{}) error {

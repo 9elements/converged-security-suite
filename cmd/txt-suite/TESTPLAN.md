@@ -11,7 +11,7 @@ Id | Test | Implemented | Document | Chapter
 08 | BIOS ACM has run                                 | :white_check_mark:     | Document 315168-016          | B.1.6 TXT.SPAD – BOOTSTATUS                             
 09 | IBB is trusted                                   | :white_check_mark:     | Document 315168-016          | B.1.6 TXT.SPAD – BOOTSTATUS                             
 10 | TXT registers are locked                         | :white_check_mark:     |                              |                                                         
-11 | IA32 debug interface isn't disabled              | :white_check_mark:     |                              |                                                         
+11 | IA32 debug interface is disabled                 | :white_check_mark:     |                              |                                                         
 12 | TPM connection                                   | :white_check_mark:     |                              |                                                         
 13 | TPM 1.2 present                                  | :white_check_mark:     |                              |                                                         
 14 | TPM 2.0 is present                               | :white_check_mark:     |                              |                                                         

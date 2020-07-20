@@ -111,7 +111,7 @@ var (
 		Status:       Implemented,
 	}
 	testia32debuginterfacelockeddisabled = Test{
-		Name:         "IA32 debug interface isn't disabled",
+		Name:         "IA32 debug interface is disabled",
 		function:     IA32DebugInterfaceLockedDisabled,
 		Required:     true,
 		dependencies: []*Test{&testcheckforintelcpu},
@@ -317,12 +317,12 @@ func NoBIOSACMErrors(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 // IA32DebugInterfaceLockedDisabled checks if IA32 debug interface is locked
 func IA32DebugInterfaceLockedDisabled(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	locked, pchStrap, enabled, err := txtAPI.IA32DebugInterfaceEnabledOrLocked()
+	debug, err := txtAPI.IA32DebugInterfaceEnabledOrLocked()
 	if err != nil {
 		return false, nil, err
 	}
-	if !pchStrap {
-		if locked && !enabled {
+	if !debug.PCHStrap {
+		if debug.Locked && !debug.Enabled {
 			return true, nil, nil
 		}
 		return false, fmt.Errorf("ia32 jtag isn't locked or disabled"), nil

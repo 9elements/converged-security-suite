@@ -33,7 +33,7 @@ type APIInterfaces interface {
 	IA32PlatformID() (uint64, error)
 	AllowsVMXInSMX() (bool, error)
 	TXTLeavesAreEnabled() (bool, error)
-	IA32DebugInterfaceEnabledOrLocked() (bool, bool, bool, error)
+	IA32DebugInterfaceEnabledOrLocked() (*IA32Debug, error)
 
 	// pci.go
 	PCIReadConfigSpace(bus int, device int, devFn int, off int, buf interface{}) error
