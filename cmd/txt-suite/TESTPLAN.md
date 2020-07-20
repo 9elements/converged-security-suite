@@ -46,23 +46,24 @@ Id | Test | Implemented | Document | Chapter
 43 | BIOSACM matches chipset                          | :white_check_mark:     | Document 315168-016          | 2.2.3.1 Matching an AC Module to the Platform           
 44 | BIOSACM matches processor                        | :white_check_mark:     | Document 315168-016          | 2.2.3.1 Matching an AC Module to the Platform           
 45 | SINIT/BIOS ACM has no NPW flag set               | :white_check_mark:     | Document 558294 Revision 2.0 | 4.1.4 Supported Platform Configurations                 
-46 | TXT memory ranges valid                          | :white_check_mark:     | Document 315168-016          | B.1                                                     
-47 | TXT public area reserved in e820                 | :white_check_mark:     | Document 558294 Revision 2.0 | 5.5.3 Intel TXT Public Space                            
-48 | TXT memory reserved in e820                      | :white_check_mark:     | Document 558294 Revision 2.0 | 5.5.4 TPM Decode Area                                   
-49 | MMIO TPMDecode space reserved in e820            | :white_check_mark:     | Document 558294 Revision 2.0 | 5.5.4 TPM Decode Area                                   
-50 | TXT memory in a DMA protected range              | :white_check_mark:     | Document 315168-016          | 1.11.1 DMA Protected Range (DPR)                        
-51 | TXT DPR register locked                          | :white_check_mark:     | Document 315168-016          | 1.11.1 DMA Protected Range (DPR)                        
-52 | CPU DPR equals hostbridge DPR                    | :white_check_mark:     | Document 315168-016          | B 1.15 TXT.DPR – DMA Protected Range                    
-53 | CPU hostbridge DPR register locked               | :white_check_mark:     | Document 315168-016          | B 1.15 TXT.DPR – DMA Protected Range                    
-54 | TXT region contains SINIT ACM                    | :white_check_mark:     | Document 315168-016          | B 1.10 TXT.SINIT.BASE – SINIT Base Address              
-55 | SINIT ACM matches chipset                        | :white_check_mark:     | Document 315168-016          | 2.2.3.1 Matching an AC Module to the Platform           
-56 | SINIT ACM matches CPU                            | :white_check_mark:     | Document 315168-016          | 2.2.3.1 Matching an AC Module to the Platform           
-57 | SINIT ACM startup successful                     | :white_check_mark:     |                              |                                                         
-58 | BIOS DATA REGION present                         | :white_check_mark:     | Document 315168-016          | C.2 BIOS Data Format                                    
-59 | BIOS DATA REGION valid                           | :white_check_mark:     | Document 315168-016          | C.2 BIOS Data Format                                    
-60 | CPU supports MTRRs                               | :white_check_mark:     | Document 315168-016          | 2.2.5.1 MTRR Setup Prior to GETSEC[SENTER] Execution    
-61 | CPU supports SMRRs                               | :white_check_mark:     |                              |                                                         
-62 | SMRR covers SMM memory                           | :white_check_mark:     |                              |                                                         
-63 | SMRR protection active                           | :white_check_mark:     |                              |                                                         
-64 | IOMMU/VT-d active                                | :white_check_mark:     | Document 315168-016          | 1.11.2 Protected Memory Regions (PMRs)                  
-65 | TXT server mode enabled                          | :white_check_mark:     |                              |                                                         
+46 | SINIT ACM supports used TPM                      | :white_check_mark:     | Document 315168-016          | 4.1.4 Supported Platform Configurations                 
+47 | TXT memory ranges valid                          | :white_check_mark:     | Document 315168-016          | B.1                                                     
+48 | TXT public area reserved in e820                 | :white_check_mark:     | Document 558294 Revision 2.0 | 5.5.3 Intel TXT Public Space                            
+49 | TXT memory reserved in e820                      | :white_check_mark:     | Document 558294 Revision 2.0 | 5.5.4 TPM Decode Area                                   
+50 | MMIO TPMDecode space reserved in e820            | :white_check_mark:     | Document 558294 Revision 2.0 | 5.5.4 TPM Decode Area                                   
+51 | TXT memory in a DMA protected range              | :white_check_mark:     | Document 315168-016          | 1.11.1 DMA Protected Range (DPR)                        
+52 | TXT DPR register locked                          | :white_check_mark:     | Document 315168-016          | 1.11.1 DMA Protected Range (DPR)                        
+53 | CPU DPR equals hostbridge DPR                    | :white_check_mark:     | Document 315168-016          | B 1.15 TXT.DPR – DMA Protected Range                    
+54 | CPU hostbridge DPR register locked               | :white_check_mark:     | Document 315168-016          | B 1.15 TXT.DPR – DMA Protected Range                    
+55 | TXT region contains SINIT ACM                    | :white_check_mark:     | Document 315168-016          | B 1.10 TXT.SINIT.BASE – SINIT Base Address              
+56 | SINIT ACM matches chipset                        | :white_check_mark:     | Document 315168-016          | 2.2.3.1 Matching an AC Module to the Platform           
+57 | SINIT ACM matches CPU                            | :white_check_mark:     | Document 315168-016          | 2.2.3.1 Matching an AC Module to the Platform           
+58 | SINIT ACM startup successful                     | :white_check_mark:     |                              |                                                         
+59 | BIOS DATA REGION present                         | :white_check_mark:     | Document 315168-016          | C.2 BIOS Data Format                                    
+60 | BIOS DATA REGION valid                           | :white_check_mark:     | Document 315168-016          | C.2 BIOS Data Format                                    
+61 | CPU supports MTRRs                               | :white_check_mark:     | Document 315168-016          | 2.2.5.1 MTRR Setup Prior to GETSEC[SENTER] Execution    
+62 | CPU supports SMRRs                               | :white_check_mark:     |                              |                                                         
+63 | SMRR covers SMM memory                           | :white_check_mark:     |                              |                                                         
+64 | SMRR protection active                           | :white_check_mark:     |                              |                                                         
+65 | IOMMU/VT-d active                                | :white_check_mark:     | Document 315168-016          | 1.11.2 Protected Memory Regions (PMRs)                  
+66 | TXT server mode enabled                          | :white_check_mark:     |                              |                                                         
