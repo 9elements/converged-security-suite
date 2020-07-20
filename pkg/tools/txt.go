@@ -11,10 +11,14 @@ import (
 const (
 	// TxtTPMDecode for external use
 	TxtTPMDecode = 0xFED40000
-	// TxtPublicSpace for external use
+	// TxtPublicSpace for external test
 	TxtPublicSpace = 0xFED30000
 	// TxtPublicSpaceSize exports the size of TXTPublicSpace in memory map
-	TxtPublicSpaceSize   = 0x10000
+	TxtPublicSpaceSize = 0x10000
+	// TxtPrivateSpace for external test
+	TxtPrivateSpace = 0xFED20000
+	// TxtPrivateSpaceSize for external test
+	TxtPrivateSpaceSize  = 0x10000
 	txtEsts              = 0x8
 	txtErrorCode         = 0x30
 	txtBootStatus        = 0xa0
