@@ -216,6 +216,16 @@ var (
 		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
 		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
+	testsinitacmupporttpm = Test{
+		Name:                    "SINIT ACM supports used TPM",
+		Required:                true,
+		function:                SINITACMcomplyTPMSpec,
+		dependencies:            []*Test{&testhasfit, &testhasbiosacm},
+		Status:                  Implemented,
+		SpecificationChapter:    "4.1.4 Supported Platform Configurations",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
+	}
 
 	// TestsFIT exports the Slice with FIT tests
 	TestsFIT = [...]*Test{
@@ -238,6 +248,7 @@ var (
 		&testbiosacmmatcheschipset,
 		&testbiosacmmatchescpu,
 		&testacmsfornpw,
+		&testsinitacmupporttpm,
 	}
 )
 
@@ -670,4 +681,32 @@ func SINITandBIOSACMnoNPW(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		return false, fmt.Errorf("SINIT ACM is either debug signed or NPW"), nil
 	}
 	return true, nil, nil
+}
+
+// SINITACMcomplyTPMSpec tests if the SINIT ACM complys with used TPM
+func SINITACMcomplyTPMSpec(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	buf, err := tools.FetchTXTRegs(txtAPI)
+	if err != nil {
+		return false, nil, err
+	}
+	regs, err := tools.ParseTXTRegs(buf)
+	if err != nil {
+		return false, nil, err
+	}
+	_, _, _, tpms, err, internalerr := sinitACM(txtAPI, regs)
+	if internalerr != nil {
+		return false, nil, internalerr
+	}
+	if err != nil {
+		return false, err, nil
+	}
+	res := (1 >> tpms.Capabilities & (uint32(tools.TPMFamilyDTPM12) | uint32(tools.TPMFamilyDTPMBoth)))
+	if res == 0 && testtpm12present.Result == ResultPass {
+		return true, nil, nil
+	}
+	res = (1 >> tpms.Capabilities & (uint32(tools.TPMFamilyDTPM20) | uint32(tools.TPMFamilyDTPMBoth)))
+	if res == 0 && testtpm2present.Result == ResultPass {
+		return true, nil, nil
+	}
+	return false, fmt.Errorf("SINIT ACM does not support used TPM"), nil
 }
