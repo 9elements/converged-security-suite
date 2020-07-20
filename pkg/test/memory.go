@@ -27,13 +27,23 @@ var (
 		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
 		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
+	testtxtprivateisreserved = Test{
+		Name:                    "TXT private area reserved in e820",
+		Required:                true,
+		function:                TXTPrivateReservedInE820,
+		dependencies:            []*Test{&testtxtmemoryrangevalid},
+		Status:                  Implemented,
+		SpecificationChapter:    "5.5.2 Intel TXT Private Space",
+		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
+		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
+	}
 	testmemoryisreserved = Test{
 		Name:                    "TXT memory reserved in e820",
 		Required:                true,
 		function:                TXTReservedInE820,
 		dependencies:            []*Test{&testtxtmemoryrangevalid},
 		Status:                  Implemented,
-		SpecificationChapter:    "5.5.4 TPM Decode Area",
+		SpecificationChapter:    "5.5.4 Intel TPM Decode Area",
 		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
 		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
@@ -190,6 +200,7 @@ var (
 	TestsMemory = [...]*Test{
 		&testtxtmemoryrangevalid,
 		&testtxtpublicisreserved,
+		&testtxtprivateisreserved,
 		&testmemoryisreserved,
 		&testtpmdecodereserved,
 		&testtxtmemoryisdpr,
@@ -282,6 +293,18 @@ func TXTPublicReservedInE820(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	}
 	return true, nil, nil
 
+}
+
+// TXTPrivateReservedInE820 checks if TXTPrivate area is marked reserved in e820 map
+func TXTPrivateReservedInE820(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	res, err := txtAPI.IsReservedInE820(uint64(tools.TxtPrivateSpace), uint64(tools.TxtPrivateSpace+tools.TxtPrivateSpaceSize))
+	if err != nil {
+		return false, nil, err
+	}
+	if res != true {
+		return false, fmt.Errorf("TXTPrivate area is not marked reserved in e820 map"), nil
+	}
+	return true, nil, nil
 }
 
 // TXTReservedInE820 checks if the HEAP/MSEG/SINIT TXT regions are marked reserved in e820 map.
