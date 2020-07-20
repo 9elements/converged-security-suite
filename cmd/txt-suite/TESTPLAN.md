@@ -48,19 +48,20 @@ Id | Test | Implemented | Document | Chapter
 45 | SINIT/BIOS ACM has no NPW flag set               | :white_check_mark:     | Document 558294 Revision 2.0 | 4.1.4 Supported Platform Configurations                 
 46 | TXT memory ranges valid                          | :white_check_mark:     | Document 315168-016          | B.1                                                     
 47 | TXT memory reserved in e820                      | :white_check_mark:     | Document 558294 Revision 2.0 | 5.5.4 TPM Decode Area                                   
-48 | TXT memory in a DMA protected range              | :white_check_mark:     | Document 315168-016          | 1.11.1 DMA Protected Range (DPR)                        
-49 | TXT DPR register locked                          | :white_check_mark:     | Document 315168-016          | 1.11.1 DMA Protected Range (DPR)                        
-50 | CPU DPR equals hostbridge DPR                    | :white_check_mark:     | Document 315168-016          | B 1.15 TXT.DPR – DMA Protected Range                    
-51 | CPU hostbridge DPR register locked               | :white_check_mark:     | Document 315168-016          | B 1.15 TXT.DPR – DMA Protected Range                    
-52 | TXT region contains SINIT ACM                    | :white_check_mark:     | Document 315168-016          | B 1.10 TXT.SINIT.BASE – SINIT Base Address              
-53 | SINIT ACM matches chipset                        | :white_check_mark:     | Document 315168-016          | 2.2.3.1 Matching an AC Module to the Platform           
-54 | SINIT ACM matches CPU                            | :white_check_mark:     | Document 315168-016          | 2.2.3.1 Matching an AC Module to the Platform           
-55 | SINIT ACM startup successful                     | :white_check_mark:     |                              |                                                         
-56 | BIOS DATA REGION present                         | :white_check_mark:     | Document 315168-016          | C.2 BIOS Data Format                                    
-57 | BIOS DATA REGION valid                           | :white_check_mark:     | Document 315168-016          | C.2 BIOS Data Format                                    
-58 | CPU supports MTRRs                               | :white_check_mark:     | Document 315168-016          | 2.2.5.1 MTRR Setup Prior to GETSEC[SENTER] Execution    
-59 | CPU supports SMRRs                               | :white_check_mark:     |                              |                                                         
-60 | SMRR covers SMM memory                           | :white_check_mark:     |                              |                                                         
-61 | SMRR protection active                           | :white_check_mark:     |                              |                                                         
-62 | IOMMU/VT-d active                                | :white_check_mark:     | Document 315168-016          | 1.11.2 Protected Memory Regions (PMRs)                  
-63 | TXT server mode enabled                          | :white_check_mark:     |                              |                                                         
+48 | MMIO TPMDecode space reserved in e820            | :white_check_mark:     | Document 558294 Revision 2.0 | 5.5.4 TPM Decode Area                                   
+49 | TXT memory in a DMA protected range              | :white_check_mark:     | Document 315168-016          | 1.11.1 DMA Protected Range (DPR)                        
+50 | TXT DPR register locked                          | :white_check_mark:     | Document 315168-016          | 1.11.1 DMA Protected Range (DPR)                        
+51 | CPU DPR equals hostbridge DPR                    | :white_check_mark:     | Document 315168-016          | B 1.15 TXT.DPR – DMA Protected Range                    
+52 | CPU hostbridge DPR register locked               | :white_check_mark:     | Document 315168-016          | B 1.15 TXT.DPR – DMA Protected Range                    
+53 | TXT region contains SINIT ACM                    | :white_check_mark:     | Document 315168-016          | B 1.10 TXT.SINIT.BASE – SINIT Base Address              
+54 | SINIT ACM matches chipset                        | :white_check_mark:     | Document 315168-016          | 2.2.3.1 Matching an AC Module to the Platform           
+55 | SINIT ACM matches CPU                            | :white_check_mark:     | Document 315168-016          | 2.2.3.1 Matching an AC Module to the Platform           
+56 | SINIT ACM startup successful                     | :white_check_mark:     |                              |                                                         
+57 | BIOS DATA REGION present                         | :white_check_mark:     | Document 315168-016          | C.2 BIOS Data Format                                    
+58 | BIOS DATA REGION valid                           | :white_check_mark:     | Document 315168-016          | C.2 BIOS Data Format                                    
+59 | CPU supports MTRRs                               | :white_check_mark:     | Document 315168-016          | 2.2.5.1 MTRR Setup Prior to GETSEC[SENTER] Execution    
+60 | CPU supports SMRRs                               | :white_check_mark:     |                              |                                                         
+61 | SMRR covers SMM memory                           | :white_check_mark:     |                              |                                                         
+62 | SMRR protection active                           | :white_check_mark:     |                              |                                                         
+63 | IOMMU/VT-d active                                | :white_check_mark:     | Document 315168-016          | 1.11.2 Protected Memory Regions (PMRs)                  
+64 | TXT server mode enabled                          | :white_check_mark:     |                              |                                                         

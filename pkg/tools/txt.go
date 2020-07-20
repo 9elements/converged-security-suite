@@ -9,7 +9,10 @@ import (
 )
 
 const (
-	txtPublicSpace       = 0xFED30000
+	txtPublicSpace = 0xFED30000
+
+	// TxtTPMDecode for external use
+	TxtTPMDecode         = 0xFED40000
 	txtEsts              = 0x8
 	txtErrorCode         = 0x30
 	txtBootStatus        = 0xa0
