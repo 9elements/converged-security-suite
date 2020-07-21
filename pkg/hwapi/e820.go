@@ -19,6 +19,50 @@ func isReservedType(regionType string) bool {
 	}
 }
 
+//IterateOverE820Ranges iterates over all e820 entries and invokes the callback for every matching type
+func IterateOverE820Ranges(t string, callback func(start uint64, end uint64) bool) (bool, error) {
+
+	dir, err := os.Open("/sys/firmware/memmap")
+	if err != nil {
+		return false, fmt.Errorf("Cannot access e820 table: %s", err)
+	}
+
+	subdirs, err := dir.Readdir(0)
+	if err != nil {
+		return false, fmt.Errorf("Cannot access e820 table: %s", err)
+	}
+
+	for _, subdir := range subdirs {
+		if subdir.IsDir() {
+
+			path := fmt.Sprintf("/sys/firmware/memmap/%s/type", subdir.Name())
+			buf, err := ioutil.ReadFile(path)
+			if err != nil {
+				continue
+			}
+			if strings.Contains(string(buf), t) {
+				path := fmt.Sprintf("/sys/firmware/memmap/%s/start", subdir.Name())
+				thisStart, err := readHexInteger(path)
+				if err != nil {
+					continue
+				}
+
+				path = fmt.Sprintf("/sys/firmware/memmap/%s/end", subdir.Name())
+				thisEnd, err := readHexInteger(path)
+				if err != nil {
+					continue
+				}
+
+				if callback(thisStart, thisEnd) {
+					return true, nil
+				}
+			}
+		}
+	}
+
+	return false, nil
+}
+
 //IsReservedInE820 reads the e820 table exported via /sys/firmware/memmap and checks whether
 // the range [start; end] is marked as reserved. Returns true if it is reserved,
 // false if not.

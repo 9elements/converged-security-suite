@@ -1,7 +1,10 @@
 package test
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
+	"os"
 
 	"github.com/9elements/converged-security-suite/pkg/hwapi"
 )
@@ -41,8 +44,8 @@ var (
 	testDMARPresent = Test{
 		Name:                    "ACPI DMAR is present",
 		Required:                true,
-		function:                notImplemented,
-		Status:                  NotImplemented,
+		function:                CheckDMARPresence,
+		Status:                  Implemented,
 		SpecificationChapter:    "SINIT Class 0xC Major 4",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
@@ -50,17 +53,18 @@ var (
 	testDMARValid = Test{
 		Name:                    "ACPI DMAR is valid",
 		Required:                true,
-		function:                notImplemented,
-		Status:                  NotImplemented,
+		function:                CheckDMARValid,
+		Status:                  Implemented,
 		SpecificationChapter:    "SINIT Class 0xC Major 5",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testDMARPresent},
 	}
 	testMADTPresent = Test{
 		Name:                    "ACPI MADT is present",
 		Required:                true,
-		function:                notImplemented,
-		Status:                  NotImplemented,
+		function:                CheckMADTPresence,
+		Status:                  Implemented,
 		SpecificationChapter:    "SINIT Class 0xC Major 16",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
@@ -68,11 +72,12 @@ var (
 	testMADTValid = Test{
 		Name:                    "ACPI MADT is valid",
 		Required:                true,
-		function:                notImplemented,
-		Status:                  NotImplemented,
+		function:                CheckMADTValid,
+		Status:                  Implemented,
 		SpecificationChapter:    "SINIT Class 0xC Major 7",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testMADTPresent},
 	}
 	testRSDPValid = Test{
 		Name:                    "ACPI RSDP is valid",
@@ -250,10 +255,140 @@ var (
 	testMCFGPresent = Test{
 		Name:                    "ACPI MCFG is present",
 		Required:                true,
-		function:                notImplemented,
-		Status:                  NotImplemented,
+		function:                CheckMCFGPresence,
+		Status:                  Implemented,
 		SpecificationChapter:    "SINIT Class 0xC Major 0xa",
 		SpecificiationTitle:     CBtGTXTPlatformSpecificationTitle,
 		SpecificationDocumentID: CBtGTXTPlatformDocumentID,
 	}
+
+	// TestsACPI exports the Slice with ACPI tests
+	TestsACPI = [...]*Test{
+		&testMCFGPresent,
+		&testDMARPresent,
+		&testDMARValid,
+		&testMADTPresent,
+		&testMADTValid,
+	}
 )
+
+//ACPIHeader represent the table header as defined in ACPI Spec 6.2 "5.2.6 System Description Table Header"
+type ACPIHeader struct {
+	Signature       [4]uint8
+	Length          uint32
+	Revision        uint8
+	Checksum        uint8
+	OEMID           [6]uint8
+	OEMTableID      [8]uint8
+	OEMRevision     uint32
+	CreatorID       uint32
+	CreatorRevision uint32
+}
+
+func checkTableValid(txtAPI hwapi.APIInterfaces, name string) ([]byte, bool, error, error) {
+	table, err := txtAPI.GetACPITable(name)
+	if os.IsNotExist(err) {
+		return nil, false, fmt.Errorf("ACPI table %s not found", name), nil
+	} else if err != nil {
+		return table, false, nil, err
+	}
+
+	var hdr ACPIHeader
+	err = binary.Read(bytes.NewBuffer(table), binary.LittleEndian, &hdr)
+	if err != nil {
+		return table, false, nil, err
+	}
+
+	if hdr.Signature[0] != name[0] ||
+		hdr.Signature[1] != name[1] ||
+		hdr.Signature[2] != name[2] ||
+		hdr.Signature[3] != name[3] {
+		return table, false, fmt.Errorf("ACPI table %s has invalid signature", name), nil
+	}
+
+	if hdr.Length != uint32(len(table)) {
+		return table, false, fmt.Errorf("ACPI table %s has invalid length", name), nil
+	}
+
+	chksum := byte(0)
+	for _, i := range table {
+		chksum = chksum + i
+	}
+
+	if chksum > 0 {
+		return table, false, fmt.Errorf("ACPI table %s has invalid checksum", name), nil
+	}
+
+	return table, true, nil, nil
+}
+
+func checKPresence(txtAPI hwapi.APIInterfaces, name string) (bool, error, error) {
+	_, err := txtAPI.GetACPITable(name)
+	if os.IsNotExist(err) {
+		return false, fmt.Errorf("ACPI table %s not found", name), nil
+	} else if err != nil {
+		return false, nil, err
+	}
+	return true, nil, nil
+}
+
+//CheckMCFGPresence tests if the MCFG ACPI table exists
+func CheckMCFGPresence(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	return checKPresence(txtAPI, "MCFG")
+}
+
+//CheckMADTPresence tests if the MADT ACPI table exists
+func CheckMADTPresence(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	return checKPresence(txtAPI, "MADT")
+}
+
+//ACPIMADT represent the table header as defined in ACPI Spec 6.2 "Multiple APIC Description Table (MADT) Format"
+type ACPIMADT struct {
+	ACPIHeader
+	LapicAddress uint32
+	Flags        uint32
+	// TODO: interrupt controller structures
+}
+
+//CheckMADTValid tests if the MADT ACPI table is valid
+func CheckMADTValid(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	table, valid, err, interr := checkTableValid(txtAPI, "MADT")
+	if interr != nil {
+		return false, nil, interr
+	} else if err != nil {
+		return false, err, nil
+	} else if !valid {
+		return false, fmt.Errorf("ACPI table MADT not valid"), nil
+	}
+
+	var decoded ACPIMADT
+	err = binary.Read(bytes.NewBuffer(table), binary.LittleEndian, &decoded)
+	if err != nil {
+		return false, nil, err
+	}
+
+	if decoded.Flags > 1 {
+		return false, fmt.Errorf("Unknown flags in ACPI table MADT"), nil
+	}
+	return true, nil, nil
+}
+
+//CheckDMARPresence tests if the MADT ACPI table exists
+func CheckDMARPresence(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	return checKPresence(txtAPI, "DMAR")
+}
+
+//CheckDMARValid tests if the DMAR ACPI table is valid
+func CheckDMARValid(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	_, valid, err, interr := checkTableValid(txtAPI, "DMAR")
+	if interr != nil {
+		return false, nil, interr
+	} else if err != nil {
+		return false, err, nil
+	} else if !valid {
+		return false, fmt.Errorf("ACPI table DMAR not valid"), nil
+	}
+
+	//FIXME: Additional checks here
+	return true, nil, nil
+}

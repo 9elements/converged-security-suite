@@ -63,6 +63,9 @@ func getTests() []*test.Test {
 	for i := range test.TestsMemory {
 		tests = append(tests, test.TestsMemory[i])
 	}
+	for i := range test.TestsACPI {
+		tests = append(tests, test.TestsACPI[i])
+	}
 	return tests
 }
 
