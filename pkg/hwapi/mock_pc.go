@@ -266,6 +266,10 @@ func (n pcmock) ReadPCR(tpmCon *tss.TPM, pcr uint32) ([]byte, error) {
 	return []byte{}, fmt.Errorf("Not implemented")
 }
 
+func (n pcmock) GetACPITable(arg string) ([]byte, error) {
+	return []byte{}, fmt.Errorf("Not implemented")
+}
+
 //GetPcMock returns APIInterfaces for mocking the hwapi used in unittests
 func GetPcMock(ReadMemoryFunc func(uint64) byte) APIInterfaces {
 	return pcmock{

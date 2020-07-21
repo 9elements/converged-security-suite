@@ -139,6 +139,10 @@ func (n nullmock) ReadPCR(tpmCon *tss.TPM, pcr uint32) ([]byte, error) {
 	return []byte{}, fmt.Errorf("Not implemented")
 }
 
+func (n nullmock) GetACPITable(arg string) ([]byte, error) {
+	return []byte{}, fmt.Errorf("Not implemented")
+}
+
 //GetNullMock returns an APIInterfaces stub
 func GetNullMock() APIInterfaces {
 	return nullmock{}

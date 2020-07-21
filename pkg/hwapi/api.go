@@ -55,6 +55,9 @@ type APIInterfaces interface {
 	ReadNVPublic(tpmCon *tss.TPM, index uint32) ([]byte, error)
 	NVReadValue(tpmCon *tss.TPM, index uint32, password string, size, offhandle uint32) ([]byte, error)
 	ReadPCR(tpmCon *tss.TPM, pcr uint32) ([]byte, error)
+
+	// acpi.go
+	GetACPITable(n string) ([]byte, error)
 }
 
 //TxtAPI The context object for TXT Api
