@@ -185,6 +185,7 @@ var (
 		Required:                false,
 		function:                ActiveIOMMU,
 		Status:                  Implemented,
+		NonCritical:             true,
 		SpecificationChapter:    "1.11.2 Protected Memory Regions (PMRs)",
 		SpecificiationTitle:     IntelTXTSpecificationTitle,
 		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
