@@ -86,7 +86,10 @@ func (t TxtAPI) getACPITableDevMemRSDT(address uint32) ([]uint32, []byte, error)
 	if string(rsdt.Signature[:]) != "RSDT" {
 		return nil, nil, fmt.Errorf("RSDT has invalid signature")
 	}
-
+	if rsdt.Length == 0 || rsdt.Length == 0xffffffff ||
+		(rsdt.Length-uint32(binary.Size(acpiHeader{})))%4 > 0 {
+		return nil, nil, fmt.Errorf("RSDT has invalid length")
+	}
 	buf = make([]byte, (rsdt.Length - uint32(binary.Size(acpiHeader{}))))
 	err = t.ReadPhysBuf(int64(address)+int64(binary.Size(acpiHeader{})), buf)
 	if err != nil {
@@ -137,7 +140,10 @@ func (t TxtAPI) getACPITableDevMemXSDT(address uint64) ([]uint64, []byte, error)
 	if string(xsdt.Signature[:]) != "XSDT" {
 		return nil, nil, fmt.Errorf("XSDT has invalid signature")
 	}
-
+	if xsdt.Length == 0 || xsdt.Length == 0xffffffff ||
+		(xsdt.Length-uint32(binary.Size(acpiHeader{})))%8 > 0 {
+		return nil, nil, fmt.Errorf("XSDT has invalid length")
+	}
 	buf = make([]byte, (xsdt.Length - uint32(binary.Size(acpiHeader{}))))
 	err = t.ReadPhysBuf(int64(address)+int64(binary.Size(acpiHeader{})), buf)
 	if err != nil {
