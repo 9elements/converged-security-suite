@@ -478,7 +478,7 @@ func CheckMCFGPresence(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 //CheckMADTPresence tests if the MADT ACPI table exists
 func CheckMADTPresence(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	return checkPresence(txtAPI, "MADT")
+	return checkPresence(txtAPI, "APIC")
 }
 
 //ACPIMADT represent the table header as defined in ACPI Spec 6.2 "Multiple APIC Description Table (MADT) Format"
@@ -491,7 +491,7 @@ type ACPIMADT struct {
 
 //CheckMADTValid tests if the MADT ACPI table is valid
 func CheckMADTValid(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	table, valid, err, interr := checkTableValid(txtAPI, "MADT")
+	table, valid, err, interr := checkTableValid(txtAPI, "APIC")
 	if interr != nil {
 		return false, nil, interr
 	} else if err != nil {
