@@ -68,3 +68,8 @@ Id | Test | Implemented | Document | Chapter
 65 | SMRR protection active                           | :white_check_mark:     |                              |                                                         
 66 | IOMMU/VT-d active                                | :white_check_mark:     | Document 315168-016          | 1.11.2 Protected Memory Regions (PMRs)                  
 67 | TXT server mode enabled                          | :white_check_mark:     |                              |                                                         
+68 | ACPI MCFG is present                             | :white_check_mark:     |                              | SINIT Class 0xC Major 0xa                               
+69 | ACPI DMAR is present                             | :white_check_mark:     |                              | SINIT Class 0xC Major 4                                 
+70 | ACPI DMAR is valid                               | :white_check_mark:     |                              | SINIT Class 0xC Major 5                                 
+71 | ACPI MADT is present                             | :white_check_mark:     |                              | SINIT Class 0xC Major 16                                
+72 | ACPI MADT is valid                               | :white_check_mark:     |                              | SINIT Class 0xC Major 7                                 
