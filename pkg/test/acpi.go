@@ -15,31 +15,63 @@ func notImplemented(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 var (
 	testRSDPChecksum = Test{
-		Name:                    "ACPI RSDP has valid checksum",
+		Name:                    "ACPI RSDP exists and has valid checksum",
 		Required:                true,
-		function:                notImplemented,
-		Status:                  NotImplemented,
+		function:                CheckRSDPValid,
+		Status:                  Implemented,
 		SpecificationChapter:    "SINIT Class 0xC Major 1",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
 	}
-	testRSDTChecksum = Test{
+	testRSDTPresent = Test{
 		Name:                    "ACPI RSDT present",
 		Required:                true,
-		function:                notImplemented,
+		function:                CheckRSDTPresent,
 		Status:                  NotImplemented,
 		SpecificationChapter:    "SINIT Class 0xC Major 2",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDPChecksum},
 	}
 	testRSDTValid = Test{
 		Name:                    "ACPI RSDT is valid",
-		Required:                true,
-		function:                notImplemented,
-		Status:                  NotImplemented,
+		Required:                false,
+		function:                CheckRSDTValid,
+		Status:                  Implemented,
 		SpecificationChapter:    "SINIT Class 0xC Major 3",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTPresent},
+	}
+	testXSDTPresent = Test{
+		Name:                    "ACPI XSDT present",
+		Required:                true,
+		function:                CheckXSDTPresent,
+		Status:                  Implemented,
+		SpecificationChapter:    "SINIT Class 0xC Major 9",
+		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
+		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDPChecksum},
+	}
+	testXSDTValid = Test{
+		Name:                    "ACPI XSDT is valid",
+		Required:                false,
+		function:                CheckXSDTValid,
+		Status:                  Implemented,
+		SpecificationChapter:    "SINIT Class 0xC Major 9",
+		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
+		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testXSDTPresent},
+	}
+	testRSDTorXSDTValid = Test{
+		Name:                    "ACPI RSDT or XSDT is valid",
+		Required:                true,
+		function:                CheckRSDTorXSDTValid,
+		Status:                  Implemented,
+		SpecificationChapter:    "5.2.8 Extended System Description Table (XSDT)",
+		SpecificiationTitle:     ACPISpecificationTitle,
+		SpecificationDocumentID: ACPISpecificationDocumentID,
+		dependencies:            []*Test{&testRSDPChecksum},
 	}
 	testDMARPresent = Test{
 		Name:                    "ACPI DMAR is present",
@@ -49,6 +81,7 @@ var (
 		SpecificationChapter:    "SINIT Class 0xC Major 4",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testDMARValid = Test{
 		Name:                    "ACPI DMAR is valid",
@@ -58,7 +91,7 @@ var (
 		SpecificationChapter:    "SINIT Class 0xC Major 5",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
-		dependencies:            []*Test{&testDMARPresent},
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testMADTPresent = Test{
 		Name:                    "ACPI MADT is present",
@@ -68,6 +101,7 @@ var (
 		SpecificationChapter:    "SINIT Class 0xC Major 16",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testMADTValid = Test{
 		Name:                    "ACPI MADT is valid",
@@ -77,7 +111,7 @@ var (
 		SpecificationChapter:    "SINIT Class 0xC Major 7",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
-		dependencies:            []*Test{&testMADTPresent},
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testRSDPValid = Test{
 		Name:                    "ACPI RSDP is valid",
@@ -87,17 +121,8 @@ var (
 		SpecificationChapter:    "SINIT Class 0xC Major 8",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDPChecksum},
 	}
-	testXSDTValid = Test{
-		Name:                    "ACPI XSDT is valid",
-		Required:                true,
-		function:                notImplemented,
-		Status:                  NotImplemented,
-		SpecificationChapter:    "SINIT Class 0xC Major 9",
-		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
-		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
-	}
-
 	testTXTHeapSizeFitsMADTCopy = Test{
 		Name:                    "ACPI MADT copy fits into TXT heap",
 		Required:                true,
@@ -106,6 +131,7 @@ var (
 		SpecificationChapter:    "SINIT Class 9 Major 7 Minor 1",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testMADTPresent},
 	}
 	testTXTHeapSizeFitsDynamicMadt = Test{
 		Name:                    "Dynamic ACPI MADT fits into TXT heap",
@@ -115,6 +141,7 @@ var (
 		SpecificationChapter:    "SINIT Class 9 Major 7 Minor 2",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testTXTHeapSizeFitsDMARCopy = Test{
 		Name:                    "ACPI DMAR copy fits into TXT heap",
@@ -124,6 +151,7 @@ var (
 		SpecificationChapter:    "SINIT Class 9 Major 7 Minor 3",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testACPIRSDPInOSToSINITData = Test{
 		Name:                    "ACPI RSDP in 'OS to SINIT data' points to address below 4 GiB",
@@ -142,6 +170,7 @@ var (
 		SpecificationChapter:    "SINIT Class 0xA Major 3 Minor 1",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testACPIDMARValidBus = Test{
 		Name:                    "ACPI DMAR table has valid BUS configuration",
@@ -151,6 +180,7 @@ var (
 		SpecificationChapter:    "SINIT Class 0xA Major 3 Minor 2",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testACPIDMARValidAzalia = Test{
 		Name:                    "ACPI DMAR table Azalia device scope is valid",
@@ -160,6 +190,7 @@ var (
 		SpecificationChapter:    "SINIT Class 0xA Major 3 Minor 3",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testACPIDMARDeviceScopePresent = Test{
 		Name:                    "ACPI DMAR table device scope is present",
@@ -169,6 +200,7 @@ var (
 		SpecificationChapter:    "SINIT Class 0xA Major 3 Minor 4",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testACPIDMARHPETScopeDuplicated = Test{
 		Name:                    "ACPI DMAR table has no duplicated HPET scope",
@@ -178,6 +210,7 @@ var (
 		SpecificationChapter:    "SINIT Class 0xA Major 3 Minor 5",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testACPIDMARDrhdVtdDevice = Test{
 		Name:                    "ACPI DMAR table DRHD device ",
@@ -187,6 +220,7 @@ var (
 		SpecificationChapter:    "SINIT Class 0xA Major 3 Minor 6",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testACPIDMARDrhdVtdScope = Test{
 		Name:                    "ACPI DMAR table DRHD device scope",
@@ -196,6 +230,7 @@ var (
 		SpecificationChapter:    "SINIT Class 0xA Major 3 Minor 7",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testACPIDMARDrhdPchApic = Test{
 		Name:                    "ACPI DMAR table DRHD PCH APIC present",
@@ -205,6 +240,7 @@ var (
 		SpecificationChapter:    "SINIT Class 0xA Major 3 Minor 8",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testACPIDMARDrhdBaseaddressBelowFourGiB = Test{
 		Name:                    "ACPI DMAR table DRHD base address below 4 GiB",
@@ -214,6 +250,7 @@ var (
 		SpecificationChapter:    "SINIT Class 0xA Major 3 Minor 9",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testACPIDMARDrhdTopaddressBelowFourGiB = Test{
 		Name:                    "ACPI DMAR table DRHD top address below 4 GiB",
@@ -223,6 +260,7 @@ var (
 		SpecificationChapter:    "SINIT Class 0xA Major 3 Minor 0xa",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testACPIDMARDrhdBadDevicescopeEntry = Test{
 		Name:                    "ACPI DMAR table DRHD device scope entries are valid",
@@ -232,6 +270,7 @@ var (
 		SpecificationChapter:    "SINIT Class 0xA Major 3 Minor 0xb",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 	testACPIDMARDrhdBadDevicescopeLength = Test{
 		Name:                    "ACPI DMAR table DRHD device scope length are valid",
@@ -241,6 +280,7 @@ var (
 		SpecificationChapter:    "SINIT Class 0xA Major 3 Minor 0xc",
 		SpecificiationTitle:     ServerGrantleyPlatformSpecificationTitle,
 		SpecificationDocumentID: ServerGrantleyPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 
 	testACPIPWRMBarBelowFourGib = Test{
@@ -260,15 +300,22 @@ var (
 		SpecificationChapter:    "SINIT Class 0xC Major 0xa",
 		SpecificiationTitle:     CBtGTXTPlatformSpecificationTitle,
 		SpecificationDocumentID: CBtGTXTPlatformDocumentID,
+		dependencies:            []*Test{&testRSDTorXSDTValid},
 	}
 
 	// TestsACPI exports the Slice with ACPI tests
 	TestsACPI = [...]*Test{
+		&testRSDPChecksum,
 		&testMCFGPresent,
 		&testDMARPresent,
 		&testDMARValid,
 		&testMADTPresent,
 		&testMADTValid,
+		&testRSDTPresent,
+		&testRSDTValid,
+		&testXSDTPresent,
+		&testXSDTValid,
+		&testRSDTorXSDTValid,
 	}
 )
 
@@ -283,6 +330,20 @@ type ACPIHeader struct {
 	OEMRevision     uint32
 	CreatorID       uint32
 	CreatorRevision uint32
+}
+
+//ACPIRsdp as defined in ACPI Spec 6.2 "5.2.5.3 Root System Description Pointer (RSDP) Structure"
+type ACPIRsdp struct {
+	Signature        [8]uint8
+	Checksum         uint8
+	OEMID            [6]uint8
+	Revision         uint8
+	RSDTPtr          uint32
+	RSDPLen          uint32
+	XSDTLen          uint32
+	XSDTPtr          uint64
+	ExtendedChecksum uint8
+	Reserved         [3]uint8
 }
 
 func checkTableValid(txtAPI hwapi.APIInterfaces, name string) ([]byte, bool, error, error) {
@@ -322,7 +383,7 @@ func checkTableValid(txtAPI hwapi.APIInterfaces, name string) ([]byte, bool, err
 	return table, true, nil, nil
 }
 
-func checKPresence(txtAPI hwapi.APIInterfaces, name string) (bool, error, error) {
+func checkPresence(txtAPI hwapi.APIInterfaces, name string) (bool, error, error) {
 	_, err := txtAPI.GetACPITable(name)
 	if os.IsNotExist(err) {
 		return false, fmt.Errorf("ACPI table %s not found", name), nil
@@ -332,14 +393,92 @@ func checKPresence(txtAPI hwapi.APIInterfaces, name string) (bool, error, error)
 	return true, nil, nil
 }
 
+//CheckRSDPValid tests if the RSDP ACPI table is vaid
+func CheckRSDPValid(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	return checkPresence(txtAPI, "RSDP") // the HWAPI will validate the RSDP
+}
+
+//CheckRSDTPresent tests if the RSDT ACPI table is present
+func CheckRSDTPresent(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	rawRsdp, err := txtAPI.GetACPITable("RSDP")
+	var rsdp ACPIRsdp
+	if os.IsNotExist(err) {
+		return false, fmt.Errorf("ACPI table RSDP not found"), nil
+	} else if err != nil {
+		return false, nil, err
+	}
+	err = binary.Read(bytes.NewBuffer(rawRsdp), binary.LittleEndian, &rsdp)
+	if err != nil {
+		return false, nil, err
+	}
+	if rsdp.RSDTPtr == 0 || rsdp.RSDTPtr == 0xffffffff {
+		return false, fmt.Errorf("ACPI RSDT not found in RSDP"), nil
+	}
+	return true, nil, nil
+}
+
+//CheckXSDTPresent tests if the XSDT ACPI table is present
+func CheckXSDTPresent(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	rawRsdp, err := txtAPI.GetACPITable("RSDP")
+	var rsdp ACPIRsdp
+	if os.IsNotExist(err) {
+		return false, fmt.Errorf("ACPI table RSDP not found"), nil
+	} else if err != nil {
+		return false, nil, err
+	}
+	err = binary.Read(bytes.NewBuffer(rawRsdp), binary.LittleEndian, &rsdp)
+	if err != nil {
+		return false, nil, err
+	}
+	if rsdp.XSDTPtr == 0 || rsdp.XSDTPtr == 0xffffffffffffffff {
+		return false, fmt.Errorf("ACPI XSDT not found in RSDP"), nil
+	}
+	return true, nil, nil
+}
+
+//CheckRSDTValid tests if the RSDT ACPI table is vaid
+func CheckRSDTValid(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	_, err := txtAPI.GetACPITable("RSDT") // HWAPI will validate the table
+	if os.IsNotExist(err) {
+		return false, fmt.Errorf("ACPI table RSDT is invalid"), nil
+	} else if err != nil {
+		return false, nil, err
+	}
+
+	return true, nil, nil
+}
+
+//CheckXSDTValid tests if the XSDT ACPI table is vaid
+func CheckXSDTValid(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	_, err := txtAPI.GetACPITable("RSDT") // HWAPI will validate the table
+	if os.IsNotExist(err) {
+		return false, fmt.Errorf("ACPI table XSDT is invalid"), nil
+	} else if err != nil {
+		return false, nil, err
+	}
+
+	return true, nil, nil
+}
+
+//CheckRSDTorXSDTValid tests if the RSDT or XSDT ACPI table is valid
+func CheckRSDTorXSDTValid(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+	_, err1 := txtAPI.GetACPITable("RSDT") // HWAPI will validate the table
+	_, err2 := txtAPI.GetACPITable("XSDT") // HWAPI will validate the table
+	if err1 != nil && err2 != nil {
+		return false, fmt.Errorf("No valid RSDT and XSDT present"), nil
+	}
+
+	return true, nil, nil
+}
+
 //CheckMCFGPresence tests if the MCFG ACPI table exists
 func CheckMCFGPresence(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	return checKPresence(txtAPI, "MCFG")
+	return checkPresence(txtAPI, "MCFG")
 }
 
 //CheckMADTPresence tests if the MADT ACPI table exists
 func CheckMADTPresence(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	return checKPresence(txtAPI, "MADT")
+	return checkPresence(txtAPI, "APIC")
 }
 
 //ACPIMADT represent the table header as defined in ACPI Spec 6.2 "Multiple APIC Description Table (MADT) Format"
@@ -347,12 +486,12 @@ type ACPIMADT struct {
 	ACPIHeader
 	LapicAddress uint32
 	Flags        uint32
-	// TODO: interrupt controller structures
+	// TODO: variable interrupt controller structures
 }
 
 //CheckMADTValid tests if the MADT ACPI table is valid
 func CheckMADTValid(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	table, valid, err, interr := checkTableValid(txtAPI, "MADT")
+	table, valid, err, interr := checkTableValid(txtAPI, "APIC")
 	if interr != nil {
 		return false, nil, interr
 	} else if err != nil {
@@ -375,7 +514,7 @@ func CheckMADTValid(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 
 //CheckDMARPresence tests if the MADT ACPI table exists
 func CheckDMARPresence(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	return checKPresence(txtAPI, "DMAR")
+	return checkPresence(txtAPI, "DMAR")
 }
 
 //CheckDMARValid tests if the DMAR ACPI table is valid

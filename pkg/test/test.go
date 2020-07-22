@@ -31,6 +31,11 @@ const (
 	CBtGTXTPlatformSpecificationTitle = "TXT error description file for Converged BtG / TXT  platform"
 	//CBtGTXTPlatformDocumentID is an empty string
 	CBtGTXTPlatformDocumentID = ""
+
+	//ACPISpecificationTitle is the title of the ACPI spec
+	ACPISpecificationTitle = "Advanced Configuration and PowerInterface (ACPI) Specification 6.3"
+	//ACPISpecificationDocumentID s an empty string
+	ACPISpecificationDocumentID = ""
 )
 
 // Result exposes the type for test results
