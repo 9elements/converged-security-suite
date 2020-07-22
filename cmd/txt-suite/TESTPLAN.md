@@ -68,8 +68,14 @@ Id | Test | Implemented | Document | Chapter
 65 | SMRR protection active                           | :white_check_mark:     |                              |                                                         
 66 | IOMMU/VT-d active                                | :white_check_mark:     | Document 315168-016          | 1.11.2 Protected Memory Regions (PMRs)                  
 67 | TXT server mode enabled                          | :white_check_mark:     |                              |                                                         
-68 | ACPI MCFG is present                             | :white_check_mark:     |                              | SINIT Class 0xC Major 0xa                               
-69 | ACPI DMAR is present                             | :white_check_mark:     |                              | SINIT Class 0xC Major 4                                 
-70 | ACPI DMAR is valid                               | :white_check_mark:     |                              | SINIT Class 0xC Major 5                                 
-71 | ACPI MADT is present                             | :white_check_mark:     |                              | SINIT Class 0xC Major 16                                
-72 | ACPI MADT is valid                               | :white_check_mark:     |                              | SINIT Class 0xC Major 7                                 
+68 | ACPI RSDP exists and has valid checksum          | :white_check_mark:     |                              | SINIT Class 0xC Major 1                                 
+69 | ACPI MCFG is present                             | :white_check_mark:     |                              | SINIT Class 0xC Major 0xa                               
+70 | ACPI DMAR is present                             | :white_check_mark:     |                              | SINIT Class 0xC Major 4                                 
+71 | ACPI DMAR is valid                               | :white_check_mark:     |                              | SINIT Class 0xC Major 5                                 
+72 | ACPI MADT is present                             | :white_check_mark:     |                              | SINIT Class 0xC Major 16                                
+73 | ACPI MADT is valid                               | :white_check_mark:     |                              | SINIT Class 0xC Major 7                                 
+74 | ACPI RSDT present                                | :x:                    |                              | SINIT Class 0xC Major 2                                 
+75 | ACPI RSDT is valid                               | :white_check_mark:     |                              | SINIT Class 0xC Major 3                                 
+76 | ACPI XSDT present                                | :white_check_mark:     |                              | SINIT Class 0xC Major 9                                 
+77 | ACPI XSDT is valid                               | :white_check_mark:     |                              | SINIT Class 0xC Major 9                                 
+78 | ACPI RSDT or XSDT is valid                       | :white_check_mark:     |                              | 5.2.8 Extended System Description Table (XSDT)          
