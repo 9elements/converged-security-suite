@@ -2,12 +2,20 @@ package tools
 
 import (
 	"bytes"
+	"crypto"
 	"encoding/binary"
 	"fmt"
 	"io"
 	"log"
+	"strconv"
+	"strings"
 
 	"github.com/google/go-tpm/tpm2"
+)
+
+const (
+	// LCPPolv2StdVersion set as standard version for LCP Policy Generation
+	LCPPolv2StdVersion uint16 = (0x302)
 )
 
 //LCPPol2Hash stores the hashing algorithm used in the LCP policy version 2
@@ -26,15 +34,94 @@ const (
 	LCPPol2HAlgSM3 LCPPol2Hash = 0x12
 )
 
+var hashMap = map[crypto.Hash]LCPPol2Hash{
+	crypto.SHA1:   0x04,
+	crypto.SHA256: 0x0B,
+	crypto.SHA384: 0x0C,
+}
+
+func (l LCPPol2Hash) String() string {
+	switch l {
+	case LCPPol2HAlgSHA1:
+		return "SHA1"
+	case LCPPol2HAlgSHA256:
+		return "SHA256"
+	case LCPPol2HAlgSHA384:
+		return "SHA384"
+	case LCPPol2HAlgNULL:
+		return "AlgNull"
+	case LCPPol2HAlgSM3:
+		return "SM3"
+	}
+	return "unknown"
+}
+
+// LCPPolicyType exports the PolicyType type for external use
+type LCPPolicyType uint8
+
+func (pt LCPPolicyType) String() string {
+	if pt == 1 {
+		return string("Any")
+	}
+	return string("List")
+}
+
+// LCPPol2Sig represents LCPPol2.LcpSignAlgMask options
+type LCPPol2Sig uint32
+
+const (
+	// RSA2048SHA1 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	RSA2048SHA1 LCPPol2Sig = 0x00000004
+	// RSA2048SHA256 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	RSA2048SHA256 LCPPol2Sig = 0x00000008
+	// RSA3072SHA256 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	RSA3072SHA256 LCPPol2Sig = 0x00000040
+	// RSA3072SHA384 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	RSA3072SHA384 LCPPol2Sig = 0x00000080
+	// ECDSAP256SHA256 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	ECDSAP256SHA256 LCPPol2Sig = 0x00001000
+	// ECDSAP384SHA384 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	ECDSAP384SHA384 LCPPol2Sig = 0x00002000
+	// SM2SM2CurveSM3 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	SM2SM2CurveSM3 LCPPol2Sig = 0x00010000
+)
+
+func (ls LCPPol2Sig) String() string {
+	var b strings.Builder
+	if (1 >> (ls & RSA2048SHA1)) == 0 {
+		b.WriteString("RSA2048SHA1 + ")
+	}
+	if (1 >> (ls & RSA2048SHA256)) == 0 {
+		b.WriteString("RSA2048SHA256 + ")
+	}
+	if (1 >> (ls & RSA3072SHA256)) == 0 {
+		b.WriteString("RSA3072SHA256 + ")
+	}
+	if (1 >> (ls & RSA3072SHA384)) == 0 {
+		b.WriteString("RSA3072SHA384 + ")
+	}
+	if (1 >> (ls & ECDSAP256SHA256)) == 0 {
+		b.WriteString("ECDSAP256SHA256 + ")
+	}
+	if (1 >> (ls & ECDSAP384SHA384)) == 0 {
+		b.WriteString("ECDSAP384SHA384 + ")
+	}
+	if (1 >> (ls & SM2SM2CurveSM3)) == 0 {
+		b.WriteString("SM2SM2CurveSM3")
+	}
+	ret := strings.TrimSuffix(b.String(), "+ ")
+	return ret
+}
+
 const (
 	//LCPPolicyVersion2 as defined in Document 315168-016 Chapter 3.2.1 LCP Policy
 	LCPPolicyVersion2 uint16 = 0x0204
 	//LCPPolicyVersion3 as defined in Document 315168-016 Chapter 3.2.1 LCP Policy
 	LCPPolicyVersion3 uint16 = 0x0300
 	//LCPPolicyTypeAny as defined in Document 315168-016 Chapter D LCP Data Structures
-	LCPPolicyTypeAny uint8 = 1
+	LCPPolicyTypeAny LCPPolicyType = 1
 	//LCPPolicyTypeList as defined in Document 315168-016 Chapter D LCP Data Structures
-	LCPPolicyTypeList uint8 = 0
+	LCPPolicyTypeList LCPPolicyType = 0
 	//LCPMaxLists as defined in Document 315168-016 Chapter D LCP Data Structures
 	LCPMaxLists uint = 8
 	//SHA1DigestSize as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
@@ -74,6 +161,15 @@ const (
 
 	// LCPPolHAlgSHA1 Document 315168-016 Chapter D.1 LCP_POLICY
 	LCPPolHAlgSHA1 uint8 = 0
+
+	// LCPPolicyControlNPW as defined in Document 315168-013 Chapter 3.2.2 PolicyControl Field for LCP_POLTYPE_LIST
+	LCPPolicyControlNPW uint32 = 0x00000001
+	//LCPPolicyControlSinitCaps as defined in Document 315168-013 Chapter 3.2.2 PolicyControl Field for LCP_POLTYPE_LIST
+	LCPPolicyControlSinitCaps uint32 = 0x00000002
+	//LCPPolicyControlOwnerEnforced as defined in Document 315168-013 Chapter 3.2.2 PolicyControl Field for LCP_POLTYPE_LIST
+	LCPPolicyControlOwnerEnforced uint32 = 0x00000004
+	//LCPPolicyControlAuxDelete as defined in Document 315168-013 Chapter 3.3.2 LCP Policy 2
+	LCPPolicyControlAuxDelete uint32 = 0x80000000
 )
 
 //LCPHash holds one of the supported hashes
@@ -208,7 +304,7 @@ type ApprovedSignatureAlogrithm struct {
 type LCPPolicy struct {
 	Version                uint16 // < 0x0204
 	HashAlg                uint8
-	PolicyType             uint8
+	PolicyType             LCPPolicyType
 	SINITMinVersion        uint8
 	Reserved               uint8
 	DataRevocationCounters [LCPMaxLists]uint16
@@ -224,14 +320,14 @@ type LCPPolicy struct {
 type LCPPolicy2 struct {
 	Version                uint16 // < 0x0302
 	HashAlg                LCPPol2Hash
-	PolicyType             uint8
+	PolicyType             LCPPolicyType
 	SINITMinVersion        uint8
 	DataRevocationCounters [LCPMaxLists]uint16
 	PolicyControl          uint32
 	MaxSINITMinVersion     uint8 // v2.0 - Only PO index, reserved for PS
 	Reserved               uint8 // v2.0 - Only PO index, reserved for PS
 	LcpHashAlgMask         uint16
-	LcpSignAlgMask         uint32
+	LcpSignAlgMask         LCPPol2Sig
 	Reserved2              uint32
 	PolicyHash             LCPHash
 }
@@ -973,4 +1069,204 @@ func (pd *LCPPolicyData) PrettyPrint() {
 			log.Printf("\t\tSignature: (None)\n")
 		}
 	}
+}
+
+// GenLCPPolicyV2 generates a LCPPolicyV2 structure with given hash algorithm
+func GenLCPPolicyV2(version uint16, hashAlg crypto.Hash, hash []byte, sinitmin uint8, pc PolicyControl, maxSinit uint8,
+	apprHashes ApprovedHashAlgorithm, apprSigs ApprovedSignatureAlogrithm) (*LCPPolicy2, error) {
+
+	var v uint16
+	h, a := hashMap[hashAlg]
+	if a != true {
+		return nil, fmt.Errorf("Invalid hash algorithm")
+	}
+	lcph, err := genLCPHash(hashAlg, hash)
+	if err != nil {
+		return nil, err
+	}
+	if version <= LCPPolv2StdVersion {
+		v = LCPPolv2StdVersion
+	} else {
+		v = version
+	}
+	apprH := deconstructApprovedHashAlgs(apprHashes)
+	apprS := deconstructApprovedSigAlgs(apprSigs)
+	p := deconstructPolicyControl(pc)
+	pol := &LCPPolicy2{
+		Version:                v,
+		HashAlg:                h,
+		PolicyType:             LCPPolicyTypeAny,
+		SINITMinVersion:        sinitmin,
+		DataRevocationCounters: [8]uint16{},
+		PolicyControl:          p,
+		MaxSINITMinVersion:     maxSinit,
+		Reserved:               uint8(0),
+		LcpHashAlgMask:         apprH,
+		LcpSignAlgMask:         apprS,
+		PolicyHash:             *lcph,
+	}
+	return pol, nil
+}
+
+func deconstructPolicyControl(pc PolicyControl) uint32 {
+	p := uint32(0)
+	if pc.NPW {
+		p += LCPPolicyControlNPW
+	}
+	if pc.SinitCaps {
+		p += LCPPolicyControlSinitCaps
+	}
+	if pc.OwnerEnforced {
+		p += LCPPolicyControlOwnerEnforced
+	}
+	if pc.AuxDelete {
+		p += LCPPolicyControlAuxDelete
+	}
+	return p
+}
+
+func deconstructApprovedSigAlgs(apprSigs ApprovedSignatureAlogrithm) LCPPol2Sig {
+	appr := LCPPol2Sig(0)
+	if apprSigs.RSA2048SHA1 == true {
+		appr += RSA2048SHA1
+	}
+	if apprSigs.RSA2048SHA256 == true {
+		appr += RSA2048SHA256
+	}
+	if apprSigs.RSA3072SHA256 == true {
+		appr += RSA3072SHA256
+	}
+	if apprSigs.RSA3072SHA384 == true {
+		appr += RSA3072SHA384
+	}
+	if apprSigs.ECDSAP256SHA256 == true {
+		appr += ECDSAP256SHA256
+	}
+	if apprSigs.ECDSAP384SHA384 == true {
+		appr += ECDSAP384SHA384
+	}
+	if apprSigs.SM2SM2CurveSM3 == true {
+		appr += SM2SM2CurveSM3
+	}
+	return appr
+}
+
+func deconstructApprovedHashAlgs(apprHashes ApprovedHashAlgorithm) uint16 {
+	var appr uint16
+	if apprHashes.SHA1 == true {
+		appr = uint16(0x0001)
+	}
+	if apprHashes.SHA256 == true {
+		appr = appr + uint16(0x0008)
+	}
+	if apprHashes.SHA384 == true {
+		appr = appr + uint16(0x0040)
+	}
+	if apprHashes.SM3 == true {
+		appr = appr + uint16(0x0020)
+	}
+	return appr
+}
+
+func genLCPHash(alg crypto.Hash, hash []byte) (*LCPHash, error) {
+	var lcph LCPHash
+	r := bytes.NewReader(hash)
+	switch alg {
+	case crypto.SHA1:
+		var sha1 [SHA1DigestSize]byte
+		err := binary.Read(r, binary.LittleEndian, &sha1)
+		if err != nil {
+			return nil, err
+		}
+		lcph.sha1 = &sha1
+		return &lcph, nil
+	case crypto.SHA256:
+		var sha256 [SHA256DigestSize]byte
+
+		err := binary.Read(r, binary.LittleEndian, &sha256)
+		if err != nil {
+			return nil, err
+		}
+		lcph.sha256 = &sha256
+		return &lcph, nil
+	case crypto.SHA384:
+		var sha384 [SHA384DigestSize]byte
+
+		err := binary.Read(r, binary.LittleEndian, &sha384)
+		if err != nil {
+			return nil, err
+		}
+		lcph.sha384 = &sha384
+		return &lcph, nil
+	case crypto.SHA512:
+		var sha512 [SHA512DigestSize]byte
+
+		err := binary.Read(r, binary.LittleEndian, &sha512)
+		if err != nil {
+			return nil, err
+		}
+		lcph.sha512 = &sha512
+		return &lcph, nil
+	}
+	return nil, fmt.Errorf("Hasl algorithm not supported")
+}
+
+// PrintPolicyControl can print PolicyControl field
+func PrintPolicyControl(pc uint32) string {
+	var b strings.Builder
+	if (1 >> (pc & LCPPolicyControlNPW)) == 0 {
+		b.WriteString("NPW + ")
+	}
+	if (1 >> (pc & LCPPolicyControlSinitCaps)) == 0 {
+		b.WriteString("SinitCaps + ")
+	}
+	if (1 >> (pc & LCPPolicyControlOwnerEnforced)) == 0 {
+		b.WriteString("OwnerEnforced + ")
+	}
+	if (1 >> (pc & LCPPolicyControlAuxDelete)) == 0 {
+		b.WriteString("AuxDelete")
+	}
+	ret := strings.TrimSuffix(b.String(), "+")
+	return ret
+}
+
+// PrettyPrint prints LCPPolicy2 Structure i a human readable format
+func (p *LCPPolicy2) PrettyPrint() {
+	var s strings.Builder
+	s.WriteString("Version: " + string(strconv.FormatInt(int64(p.Version), 16)) + "\n")
+	s.WriteString("HashAlg: " + string(p.HashAlg.String()) + "\n")
+	s.WriteString("PolicyType: " + p.PolicyType.String() + "\n")
+	s.WriteString("SINITMinVersion: " + string(strconv.Itoa(int(p.SINITMinVersion))) + "\n")
+	s.WriteString("DataRevocationCounters: ")
+	for _, item := range p.DataRevocationCounters {
+		if item != 0 {
+			s.WriteString(string(item) + "+")
+		}
+	}
+	s.WriteString("\n\n")
+	s.WriteString("PolicyControl: " + PrintPolicyControl(p.PolicyControl) + "\n")
+	s.WriteString("MaxSINITMinVersion: " + string(strconv.FormatInt(int64(p.MaxSINITMinVersion), 16)) + "\n")
+	s.WriteString("LcpHashAlgMask: " + PrintLcpHashAlgMask(p.LcpHashAlgMask) + "\n")
+	s.WriteString("LcpSignAlgMask: " + p.LcpSignAlgMask.String() + "\n")
+	s.WriteString("PolicyHash: " + "" + "\n")
+	fmt.Printf(s.String())
+}
+
+// PrintLcpHashAlgMask prints LcpHashAlgMask in human readable format
+func PrintLcpHashAlgMask(mask uint16) string {
+	var b strings.Builder
+	if (1 >> (mask & 0x0001)) == 0 {
+		b.WriteString("SHA1 + ")
+	}
+	if (1 >> (mask & 0x0008)) == 0 {
+		b.WriteString("SHA256 + ")
+	}
+	if (1 >> (mask & 0x0020)) == 0 {
+		b.WriteString("SM3 + ")
+	}
+	if (1 >> (mask & 0x0040)) == 0 {
+		b.WriteString("SHA385")
+	}
+	ret := strings.TrimSuffix(b.String(), " + ")
+	return ret
 }

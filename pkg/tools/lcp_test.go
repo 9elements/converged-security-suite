@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"crypto"
 	"io/ioutil"
 	"testing"
 )
@@ -30,15 +31,17 @@ func TestLCPParser2(t *testing.T) {
 }
 
 func TestLCPParser3(t *testing.T) {
+	var lcp2 *LCPPolicy2
 	file, err := ioutil.ReadFile("./tests/pol3.bin")
 	if err != nil {
 		t.Errorf("LCPDataParser() failed: %v", err)
 	}
 
-	_, _, err = ParsePolicy(file)
+	_, lcp2, err = ParsePolicy(file)
 	if err != nil {
 		t.Errorf("LCPDataParser() failed: %v", err)
 	}
+	lcp2.PrettyPrint()
 }
 
 func TestLCPDataParser(t *testing.T) {
@@ -67,4 +70,19 @@ func TestLCPDataParser2(t *testing.T) {
 	}
 
 	poldata.PrettyPrint()
+}
+
+func TestLCPPolv2Gen(t *testing.T) {
+	version := uint16(0x304)
+	sinitmin := uint8(0)
+	maxsinit := uint8(0)
+	hash := make([]byte, crypto.SHA256.Size())
+	apprHash := ApprovedHashAlgorithm{SHA1: false, SHA256: true, SHA384: false, SM3: false}
+	apprSign := ApprovedSignatureAlogrithm{RSA3072SHA256: true}
+	pc := PolicyControl{NPW: false, OwnerEnforced: false, AuxDelete: false, SinitCaps: false}
+	lcp2, err := GenLCPPolicyV2(version, crypto.SHA256, hash, sinitmin, pc, maxsinit, apprHash, apprSign)
+	if err != nil {
+		t.Errorf("GenLCPPolicyV2() failed: %v", err)
+	}
+	lcp2.PrettyPrint()
 }
