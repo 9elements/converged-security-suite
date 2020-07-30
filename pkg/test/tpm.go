@@ -72,22 +72,6 @@ var (
 		function: TPMConnect,
 		Status:   Implemented,
 	}
-	testtpm12present = Test{
-		Name:         "TPM 1.2 present",
-		Required:     false,
-		NonCritical:  true,
-		function:     TPM12Present,
-		dependencies: []*Test{&testtpmconnection},
-		Status:       Implemented,
-	}
-	testtpm2present = Test{
-		Name:         "TPM 2.0 is present",
-		Required:     false,
-		NonCritical:  true,
-		function:     TPM20Present,
-		dependencies: []*Test{&testtpmconnection},
-		Status:       Implemented,
-	}
 	testtpmispresent = Test{
 		Name:         "TPM is present",
 		Required:     true,
@@ -99,9 +83,9 @@ var (
 		Name:                    "TPM NVRAM is locked",
 		function:                TPMNVRAMIsLocked,
 		Required:                true,
-		NonCritical:             true,
 		dependencies:            []*Test{&testtpmispresent},
 		Status:                  Implemented,
+		Firmware:                FWNoCoreboot,
 		SpecificationChapter:    "5.6.3.1 Failsafe Hash",
 		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
 		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
@@ -130,7 +114,6 @@ var (
 		Name:                    "AUX Index has the correct hash",
 		function:                AUXTPM2IndexCheckHash,
 		Required:                true,
-		NonCritical:             false,
 		dependencies:            []*Test{&testtpmispresent},
 		Status:                  Implemented,
 		SpecificationChapter:    "I TPM NV",
@@ -141,7 +124,6 @@ var (
 		Name:                    "PO Index has correct config",
 		function:                POIndexConfig,
 		Required:                false,
-		NonCritical:             true,
 		dependencies:            []*Test{&testtpmispresent},
 		Status:                  Implemented,
 		SpecificationChapter:    "I TPM NV",
@@ -162,7 +144,6 @@ var (
 		Name:                    "PO index has valid LCP Policy",
 		function:                POIndexHasValidLCP,
 		Required:                true,
-		NonCritical:             true,
 		dependencies:            []*Test{&testtpmispresent},
 		Status:                  Implemented,
 		SpecificationChapter:    "D.3 LCP_POLICY_LIST",
@@ -189,24 +170,13 @@ var (
 		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
 		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
-	testtxtmodeauto = Test{
-		Name:                    "Auto-promotion mode is active",
-		function:                AutoPromotionModeIsActive,
+	// TODO TXT Mode is Set
+	testtxtmodeisset = Test{
+		Name:                    "TXT Mode is set",
+		function:                TXTModeIsSet,
 		Required:                true,
 		dependencies:            []*Test{&testpsindexissvalid},
 		Status:                  Implemented,
-		NonCritical:             true,
-		SpecificationChapter:    "5.6.2 Autopromotion Hash and Signed BIOS Policy",
-		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
-		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
-	}
-	testtxtmodesignedpolicy = Test{
-		Name:                    "Signed policy mode is active",
-		function:                SignedPolicyModeIsActive,
-		Required:                true,
-		dependencies:            []*Test{&testpsindexissvalid},
-		Status:                  Implemented,
-		NonCritical:             true,
 		SpecificationChapter:    "5.6.2 Autopromotion Hash and Signed BIOS Policy",
 		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
 		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
@@ -215,8 +185,6 @@ var (
 	// TestsTPM exposes the slice of pointers to tests regarding tpm functionality for txt
 	TestsTPM = [...]*Test{
 		&testtpmconnection,
-		&testtpm12present,
-		&testtpm2present,
 		&testtpmispresent,
 		&testtpmnvramislocked,
 		&testpsindexconfig,
@@ -227,8 +195,7 @@ var (
 		&testpoindexissvalid,
 		&testpcr00valid,
 		&testpsnpwmodenotactive,
-		&testtxtmodeauto,
-		&testtxtmodesignedpolicy,
+		&testtxtmodeisset,
 	}
 )
 
@@ -242,28 +209,12 @@ func TPMConnect(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	return true, nil, nil
 }
 
-// TPM12Present Checks if TPM 1.2 is present and answers to GetCapability
-func TPM12Present(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-
+// TPMIsPresent validates if one of the two previous tests succeeded
+func TPMIsPresent(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
 		return true, nil, nil
-	}
-	return false, fmt.Errorf("No TPM1.2 device detected"), nil
-}
-
-// TPM20Present Checks if TPM 2.0 is present and answers to GetCapability
-func TPM20Present(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	switch tpmCon.Version {
 	case tss.TPMVersion20:
-		return true, nil, nil
-	}
-	return false, fmt.Errorf("No TPM2.0 device detected"), nil
-}
-
-// TPMIsPresent validates if one of the two previous tests succeeded
-func TPMIsPresent(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	if (testtpm12present.Result == ResultPass) || (testtpm2present.Result == ResultPass) {
 		return true, nil, nil
 	}
 	return false, fmt.Errorf("No TPM present"), nil
@@ -895,39 +846,26 @@ func NPWModeIsNotSetInPS(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	return true, nil, nil
 }
 
-// AutoPromotionModeIsActive checks if TXT is in auto-promotion mode
-func AutoPromotionModeIsActive(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+// TXTModeIsSet checks if a TXT mode is set
+func TXTModeIsSet(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	pol1, pol2, err := readPSLCPPolicy(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
 	if pol1 != nil {
 		if pol1.PolicyType != tools.LCPPolicyTypeAny {
-			return false, fmt.Errorf("Signed Policy mode active"), nil
+			return true, fmt.Errorf("Signed Policy mode active"), nil
+		}
+		if pol1.PolicyType != tools.LCPPolicyTypeList {
+			return true, fmt.Errorf("Auto-promotion mode active"), nil
 		}
 	}
 	if pol2 != nil {
 		if pol2.PolicyType != tools.LCPPolicyTypeAny {
-			return false, fmt.Errorf("Signed Policy mode active"), nil
+			return true, fmt.Errorf("Signed Policy mode active"), nil
 		}
-	}
-	return true, nil, nil
-}
-
-// SignedPolicyModeIsActive checks if TXT is in signed policy mode
-func SignedPolicyModeIsActive(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	pol1, pol2, err := readPSLCPPolicy(txtAPI)
-	if err != nil {
-		return false, nil, err
-	}
-	if pol1 != nil {
-		if pol1.PolicyType != tools.LCPPolicyTypeList {
-			return false, fmt.Errorf("Auto-promotion mode active"), nil
-		}
-	}
-	if pol2 != nil {
 		if pol2.PolicyType != tools.LCPPolicyTypeList {
-			return false, fmt.Errorf("Auto-promotion mode active"), nil
+			return true, fmt.Errorf("Auto-promotion mode active"), nil
 		}
 	}
 	return true, nil, nil

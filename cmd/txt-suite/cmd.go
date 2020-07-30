@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/9elements/converged-security-suite/pkg/test"
+	"github.com/9elements/converged-security-suite/pkg/tools"
 )
 
 var testno = flag.String("t", "", "Select test number 1 - 50. e.g.: -t=1,2,3,4,...")
@@ -49,21 +50,48 @@ func showHelp() {
 	fmt.Println("\t-legacyboot : Test if platform is TXT Legacy boot enabled")
 }
 
+func systemRunsCoreboot() (bool, error) {
+	firmware, err := tools.SMBIOSGetVendor()
+	if err != nil {
+		return false, err
+	}
+	if strings.Contains(*firmware, string(test.FWCoreboot)) {
+		return true, nil
+	}
+	return false, nil
+}
+
 func getTests() []*test.Test {
 	var tests []*test.Test
+	coreboot, _ := systemRunsCoreboot()
 	for i := range test.TestsCPU {
+		if test.TestsCPU[i].Firmware == test.FWNoCoreboot && coreboot {
+			continue
+		}
 		tests = append(tests, test.TestsCPU[i])
 	}
 	for i := range test.TestsTPM {
+		if test.TestsTPM[i].Firmware == test.FWNoCoreboot && coreboot {
+			continue
+		}
 		tests = append(tests, test.TestsTPM[i])
 	}
 	for i := range test.TestsFIT {
+		if test.TestsFIT[i].Firmware == test.FWNoCoreboot && coreboot {
+			continue
+		}
 		tests = append(tests, test.TestsFIT[i])
 	}
 	for i := range test.TestsMemory {
+		if test.TestsMemory[i].Firmware == test.FWNoCoreboot && coreboot {
+			continue
+		}
 		tests = append(tests, test.TestsMemory[i])
 	}
 	for i := range test.TestsACPI {
+		if test.TestsACPI[i].Firmware == test.FWNoCoreboot && coreboot {
+			continue
+		}
 		tests = append(tests, test.TestsACPI[i])
 	}
 	return tests
@@ -108,8 +136,8 @@ func deconstructFlag() ([]int, error) {
 	var err error
 	tmpstrings = strings.Split(*testno, ",")
 	for _, item := range tmpstrings {
-		if strings.Contains(*testno, "-") {
-			testrange = strings.Split(*testno, "-")
+		if strings.Contains(item, "-") {
+			testrange = strings.Split(item, "-")
 			testmin, err = strconv.Atoi(testrange[0])
 			if err != nil {
 				return nil, err
@@ -119,7 +147,7 @@ func deconstructFlag() ([]int, error) {
 				return nil, err
 			}
 
-			for i := testmin; i < testmax; i++ {
+			for i := testmin; i <= testmax; i++ {
 				testnos = append(testnos, i)
 			}
 

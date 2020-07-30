@@ -8,6 +8,7 @@ import (
 
 	"github.com/9elements/converged-security-suite/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/pkg/tools"
+	tss "github.com/9elements/go-tss"
 )
 
 // FITSize 16MiB
@@ -54,7 +55,6 @@ var (
 	testhasmcupdate = Test{
 		Name:                    "Microcode update entry in FIT",
 		Required:                true,
-		NonCritical:             true,
 		function:                HasMicroCode,
 		dependencies:            []*Test{&testhasfit},
 		Status:                  Implemented,
@@ -83,11 +83,10 @@ var (
 		SpecificationDocumentID: IntelFITSpecificationDocumentID,
 	}
 	testhaslcpTest = Test{
-		Name:         "BIOS Policy entry in FIT",
-		Required:     false,
-		function:     HasBIOSPolicy,
-		dependencies: []*Test{&testhasfit, &testtxtmodesignedpolicy},
-		Status:       Implemented,
+		Name:     "BIOS Policy entry in FIT",
+		Required: false,
+		function: HasBIOSPolicy,
+		Status:   NotImplemented,
 	}
 	testibbcoversresetvector = Test{
 		Name:                    "IBB covers reset vector",
@@ -700,13 +699,17 @@ func SINITACMcomplyTPMSpec(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	if err != nil {
 		return false, err, nil
 	}
-	res := (1 >> tpms.Capabilities & (uint32(tools.TPMFamilyDTPM12) | uint32(tools.TPMFamilyDTPMBoth)))
-	if res == 0 && testtpm12present.Result == ResultPass {
-		return true, nil, nil
-	}
-	res = (1 >> tpms.Capabilities & (uint32(tools.TPMFamilyDTPM20) | uint32(tools.TPMFamilyDTPMBoth)))
-	if res == 0 && testtpm2present.Result == ResultPass {
-		return true, nil, nil
+	switch tpmCon.Version {
+	case tss.TPMVersion12:
+		res := (1 >> tpms.Capabilities & (uint32(tools.TPMFamilyDTPM12) | uint32(tools.TPMFamilyDTPMBoth)))
+		if res == 0 {
+			return true, nil, nil
+		}
+	case tss.TPMVersion20:
+		res := (1 >> tpms.Capabilities & (uint32(tools.TPMFamilyDTPM20) | uint32(tools.TPMFamilyDTPMBoth)))
+		if res == 0 {
+			return true, nil, nil
+		}
 	}
 	return false, fmt.Errorf("SINIT ACM does not support used TPM"), nil
 }

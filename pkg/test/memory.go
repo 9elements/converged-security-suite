@@ -124,13 +124,6 @@ var (
 		SpecificiationTitle:     IntelTXTSpecificationTitle,
 		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
-	testnosiniterrors = Test{
-		Name:        "SINIT ACM startup successful",
-		Required:    false,
-		NonCritical: true,
-		function:    NoSINITErrors,
-		Status:      Implemented,
-	}
 	testbiosdataregionpresent = Test{
 		Name:                    "BIOS DATA REGION present",
 		Required:                true,
@@ -185,7 +178,6 @@ var (
 		Required:                false,
 		function:                ActiveIOMMU,
 		Status:                  Implemented,
-		NonCritical:             true,
 		SpecificationChapter:    "1.11.2 Protected Memory Regions (PMRs)",
 		SpecificiationTitle:     IntelTXTSpecificationTitle,
 		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
@@ -211,7 +203,6 @@ var (
 		&testsinitintxt,
 		&testsinitmatcheschipset,
 		&testsinitmatchescpu,
-		&testnosiniterrors,
 		&testbiosdataregionpresent,
 		&testbiosdataregionvalid,
 		&testhasmtrr,
@@ -562,23 +553,6 @@ func SINITMatchesCPU(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	}
 
 	return false, fmt.Errorf("CPU signature not found in SINIT processor ID list"), nil
-}
-
-// NoSINITErrors checks if the SINITACM was executed without any errors
-func NoSINITErrors(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	buf, err := tools.FetchTXTRegs(txtAPI)
-	if err != nil {
-		return false, nil, err
-	}
-	regs, err := tools.ParseTXTRegs(buf)
-	if err != nil {
-		return false, nil, err
-	}
-
-	if regs.ErrorCodeRaw != 0xc0000001 {
-		return false, fmt.Errorf("SINIT Error detected"), nil
-	}
-	return true, nil, nil
 }
 
 // BIOSDATAREGIONPresent checks is the BIOSDATA Region is present in TXT Register Space

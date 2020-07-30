@@ -96,7 +96,6 @@ var (
 		Name:                    "IBB is trusted",
 		function:                IBBIsTrusted,
 		Required:                false,
-		NonCritical:             true,
 		dependencies:            []*Test{&testtxtregisterspaceaccessible},
 		Status:                  Implemented,
 		SpecificationChapter:    "B.1.6 TXT.SPAD – BOOTSTATUS",
@@ -287,7 +286,7 @@ func IBBIsTrusted(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	if regs.BootStatus&(1<<59) != 0 && regs.BootStatus&(1<<63) != 0 {
 		return true, nil, nil
 	}
-	return false, fmt.Errorf("IBB not trusted"), err
+	return true, fmt.Errorf("IBB not trusted, MLE not running"), err
 }
 
 // TXTRegistersLocked Verify that the TXT register space is locked

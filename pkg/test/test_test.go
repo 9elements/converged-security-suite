@@ -17,7 +17,7 @@ func TestTest_Run(t *testing.T) {
 		ErrorText    string
 		Status       Status
 		Spec         TXTSpec
-		NonCritical  bool
+		Firmware     FirmwareType
 	}
 
 	BNotImplemented := Test{
@@ -30,7 +30,7 @@ func TestTest_Run(t *testing.T) {
 		"",
 		NotImplemented,
 		Common,
-		true,
+		FWCoreboot,
 		"",
 		"",
 		"",
@@ -46,7 +46,7 @@ func TestTest_Run(t *testing.T) {
 		"",
 		Implemented,
 		Common,
-		true,
+		FWCoreboot,
 		"",
 		"",
 		"",
@@ -61,7 +61,7 @@ func TestTest_Run(t *testing.T) {
 		"",
 		Implemented,
 		Common,
-		true,
+		FWCoreboot,
 		"",
 		"",
 		"",
@@ -84,7 +84,7 @@ func TestTest_Run(t *testing.T) {
 				"",
 				Implemented,
 				Common,
-				true,
+				FWCoreboot,
 			},
 			true,
 			ResultPass,
@@ -100,7 +100,7 @@ func TestTest_Run(t *testing.T) {
 				"",
 				Implemented,
 				Common,
-				true,
+				FWCoreboot,
 			},
 			false,
 			ResultDependencyFailed,
@@ -116,7 +116,7 @@ func TestTest_Run(t *testing.T) {
 				"",
 				Implemented,
 				Common,
-				true,
+				FWCoreboot,
 			},
 			true,
 			ResultPass,
@@ -132,7 +132,7 @@ func TestTest_Run(t *testing.T) {
 				"",
 				Implemented,
 				Common,
-				true,
+				FWCoreboot,
 			},
 			true,
 			ResultPass,
@@ -148,7 +148,7 @@ func TestTest_Run(t *testing.T) {
 				"",
 				Implemented,
 				Common,
-				true,
+				FWCoreboot,
 			},
 			false,
 			ResultInternalError,
@@ -158,29 +158,13 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, returns error",
 				true,
-				func(a hwapi.APIInterfaces) (bool, error, error) { return true, fmt.Errorf("error 1"), nil },
-				ResultNotRun,
-				[]*Test{},
-				"",
-				Implemented,
-				Common,
-				true,
-			},
-			false,
-			ResultWarn,
-		},
-		{
-			"Regular test error critical",
-			fields{
-				"Test A, returns error, but is critical",
-				true,
 				func(a hwapi.APIInterfaces) (bool, error, error) { return false, fmt.Errorf("error 1"), nil },
 				ResultNotRun,
 				[]*Test{},
 				"",
 				Implemented,
 				Common,
-				false,
+				FWCoreboot,
 			},
 			false,
 			ResultFail,
@@ -199,7 +183,7 @@ func TestTest_Run(t *testing.T) {
 				ErrorText:    tt.fields.ErrorText,
 				Status:       tt.fields.Status,
 				Spec:         tt.fields.Spec,
-				NonCritical:  tt.fields.NonCritical,
+				Firmware:     tt.fields.Firmware,
 			}
 			if got := tr.Run(txtAPI); got != tt.wantReturn {
 				t.Errorf("Test.Run() = %v, want %v", got, tt.wantReturn)

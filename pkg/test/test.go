@@ -54,15 +54,23 @@ const (
 	// ResultFail indicates that the test failed
 	ResultFail
 
-	// ResultWarn indicates that the test failed for the standard configuration but can still be valid in a different configuration of TXT
-	ResultWarn
-
 	// ResultPass indicates that the test succeeded.
 	ResultPass
 )
 
+// FirmwareType exposes the type of firmware
+type FirmwareType string
+
+const (
+	// FWCoreboot indicates test does run on coreboot firmware
+	FWCoreboot FirmwareType = "coreboot"
+
+	// FWNoCoreboot indicates test doesn't run on coreboot firmware
+	FWNoCoreboot FirmwareType = "UEFI"
+)
+
 func (t Result) String() string {
-	return [...]string{"TESTNOTRUN", "DEPENDENCY_FAILED", "INTERNAL_ERROR", "FAIL", "WARN", "PASS"}[t]
+	return [...]string{"TESTNOTRUN", "DEPENDENCY_FAILED", "INTERNAL_ERROR", "FAIL", "PASS"}[t]
 }
 
 // Status exposes the type for test status
@@ -117,7 +125,7 @@ type Test struct {
 	ErrorTextSpec string
 	Status        Status
 	Spec          TXTSpec
-	NonCritical   bool
+	Firmware      FirmwareType
 	// The chapter inside the spec used for this test
 	SpecificationChapter string
 	// The specification used in this test
@@ -160,8 +168,6 @@ var TestsTXTReady = []*Test{
 
 	// TPM tests
 	&testtpmconnection,
-	&testtpm12present,
-	&testtpm2present,
 	&testtpmispresent,
 
 	&testtpmnvramislocked,
@@ -224,8 +230,6 @@ var TestsTXTLegacyBoot = []*Test{
 
 	// TPM tests
 	&testtpmconnection,
-	&testtpm12present,
-	&testtpm2present,
 	&testtpmispresent,
 	&testtpmnvramislocked,
 	&testpsindexconfig,
@@ -275,12 +279,7 @@ func (t *Test) Run(TxtAPI hwapi.APIInterfaces) bool {
 				}
 				t.ErrorTextSpec += "for implementation details."
 			}
-
-			if t.NonCritical {
-				t.Result = ResultWarn
-			} else {
-				t.Result = ResultFail
-			}
+			t.Result = ResultFail
 		} else if rc {
 			t.Result = ResultPass
 		} else {
