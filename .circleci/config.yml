@@ -52,8 +52,8 @@ jobs:
       - run: cp /tmp/out/txt-suite .
       - run: if [ -z "$CIRCLE_TAG" ]; then echo "export CIRCLE_TAG=$(git describe --tags|cut -d'-' -f1);" >> $BASH_ENV; fi
       - run: if [ -z "$CIRCLE_BUILD_NUM" ]; then echo "export CIRCLE_BUILD_NUM=$(git describe --tags|cut -d'-' -f2);" >> $BASH_ENV; fi
-      - run: MY_APP_VERSION=${CIRCLE_TAG} MY_APP_BUILDNUMBER=${CIRCLE_BUILD_NUM} go run github.com/goreleaser/nfpm/cmd/nfpm pkg --config ./cmd/txt-suite/nfpm_rpm.yaml --target golang-txt-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}.x86_64.rpm
-      - run: MY_APP_VERSION=${CIRCLE_TAG} MY_APP_BUILDNUMBER=${CIRCLE_BUILD_NUM} go run github.com/goreleaser/nfpm/cmd/nfpm pkg --config ./cmd/txt-suite/nfpm_deb.yaml --target go_txt-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}_amd64.deb
+      - run: MY_APP_VERSION=${CIRCLE_TAG} MY_APP_BUILDNUMBER=${CIRCLE_BUILD_NUM} go run github.com/goreleaser/nfpm/cmd/nfpm pkg --config ./build/package/nfpm_rpm.yaml --target golang-txt-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}.x86_64.rpm
+      - run: MY_APP_VERSION=${CIRCLE_TAG} MY_APP_BUILDNUMBER=${CIRCLE_BUILD_NUM} go run github.com/goreleaser/nfpm/cmd/nfpm pkg --config ./build/package/nfpm_deb.yaml --target go_txt-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}_amd64.deb
       - run: mkdir -p out && cp *.rpm ./out/ && cp *.deb ./out/
       - run: cp txt-suite ./out/
       - run: cp golang-txt-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}.x86_64.rpm artifact.rpm
