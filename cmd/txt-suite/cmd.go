@@ -30,9 +30,13 @@ func flagInteractive() bool {
 }
 
 func showVersion() {
-	fmt.Println("TXT test suite version 1.0")
-	fmt.Println("Copyright (c) 2019, 9elements Agency GmbH.")
-	fmt.Println("This program is licensed under MIT.")
+	fmt.Println("Converged Security Suite - TXT-Testing")
+	fmt.Println("")
+	fmt.Println("BSD 3-Clause License")
+	fmt.Println("")
+	fmt.Println("Copyright (c) 2020, 9elements GmbH.")
+	fmt.Println("Copyright (c) 2020, facebook Inc.")
+	fmt.Println("All rights reserved.")
 }
 
 func showHelp() {
