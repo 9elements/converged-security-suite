@@ -13,11 +13,6 @@ import (
 	"github.com/google/go-tpm/tpm2"
 )
 
-const (
-	// LCPPolv2StdVersion set as standard version for LCP Policy Generation
-	LCPPolv2StdVersion uint16 = (0x302)
-)
-
 //LCPPol2Hash stores the hashing algorithm used in the LCP policy version 2
 type LCPPol2Hash uint16
 
@@ -34,7 +29,8 @@ const (
 	LCPPol2HAlgSM3 LCPPol2Hash = 0x12
 )
 
-var hashMap = map[crypto.Hash]LCPPol2Hash{
+// HashAlgMap exports map from crypto.Hash to LCPPol2Hash for parsing manual input to LCPPolicy2
+var HashAlgMap = map[crypto.Hash]LCPPol2Hash{
 	crypto.SHA1:   0x04,
 	crypto.SHA256: 0x0B,
 	crypto.SHA384: 0x0C,
@@ -113,6 +109,34 @@ func (ls LCPPol2Sig) String() string {
 	return ret
 }
 
+// SignMaskMap exports map to convert string to type LCPPol2Sig for file parsing
+var SignMaskMap = map[string]LCPPol2Sig{
+	"RSA2048SHA1":     RSA2048SHA1,
+	"RSA2048SHA256":   RSA2048SHA256,
+	"RSA3072SHA256":   RSA3072SHA256,
+	"RSA3072SHA384":   RSA3072SHA384,
+	"ECDSAP256SHA256": ECDSAP256SHA256,
+	"ECDSAP384SHA384": ECDSAP384SHA384,
+}
+
+const (
+	// LCPPol2HashMaskSHA1 exports SHA1 definition for LCPPolicy2.LcpHashMapAlg
+	LCPPol2HashMaskSHA1 uint16 = 0x0001
+
+	// LCPPol2HashMaskSHA256 exports SHA256 definition for LCPPolicy2.LcpHashMapAlg
+	LCPPol2HashMaskSHA256 uint16 = 0x0008
+
+	// LCPPol2HashMaskSHA384 exports SHA384 definition for LCPPolicy2.LcpHashMapAlg
+	LCPPol2HashMaskSHA384 uint16 = 0x0040
+)
+
+// HashMaskMap exports map to convert string to type LCPPol2HashMask for file parsing
+var HashMaskMap = map[string]uint16{
+	"SHA1":   LCPPol2HashMaskSHA1,
+	"SHA256": LCPPol2HashMaskSHA256,
+	"SHA384": LCPPol2HashMaskSHA256,
+}
+
 const (
 	//LCPPolicyVersion2 as defined in Document 315168-016 Chapter 3.2.1 LCP Policy
 	LCPPolicyVersion2 uint16 = 0x0204
@@ -172,13 +196,21 @@ const (
 	LCPPolicyControlAuxDelete uint32 = 0x80000000
 )
 
+// PolicyControlMap exports map to convert string to type PoliyControl for file parsing
+var PolicyControlMap = map[string]uint32{
+	"NPW":           0x00000001,
+	"SinitCaps":     0x00000002,
+	"OwnerEnforced": 0x00000004,
+	"AuxDelete":     0x80000000,
+}
+
 //LCPHash holds one of the supported hashes
 type LCPHash struct {
-	sha1   *[SHA1DigestSize]uint8
-	sha256 *[SHA256DigestSize]uint8
-	sha384 *[SHA384DigestSize]uint8
-	sha512 *[SHA512DigestSize]uint8
-	sm3    *[SM3DigestSize]uint8
+	Sha1   *[SHA1DigestSize]uint8
+	Sha256 *[SHA256DigestSize]uint8
+	Sha384 *[SHA384DigestSize]uint8
+	Sha512 *[SHA512DigestSize]uint8
+	SM3    *[SM3DigestSize]uint8
 }
 
 //LCPPolicyElement represents a policy element as defined in Document 315168-016 Chapter D.4 LCP_POLICY_ELEMENT
@@ -329,7 +361,7 @@ type LCPPolicy2 struct {
 	LcpHashAlgMask         uint16
 	LcpSignAlgMask         LCPPol2Sig
 	Reserved2              uint32
-	PolicyHash             LCPHash
+	PolicyHash             []byte
 }
 
 //LCPPolicyData FIXME
@@ -492,7 +524,7 @@ func parsePolicy2(policy []byte) (*LCPPolicy2, error) {
 		if err != nil && err != io.EOF {
 			return nil, err
 		}
-		pol2.PolicyHash.sha1 = &sha1
+		copy(pol2.PolicyHash[:], sha1[:20])
 		break
 	case LCPPol2HAlgSHA256:
 		var sha256 [SHA256DigestSize]byte
@@ -500,7 +532,7 @@ func parsePolicy2(policy []byte) (*LCPPolicy2, error) {
 		if err != nil && err != io.EOF {
 			return nil, err
 		}
-		pol2.PolicyHash.sha256 = &sha256
+		copy(pol2.PolicyHash[:], sha256[:32])
 		break
 	case LCPPol2HAlgSHA384:
 		var sha384 [SHA384DigestSize]byte
@@ -508,7 +540,7 @@ func parsePolicy2(policy []byte) (*LCPPolicy2, error) {
 		if err != nil && err != io.EOF {
 			return nil, err
 		}
-		pol2.PolicyHash.sha384 = &sha384
+		copy(pol2.PolicyHash[:], sha384[:48])
 		break
 	case LCPPol2HAlgSM3:
 		var sm3 [SM3DigestSize]byte
@@ -516,7 +548,7 @@ func parsePolicy2(policy []byte) (*LCPPolicy2, error) {
 		if err != nil && err != io.EOF {
 			return nil, err
 		}
-		pol2.PolicyHash.sm3 = &sm3
+		copy(pol2.PolicyHash[:], sm3[:32])
 		break
 	}
 
@@ -901,7 +933,7 @@ func parseLCPHash2(buf *bytes.Reader, hash *LCPHash, alg tpm2.Algorithm) error {
 		if err != nil {
 			return err
 		}
-		hash.sha1 = &sha1
+		hash.Sha1 = &sha1
 
 	case tpm2.AlgSHA256:
 		var sha256 [SHA256DigestSize]byte
@@ -910,7 +942,7 @@ func parseLCPHash2(buf *bytes.Reader, hash *LCPHash, alg tpm2.Algorithm) error {
 		if err != nil {
 			return err
 		}
-		hash.sha256 = &sha256
+		hash.Sha256 = &sha256
 
 	case tpm2.AlgSHA384:
 		var sha384 [SHA384DigestSize]byte
@@ -919,7 +951,7 @@ func parseLCPHash2(buf *bytes.Reader, hash *LCPHash, alg tpm2.Algorithm) error {
 		if err != nil {
 			return err
 		}
-		hash.sha384 = &sha384
+		hash.Sha384 = &sha384
 
 	case tpm2.AlgSHA512:
 		var sha512 [SHA512DigestSize]byte
@@ -928,7 +960,7 @@ func parseLCPHash2(buf *bytes.Reader, hash *LCPHash, alg tpm2.Algorithm) error {
 		if err != nil {
 			return err
 		}
-		hash.sha512 = &sha512
+		hash.Sha512 = &sha512
 
 	//case tpm2.AlgSM3:
 	//	var sm3 [32]byte
@@ -982,14 +1014,14 @@ func ParsePolicyData(policyData []byte) (*LCPPolicyData, error) {
 
 //PrettyPrint prints the LCPHash in a human readable format
 func (p *LCPHash) PrettyPrint() string {
-	if p.sha1 != nil {
-		return fmt.Sprintf("%02x [SHA-1]", *p.sha1)
-	} else if p.sha256 != nil {
-		return fmt.Sprintf("%02x [SHA-256]", *p.sha256)
-	} else if p.sha384 != nil {
-		return fmt.Sprintf("%02x [SHA-384]", *p.sha384)
-	} else if p.sha512 != nil {
-		return fmt.Sprintf("%02x [SHA-512]", *p.sha512)
+	if p.Sha1 != nil {
+		return fmt.Sprintf("%02x [SHA-1]", *p.Sha1)
+	} else if p.Sha256 != nil {
+		return fmt.Sprintf("%02x [SHA-256]", *p.Sha256)
+	} else if p.Sha384 != nil {
+		return fmt.Sprintf("%02x [SHA-384]", *p.Sha384)
+	} else if p.Sha512 != nil {
+		return fmt.Sprintf("%02x [SHA-512]", *p.Sha512)
 		//} else if p.sm3 != nil {
 		//	return fmt.Sprintf("% 02x [SM3]", *p.sm3)
 	} else {
@@ -1072,11 +1104,11 @@ func (pd *LCPPolicyData) PrettyPrint() {
 }
 
 // GenLCPPolicyV2 generates a LCPPolicyV2 structure with given hash algorithm
-func GenLCPPolicyV2(version uint16, hashAlg crypto.Hash, hash []byte, sinitmin uint8, pc PolicyControl, maxSinit uint8,
+func GenLCPPolicyV2(version uint16, hashAlg crypto.Hash, hash []byte, sinitmin uint8, pc PolicyControl,
 	apprHashes ApprovedHashAlgorithm, apprSigs ApprovedSignatureAlogrithm) (*LCPPolicy2, error) {
 
 	var v uint16
-	h, a := hashMap[hashAlg]
+	h, a := HashAlgMap[hashAlg]
 	if a != true {
 		return nil, fmt.Errorf("Invalid hash algorithm")
 	}
@@ -1084,8 +1116,8 @@ func GenLCPPolicyV2(version uint16, hashAlg crypto.Hash, hash []byte, sinitmin u
 	if err != nil {
 		return nil, err
 	}
-	if version <= LCPPolv2StdVersion {
-		v = LCPPolv2StdVersion
+	if version <= LCPPolicyVersion3 {
+		v = LCPPolicyVersion3
 	} else {
 		v = version
 	}
@@ -1099,12 +1131,12 @@ func GenLCPPolicyV2(version uint16, hashAlg crypto.Hash, hash []byte, sinitmin u
 		SINITMinVersion:        sinitmin,
 		DataRevocationCounters: [8]uint16{},
 		PolicyControl:          p,
-		MaxSINITMinVersion:     maxSinit,
+		MaxSINITMinVersion:     uint8(0),
 		Reserved:               uint8(0),
 		LcpHashAlgMask:         apprH,
 		LcpSignAlgMask:         apprS,
-		PolicyHash:             *lcph,
 	}
+	copy(pol.PolicyHash, *lcph)
 	return pol, nil
 }
 
@@ -1168,8 +1200,8 @@ func deconstructApprovedHashAlgs(apprHashes ApprovedHashAlgorithm) uint16 {
 	return appr
 }
 
-func genLCPHash(alg crypto.Hash, hash []byte) (*LCPHash, error) {
-	var lcph LCPHash
+func genLCPHash(alg crypto.Hash, hash []byte) (*[]byte, error) {
+	var ret []byte
 	r := bytes.NewReader(hash)
 	switch alg {
 	case crypto.SHA1:
@@ -1178,8 +1210,9 @@ func genLCPHash(alg crypto.Hash, hash []byte) (*LCPHash, error) {
 		if err != nil {
 			return nil, err
 		}
-		lcph.sha1 = &sha1
-		return &lcph, nil
+		copy(ret[:], sha1[:20])
+		return &ret, nil
+
 	case crypto.SHA256:
 		var sha256 [SHA256DigestSize]byte
 
@@ -1187,8 +1220,9 @@ func genLCPHash(alg crypto.Hash, hash []byte) (*LCPHash, error) {
 		if err != nil {
 			return nil, err
 		}
-		lcph.sha256 = &sha256
-		return &lcph, nil
+		copy(ret[:], sha256[:32])
+		return &ret, nil
+
 	case crypto.SHA384:
 		var sha384 [SHA384DigestSize]byte
 
@@ -1196,8 +1230,8 @@ func genLCPHash(alg crypto.Hash, hash []byte) (*LCPHash, error) {
 		if err != nil {
 			return nil, err
 		}
-		lcph.sha384 = &sha384
-		return &lcph, nil
+		copy(ret[:], sha384[:48])
+		return &ret, nil
 	case crypto.SHA512:
 		var sha512 [SHA512DigestSize]byte
 
@@ -1205,8 +1239,8 @@ func genLCPHash(alg crypto.Hash, hash []byte) (*LCPHash, error) {
 		if err != nil {
 			return nil, err
 		}
-		lcph.sha512 = &sha512
-		return &lcph, nil
+		copy(ret[:], sha512[:64])
+		return &ret, nil
 	}
 	return nil, fmt.Errorf("Hasl algorithm not supported")
 }
@@ -1226,7 +1260,7 @@ func PrintPolicyControl(pc uint32) string {
 	if (1 >> (pc & LCPPolicyControlAuxDelete)) == 0 {
 		b.WriteString("AuxDelete")
 	}
-	ret := strings.TrimSuffix(b.String(), "+")
+	ret := strings.TrimSuffix(b.String(), " +")
 	return ret
 }
 
@@ -1235,7 +1269,7 @@ func (p *LCPPolicy2) PrettyPrint() {
 	var s strings.Builder
 	s.WriteString("Version: " + string(strconv.FormatInt(int64(p.Version), 16)) + "\n")
 	s.WriteString("HashAlg: " + string(p.HashAlg.String()) + "\n")
-	s.WriteString("PolicyType: " + p.PolicyType.String() + "\n")
+	s.WriteString("PolicyType: " + fmt.Sprintf("%v", p.PolicyControl) + "\n")
 	s.WriteString("SINITMinVersion: " + string(strconv.Itoa(int(p.SINITMinVersion))) + "\n")
 	s.WriteString("DataRevocationCounters: ")
 	for _, item := range p.DataRevocationCounters {
@@ -1246,9 +1280,11 @@ func (p *LCPPolicy2) PrettyPrint() {
 	s.WriteString("\n\n")
 	s.WriteString("PolicyControl: " + PrintPolicyControl(p.PolicyControl) + "\n")
 	s.WriteString("MaxSINITMinVersion: " + string(strconv.FormatInt(int64(p.MaxSINITMinVersion), 16)) + "\n")
+	s.WriteString("Reserved: " + fmt.Sprintf("%v", p.Reserved) + "\n")
 	s.WriteString("LcpHashAlgMask: " + PrintLcpHashAlgMask(p.LcpHashAlgMask) + "\n")
 	s.WriteString("LcpSignAlgMask: " + p.LcpSignAlgMask.String() + "\n")
-	s.WriteString("PolicyHash: " + "" + "\n")
+	s.WriteString("Reserved2: " + fmt.Sprintf("%v", p.Reserved2) + "\n")
+	s.WriteString("PolicyHash: " + fmt.Sprintf("%v", p.PolicyHash) + "\n")
 	fmt.Printf(s.String())
 }
 

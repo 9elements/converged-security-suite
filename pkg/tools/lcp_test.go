@@ -75,12 +75,11 @@ func TestLCPDataParser2(t *testing.T) {
 func TestLCPPolv2Gen(t *testing.T) {
 	version := uint16(0x304)
 	sinitmin := uint8(0)
-	maxsinit := uint8(0)
 	hash := make([]byte, crypto.SHA256.Size())
 	apprHash := ApprovedHashAlgorithm{SHA1: false, SHA256: true, SHA384: false, SM3: false}
 	apprSign := ApprovedSignatureAlogrithm{RSA3072SHA256: true}
 	pc := PolicyControl{NPW: false, OwnerEnforced: false, AuxDelete: false, SinitCaps: false}
-	lcp2, err := GenLCPPolicyV2(version, crypto.SHA256, hash, sinitmin, pc, maxsinit, apprHash, apprSign)
+	lcp2, err := GenLCPPolicyV2(version, crypto.SHA256, hash, sinitmin, pc, apprHash, apprSign)
 	if err != nil {
 		t.Errorf("GenLCPPolicyV2() failed: %v", err)
 	}

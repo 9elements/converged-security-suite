@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto"
 	"flag"
 	"fmt"
 	"os"
@@ -21,8 +20,7 @@ func main() {
 
 func run() error {
 	var err error
-	var delHash, writeHash []byte
-	var hA *crypto.Hash
+	var delHash, writeHash *[32]byte
 	if *help {
 		showHelp()
 		return nil
@@ -40,57 +38,69 @@ func run() error {
 
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
-		// Only uses SHA1, so we don't need -t evaluation
+		// Uses SHA1,
+		if *tpm == "tpm20" {
+			return fmt.Errorf("TPM2.0 selected, but system has TPM1.2. TPM1.2 not supported")
+		}
 		return fmt.Errorf("TPM 1.2 not supported yet")
 	case tss.TPMVersion20:
-		// Uses SHA1,SHA256, SHA384, SHA512
+		// Uses SHA256
 
+		if *tpm == "tpm12" {
+			return fmt.Errorf("TPM12 selected, but system has TPM2.0")
+		}
 		if *loadfiles {
-			delHash, writeHash, _, hA, err = loadFiles()
+			delHash, writeHash, _, err = loadFilesSHA256()
 			if err != nil {
 				return err
 			}
 		} else {
-			hA, err := deconstructHashesAlg()
+			delHash, writeHash, err = handlePasswordsTPM20()
 			if err != nil {
 				return err
 			}
-			delHash, writeHash, err = handlePasswordsTPM20(*hA)
-			if err != nil {
-				return err
-			}
-			if *savePol == true {
-				if err := writeFile("delHash", delHash, *hA); err != nil {
+			if *savePol {
+				if err := writeFile("delHash", *delHash); err != nil {
 					return err
 				}
-				if err = writeFile("writeHash", writeHash, *hA); err != nil {
+				if err = writeFile("writeHash", *writeHash); err != nil {
 					return err
 				}
 			}
 		}
 
 		if !*deletePS && !*deleteAUX && *provi {
-			psHash, hashAlg, err := prov.ProvisionTPM20(tpmCon.RWC, delHash, writeHash, *hA)
+			lcppol, err := getLCPDataFromFile()
 			if err != nil {
 				return err
 			}
-			if *savePol == true {
-				if err := writeFile("psPolicy", psHash, *hashAlg); err != nil {
+			psHash, err := prov.ProvisionTPM20(tpmCon.RWC, delHash[:32], writeHash[:32], lcppol)
+			if err != nil {
+				return fmt.Errorf("ProvisionTPM20() failed: %v", err)
+			}
+			if *savePol {
+				if err := writeFile("psPolicy", *psHash); err != nil {
 					return err
 				}
 			}
 
 		}
-		if *deletePS && !*deleteAUX && !*provi && delHash != nil {
-			return prov.DeletePSindexTPM20(tpmCon.RWC, delHash)
+		if *deletePS && !*deleteAUX && !*provi && delHash != nil && writeHash != nil {
+
+			return prov.DeletePSindexTPM20(tpmCon.RWC, delHash[:32], writeHash[:32])
 		}
-		if !*deletePS && *deleteAUX && !*provi && writeHash != nil {
-			return prov.DeleteAUXindexTPM20(tpmCon.RWC, writeHash)
+		if !*deletePS && *deleteAUX && !*provi && writeHash != nil && delHash != nil {
+			lcppol, err := getLCPDataFromFile()
+			if err != nil {
+				return err
+			}
+			return prov.DeleteAUXindexTPM20(tpmCon.RWC, lcppol, delHash[:32], writeHash[:32])
 
 		}
 		if *deletePS && *deleteAUX {
 			return fmt.Errorf("Using -dAux and -dPS is not permitted")
 		}
+		return nil
 	}
 	return fmt.Errorf("No TPM device found")
 }
