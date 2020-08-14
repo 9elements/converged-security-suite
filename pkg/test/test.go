@@ -167,11 +167,10 @@ var TestsTXTReady = []*Test{
 	&testtpmnvramislocked,
 	&testpsindexconfig,
 	&testauxindexconfig,
-	&testpoindexconfig,
 }
 
-// TestsTXTLegacyBoot - Summarizes all test for TXT legacy boot (not CvBG) platforms
-var TestsTXTLegacyBoot = []*Test{
+// TestsBIOSBoot - Summarizes all test for TXT BIOS boot (not CBnT) platforms
+var TestsBIOSBoot = []*Test{
 	// CPU tests
 	&testcheckforintelcpu,
 	&testwaybridgeorlater,
@@ -184,7 +183,6 @@ var TestsTXTLegacyBoot = []*Test{
 	&testtxtregisterslocked,
 	&testia32debuginterfacelockeddisabled,
 	&testibbmeasured,
-	&testibbistrusted,
 
 	// Memory tests
 	&testtxtmemoryrangevalid,
@@ -230,10 +228,91 @@ var TestsTXTLegacyBoot = []*Test{
 	&testtpmnvramislocked,
 	&testpsindexconfig,
 	&testauxindexconfig,
-	&testpoindexconfig,
 	&testpsindexissvalid,
-	&testpoindexissvalid,
 	&testpcr00valid,
+}
+
+// TestsUEFIBoot - Summarizes all test for TXT UEFI boot (not CBnT) platforms
+var TestsUEFIBoot = []*Test{
+	// CPU tests
+	&testcheckforintelcpu,
+	&testwaybridgeorlater,
+	&testcpusupportstxt,
+	&testtxtregisterspaceaccessible,
+	&testsupportssmx,
+	&testsupportvmx,
+	&testia32featurectrl,
+	&testtxtnotdisabled,
+	&testtxtregisterslocked,
+	&testia32debuginterfacelockeddisabled,
+	&testibbmeasured,
+
+	// Memory tests
+	&testtxtmemoryrangevalid,
+	&testmemoryisreserved,
+	&testtxtmemoryisdpr,
+	&testtxtdprislocked,
+	&testhostbridgeDPRcorrect,
+	&testhostbridgeDPRislocked,
+	&testsinitintxt,
+	&testsinitmatcheschipset,
+	&testsinitmatchescpu,
+	&testbiosdataregionpresent,
+	&testbiosdataregionvalid,
+	&testhasmtrr,
+	&testhassmrr,
+	&testvalidsmrr,
+	&testactivesmrr,
+
+	// FIT tests
+	&testfitvectorisset,
+	&testhasfit,
+	&testhasbiosacm,
+	&testhasibb,
+	&testhaslcpTest,
+	&testibbcoversresetvector,
+	&testibbcoversfitvector,
+	&testibbcoversfit,
+	&testnoibboverlap,
+	&testnobiosacmoverlap,
+	&testnobiosacmisbelow4g,
+	&testpolicyallowstxt,
+	&testbiosacmvalid,
+	&testbiosacmsizecorrect,
+	&testbiosacmaligmentcorrect,
+	&testbiosacmmatcheschipset,
+	&testbiosacmmatchescpu,
+
+	// TPM tests
+	&testtpmconnection,
+	&testtpm12present,
+	&testtpm2present,
+	&testtpmispresent,
+	&testtpmnvramislocked,
+	&testpsindexconfig,
+	&testauxindexconfig,
+	&testpsindexissvalid,
+	&testpcr00valid,
+
+	// ACPI tests
+	&testRSDPChecksum,
+	&testMCFGPresent,
+	&testDMARPresent,
+	&testDMARValid,
+	&testMADTPresent,
+	&testMADTValid,
+	&testRSDTPresent,
+	&testRSDTValid,
+	&testXSDTPresent,
+	&testXSDTValid,
+	&testRSDTorXSDTValid,
+}
+
+// TestsTBoot - Summarizes all test for the tboot hypervisor
+var TestsTBoot = []*Test{
+	&testactiveiommu,
+	&testnosiniterrors,
+	&testibbistrusted,
 }
 
 // Run implements the genereal test function and exposes it.
