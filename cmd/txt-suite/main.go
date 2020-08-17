@@ -119,12 +119,16 @@ func main() {
 		showVersion()
 	} else if *teststomarkdown == true {
 		listTestsAsMarkdown()
+	} else if *all == true {
+		ret = run(getTests())
+	} else if *uefiboot == true {
+		ret = run(test.TestsUEFIBoot)
 	} else if *txtready == true {
 		ret = run(test.TestsTXTReady)
-	} else if *legacyboot == true {
-		ret = run(test.TestsTXTLegacyBoot)
+	} else if *tboot == true {
+		ret = run(test.TestsTBoot)
 	} else {
-		ret = run(getTests())
+		ret = run(test.TestsBIOSBoot)
 	}
 
 	if ret {

@@ -18,8 +18,10 @@ var teststomarkdown = flag.Bool("m", false, "Output test implementation state as
 var version = flag.Bool("v", false, "Shows Version, copyright info and license")
 var tpmdev = flag.String("tpm", "", "Select TPM-Path. e.g.: -tpm=/dev/tpmX, with X as number of the TPM module")
 var logpath = flag.String("log", "", "Give a path/filename for test result output in JSON format. e.g.: /path/to/filename.json")
+var all = flag.Bool("all", false, "Run all the tests of the suite")
+var uefiboot = flag.Bool("uefiboot", false, "Test if platform is UEFI boot enabled")
 var txtready = flag.Bool("txtready", false, "Test if platform is TXTReady")
-var legacyboot = flag.Bool("legacyboot", false, "Test if platform is TXT Legacy boot enabled")
+var tboot = flag.Bool("tboot", false, "Test if tboot hypervisor runs correctly")
 
 func flagUsed() bool {
 	return testno != nil
