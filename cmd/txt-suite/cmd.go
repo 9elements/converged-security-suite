@@ -112,8 +112,8 @@ func deconstructFlag() ([]int, error) {
 	var err error
 	tmpstrings = strings.Split(*testno, ",")
 	for _, item := range tmpstrings {
-		if strings.Contains(*testno, "-") {
-			testrange = strings.Split(*testno, "-")
+		if strings.Contains(item, "-") {
+			testrange = strings.Split(item, "-")
 			testmin, err = strconv.Atoi(testrange[0])
 			if err != nil {
 				return nil, err
@@ -123,7 +123,7 @@ func deconstructFlag() ([]int, error) {
 				return nil, err
 			}
 
-			for i := testmin; i < testmax; i++ {
+			for i := testmin; i <= testmax; i++ {
 				testnos = append(testnos, i)
 			}
 

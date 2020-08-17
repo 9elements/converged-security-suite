@@ -66,6 +66,7 @@ func run(tests []*test.Test) bool {
 		ioutil.WriteFile(logfile, data, 0664)
 	}
 
+	fmt.Printf("For more information about the documents and chapters, run: txt-suite -m\n\n")
 	for index := range tests {
 		if tests[index].Status == test.NotImplemented {
 			continue
@@ -73,21 +74,21 @@ func run(tests []*test.Test) bool {
 		if tests[index].Result == test.ResultNotRun {
 			continue
 		}
+		fmt.Printf("%02d - ", index)
 		fmt.Printf("%-40s: ", a.Bold(tests[index].Name))
 		f.Flush()
 
 		if tests[index].Result == test.ResultPass {
-			fmt.Printf("%-20s\n", a.Bold(a.Green(tests[index].Result)))
+			fmt.Printf("%-20s", a.Bold(a.Green(tests[index].Result)))
 		} else if tests[index].Result == test.ResultWarn {
-			fmt.Printf("%-20s\n", a.Bold(a.Yellow(tests[index].Result)))
+			fmt.Printf("%-20s", a.Bold(a.Yellow(tests[index].Result)))
 		} else {
-			fmt.Printf("%-20s\n", a.Bold(a.Red(tests[index].Result)))
+			fmt.Printf("%-20s", a.Bold(a.Red(tests[index].Result)))
 		}
 		if tests[index].ErrorText != "" {
-			fmt.Printf(" %s\n", tests[index].ErrorText)
-		}
-		if tests[index].ErrorTextSpec != "" {
-			fmt.Printf(" %s\n", tests[index].ErrorTextSpec)
+			fmt.Printf(" (%s)", tests[index].ErrorText)
+		} else if len(tests[index].ErrorText) == 0 && tests[index].Result == test.ResultFail {
+			fmt.Print(" (No error text given)")
 		}
 		fmt.Printf("\n")
 
