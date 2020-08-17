@@ -189,8 +189,6 @@ var TestsBIOSBoot = []*Test{
 	&testmemoryisreserved,
 	&testtxtmemoryisdpr,
 	&testtxtdprislocked,
-	&testhostbridgeDPRcorrect,
-	&testhostbridgeDPRislocked,
 	&testsinitintxt,
 	&testsinitmatcheschipset,
 	&testsinitmatchescpu,
@@ -252,8 +250,6 @@ var TestsUEFIBoot = []*Test{
 	&testmemoryisreserved,
 	&testtxtmemoryisdpr,
 	&testtxtdprislocked,
-	&testhostbridgeDPRcorrect,
-	&testhostbridgeDPRislocked,
 	&testsinitintxt,
 	&testsinitmatcheschipset,
 	&testsinitmatchescpu,
@@ -313,6 +309,8 @@ var TestsTBoot = []*Test{
 	&testactiveiommu,
 	&testnosiniterrors,
 	&testibbistrusted,
+	&testhostbridgeDPRcorrect,
+	&testhostbridgeDPRislocked,
 }
 
 // Run implements the genereal test function and exposes it.
