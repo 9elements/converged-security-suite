@@ -54,15 +54,12 @@ const (
 	// ResultFail indicates that the test failed
 	ResultFail
 
-	// ResultWarn indicates that the test failed for the standard configuration but can still be valid in a different configuration of TXT
-	ResultWarn
-
 	// ResultPass indicates that the test succeeded.
 	ResultPass
 )
 
 func (t Result) String() string {
-	return [...]string{"TESTNOTRUN", "DEPENDENCY_FAILED", "INTERNAL_ERROR", "FAIL", "WARN", "PASS"}[t]
+	return [...]string{"TESTNOTRUN", "DEPENDENCY_FAILED", "INTERNAL_ERROR", "FAIL", "PASS"}[t]
 }
 
 // Status exposes the type for test status
@@ -117,7 +114,6 @@ type Test struct {
 	ErrorTextSpec string
 	Status        Status
 	Spec          TXTSpec
-	NonCritical   bool
 	// The chapter inside the spec used for this test
 	SpecificationChapter string
 	// The specification used in this test
@@ -352,12 +348,7 @@ func (t *Test) Run(TxtAPI hwapi.APIInterfaces) bool {
 				}
 				t.ErrorTextSpec += "for implementation details."
 			}
-
-			if t.NonCritical {
-				t.Result = ResultWarn
-			} else {
-				t.Result = ResultFail
-			}
+			t.Result = ResultFail
 		} else if rc {
 			t.Result = ResultPass
 		} else {

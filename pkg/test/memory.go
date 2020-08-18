@@ -125,11 +125,10 @@ var (
 		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
 	testnosiniterrors = Test{
-		Name:        "SINIT ACM startup successful",
-		Required:    false,
-		NonCritical: true,
-		function:    NoSINITErrors,
-		Status:      Implemented,
+		Name:     "SINIT ACM startup successful",
+		Required: false,
+		function: NoSINITErrors,
+		Status:   Implemented,
 	}
 	testbiosdataregionpresent = Test{
 		Name:                    "BIOS DATA REGION present",
@@ -185,7 +184,6 @@ var (
 		Required:                false,
 		function:                ActiveIOMMU,
 		Status:                  Implemented,
-		NonCritical:             true,
 		SpecificationChapter:    "1.11.2 Protected Memory Regions (PMRs)",
 		SpecificiationTitle:     IntelTXTSpecificationTitle,
 		SpecificationDocumentID: IntelTXTSpecificationDocumentID,

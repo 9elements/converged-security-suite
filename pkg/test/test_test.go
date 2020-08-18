@@ -17,7 +17,6 @@ func TestTest_Run(t *testing.T) {
 		ErrorText    string
 		Status       Status
 		Spec         TXTSpec
-		NonCritical  bool
 	}
 
 	BNotImplemented := Test{
@@ -30,7 +29,6 @@ func TestTest_Run(t *testing.T) {
 		"",
 		NotImplemented,
 		Common,
-		true,
 		"",
 		"",
 		"",
@@ -46,7 +44,6 @@ func TestTest_Run(t *testing.T) {
 		"",
 		Implemented,
 		Common,
-		true,
 		"",
 		"",
 		"",
@@ -61,7 +58,6 @@ func TestTest_Run(t *testing.T) {
 		"",
 		Implemented,
 		Common,
-		true,
 		"",
 		"",
 		"",
@@ -84,7 +80,6 @@ func TestTest_Run(t *testing.T) {
 				"",
 				Implemented,
 				Common,
-				true,
 			},
 			true,
 			ResultPass,
@@ -100,7 +95,6 @@ func TestTest_Run(t *testing.T) {
 				"",
 				Implemented,
 				Common,
-				true,
 			},
 			false,
 			ResultDependencyFailed,
@@ -116,7 +110,6 @@ func TestTest_Run(t *testing.T) {
 				"",
 				Implemented,
 				Common,
-				true,
 			},
 			true,
 			ResultPass,
@@ -132,7 +125,6 @@ func TestTest_Run(t *testing.T) {
 				"",
 				Implemented,
 				Common,
-				true,
 			},
 			true,
 			ResultPass,
@@ -148,7 +140,6 @@ func TestTest_Run(t *testing.T) {
 				"",
 				Implemented,
 				Common,
-				true,
 			},
 			false,
 			ResultInternalError,
@@ -164,10 +155,9 @@ func TestTest_Run(t *testing.T) {
 				"",
 				Implemented,
 				Common,
-				true,
 			},
 			false,
-			ResultWarn,
+			ResultFail,
 		},
 		{
 			"Regular test error critical",
@@ -180,7 +170,6 @@ func TestTest_Run(t *testing.T) {
 				"",
 				Implemented,
 				Common,
-				false,
 			},
 			false,
 			ResultFail,
@@ -199,7 +188,6 @@ func TestTest_Run(t *testing.T) {
 				ErrorText:    tt.fields.ErrorText,
 				Status:       tt.fields.Status,
 				Spec:         tt.fields.Spec,
-				NonCritical:  tt.fields.NonCritical,
 			}
 			if got := tr.Run(txtAPI); got != tt.wantReturn {
 				t.Errorf("Test.Run() = %v, want %v", got, tt.wantReturn)

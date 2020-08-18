@@ -96,7 +96,6 @@ var (
 		Name:                    "IBB is trusted",
 		function:                IBBIsTrusted,
 		Required:                false,
-		NonCritical:             true,
 		dependencies:            []*Test{&testtxtregisterspaceaccessible},
 		Status:                  Implemented,
 		SpecificationChapter:    "B.1.6 TXT.SPAD – BOOTSTATUS",
