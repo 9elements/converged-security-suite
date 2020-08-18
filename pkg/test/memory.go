@@ -233,7 +233,7 @@ var (
 )
 
 // TXTRegisterSpaceValid checks if the registers indicates the correct sizes
-func TXTRegisterSpaceValid(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func TXTRegisterSpaceValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -284,7 +284,7 @@ func TXTRegisterSpaceValid(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // TXTPublicReservedInE820 checks if TXTPublic area is marked reserved in e820 map
-func TXTPublicReservedInE820(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func TXTPublicReservedInE820(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	res, err := txtAPI.IsReservedInE820(uint64(tools.TxtPublicSpace), uint64(tools.TxtPublicSpace+tools.TxtPublicSpaceSize))
 	if err != nil {
 		return false, nil, err
@@ -297,7 +297,7 @@ func TXTPublicReservedInE820(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // TXTPrivateReservedInE820 checks if TXTPrivate area is marked reserved in e820 map
-func TXTPrivateReservedInE820(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func TXTPrivateReservedInE820(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	res, err := txtAPI.IsReservedInE820(uint64(tools.TxtPrivateSpace), uint64(tools.TxtPrivateSpace+tools.TxtPrivateSpaceSize))
 	if err != nil {
 		return false, nil, err
@@ -309,7 +309,7 @@ func TXTPrivateReservedInE820(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // TXTReservedInE820 checks if the HEAP/MSEG/SINIT TXT regions are marked reserved in e820 map.
-func TXTReservedInE820(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func TXTReservedInE820(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -336,7 +336,7 @@ func TXTReservedInE820(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // TXTTPMDecodeSpaceIn820 checks if TPMDecode area is marked as reserved in e820 map
-func TXTTPMDecodeSpaceIn820(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func TXTTPMDecodeSpaceIn820(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	res, err := txtAPI.IsReservedInE820(uint64(tools.TxtTPMDecode), uint64(tools.TxtTPMDecode+0x10000))
 	if err != nil {
 		return false, nil, err
@@ -348,7 +348,7 @@ func TXTTPMDecodeSpaceIn820(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // TXTMemoryIsDPR checks if the TXT DPR protects TXT memory.
-func TXTMemoryIsDPR(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func TXTMemoryIsDPR(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -392,7 +392,7 @@ func TXTMemoryIsDPR(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // TXTDPRisLock checks the TXTRegister in memory about the status of DPR if it's locked.
-func TXTDPRisLock(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func TXTDPRisLock(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -409,7 +409,7 @@ func TXTDPRisLock(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // HostbridgeDPRCorrect checks if TXT DPR equals PCI Hostbridge DPR
-func HostbridgeDPRCorrect(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func HostbridgeDPRCorrect(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
 		return false, fmt.Errorf("Cannot read DPR registers: %s", err), nil
@@ -435,7 +435,7 @@ func HostbridgeDPRCorrect(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // HostbridgeDPRisLocked checks if the Hostbridge DPR is marked as locked
-func HostbridgeDPRisLocked(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func HostbridgeDPRisLocked(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	hostbridgeDpr, err := txtAPI.ReadHostBridgeDPR()
 
 	if err != nil {
@@ -449,7 +449,7 @@ func HostbridgeDPRisLocked(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // SINITInTXT checks the TXT region on containing a valid SINIT ACM.
-func SINITInTXT(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func SINITInTXT(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -484,7 +484,7 @@ func SINITInTXT(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // SINITMatchesChipset checks if the SINIT ACM matches the chipset.
-func SINITMatchesChipset(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func SINITMatchesChipset(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -526,7 +526,7 @@ func SINITMatchesChipset(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // SINITMatchesCPU checks if the SINITACM matches the CPU
-func SINITMatchesCPU(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func SINITMatchesCPU(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -565,7 +565,7 @@ func SINITMatchesCPU(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // NoSINITErrors checks if the SINITACM was executed without any errors
-func NoSINITErrors(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func NoSINITErrors(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -582,7 +582,7 @@ func NoSINITErrors(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // BIOSDATAREGIONPresent checks is the BIOSDATA Region is present in TXT Register Space
-func BIOSDATAREGIONPresent(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func BIOSDATAREGIONPresent(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -607,7 +607,7 @@ func BIOSDATAREGIONPresent(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // BIOSDATAREGIONValid checks if the BIOSDATA Region in TXT Register Space is valid
-func BIOSDATAREGIONValid(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func BIOSDATAREGIONValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	if biosdata.Version < 2 {
 		return false, fmt.Errorf("BIOS DATA regions version < 2 are not supperted"), nil
 	}
@@ -623,7 +623,7 @@ func BIOSDATAREGIONValid(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // HasMTRR checks if MTRR is supported by CPU
-func HasMTRR(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func HasMTRR(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	if txtAPI.HasMTRR() != true {
 		return false, fmt.Errorf("CPU does not have MTRR"), nil
 	}
@@ -631,7 +631,7 @@ func HasMTRR(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // HasSMRR checks if SMRR is supported
-func HasSMRR(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func HasSMRR(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	ret, err := txtAPI.HasSMRR()
 	if err != nil {
 		return false, nil, err
@@ -643,7 +643,7 @@ func HasSMRR(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // ValidSMRR checks if SMRR is valid
-func ValidSMRR(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func ValidSMRR(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	smrr, err := txtAPI.GetSMRRInfo()
 	if err != nil {
 		return false, nil, err
@@ -684,7 +684,7 @@ func ValidSMRR(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // ActiveSMRR checks if SMMR is set active
-func ActiveSMRR(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func ActiveSMRR(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	smrr, err := txtAPI.GetSMRRInfo()
 	if err != nil {
 		return false, nil, err
@@ -697,7 +697,7 @@ func ActiveSMRR(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // ActiveIOMMU checks if IOMMU is active
-func ActiveIOMMU(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func ActiveIOMMU(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	smrr, err := txtAPI.GetSMRRInfo()
 	if err != nil {
 		return false, nil, err
@@ -714,7 +714,7 @@ func ActiveIOMMU(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // ServerModeTXT checks if TXT runs in Servermode
-func ServerModeTXT(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func ServerModeTXT(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	// FIXME: Query GetSec[Parameters] ebx = 5
 	// Assume yes if dependencies are satisfied
 	val, err := txtAPI.HasSMRR()
@@ -728,7 +728,7 @@ func ServerModeTXT(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 //ReleaseFusedFSBI checks if the FSBI is release fused
-func ReleaseFusedFSBI(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func ReleaseFusedFSBI(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	return false, nil, fmt.Errorf("ReleaseFusedFSBI: Unimplemented")
 }
 

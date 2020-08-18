@@ -36,6 +36,15 @@ const (
 	txtE2STS             = 0x8f0
 )
 
+// TXTMode is the mode of operation for Intel TXT
+type TXTMode uint8
+
+// TXT modes
+const (
+	AutoPromotion TXTMode = iota
+	SignedPolicy
+)
+
 //TXTStatus represents serveral configurations within the TXT config space
 type TXTStatus struct {
 	SenterDone bool // SENTER.DONE.STS (0)

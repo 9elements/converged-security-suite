@@ -76,24 +76,57 @@ To build the test suite run:
 <GO111MODULE=on> go build -o txt-suite cmd/txt-suite/*.go
 ```
 
+Create a configuration file:
+
+**TPM** option
+Can have the value *1.2* or *2.0*
+
+**TXTMode** option (deprecated on CBnT)
+Can have the value *auto* for autopromotion or *signed* for signed policy mode
+
+**LCP2Hash** option (deprecated on CBnT)
+Can have the values (*SHA1*, *SHA256*, *SHA384*, *SM3*, *NULL*) as the LCP2 hash
+
+**platform.config**
+```json
+{
+	"TPM": "2.0",
+	"TXTMode": "auto",
+	"LCP2Hash": "SHA256"
+}
+```
+
 Run it as root:
 
 ```bash
-./txt-suite
+./txt-suite -config platform.config
 ```
 
 Commandline arguments
 ```bash
--m : Generate markdown
--l : Lists all tests
--log : Specify a path/filename.json where test results will be written (only in combination with test enforcing (-i option))
--i : interactive move - Test will stop if an error occurs. Test results will be written to test_log.json
--t=<n,m,o> : Choose tests, seperated by comma
--t=<n-m> or -t=<n-m,o-p> : Choose ranges of tests, can be seperated by comma
--v : Gives information about Licence, Copyright and Version
--h : Shows this information
--txtready   : Test if platform is TXTReady
--legacyboot : Test if platform is TXT Legacy boot enabled
+Usage of ./txt-suite:
+  -all
+        Run all the tests of the suite
+  -cbnt
+        Run CBnT specific tests
+  -config string
+        Give a path/filename to configuration file
+  -i    Interactive mode. Errors will stop the testing.
+  -l    Lists all test
+  -log string
+        Give a path/filename for test result output in JSON format. e.g.: /path/to/filename.json
+  -m    Output test implementation state as Markdown
+  -t string
+        Select test number 1 - 50. e.g.: -t=1,2,3,4,...
+  -tboot
+        Test if tboot hypervisor runs correctly
+  -tpm string
+        Select TPM-Path. e.g.: -tpm=/dev/tpmX, with X as number of the TPM module
+  -txtready
+        Run TXTReady specific tests
+  -uefi
+        Test if platform is UEFI boot enabled
+  -v    Shows Version, copyright info and license
 ```
 
 API Usage
@@ -126,7 +159,7 @@ import (
 func main() {
 	hwAPI := hwapi.GetAPI()
 
-	success, failureMsg, err := test.RunTestsSilent(hwAPI, test.TestsTXTReady)
+	success, failureMsg, err := test.RunTestsSilent(hwAPI, nil, test.TestsTXTReady)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -153,8 +186,12 @@ import (
 
 func main() {
 	hwAPI := hwapi.GetAPI()
+	var config tools.Configuration
+	config.LCPHash = tools.LCPPol2HAlgSHA256
+	config.TPM = tss.TPMVersion20
+	config.TXTMode = tools.AutoPromotion
 
-	success, failureMsg, err := test.RunTestsSilent(hwAPI, test.TestsTXTLegacyBoot)
+	success, failureMsg, err := test.RunTestsSilent(hwAPI, &config, test.TestsTXTLegacyBoot)
 	if err != nil {
 		log.Fatal(err)
 	}
