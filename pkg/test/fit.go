@@ -54,7 +54,6 @@ var (
 	testhasmcupdate = Test{
 		Name:                    "Microcode update entry in FIT",
 		Required:                true,
-		NonCritical:             true,
 		function:                HasMicroCode,
 		dependencies:            []*Test{&testhasfit},
 		Status:                  Implemented,
