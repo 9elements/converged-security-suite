@@ -23,7 +23,7 @@ Id | Test | Implemented | Document | Chapter
 20 | PO index has valid LCP Policy                    | :white_check_mark:     | Document 315168-016          | D.3 LCP_POLICY_LIST                                     
 21 | PCR 0 is set correctly                           | :white_check_mark:     | Document 558294 Revision 2.0 | BIOS Startup Module (Type 0x07) Entry                   
 22 | NPW mode is deactivated in PS policy             | :white_check_mark:     | Document 558294 Revision 2.0 | 4.1.4 Supported Platform Configurations                 
-23 | Auto-promotion mode is active                    | :white_check_mark:     | Document 558294 Revision 2.0 | 5.6.2 Autopromotion Hash and Signed BIOS Policy         
+23 | TXT mode is valid                                | :white_check_mark:     | Document 558294 Revision 2.0 | 5.6.2 Autopromotion Hash and Signed BIOS Policy         
 24 | Valid FIT vector                                 | :white_check_mark:     | Document 599500 Revision 1.2 | 3.0 FIT Pointer                                         
 25 | Valid FIT                                        | :white_check_mark:     | Document 599500 Revision 1.2 | 4.0 Firmware Interface Table                            
 26 | Microcode update entry in FIT                    | :white_check_mark:     | Document 599500 Revision 1.2 | 4.4 Startup ACM (Type 2) Rules                          
