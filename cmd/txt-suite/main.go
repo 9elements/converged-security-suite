@@ -87,8 +87,6 @@ func run(testGroup string, tests []*test.Test, config tools.Configuration) bool 
 
 		if tests[index].Result == test.ResultPass {
 			fmt.Printf("%-20s", a.Bold(a.Green(tests[index].Result)))
-		} else if tests[index].Result == test.ResultWarn {
-			fmt.Printf("%-20s", a.Bold(a.Yellow(tests[index].Result)))
 		} else {
 			fmt.Printf("%-20s", a.Bold(a.Red(tests[index].Result)))
 		}
