@@ -72,20 +72,6 @@ var (
 		function: TPMConnect,
 		Status:   Implemented,
 	}
-	testtpm12present = Test{
-		Name:         "TPM 1.2 present",
-		Required:     false,
-		function:     TPM12Present,
-		dependencies: []*Test{&testtpmconnection},
-		Status:       Implemented,
-	}
-	testtpm2present = Test{
-		Name:         "TPM 2.0 is present",
-		Required:     false,
-		function:     TPM20Present,
-		dependencies: []*Test{&testtpmconnection},
-		Status:       Implemented,
-	}
 	testtpmispresent = Test{
 		Name:         "TPM is present",
 		Required:     true,
@@ -183,19 +169,9 @@ var (
 		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
 		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
 	}
-	testtxtmodeauto = Test{
-		Name:                    "Auto-promotion mode is active",
-		function:                AutoPromotionModeIsActive,
-		Required:                true,
-		dependencies:            []*Test{&testpsindexissvalid},
-		Status:                  Implemented,
-		SpecificationChapter:    "5.6.2 Autopromotion Hash and Signed BIOS Policy",
-		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
-		SpecificationDocumentID: IntelTXTBGSBIOSSpecificationDocumentID,
-	}
-	testtxtmodesignedpolicy = Test{
-		Name:                    "Signed policy mode is active",
-		function:                SignedPolicyModeIsActive,
+	testtxtmodvalid = Test{
+		Name:                    "TXT mode is valid",
+		function:                TXTModeValid,
 		Required:                true,
 		dependencies:            []*Test{&testpsindexissvalid},
 		Status:                  Implemented,
@@ -207,8 +183,6 @@ var (
 	// TestsTPM exposes the slice of pointers to tests regarding tpm functionality for txt
 	TestsTPM = [...]*Test{
 		&testtpmconnection,
-		&testtpm12present,
-		&testtpm2present,
 		&testtpmispresent,
 		&testtpmnvramislocked,
 		&testpsindexconfig,
@@ -219,13 +193,12 @@ var (
 		&testpoindexissvalid,
 		&testpcr00valid,
 		&testpsnpwmodenotactive,
-		&testtxtmodeauto,
-		&testtxtmodesignedpolicy,
+		&testtxtmodvalid,
 	}
 )
 
 // TPMConnect Connects to a TPM device (virtual or real)
-func TPMConnect(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func TPMConnect(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	t, err := txtAPI.NewTPM()
 	if err != nil {
 		return false, nil, err
@@ -234,41 +207,22 @@ func TPMConnect(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	return true, nil, nil
 }
 
-// TPM12Present Checks if TPM 1.2 is present and answers to GetCapability
-func TPM12Present(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-
-	switch tpmCon.Version {
-	case tss.TPMVersion12:
-		return true, nil, nil
-	}
-	return false, fmt.Errorf("No TPM1.2 device detected"), nil
-}
-
-// TPM20Present Checks if TPM 2.0 is present and answers to GetCapability
-func TPM20Present(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	switch tpmCon.Version {
-	case tss.TPMVersion20:
-		return true, nil, nil
-	}
-	return false, fmt.Errorf("No TPM2.0 device detected"), nil
-}
-
 // TPMIsPresent validates if one of the two previous tests succeeded
-func TPMIsPresent(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	if (testtpm12present.Result == ResultPass) || (testtpm2present.Result == ResultPass) {
+func TPMIsPresent(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+	if tpmCon.Version == config.TPM {
 		return true, nil, nil
 	}
 	return false, fmt.Errorf("No TPM present"), nil
 }
 
 // TPMNVRAMIsLocked Checks if NVRAM indexes are write protected
-func TPMNVRAMIsLocked(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func TPMNVRAMIsLocked(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	res, err := txtAPI.NVLocked(tpmCon)
 	return res, err, nil
 }
 
 // PSIndexConfig tests if PS Index has correct configuration
-func PSIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func PSIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	var d1 tpm1.NVDataPublic
 	var d2 tpm2.NVPublic
 	var err error
@@ -369,7 +323,7 @@ func PSIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // AUXIndexConfig tests if the AUX Index has the correct configuration
-func AUXIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func AUXIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	var d1 tpm1.NVDataPublic
 	var d2 tpm2.NVPublic
 	var err error
@@ -470,7 +424,7 @@ func AUXIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // AUXTPM2IndexCheckHash checks the PolicyHash of AUX index
-func AUXTPM2IndexCheckHash(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func AUXTPM2IndexCheckHash(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
 		return false, fmt.Errorf("Only valid for TPM 2.0"), nil
@@ -522,7 +476,7 @@ func AUXTPM2IndexCheckHash(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // POIndexConfig checks the PO index configuration
-func POIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func POIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	var d1 tpm1.NVDataPublic
 	var d2 tpm2.NVPublic
 	var err error
@@ -605,7 +559,7 @@ func POIndexConfig(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // PSIndexHasValidLCP checks if PS Index has a valid LCP
-func PSIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func PSIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	emptyHash := make([]byte, 20)
 	pol1, pol2, err := readPSLCPPolicy(txtAPI)
 	if err != nil {
@@ -639,13 +593,7 @@ func PSIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		if pol2.Version < tools.LCPPolicyVersion3 {
 			return false, fmt.Errorf("wrong policy version. Have %v - Want: %v", pol2.Version, tools.LCPPolicyVersion3), nil
 		}
-		switch pol2.HashAlg {
-		case tools.LCPPol2HAlgSHA1:
-		case tools.LCPPol2HAlgSHA256:
-		case tools.LCPPol2HAlgSHA384:
-		case tools.LCPPol2HAlgNULL:
-		case tools.LCPPol2HAlgSM3:
-		default:
+		if pol2.HashAlg != config.LCPHash {
 			return false, fmt.Errorf("HashAlg has invalid value"), nil
 		}
 		if pol2.PolicyType != tools.LCPPolicyTypeAny && pol1.PolicyType != tools.LCPPolicyTypeList {
@@ -663,7 +611,7 @@ func PSIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // POIndexHasValidLCP checks if PO Index holds a valid LCP
-func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	var pol1 *tools.LCPPolicy
 	var pol2 *tools.LCPPolicy2
 	emptyHash := make([]byte, 20)
@@ -761,13 +709,7 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 		if pol2.Version < tools.LCPPolicyVersion3 {
 			return false, fmt.Errorf("wrong lcp policy version. Have %v - Want: %v", pol2.Version, tools.LCPPolicyVersion3), nil
 		}
-		switch pol2.HashAlg {
-		case tools.LCPPol2HAlgSHA1:
-		case tools.LCPPol2HAlgSHA256:
-		case tools.LCPPol2HAlgSHA384:
-		case tools.LCPPol2HAlgNULL:
-		case tools.LCPPol2HAlgSM3:
-		default:
+		if pol2.HashAlg != config.LCPHash {
 			return false, fmt.Errorf("HashAlg has invalid value"), nil
 		}
 		if pol2.PolicyType != tools.LCPPolicyTypeAny && pol1.PolicyType != tools.LCPPolicyTypeList {
@@ -785,7 +727,7 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 }
 
 // PCR0IsSet Reads PCR-00 and checks whether if it's not the EmptyDigest
-func PCR0IsSet(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func PCR0IsSet(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	pcr, err := txtAPI.ReadPCR(tpmCon, 0)
 	if err != nil {
 		return false, nil, err
@@ -869,7 +811,7 @@ func readPSLCPPolicy(txtAPI hwapi.APIInterfaces) (*tools.LCPPolicy, *tools.LCPPo
 }
 
 // NPWModeIsNotSetInPS checks if NPW is activated or not
-func NPWModeIsNotSetInPS(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+func NPWModeIsNotSetInPS(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	pol1, pol2, err := readPSLCPPolicy(txtAPI)
 	if err != nil {
 		return false, err, nil
@@ -887,40 +829,29 @@ func NPWModeIsNotSetInPS(txtAPI hwapi.APIInterfaces) (bool, error, error) {
 	return true, nil, nil
 }
 
-// AutoPromotionModeIsActive checks if TXT is in auto-promotion mode
-func AutoPromotionModeIsActive(txtAPI hwapi.APIInterfaces) (bool, error, error) {
+// TXTModeValid checks if TXT is in valid mode
+func TXTModeValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	pol1, pol2, err := readPSLCPPolicy(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
-	if pol1 != nil {
-		if pol1.PolicyType != tools.LCPPolicyTypeAny {
-			return false, fmt.Errorf("Signed Policy mode active"), nil
+	switch config.TXTMode {
+	case tools.AutoPromotion:
+		if pol1 != nil && pol1.PolicyType == tools.LCPPolicyTypeAny {
+			return true, nil, nil
 		}
-	}
-	if pol2 != nil {
-		if pol2.PolicyType != tools.LCPPolicyTypeAny {
-			return false, fmt.Errorf("Signed Policy mode active"), nil
+		if pol2 != nil && pol2.PolicyType == tools.LCPPolicyTypeAny {
+			return true, nil, nil
 		}
-	}
-	return true, nil, nil
-}
-
-// SignedPolicyModeIsActive checks if TXT is in signed policy mode
-func SignedPolicyModeIsActive(txtAPI hwapi.APIInterfaces) (bool, error, error) {
-	pol1, pol2, err := readPSLCPPolicy(txtAPI)
-	if err != nil {
-		return false, nil, err
-	}
-	if pol1 != nil {
-		if pol1.PolicyType != tools.LCPPolicyTypeList {
-			return false, fmt.Errorf("Auto-promotion mode active"), nil
+		break
+	case tools.SignedPolicy:
+		if pol1 != nil && pol1.PolicyType == tools.LCPPolicyTypeList {
+			return true, nil, nil
 		}
-	}
-	if pol2 != nil {
-		if pol2.PolicyType != tools.LCPPolicyTypeList {
-			return false, fmt.Errorf("Auto-promotion mode active"), nil
+		if pol2 != nil && pol2.PolicyType == tools.LCPPolicyTypeList {
+			return true, nil, nil
 		}
+		break
 	}
-	return true, nil, nil
+	return false, nil, fmt.Errorf("Couldn't validate TXT mode of operation")
 }

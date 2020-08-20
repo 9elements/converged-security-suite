@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/pkg/hwapi"
+	"github.com/9elements/converged-security-suite/pkg/tools"
 )
 
 const (
@@ -107,7 +108,7 @@ type Test struct {
 	//-> mostly api errors, but not directly testrelated problem.
 	//The return call in test functions shall return only one of the errors,
 	//while the other is nil.
-	function      func(hwapi.APIInterfaces) (bool, error, error)
+	function      func(hwapi.APIInterfaces, *tools.Configuration) (bool, error, error)
 	Result        Result
 	dependencies  []*Test
 	ErrorText     string
@@ -156,17 +157,12 @@ var TestsTXTReady = []*Test{
 
 	// TPM tests
 	&testtpmconnection,
-	&testtpm12present,
-	&testtpm2present,
-	&testtpmispresent,
-
 	&testtpmnvramislocked,
-	&testpsindexconfig,
 	&testauxindexconfig,
 }
 
-// TestsBIOSBoot - Summarizes all test for TXT BIOS boot (not CBnT) platforms
-var TestsBIOSBoot = []*Test{
+// TestsLegacy - Summarizes all test for TXT (not CBnT) platforms
+var TestsLegacy = []*Test{
 	// CPU tests
 	&testcheckforintelcpu,
 	&testwaybridgeorlater,
@@ -216,8 +212,6 @@ var TestsBIOSBoot = []*Test{
 
 	// TPM tests
 	&testtpmconnection,
-	&testtpm12present,
-	&testtpm2present,
 	&testtpmispresent,
 	&testtpmnvramislocked,
 	&testpsindexconfig,
@@ -226,66 +220,8 @@ var TestsBIOSBoot = []*Test{
 	&testpcr00valid,
 }
 
-// TestsUEFIBoot - Summarizes all test for TXT UEFI boot (not CBnT) platforms
-var TestsUEFIBoot = []*Test{
-	// CPU tests
-	&testcheckforintelcpu,
-	&testwaybridgeorlater,
-	&testcpusupportstxt,
-	&testtxtregisterspaceaccessible,
-	&testsupportssmx,
-	&testsupportvmx,
-	&testia32featurectrl,
-	&testtxtnotdisabled,
-	&testtxtregisterslocked,
-	&testia32debuginterfacelockeddisabled,
-	&testibbmeasured,
-
-	// Memory tests
-	&testtxtmemoryrangevalid,
-	&testmemoryisreserved,
-	&testtxtmemoryisdpr,
-	&testtxtdprislocked,
-	&testsinitintxt,
-	&testsinitmatcheschipset,
-	&testsinitmatchescpu,
-	&testbiosdataregionpresent,
-	&testbiosdataregionvalid,
-	&testhasmtrr,
-	&testhassmrr,
-	&testvalidsmrr,
-	&testactivesmrr,
-
-	// FIT tests
-	&testfitvectorisset,
-	&testhasfit,
-	&testhasbiosacm,
-	&testhasibb,
-	&testhaslcpTest,
-	&testibbcoversresetvector,
-	&testibbcoversfitvector,
-	&testibbcoversfit,
-	&testnoibboverlap,
-	&testnobiosacmoverlap,
-	&testnobiosacmisbelow4g,
-	&testpolicyallowstxt,
-	&testbiosacmvalid,
-	&testbiosacmsizecorrect,
-	&testbiosacmaligmentcorrect,
-	&testbiosacmmatcheschipset,
-	&testbiosacmmatchescpu,
-
-	// TPM tests
-	&testtpmconnection,
-	&testtpm12present,
-	&testtpm2present,
-	&testtpmispresent,
-	&testtpmnvramislocked,
-	&testpsindexconfig,
-	&testauxindexconfig,
-	&testpsindexissvalid,
-	&testpcr00valid,
-
+// TestsUEFI - Summarizes all test for TXT UEFI boot
+var TestsUEFI = []*Test{
 	// ACPI tests
 	&testRSDPChecksum,
 	&testMCFGPresent,
@@ -310,7 +246,7 @@ var TestsTBoot = []*Test{
 }
 
 // Run implements the genereal test function and exposes it.
-func (t *Test) Run(TxtAPI hwapi.APIInterfaces) bool {
+func (t *Test) Run(TxtAPI hwapi.APIInterfaces, config *tools.Configuration) bool {
 	var DepsPassed = true
 	// Make sure all dependencies have run and passed
 	for idx := range t.dependencies {
@@ -318,7 +254,7 @@ func (t *Test) Run(TxtAPI hwapi.APIInterfaces) bool {
 			continue
 		}
 		if t.dependencies[idx].Result == ResultNotRun {
-			t.dependencies[idx].Run(TxtAPI)
+			t.dependencies[idx].Run(TxtAPI, config)
 		}
 		if t.dependencies[idx].Result != ResultPass {
 			t.ErrorText = t.dependencies[idx].Name + " failed"
@@ -329,7 +265,7 @@ func (t *Test) Run(TxtAPI hwapi.APIInterfaces) bool {
 
 	if DepsPassed {
 		// Now run the test itself
-		rc, testerror, internalerror := t.function(TxtAPI)
+		rc, testerror, internalerror := t.function(TxtAPI, config)
 		if internalerror != nil && testerror == nil {
 			t.Result = ResultInternalError
 			t.ErrorText = internalerror.Error()
@@ -360,12 +296,12 @@ func (t *Test) Run(TxtAPI hwapi.APIInterfaces) bool {
 }
 
 //RunTestsSilent Runs the specified tests and returns false on the first error encountered
-func RunTestsSilent(TxtAPI hwapi.APIInterfaces, Tests []*Test) (bool, string, error) {
+func RunTestsSilent(TxtAPI hwapi.APIInterfaces, config *tools.Configuration, Tests []*Test) (bool, string, error) {
 
 	intErr := fmt.Errorf("Internal error running test")
 
 	for i := range Tests {
-		if !Tests[i].Run(TxtAPI) && Tests[i].Required {
+		if !Tests[i].Run(TxtAPI, config) && Tests[i].Required {
 			if Tests[i].Status == NotImplemented {
 				continue
 			}

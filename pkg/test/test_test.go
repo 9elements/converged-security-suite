@@ -5,13 +5,15 @@ import (
 	"testing"
 
 	"github.com/9elements/converged-security-suite/pkg/hwapi"
+	"github.com/9elements/converged-security-suite/pkg/tools"
+	"github.com/9elements/go-tss"
 )
 
 func TestTest_Run(t *testing.T) {
 	type fields struct {
 		Name         string
 		Required     bool
-		function     func(hwapi.APIInterfaces) (bool, error, error)
+		function     func(hwapi.APIInterfaces, *tools.Configuration) (bool, error, error)
 		Result       Result
 		dependencies []*Test
 		ErrorText    string
@@ -22,7 +24,7 @@ func TestTest_Run(t *testing.T) {
 	BNotImplemented := Test{
 		"Test B",
 		true,
-		func(a hwapi.APIInterfaces) (bool, error, error) { return true, nil, nil },
+		func(a hwapi.APIInterfaces, c *tools.Configuration) (bool, error, error) { return true, nil, nil },
 		ResultFail,
 		nil,
 		"",
@@ -37,7 +39,7 @@ func TestTest_Run(t *testing.T) {
 	BFailed := Test{
 		"Test B",
 		true,
-		func(a hwapi.APIInterfaces) (bool, error, error) { return true, nil, nil },
+		func(a hwapi.APIInterfaces, c *tools.Configuration) (bool, error, error) { return true, nil, nil },
 		ResultFail,
 		nil,
 		"",
@@ -51,7 +53,7 @@ func TestTest_Run(t *testing.T) {
 	BNotRun := Test{
 		"Test B",
 		true,
-		func(a hwapi.APIInterfaces) (bool, error, error) { return true, nil, nil },
+		func(a hwapi.APIInterfaces, c *tools.Configuration) (bool, error, error) { return true, nil, nil },
 		ResultNotRun,
 		nil,
 		"",
@@ -74,7 +76,7 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, ignores unimplemented Test B",
 				true,
-				func(a hwapi.APIInterfaces) (bool, error, error) { return true, nil, nil },
+				func(a hwapi.APIInterfaces, c *tools.Configuration) (bool, error, error) { return true, nil, nil },
 				ResultNotRun,
 				[]*Test{&BNotImplemented},
 				"",
@@ -89,7 +91,7 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, fails on failed dependency Test B",
 				true,
-				func(a hwapi.APIInterfaces) (bool, error, error) { return true, nil, nil },
+				func(a hwapi.APIInterfaces, c *tools.Configuration) (bool, error, error) { return true, nil, nil },
 				ResultNotRun,
 				[]*Test{&BFailed},
 				"",
@@ -104,7 +106,9 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, runs dependency Test B",
 				true,
-				func(a hwapi.APIInterfaces) (bool, error, error) { return BNotRun.Result == ResultPass, nil, nil },
+				func(a hwapi.APIInterfaces, c *tools.Configuration) (bool, error, error) {
+					return BNotRun.Result == ResultPass, nil, nil
+				},
 				ResultNotRun,
 				[]*Test{&BNotRun},
 				"",
@@ -119,7 +123,9 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, multiple dependencies",
 				true,
-				func(a hwapi.APIInterfaces) (bool, error, error) { return BNotRun.Result == ResultPass, nil, nil },
+				func(a hwapi.APIInterfaces, c *tools.Configuration) (bool, error, error) {
+					return BNotRun.Result == ResultPass, nil, nil
+				},
 				ResultNotRun,
 				[]*Test{&BNotRun, &BNotImplemented},
 				"",
@@ -134,7 +140,9 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, returns internal error",
 				true,
-				func(a hwapi.APIInterfaces) (bool, error, error) { return true, nil, fmt.Errorf("Internal error 24") },
+				func(a hwapi.APIInterfaces, c *tools.Configuration) (bool, error, error) {
+					return true, nil, fmt.Errorf("Internal error 24")
+				},
 				ResultNotRun,
 				[]*Test{},
 				"",
@@ -149,7 +157,9 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, returns error",
 				true,
-				func(a hwapi.APIInterfaces) (bool, error, error) { return true, fmt.Errorf("error 1"), nil },
+				func(a hwapi.APIInterfaces, c *tools.Configuration) (bool, error, error) {
+					return true, fmt.Errorf("error 1"), nil
+				},
 				ResultNotRun,
 				[]*Test{},
 				"",
@@ -164,7 +174,9 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, returns error, but is critical",
 				true,
-				func(a hwapi.APIInterfaces) (bool, error, error) { return false, fmt.Errorf("error 1"), nil },
+				func(a hwapi.APIInterfaces, c *tools.Configuration) (bool, error, error) {
+					return false, fmt.Errorf("error 1"), nil
+				},
 				ResultNotRun,
 				[]*Test{},
 				"",
@@ -177,6 +189,10 @@ func TestTest_Run(t *testing.T) {
 	}
 
 	txtAPI := hwapi.GetAPI()
+	var config tools.Configuration
+	config.LCPHash = tools.LCPPol2HAlgSHA256
+	config.TPM = tss.TPMVersion20
+	config.TXTMode = tools.AutoPromotion
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tr := &Test{
@@ -189,7 +205,7 @@ func TestTest_Run(t *testing.T) {
 				Status:       tt.fields.Status,
 				Spec:         tt.fields.Spec,
 			}
-			if got := tr.Run(txtAPI); got != tt.wantReturn {
+			if got := tr.Run(txtAPI, &config); got != tt.wantReturn {
 				t.Errorf("Test.Run() = %v, want %v", got, tt.wantReturn)
 			}
 			if tr.Result != tt.wantResult {

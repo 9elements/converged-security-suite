@@ -11,6 +11,8 @@ import (
 
 	"github.com/9elements/converged-security-suite/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/pkg/test"
+	"github.com/9elements/converged-security-suite/pkg/tools"
+	"github.com/9elements/go-tss"
 	a "github.com/logrusorgru/aurora"
 )
 
@@ -28,12 +30,18 @@ type temptest struct {
 	Status     string
 }
 
-func run(tests []*test.Test) bool {
+func run(testGroup string, tests []*test.Test, config tools.Configuration) bool {
 	var result = false
 	f := bufio.NewWriter(os.Stdout)
 
 	hwAPI := hwapi.GetAPI()
 
+	fmt.Printf("\n%s tests\n", a.Bold(a.Gray(20-1, testGroup).BgGray(4-1)))
+	var i int
+	for i = 0; i < len(testGroup)+6; i++ {
+		fmt.Print("_")
+	}
+	fmt.Println()
 	for idx := range tests {
 		if len(testnos) > 0 {
 			// SearchInt returns an index where to "insert" idx
@@ -47,7 +55,7 @@ func run(tests []*test.Test) bool {
 			}
 		}
 
-		if !tests[idx].Run(hwAPI) && tests[idx].Required && flagInteractive() {
+		if !tests[idx].Run(hwAPI, &config) && tests[idx].Required && flagInteractive() {
 			result = true
 			break
 		}
@@ -66,7 +74,6 @@ func run(tests []*test.Test) bool {
 		ioutil.WriteFile(logfile, data, 0664)
 	}
 
-	fmt.Printf("For more information about the documents and chapters, run: txt-suite -m\n\n")
 	for index := range tests {
 		if tests[index].Status == test.NotImplemented {
 			continue
@@ -108,27 +115,48 @@ func main() {
 	if *logpath != "" {
 		logfile = *logpath
 	}
+	var config tools.Configuration
+	if *configFile != "" {
+		var err error
+		configuration, err := tools.ParseConfig(*configFile)
+		if err != nil {
+			os.Exit(1)
+		}
+		config = *configuration
+	} else {
+		// Default TPM 2.0 Intel TXT configuration
+		config.LCPHash = tools.LCPPol2HAlgSHA256
+		config.TPM = tss.TPMVersion20
+		config.TXTMode = tools.AutoPromotion
+	}
 
 	if *listtests == true {
 		listTests()
-	} else if *help == true {
-		showHelp()
 	} else if *version == true {
 		showVersion()
 	} else if *teststomarkdown == true {
 		listTestsAsMarkdown()
 	} else if *all == true {
-		ret = run(getTests())
-	} else if *uefiboot == true {
-		ret = run(test.TestsUEFIBoot)
+		fmt.Println("For more information about the documents and chapters, run: txt-suite -m")
+		ret = run("All", getTests(), config)
 	} else if *txtready == true {
-		ret = run(test.TestsTXTReady)
-	} else if *tboot == true {
-		ret = run(test.TestsTBoot)
+		fmt.Println("For more information about the documents and chapters, run: txt-suite -m")
+		ret = run("TXT Ready", test.TestsTXTReady, config)
 	} else {
-		ret = run(test.TestsBIOSBoot)
+		fmt.Println("For more information about the documents and chapters, run: txt-suite -m")
+		if *cbnt {
+			fmt.Println("CBnT support not implemented yet.")
+			os.Exit(1)
+		} else {
+			ret = run("Legacy TXT", test.TestsLegacy, config)
+		}
 	}
-
+	if *uefi == true {
+		ret = run("UEFI", test.TestsUEFI, config)
+	}
+	if *tboot == true {
+		ret = run("Tboot", test.TestsTBoot, config)
+	}
 	if ret {
 		os.Exit(1)
 	} else {
