@@ -1,10 +1,10 @@
 package provisioning
 
 import (
-	"crypto"
 	"fmt"
 	"io"
 
+	tools "github.com/9elements/converged-security-suite/pkg/tools"
 	tpm2 "github.com/google/go-tpm/tpm2"
 	tpmutil "github.com/google/go-tpm/tpmutil"
 )
@@ -13,79 +13,81 @@ var (
 	emptyPW string
 )
 
-// ProvisionTPM20 generates and provision the TPM 2.0 module
-func ProvisionTPM20(rw io.ReadWriter, delHash, writeHash []byte, hashAlg crypto.Hash) ([]byte, *crypto.Hash, error) {
+// ProvisionTPM20 generates and provision the TPM 2.0 module and return the PS policyHash
+func ProvisionTPM20(rw io.ReadWriter, delHash, writeHash []byte, lcppol *tools.LCPPolicy2) (*[32]byte, error) {
+	var ret [32]byte
 	_, err := tpm2.NVReadPublic(rw, tpm2PSIndexDef.NVIndex)
 	if err == nil {
-		return nil, nil, fmt.Errorf("PS index already defined in TPM 2.0 - Undefine first")
-	}
-	_, err = tpm2.NVReadPublic(rw, tpm20AUXIndexDef.NVIndex)
-	if err == nil {
-		return nil, nil, fmt.Errorf("AUX index already defined in TPM2.0 - Undefine first")
+		return nil, fmt.Errorf("PS index already defined in TPM 2.0 - Undefine first")
 	}
 	psPolicyHash, err := getPSPolicyHash(rw, delHash, writeHash)
 	if err != nil {
-		return nil, nil, err
+		return nil, fmt.Errorf("getPSPolicyHash() failed: %v", err)
 	}
-	if err := definePSIndexTPM20(rw, psPolicyHash, hashAlg); err != nil {
-		return nil, nil, err
+	if err := definePSIndexTPM20(rw, psPolicyHash); err != nil {
+		return nil, fmt.Errorf("definePSIndexTPM20() failed: %v", err)
 	}
-	/*
-		Write LCP Policy to PS index here
-	*/
+	if err := writePSPolicy(rw, lcppol, delHash, writeHash); err != nil {
+		return nil, fmt.Errorf("writePSPolicy() failed: %v", err)
+	}
 	if err := defineAUXIndexTPM20(rw); err != nil {
-		return nil, nil, err
+		return nil, fmt.Errorf("defineAUXIndexTPM20() failed: %v", err)
 	}
-
-	return psPolicyHash, &hashAlg, nil
+	copy(ret[:], psPolicyHash[:32])
+	return &ret, nil
 }
 
-func definePSIndexTPM20(rw io.ReadWriter, pspolhash []byte, hashAlg crypto.Hash) error {
-	tpm2PSIndexDef.AuthPolicy = pspolhash
-	tpm2PSIndexDef.NameAlg = tpm2.Algorithm(hashAlg)
-
-	err := tpm2.NVDefineSpaceEx(tpmCon.RWC, tpm2.HandleOwner, emptyPW, emptyPW, tpm2PSIndexDef)
-	return err
+func definePSIndexTPM20(rw io.ReadWriter, pspolhash tpmutil.U16Bytes) error {
+	psIndexDef := tpm2.NVPublic{
+		NVIndex: tpmutil.Handle(0x01C10103),
+		NameAlg: tpm2.AlgSHA256,
+		Attributes: tpm2.AttrPolicyWrite + tpm2.AttrPolicyDelete +
+			tpm2.AttrAuthRead + tpm2.AttrNoDA + tpm2.AttrPlatformCreate,
+		AuthPolicy: pspolhash,
+		DataSize:   uint16(70),
+	}
+	authArea := tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession, Auth: []byte(tpm2.EmptyAuth)}
+	err := tpm2.NVDefineSpaceEx(rw, tpm2.HandlePlatform, authArea, "", psIndexDef)
+	if err != nil {
+		return fmt.Errorf("NVDefineSpaceEx() failed: %v", err)
+	}
+	return nil
 }
 
 func defineAUXIndexTPM20(rw io.ReadWriter) error {
-	return tpm2.NVDefineSpaceEx(rw, tpm2.HandleOwner, emptyPW, emptyPW, tpm20AUXIndexDef)
+	authArea := tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession, Auth: []byte(tpm2.EmptyAuth)}
+	err := tpm2.NVDefineSpaceEx(rw, tpm2.HandlePlatform, authArea, "", tpm20AUXIndexDef)
+	if err != nil {
+		return fmt.Errorf("NVDefineSpaceEx() failed: %v", err)
+	}
+	return nil
 }
 
 func getPSPolicyHash(rw io.ReadWriter, delHash, writeHash []byte) ([]byte, error) {
 	zeroHash := make([]byte, len(delHash))
 	delBranch, err := constructDelBranch(rw, delHash, zeroHash)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("constructDelBranch() failed: %v", err)
 	}
 	writeBranch, err := constructWriteBranch(rw, writeHash, zeroHash)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("constructWriteBranch() failed: %v", err)
 	}
 
 	psPol, err := mergeToPSPolicy(rw, delBranch, writeBranch)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("mergeToPSPolicy() failed: %v", err)
 	}
 	return psPol, nil
 }
 
 func constructDelBranch(rw io.ReadWriter, delHash, zeroHash []byte) ([]byte, error) {
-	sess, _, err := tpm2.StartAuthSession(tpmCon.RWC, tpm2.HandleNull, tpm2.HandleNull, make([]byte, 16), nil, tpm2.SessionPolicy, tpm2.AlgNull, tpm2.AlgSHA256)
+	sess, _, err := tpm2.StartAuthSession(rw, tpm2.HandleNull, tpm2.HandleNull, make([]byte, 16), nil, tpm2.SessionPolicy, tpm2.AlgNull, tpm2.AlgSHA256)
 	if err != nil {
 		return nil, err
 	}
-	delhashraw, err := tpmutil.Pack(delHash)
-	if err != nil {
-		return nil, err
-	}
-	zerohashraw, err := tpmutil.Pack(zeroHash)
-	if err != nil {
-		return nil, err
-	}
-	delhashdata := tpmutil.U16Bytes(delhashraw)
-	zeorhashdata := tpmutil.U16Bytes(zerohashraw)
-	err = tpm2.PolicyOr(rw, sess, tpm2.TPMLDigest{Count: uint32(2), Digests: []tpmutil.U16Bytes{delhashdata, zeorhashdata}})
+	hashData := tpm2.TPMLDigest{Digests: []tpmutil.U16Bytes{delHash, zeroHash}}
+	err = tpm2.PolicyOr(rw, sess, hashData)
 	if err != nil {
 		return nil, err
 	}
@@ -109,17 +111,8 @@ func constructWriteBranch(rw io.ReadWriter, writeHash, zeroHash []byte) ([]byte,
 	if err != nil {
 		return nil, err
 	}
-	writehashraw, err := tpmutil.Pack(writeHash)
-	if err != nil {
-		return nil, err
-	}
-	zerohashraw, err := tpmutil.Pack(zeroHash)
-	if err != nil {
-		return nil, err
-	}
-	writehashdata := tpmutil.U16Bytes(writehashraw)
-	zeorhashdata := tpmutil.U16Bytes(zerohashraw)
-	err = tpm2.PolicyOr(rw, sess, tpm2.TPMLDigest{Count: uint32(2), Digests: []tpmutil.U16Bytes{writehashdata, zeorhashdata}})
+	hashData := tpm2.TPMLDigest{Digests: []tpmutil.U16Bytes{writeHash, zeroHash}}
+	err = tpm2.PolicyOr(rw, sess, hashData)
 	if err != nil {
 		return nil, err
 	}
@@ -135,23 +128,14 @@ func constructWriteBranch(rw io.ReadWriter, writeHash, zeroHash []byte) ([]byte,
 }
 
 func mergeToPSPolicy(rw io.ReadWriter, delPol, writePol []byte) ([]byte, error) {
-	sess, _, err := tpm2.StartAuthSession(rw, tpm2.HandleNull, tpm2.HandleNull, make([]byte, 16), nil, tpm2.SessionPolicy, tpm2.AlgNull, tpm2.AlgSHA256)
+	sess, _, err := tpm2.StartAuthSession(rw, tpm2.HandleNull, tpm2.HandleNull, make([]byte, 16), nil, tpm2.SessionTrial, tpm2.AlgNull, tpm2.AlgSHA256)
 	if err != nil {
 		return nil, err
 	}
-	delhashraw, err := tpmutil.Pack(delPol)
+	hashData := tpm2.TPMLDigest{Digests: []tpmutil.U16Bytes{delPol, writePol}}
+	err = tpm2.PolicyOr(rw, sess, hashData)
 	if err != nil {
-		return nil, err
-	}
-	writehashraw, err := tpmutil.Pack(writePol)
-	if err != nil {
-		return nil, err
-	}
-	delhashdata := tpmutil.U16Bytes(delhashraw)
-	writehashdata := tpmutil.U16Bytes(writehashraw)
-	err = tpm2.PolicyOr(rw, sess, tpm2.TPMLDigest{Count: uint32(2), Digests: []tpmutil.U16Bytes{delhashdata, writehashdata}})
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PolicyOr() failed: %v, len(delPol): %v, len(writePol): %v", err, delPol, writePol)
 	}
 	data, err := tpm2.PolicyGetDigest(rw, sess)
 	if err != nil {
@@ -167,4 +151,50 @@ func mergeToPSPolicy(rw io.ReadWriter, delPol, writePol []byte) ([]byte, error) 
 // ProvisionTPM12 generates and provision the TPM 1.2 module
 func ProvisionTPM12(rw io.ReadWriter) error {
 	return fmt.Errorf("Not implemented yet")
+}
+
+func writePSPolicy(rw io.ReadWriter, lcppol *tools.LCPPolicy2, delHash, writeHash []byte) error {
+	zeroHash := make([]byte, 32)
+	delPol, err := constructDelBranch(rw, delHash, zeroHash)
+	if err != nil {
+		return fmt.Errorf("constructDelBranch() failed: %v", err)
+	}
+	writePol, err := constructWriteBranch(rw, writeHash, zeroHash)
+	if err != nil {
+		return fmt.Errorf("constructWriteBranch() failed: %v", err)
+	}
+	sess, _, err := tpm2.StartAuthSession(rw, tpm2.HandleNull, tpm2.HandleNull, make([]byte, 16), nil, tpm2.SessionPolicy, tpm2.AlgNull, tpm2.AlgSHA256)
+	if err != nil {
+		return fmt.Errorf("StartAuthSession in writePSPolicy failed: %v", err)
+	}
+
+	a := tpm2.TPMLDigest{Digests: []tpmutil.U16Bytes{writeHash, zeroHash}}
+	b := tpm2.TPMLDigest{Digests: []tpmutil.U16Bytes{delPol, writePol}}
+
+	err = tpm2.PolicyOr(rw, sess, a)
+	if err != nil {
+		return fmt.Errorf("writePSPolicy() failed at PolicyOR1: %v", err)
+	}
+	err = tpm2.PolicyOr(rw, sess, b)
+	if err != nil {
+		return fmt.Errorf("writePSPolicy() failed at PolicyOR2: %v", err)
+	}
+	lcpbytes, err := tpmutil.Pack(lcppol)
+	if err != nil {
+		return err
+	}
+	lcpraw, err := tpmutil.Pack(lcpbytes)
+	if err != nil {
+		return err
+	}
+	authArea := tpm2.AuthCommand{
+		Session:    sess,
+		Attributes: tpm2.AttrContinueSession,
+	}
+	err = tpm2.NVWriteEx(rw, tpm2PSIndexDef.NVIndex, tpm2PSIndexDef.NVIndex, authArea, lcpraw, 0)
+	if err != nil {
+		return fmt.Errorf("NVWrite in writePSPolicy failed: %v", err)
+	}
+	lcppol.PrettyPrint()
+	return nil
 }
