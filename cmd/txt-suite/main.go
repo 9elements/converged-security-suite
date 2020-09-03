@@ -16,10 +16,14 @@ import (
 	a "github.com/logrusorgru/aurora"
 )
 
+const programName = "Intel TXT Suite"
+
 var (
-	testnos []int
-	testerg bool
-	logfile = "test_log.json"
+	testnos   []int
+	testerg   bool
+	logfile   = "test_log.json"
+	gitcommit string
+	gittag    string
 )
 
 type temptest struct {
@@ -133,7 +137,7 @@ func main() {
 	if *listtests == true {
 		listTests()
 	} else if *version == true {
-		showVersion()
+		tools.ShowVersion(programName, gittag, gitcommit)
 	} else if *teststomarkdown == true {
 		listTestsAsMarkdown()
 	} else if *all == true {

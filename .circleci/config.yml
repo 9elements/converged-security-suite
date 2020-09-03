@@ -22,8 +22,8 @@ jobs:
       - run: golint -set_exit_status ./cmd/txt-prov
       - run: go mod download
       - run: go mod verify
-      - run: go build -o txt-suite cmd/txt-suite/*.go
-      - run: go build -o txt-prov cmd/txt-prov/*.go
+      - run: go build -ldflags "-X main.commit=<< pipeline.gitcommit >> -X main.tag=<< pipeline.gittag >>" -o txt-suite cmd/txt-suite/*.go
+      - run: go build -ldflags "-X main.commit=<< pipeline.gitcommit >> -X main.tag=<< pipeline.gittag >>" -o txt-prov cmd/txt-prov/*.go
       - run: go test ./pkg/hwapi/
       - run: go test ./pkg/tools/
       - run: go test ./pkg/test/

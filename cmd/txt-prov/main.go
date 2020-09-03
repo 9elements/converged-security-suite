@@ -6,13 +6,21 @@ import (
 	"os"
 
 	"github.com/9elements/converged-security-suite/pkg/provisioning"
+	"github.com/9elements/converged-security-suite/pkg/tools"
 	tss "github.com/9elements/go-tss"
+)
+
+const programName = "Intel TXT Provisioning tool"
+
+var (
+	gitcommit string
+	gittag    string
 )
 
 func main() {
 	flag.Parse()
 	if *version {
-		showVersion()
+		tools.ShowVersion(programName, gittag, gitcommit)
 		os.Exit(0)
 	}
 	tpmTss, err := tss.NewTPM()

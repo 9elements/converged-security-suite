@@ -32,16 +32,6 @@ func flagInteractive() bool {
 	return *interactive
 }
 
-func showVersion() {
-	fmt.Println("Converged Security Suite - TXT-Suite")
-	fmt.Println("")
-	fmt.Println("BSD 3-Clause License")
-	fmt.Println("")
-	fmt.Println("Copyright (c) 2020, 9elements GmbH.")
-	fmt.Println("Copyright (c) 2020, facebook Inc.")
-	fmt.Println("All rights reserved.")
-}
-
 func getTests() []*test.Test {
 	var tests []*test.Test
 	for i := range test.TestsCPU {

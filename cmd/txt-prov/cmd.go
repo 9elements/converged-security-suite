@@ -23,16 +23,6 @@ var (
 	version      = flag.Bool("v", false, "Shows version and license information")
 )
 
-func showVersion() {
-	fmt.Println("Converged Security Suite TXT provisioning tool")
-	fmt.Println("")
-	fmt.Println("BSD 3-Clause License")
-	fmt.Println("")
-	fmt.Println("Copyright (c) 2020, 9elements GmbH.")
-	fmt.Println("Copyright (c) 2020, facebook Inc.")
-	fmt.Println("All rights reserved.")
-}
-
 func provisionTPM20(rw io.ReadWriter, passHash []byte, lcpPolilcy *tools.LCPPolicy2) error {
 	passHash, err := readPassphraseHashTPM20()
 	if err != nil {
