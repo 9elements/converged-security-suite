@@ -1,9 +1,10 @@
 {
     "Version": "0x302",
     "HashAlg": "SHA256",
-    "PolicyType": "1",
+    "PolicyType": "Any",
     "SINITMinVersion":"0",
-    "PolicyControl":"NPW",
+    "MaxSINITMinVersion": "ff",
+    "PolicyControl":"",
     "LcpHashAlgMask":"SHA256",
     "LcpSignAlgMask": "RSA2048SHA256"
 }

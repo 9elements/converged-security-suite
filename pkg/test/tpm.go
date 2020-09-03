@@ -572,8 +572,8 @@ func PSIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration)
 		if pol1.HashAlg != tools.LCPPolHAlgSHA1 {
 			return false, fmt.Errorf("HashAlg is not 0 (SHA1). Must be equal 0"), nil
 		}
-		if pol1.PolicyType > tools.LCPPolicyTypeAny && pol1.PolicyType < tools.LCPPolicyTypeList {
-			return false, fmt.Errorf("PolicyType is invalid. Have: %v - Want: %v or %v", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
+		if pol1.PolicyType != tools.LCPPolicyTypeAny && pol1.PolicyType != tools.LCPPolicyTypeList {
+			return false, fmt.Errorf("PolicyType is invalid. Have: %d - Want: %d or %d", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
 		}
 		if pol1.SINITMinVersion == 0 {
 			return false, fmt.Errorf("SINITMinVersion is invalid. Must be greater than 0"), nil
@@ -596,8 +596,8 @@ func PSIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration)
 		if pol2.HashAlg != config.LCPHash {
 			return false, fmt.Errorf("HashAlg has invalid value"), nil
 		}
-		if pol2.PolicyType >= tools.LCPPolicyTypeAny && pol1.PolicyType <= tools.LCPPolicyTypeList {
-			return false, fmt.Errorf("PolicyType is invalid. Have: %v - Want: %v or %v", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
+		if pol2.PolicyType != tools.LCPPolicyTypeAny && pol1.PolicyType != tools.LCPPolicyTypeList {
+			return false, fmt.Errorf("PolicyType is invalid. Have: %d - Want: %d or %d", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
 		}
 		if pol2.LcpHashAlgMask == 0 {
 			return false, fmt.Errorf("LcpHashAlgMask is invalid. Must be greater than 0"), nil
@@ -689,7 +689,7 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration)
 			return false, fmt.Errorf("HashAlg is invalid. Must be equal 0"), nil
 		}
 		if pol1.PolicyType != tools.LCPPolicyTypeAny && pol1.PolicyType != tools.LCPPolicyTypeList {
-			return false, fmt.Errorf("PolicyType is invalid. Have: %v - Want: %v or %v", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
+			return false, fmt.Errorf("PolicyType is invalid. Have: %d - Want: %d or %d", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
 		}
 		if pol1.SINITMinVersion == 0 {
 			return false, fmt.Errorf("SINITMinVersion is invalid. Must be greater than 0"), nil
@@ -713,7 +713,7 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration)
 			return false, fmt.Errorf("HashAlg has invalid value"), nil
 		}
 		if pol2.PolicyType != tools.LCPPolicyTypeAny && pol1.PolicyType != tools.LCPPolicyTypeList {
-			return false, fmt.Errorf("PolicyType is invalid. Have: %v - Want: %v or %v", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
+			return false, fmt.Errorf("PolicyType is invalid. Have: %d - Want: %d or %d", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
 		}
 		if pol2.LcpHashAlgMask == 0 {
 			return false, fmt.Errorf("LcpHashAlgMask is invalid. Must be greater than 0"), nil

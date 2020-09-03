@@ -8,14 +8,15 @@ import (
 )
 
 // DeleteAUXindexTPM20 deletes the AUX index on TPM 2.0
-func DeleteAUXindexTPM20(rw io.ReadWriter, psPol *tools.LCPPolicy2, writeHash, delHash []byte) error {
-	if (1 >> (psPol.PolicyControl & tools.LCPPolicyControlAuxDelete)) != 0 {
+func DeleteAUXindexTPM20(rw io.ReadWriter, pol *tools.LCPPolicy2, passHash []byte) error {
+	if !pol.ParsePolicyControl2().AuxDelete {
 		return fmt.Errorf("AuxDelete not set in LCP Policy")
 	}
-	err := writePSPolicy(rw, psPol, delHash, writeHash)
+	err := WritePSIndexTPM20(rw, pol, passHash)
 	if err != nil {
 		return err
 	}
+	fmt.Println("AUX index deletion in progress, please reboot machine")
 	return nil
 }
 

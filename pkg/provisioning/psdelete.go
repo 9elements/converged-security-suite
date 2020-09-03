@@ -9,14 +9,14 @@ import (
 	tpm2 "github.com/google/go-tpm/tpm2"
 )
 
-// DeletePSindexTPM20 deletes the PS index on TPM 2.0
-func DeletePSindexTPM20(rw io.ReadWriter, delHash, writeHash []byte) error {
+// DeletePSIndexTPM20 deletes the PS index on TPM 2.0
+func DeletePSIndexTPM20(rw io.ReadWriter, passHash []byte) error {
 	zeroHash := make([]byte, 32)
-	delPol, err := constructDelBranch(rw, delHash, zeroHash)
+	delPol, err := constructDelBranch(rw, passHash, zeroHash)
 	if err != nil {
 		return err
 	}
-	writePol, err := constructWriteBranch(rw, writeHash, zeroHash)
+	writePol, err := constructWriteBranch(rw, passHash, zeroHash)
 	if err != nil {
 		return err
 	}
@@ -27,7 +27,7 @@ func DeletePSindexTPM20(rw io.ReadWriter, delHash, writeHash []byte) error {
 	}
 	defer tpm2.FlushContext(rw, sessIndex)
 
-	or1 := tpm2.TPMLDigest{Digests: []tpmutil.U16Bytes{delHash, zeroHash}}
+	or1 := tpm2.TPMLDigest{Digests: []tpmutil.U16Bytes{passHash, zeroHash}}
 	or2 := tpm2.TPMLDigest{Digests: []tpmutil.U16Bytes{delPol, writePol}}
 
 	err = tpm2.PolicyOr(rw, sessIndex, or1)
@@ -49,8 +49,8 @@ func DeletePSindexTPM20(rw io.ReadWriter, delHash, writeHash []byte) error {
 	if err != nil {
 		return fmt.Errorf("NVUndefineSpaceSpecial() failed: %v", err)
 	}
-
-	return err
+	fmt.Println("PS index deleted successfully")
+	return nil
 }
 
 // DeletePSIndexTPM12 deletes the PS index on TPM 1.2
