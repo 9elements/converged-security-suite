@@ -17,25 +17,29 @@ jobs:
       - run: golint -set_exit_status ./pkg/test
       - run: golint -set_exit_status ./pkg/tools
       - run: golint -set_exit_status ./pkg/hwapi
+      - run: golint -set_exit_status ./pkg/provisioning
       - run: golint -set_exit_status ./cmd/txt-suite
+      - run: golint -set_exit_status ./cmd/txt-prov
       - run: go mod download
       - run: go mod verify
-      - run: go build -o txt-suite cmd/txt-suite/*.go
+      - run: go build -o txt-suite txt-prov cmd/txt-suite/*.go cmd/txt-prov/*.go
       - run: go test ./pkg/hwapi/
       - run: go test ./pkg/tools/
       - run: go test ./pkg/test/
+      - run: go test ./pkg/provisioning/
       - run: mkdir out
       - run: git config user.email "circleci@circleci.com"
       - run: git config user.name "CI"
       - run: ./txt-suite -m > ./cmd/txt-suite/TESTPLAN.md
       - run: git add ./cmd/txt-suite/TESTPLAN.md
       - run: (git commit -m "Update testplan file" && git push --set-upstream origin ${CIRCLE_BRANCH}) || true
-      - run: cp txt-suite out/
+      - run: cp txt-suite txt-prov out/
 
       - persist_to_workspace:
           root: out
           paths:
             - txt-suite
+            - txt-prov
 
   create_deb_rpm:
     docker:
@@ -50,12 +54,14 @@ jobs:
       - run: go get github.com/goreleaser/nfpm/cmd/nfpm@v1.3.2
       - run: go build github.com/goreleaser/nfpm/cmd/nfpm
       - run: cp /tmp/out/txt-suite .
+      - run: cp /tmp/out/txt-prov .
       - run: if [ -z "$CIRCLE_TAG" ]; then echo "export CIRCLE_TAG=$(git describe --tags|cut -d'-' -f1);" >> $BASH_ENV; fi
       - run: if [ -z "$CIRCLE_BUILD_NUM" ]; then echo "export CIRCLE_BUILD_NUM=$(git describe --tags|cut -d'-' -f2);" >> $BASH_ENV; fi
       - run: MY_APP_VERSION=${CIRCLE_TAG} MY_APP_BUILDNUMBER=${CIRCLE_BUILD_NUM} go run github.com/goreleaser/nfpm/cmd/nfpm pkg --config ./build/package/nfpm_rpm.yaml --target golang-txt-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}.x86_64.rpm
       - run: MY_APP_VERSION=${CIRCLE_TAG} MY_APP_BUILDNUMBER=${CIRCLE_BUILD_NUM} go run github.com/goreleaser/nfpm/cmd/nfpm pkg --config ./build/package/nfpm_deb.yaml --target go_txt-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}_amd64.deb
       - run: mkdir -p out && cp *.rpm ./out/ && cp *.deb ./out/
       - run: cp txt-suite ./out/
+      - run: cp txt-prov ./out/
       - run: cp golang-txt-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}.x86_64.rpm artifact.rpm
       - run: cp go_txt-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}_amd64.deb artifact.deb
       - persist_to_workspace:
@@ -64,6 +70,7 @@ jobs:
             - golang-txt-suite*.rpm
             - go_txt-suite*.deb
             - txt-suite
+            - txt-prov
       - store_artifacts:
           path: artifact.rpm
           destination: golang-txt-suite.rpm
