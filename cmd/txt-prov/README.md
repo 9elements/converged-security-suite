@@ -43,7 +43,7 @@ Please get necessary information out of the Intel TXT documents/provisioning too
 **lcp.json**
 ```json
 {
-    "Version": "0x302",
+    "Version": "0x300",
     "HashAlg": "SHA256",
     "PolicyType": "Any",
     "SINITMinVersion":"0",
