@@ -58,8 +58,11 @@ type LCPPolicyType uint8
 func (pt LCPPolicyType) String() string {
 	if pt == 1 {
 		return string("Any")
+	} else if pt == 0 {
+		return string("List")
+	} else {
+		return string("Unknown")
 	}
-	return string("List")
 }
 
 // LCPPol2Sig represents LCPPol2.LcpSignAlgMask options
@@ -361,7 +364,7 @@ type LCPPolicy2 struct {
 	LcpHashAlgMask         uint16
 	LcpSignAlgMask         LCPPol2Sig
 	Reserved2              uint32
-	PolicyHash             []byte
+	PolicyHash             [32]byte
 }
 
 //LCPPolicyData FIXME
@@ -1136,7 +1139,7 @@ func GenLCPPolicyV2(version uint16, hashAlg crypto.Hash, hash []byte, sinitmin u
 		LcpHashAlgMask:         apprH,
 		LcpSignAlgMask:         apprS,
 	}
-	copy(pol.PolicyHash, *lcph)
+	copy(pol.PolicyHash[:], *lcph)
 	return pol, nil
 }
 
@@ -1267,25 +1270,24 @@ func PrintPolicyControl(pc uint32) string {
 // PrettyPrint prints LCPPolicy2 Structure i a human readable format
 func (p *LCPPolicy2) PrettyPrint() {
 	var s strings.Builder
-	s.WriteString("Version: " + string(strconv.FormatInt(int64(p.Version), 16)) + "\n")
-	s.WriteString("HashAlg: " + string(p.HashAlg.String()) + "\n")
-	s.WriteString("PolicyType: " + fmt.Sprintf("%v", p.PolicyControl) + "\n")
-	s.WriteString("SINITMinVersion: " + string(strconv.Itoa(int(p.SINITMinVersion))) + "\n")
-	s.WriteString("DataRevocationCounters: ")
+	s.WriteString("   Version: 0x" + string(strconv.FormatInt(int64(p.Version), 16)) + "\n")
+	s.WriteString("   HashAlg: " + string(p.HashAlg.String()) + "\n")
+	s.WriteString("   PolicyType: " + fmt.Sprintf("%s", p.PolicyType.String()) + "\n")
+	s.WriteString("   SINITMinVersion: " + string(strconv.Itoa(int(p.SINITMinVersion))) + "\n")
+	s.WriteString("   DataRevocationCounters: ")
 	for _, item := range p.DataRevocationCounters {
 		if item != 0 {
 			s.WriteString(string(item) + "+")
 		}
 	}
-	s.WriteString("\n\n")
-	s.WriteString("PolicyControl: " + PrintPolicyControl(p.PolicyControl) + "\n")
-	s.WriteString("MaxSINITMinVersion: " + string(strconv.FormatInt(int64(p.MaxSINITMinVersion), 16)) + "\n")
-	s.WriteString("Reserved: " + fmt.Sprintf("%v", p.Reserved) + "\n")
-	s.WriteString("LcpHashAlgMask: " + PrintLcpHashAlgMask(p.LcpHashAlgMask) + "\n")
-	s.WriteString("LcpSignAlgMask: " + p.LcpSignAlgMask.String() + "\n")
-	s.WriteString("Reserved2: " + fmt.Sprintf("%v", p.Reserved2) + "\n")
-	s.WriteString("PolicyHash: " + fmt.Sprintf("%v", p.PolicyHash) + "\n")
+	s.WriteString("\n")
+	s.WriteString("   PolicyControl: " + PrintPolicyControl(p.PolicyControl) + "\n")
+	s.WriteString("   MaxSINITMinVersion: " + string(strconv.FormatInt(int64(p.MaxSINITMinVersion), 16)) + "\n")
+	s.WriteString("   LcpHashAlgMask: " + PrintLcpHashAlgMask(p.LcpHashAlgMask) + "\n")
+	s.WriteString("   LcpSignAlgMask: " + p.LcpSignAlgMask.String() + "\n")
+	s.WriteString("   PolicyHash: " + fmt.Sprintf("%v", p.PolicyHash) + "\n")
 	fmt.Printf(s.String())
+	fmt.Println()
 }
 
 // PrintLcpHashAlgMask prints LcpHashAlgMask in human readable format
