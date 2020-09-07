@@ -54,7 +54,7 @@ func TestACMSize(t *testing.T) {
 		t.Errorf("Failed to read file: %v", err)
 	}
 
-	size, err := LookupSize(file)
+	size, err := LookupACMSize(file)
 	if err != nil {
 		t.Errorf("ACMSize() failed: %v", err)
 	}
@@ -94,7 +94,7 @@ func TestACMSize2(t *testing.T) {
 		t.Errorf("ACMSize() failed: %v", err)
 	}
 
-	size, err := LookupSize(file)
+	size, err := LookupACMSize(file)
 	if err != nil {
 		t.Errorf("ACMSize() failed: %v", err)
 	}

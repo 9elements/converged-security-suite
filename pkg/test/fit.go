@@ -283,8 +283,8 @@ func HasFIT(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, erro
 	if err != nil {
 		return false, nil, err
 	}
-
-	hdr, err := tools.GetFitHeader(fithdr)
+	header := bytes.NewReader(fithdr)
+	hdr, err := tools.GetFitHeader(header)
 	if err != nil {
 		return false, nil, err
 	}

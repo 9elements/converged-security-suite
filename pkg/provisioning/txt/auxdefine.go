@@ -1,4 +1,4 @@
-package provisioning
+package txt
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ func DefineAUXIndexTPM20(rw io.ReadWriter) error {
 		return fmt.Errorf("AUX index already defined in TPM 2.0 - Delete first")
 	}
 	authArea := tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession, Auth: []byte(tpm2.EmptyAuth)}
-	err = tpm2.NVDefineSpaceEx(rw, tpm2.HandlePlatform, authArea, "", tpm20AUXIndexDef)
+	err = tpm2.NVDefineSpaceEx(rw, tpm2.HandlePlatform, "", tpm20AUXIndexDef, authArea)
 	if err != nil {
 		return fmt.Errorf("NVDefineSpaceEx() failed: %v", err)
 	}

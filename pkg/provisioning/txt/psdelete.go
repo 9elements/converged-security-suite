@@ -1,4 +1,4 @@
-package provisioning
+package txt
 
 import (
 	"fmt"
@@ -44,8 +44,9 @@ func DeletePSIndexTPM20(rw io.ReadWriter, passHash []byte) error {
 	if err != nil {
 		return fmt.Errorf("PolicyOr2 failed with: %v", err)
 	}
-
-	err = tpm2.NVUndefineSpaceSpecial(rw, tpm2PSIndexDef.NVIndex, sessIndex, tpm2.EmptyAuth)
+	indexAuth := tpm2.AuthCommand{Session: sessIndex, Attributes: tpm2.AttrContinueSession, Auth: []byte(tpm2.EmptyAuth)}
+	platformAuth := tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession, Auth: []byte(tpm2.EmptyAuth)}
+	err = tpm2.NVUndefineSpaceSpecial(rw, tpm2PSIndexDef.NVIndex, indexAuth, platformAuth)
 	if err != nil {
 		return fmt.Errorf("NVUndefineSpaceSpecial() failed: %v", err)
 	}

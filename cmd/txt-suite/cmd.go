@@ -1,35 +1,130 @@
 package main
 
 import (
-	"flag"
+	"bufio"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"sort"
-	"strconv"
-	"strings"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/test"
+	"github.com/9elements/converged-security-suite/v2/pkg/tools"
+	"github.com/google/go-tpm/tpm2"
+
+	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
+
+	a "github.com/logrusorgru/aurora"
 )
 
-var testno = flag.String("t", "", "Select test number 1 - 50. e.g.: -t=1,2,3,4,...")
-var interactive = flag.Bool("i", false, "Interactive mode. Errors will stop the testing.")
-var listtests = flag.Bool("l", false, "Lists all test")
-var teststomarkdown = flag.Bool("m", false, "Output test implementation state as Markdown")
-var version = flag.Bool("v", false, "Shows Version, copyright info and license")
-var tpmdev = flag.String("tpm", "", "Select TPM-Path. e.g.: -tpm=/dev/tpmX, with X as number of the TPM module")
-var logpath = flag.String("log", "", "Give a path/filename for test result output in JSON format. e.g.: /path/to/filename.json")
-var all = flag.Bool("all", false, "Run all the tests of the suite")
-var uefi = flag.Bool("uefi", false, "Test if platform is UEFI boot enabled")
-var txtready = flag.Bool("txtready", false, "Run TXTReady specific tests")
-var tboot = flag.Bool("tboot", false, "Test if tboot hypervisor runs correctly")
-var cbnt = flag.Bool("cbnt", false, "Run CBnT specific tests")
-var configFile = flag.String("config", "", "Give a path/filename to configuration file")
-
-func flagUsed() bool {
-	return testno != nil
+type context struct {
+	tpmdev      *hwapi.TPM
+	interactive bool
+	logpath     string
 }
 
-func flagInteractive() bool {
-	return *interactive
+type listCmd struct {
+}
+
+type markdownCmd struct {
+}
+
+type versionCmd struct {
+}
+
+type execTestsCmd struct {
+	Set         string `required default:"all" help:"Select subset of tests. Options: all, uefi, txtready, tboot, cbnt, legacy"`
+	Interactive bool   `optional short:"i" help:"Interactive mode. Errors will stop the testing."`
+	Config      string `optional short:"c" help:"Path/Filename to config file."`
+	Log         string `optional help:"Give a path/filename for test result output inJSON format. e.g.: /path/to/filename.json"`
+}
+
+var cli struct {
+	ManifestStrictOrderCheck bool `help:"Enable checking of manifest elements order"`
+
+	TpmDev string `short:"t" help:"Select TPM-Path. e.g.:--tpmdev=/dev/tpmX, with X as number of the TPM module"`
+
+	ExecTests execTestsCmd `cmd help:"Executes tests given be TestNo or TestSet"`
+	List      listCmd      `cmd help:"Lists all tests"`
+	Markdown  markdownCmd  `cmd help:"Output test implementation state as Markdown"`
+	Version   versionCmd   `cmd help:"Prints the version of the program"`
+}
+
+func (e *execTestsCmd) Run(ctx *context) error {
+	ret := false
+	var config tools.Configuration
+	if e.Config != "" {
+		var err error
+		configuration, err := tools.ParseConfig(e.Config)
+		if err != nil {
+			os.Exit(1)
+		}
+		config = *configuration
+	} else {
+		// Default TPM 2.0 Intel TXT configuration
+		config.LCPHash = tpm2.AlgSHA256
+		config.TPM = hwapi.TPMVersion20
+		config.TXTMode = tools.AutoPromotion
+	}
+
+	switch e.Set {
+	case "all":
+		fmt.Println("For more information about the documents and chapters, run: txt-suite -m")
+		ret = run("All", getTests(), config, e.Interactive)
+	case "uefi":
+		ret = run("UEFI", test.TestsUEFI, config, e.Interactive)
+	case "txtready":
+		fmt.Println("For more information about the documents and chapters, run: txt-suite -m")
+		ret = run("TXT Ready", test.TestsTXTReady, config, e.Interactive)
+	case "tboot":
+		ret = run("Tboot", test.TestsTBoot, config, e.Interactive)
+	case "cbnt":
+		return fmt.Errorf("CBnT support not implemented yet")
+	case "legacy":
+		ret = run("Legacy TXT", test.TestsLegacy, config, e.Interactive)
+	default:
+		return fmt.Errorf("No valid test set given")
+	}
+	if !ret {
+		return fmt.Errorf("Tests ran with errors")
+	}
+	return nil
+}
+
+func (l *listCmd) Run(ctx *context) error {
+	tests := getTests()
+	for i := range tests {
+		fmt.Printf("Test No: %v, %v\n", i, tests[i].Name)
+	}
+	return nil
+}
+
+func (m *markdownCmd) Run(ctx *context) error {
+	var teststate string
+	tests := getTests()
+
+	fmt.Println("Id | Test | Implemented | Document | Chapter")
+	fmt.Println("------------|------------|------------|------------|------------")
+	for i := range tests {
+		if tests[i].Status == test.Implemented {
+			teststate = ":white_check_mark:"
+		} else if tests[i].Status == test.NotImplemented {
+			teststate = ":x:"
+		} else {
+			teststate = ":clock1:"
+		}
+		docID := tests[i].SpecificationDocumentID
+		if docID != "" {
+			docID = "Document " + docID
+		}
+		fmt.Printf("%02d | %-48s | %-22s | %-28s | %-56s\n", i, tests[i].Name, teststate, docID, tests[i].SpecificationChapter)
+	}
+	return nil
+}
+
+func (v *versionCmd) Run(ctx *context) error {
+	tools.ShowVersion(programDesc, gittag, gitcommit)
+	return nil
 }
 
 func getTests() []*test.Test {
@@ -52,70 +147,75 @@ func getTests() []*test.Test {
 	return tests
 }
 
-func listTests() {
-	tests := getTests()
+func run(testGroup string, tests []*test.Test, config tools.Configuration, interactive bool) bool {
+	var result = false
+	f := bufio.NewWriter(os.Stdout)
 
-	for i := range tests {
-		fmt.Printf("Test No: %v, %v\n", i, tests[i].Name)
+	hwAPI := hwapi.GetAPI()
+
+	fmt.Printf("\n%s tests\n", a.Bold(a.Gray(20-1, testGroup).BgGray(4-1)))
+	var i int
+	for i = 0; i < len(testGroup)+6; i++ {
+		fmt.Print("_")
 	}
-}
+	fmt.Println()
+	for idx := range tests {
+		if len(testnos) > 0 {
+			// SearchInt returns an index where to "insert" idx
+			i := sort.SearchInts(testnos, idx)
+			if i >= len(testnos) {
+				continue
+			}
+			// still here? i must be within testnos.
+			if testnos[i] != idx {
+				continue
+			}
+		}
 
-func listTestsAsMarkdown() {
-	var teststate string
-	tests := getTests()
+		if !tests[idx].Run(hwAPI, &config) && tests[idx].Required && interactive {
+			result = true
+			break
+		}
 
-	fmt.Println("Id | Test | Implemented | Document | Chapter")
-	fmt.Println("------------|------------|------------|------------|------------")
-	for i := range tests {
-		if tests[i].Status == test.Implemented {
-			teststate = ":white_check_mark:"
-		} else if tests[i].Status == test.NotImplemented {
-			teststate = ":x:"
+	}
+
+	if !interactive {
+		var t []temptest
+		for index := range tests {
+			if tests[index].Status != test.NotImplemented {
+				ttemp := temptest{index, tests[index].Name, tests[index].Result.String(), tests[index].ErrorText, tests[index].Status.String()}
+				t = append(t, ttemp)
+			}
+		}
+		data, _ := json.MarshalIndent(t, "", "")
+		ioutil.WriteFile(logfile, data, 0664)
+	}
+
+	for index := range tests {
+		if tests[index].Status == test.NotImplemented {
+			continue
+		}
+		if tests[index].Result == test.ResultNotRun {
+			continue
+		}
+		fmt.Printf("%02d - ", index)
+		fmt.Printf("%-40s: ", a.Bold(tests[index].Name))
+		f.Flush()
+
+		if tests[index].Result == test.ResultPass {
+			fmt.Printf("%-20s", a.Bold(a.Green(tests[index].Result)))
 		} else {
-			teststate = ":clock1:"
+			fmt.Printf("%-20s", a.Bold(a.Red(tests[index].Result)))
 		}
-		docID := tests[i].SpecificationDocumentID
-		if docID != "" {
-			docID = "Document " + docID
+		if tests[index].ErrorText != "" {
+			fmt.Printf(" (%s)", tests[index].ErrorText)
+		} else if len(tests[index].ErrorText) == 0 && tests[index].Result == test.ResultFail {
+			fmt.Print(" (No error text given)")
 		}
-		fmt.Printf("%02d | %-48s | %-22s | %-28s | %-56s\n", i, tests[i].Name, teststate, docID, tests[i].SpecificationChapter)
+		fmt.Printf("\n")
+
+		f.Flush()
 	}
-}
 
-func deconstructFlag() ([]int, error) {
-	var testnos []int
-	var tmpstrings []string
-	var testrange []string
-	var testmin int
-	var testmax int
-	var err error
-	tmpstrings = strings.Split(*testno, ",")
-	for _, item := range tmpstrings {
-		if strings.Contains(item, "-") {
-			testrange = strings.Split(item, "-")
-			testmin, err = strconv.Atoi(testrange[0])
-			if err != nil {
-				return nil, err
-			}
-			testmax, err = strconv.Atoi(testrange[1])
-			if err != nil {
-				return nil, err
-			}
-
-			for i := testmin; i <= testmax; i++ {
-				testnos = append(testnos, i)
-			}
-
-		} else {
-			tmpno, err := strconv.Atoi(item)
-			if err != nil {
-				return nil, err
-			}
-			testnos = append(testnos, tmpno)
-		}
-	}
-	//Sort array
-	sort.Ints(testnos)
-	return testnos, nil
-
+	return result
 }
