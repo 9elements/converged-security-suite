@@ -53,47 +53,6 @@ var vendors = map[TCGVendorID]string{
 	1196379975: "Google",
 }
 
-// HashAlg is the TPM hash algorithm id
-type HashAlg uint8
-
-var (
-	// HashSHA1 is the TPM 1.2 identifier for SHA1
-	HashSHA1 = HashAlg(tpm2.AlgSHA1)
-	// HashSHA256 is the TPM 2.0 identifier for SHA256
-	HashSHA256 = HashAlg(tpm2.AlgSHA256)
-)
-
-func (a HashAlg) cryptoHash() crypto.Hash {
-	switch a {
-	case HashSHA1:
-		return crypto.SHA1
-	case HashSHA256:
-		return crypto.SHA256
-	}
-	return 0
-}
-
-func (a HashAlg) goTPMAlg() tpm2.Algorithm {
-	switch a {
-	case HashSHA1:
-		return tpm2.AlgSHA1
-	case HashSHA256:
-		return tpm2.AlgSHA256
-	}
-	return 0
-}
-
-// String returns a human-friendly representation of the hash algorithm.
-func (a HashAlg) String() string {
-	switch a {
-	case HashSHA1:
-		return "SHA1"
-	case HashSHA256:
-		return "SHA256"
-	}
-	return fmt.Sprintf("HashAlg<%d>", int(a))
-}
-
 // PCR encapsulates the value of a PCR at a point in time.
 type PCR struct {
 	Index     int
@@ -418,7 +377,7 @@ func readPCR12(rwc io.ReadWriter, pcrIndex uint32) ([]byte, error) {
 }
 
 func readPCR20(rwc io.ReadWriter, pcrIndex uint32) ([]byte, error) {
-	return tpm2.ReadPCR(rwc, int(pcrIndex), HashSHA256.goTPMAlg())
+	return tpm2.ReadPCR(rwc, int(pcrIndex), tpm2.AlgSHA256)
 }
 
 // NewTPM returns a TPM
@@ -528,13 +487,13 @@ func (t *TPM) ReadNVPublic(index uint32) ([]byte, error) {
 }
 
 // ReadPCRs reads all PCRs into the PCR structure
-func (t *TPM) ReadPCRs(alg HashAlg) ([]PCR, error) {
+func (t *TPM) ReadPCRs(alg tpm2.Algorithm) ([]PCR, error) {
 	var PCRs map[uint32][]byte
 	var err error
 
 	switch t.Version {
 	case TPMVersion12:
-		if alg != HashSHA1 {
+		if alg != tpm2.AlgSHA1 {
 			return nil, fmt.Errorf("non-SHA1 algorithm %v is not supported on TPM 1.2", alg)
 		}
 		PCRs, err = readAllPCRs12(t.RWC)
@@ -543,7 +502,7 @@ func (t *TPM) ReadPCRs(alg HashAlg) ([]PCR, error) {
 		}
 
 	case TPMVersion20:
-		PCRs, err = readAllPCRs20(t.RWC, alg.goTPMAlg())
+		PCRs, err = readAllPCRs20(t.RWC, alg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read PCRs: %v", err)
 		}
@@ -554,10 +513,14 @@ func (t *TPM) ReadPCRs(alg HashAlg) ([]PCR, error) {
 
 	out := make([]PCR, len(PCRs))
 	for index, digest := range PCRs {
+		h, err := alg.Hash()
+		if err != nil {
+			return nil, err
+		}
 		out[int(index)] = PCR{
 			Index:     int(index),
 			Digest:    digest,
-			DigestAlg: alg.cryptoHash(),
+			DigestAlg: h,
 		}
 	}
 

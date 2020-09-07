@@ -739,7 +739,7 @@ func ActiveIOMMU(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool,
 
 // ServerModeTXT checks if TXT runs in Servermode
 func ServerModeTXT(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
-	// FIXME: Query GetSec[Parameters] ebx = 5
+	// FIXME: FindOverlapping GetSec[Parameters] ebx = 5
 	// Assume yes if dependencies are satisfied
 	val, err := txtAPI.HasSMRR()
 	if err != nil {

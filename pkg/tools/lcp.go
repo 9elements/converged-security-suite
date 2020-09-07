@@ -13,43 +13,11 @@ import (
 	"github.com/google/go-tpm/tpm2"
 )
 
-//LCPPol2Hash stores the hashing algorithm used in the LCP policy version 2
-type LCPPol2Hash uint16
-
-const (
-	//LCPPol2HAlgSHA1 as defined in Document 315168-016 Chapter D.3.2.1 LCP_POLICY_LIST2 Structure. Same as TPMAlgoSHA1
-	LCPPol2HAlgSHA1 LCPPol2Hash = 0x04
-	//LCPPol2HAlgSHA256 as defined in Document 315168-016 Chapter D.3.2.1 LCP_POLICY_LIST2 Structure. Same as TPMAlgoSHA256
-	LCPPol2HAlgSHA256 LCPPol2Hash = 0x0B
-	//LCPPol2HAlgSHA384 as defined in Document 315168-016 Chapter D.3.2.1 LCP_POLICY_LIST2 Structure. Same as TPMAlgoSHA384
-	LCPPol2HAlgSHA384 LCPPol2Hash = 0x0C
-	//LCPPol2HAlgNULL as defined in Document 315168-016 Chapter D.3.2.1 LCP_POLICY_LIST2 Structure. Same as TPMAlgoNULL
-	LCPPol2HAlgNULL LCPPol2Hash = 0x10
-	//LCPPol2HAlgSM3 as defined in Document 315168-016 Chapter D.3.2.1 LCP_POLICY_LIST2 Structure. Same as TPMAlgoSM3_256
-	LCPPol2HAlgSM3 LCPPol2Hash = 0x12
-)
-
 // HashAlgMap exports map from crypto.Hash to LCPPol2Hash for parsing manual input to LCPPolicy2
-var HashAlgMap = map[crypto.Hash]LCPPol2Hash{
+var HashAlgMap = map[crypto.Hash]tpm2.Algorithm{
 	crypto.SHA1:   0x04,
 	crypto.SHA256: 0x0B,
 	crypto.SHA384: 0x0C,
-}
-
-func (l LCPPol2Hash) String() string {
-	switch l {
-	case LCPPol2HAlgSHA1:
-		return "SHA1"
-	case LCPPol2HAlgSHA256:
-		return "SHA256"
-	case LCPPol2HAlgSHA384:
-		return "SHA384"
-	case LCPPol2HAlgNULL:
-		return "AlgNull"
-	case LCPPol2HAlgSM3:
-		return "SM3"
-	}
-	return "unknown"
 }
 
 // LCPPolicyType exports the PolicyType type for external use
@@ -137,7 +105,7 @@ const (
 var HashMaskMap = map[string]uint16{
 	"SHA1":   LCPPol2HashMaskSHA1,
 	"SHA256": LCPPol2HashMaskSHA256,
-	"SHA384": LCPPol2HashMaskSHA256,
+	"SHA384": LCPPol2HashMaskSHA384,
 }
 
 const (
@@ -354,7 +322,7 @@ type LCPPolicy struct {
 //LCPPolicy2 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
 type LCPPolicy2 struct {
 	Version                uint16 // < 0x0302
-	HashAlg                LCPPol2Hash
+	HashAlg                tpm2.Algorithm
 	PolicyType             LCPPolicyType
 	SINITMinVersion        uint8
 	DataRevocationCounters [LCPMaxLists]uint16
@@ -520,40 +488,17 @@ func parsePolicy2(policy []byte) (*LCPPolicy2, error) {
 	if err != nil {
 		return nil, err
 	}
-	switch pol2.HashAlg {
-	case LCPPol2HAlgSHA1:
-		var sha1 [SHA1DigestSize]byte
-		err = binary.Read(buf, binary.LittleEndian, &sha1)
-		if err != nil && err != io.EOF {
-			return nil, err
-		}
-		copy(pol2.PolicyHash[:], sha1[:20])
-		break
-	case LCPPol2HAlgSHA256:
-		var sha256 [SHA256DigestSize]byte
-		err = binary.Read(buf, binary.LittleEndian, &sha256)
-		if err != nil && err != io.EOF {
-			return nil, err
-		}
-		copy(pol2.PolicyHash[:], sha256[:32])
-		break
-	case LCPPol2HAlgSHA384:
-		var sha384 [SHA384DigestSize]byte
-		err = binary.Read(buf, binary.LittleEndian, &sha384)
-		if err != nil && err != io.EOF {
-			return nil, err
-		}
-		copy(pol2.PolicyHash[:], sha384[:48])
-		break
-	case LCPPol2HAlgSM3:
-		var sm3 [SM3DigestSize]byte
-		err = binary.Read(buf, binary.LittleEndian, &sm3)
-		if err != nil && err != io.EOF {
-			return nil, err
-		}
-		copy(pol2.PolicyHash[:], sm3[:32])
-		break
+
+	h, err := pol2.HashAlg.Hash()
+	if err != nil {
+		return nil, err
 	}
+	hash := make([]byte, h.Size())
+	err = binary.Read(buf, binary.LittleEndian, &hash)
+	if err != nil && err != io.EOF {
+		return nil, err
+	}
+	copy(pol2.PolicyHash[:], hash[:h.Size()])
 
 	return &pol2, nil
 }
@@ -928,51 +873,28 @@ func parseLCPHash(buf *bytes.Reader, hash *LCPHash, alg uint8) error {
 }
 
 func parseLCPHash2(buf *bytes.Reader, hash *LCPHash, alg tpm2.Algorithm) error {
+
+	h, err := alg.Hash()
+	if err != nil {
+		return err
+	}
+	hbyte := make([]byte, h.Size())
+	err = binary.Read(buf, binary.LittleEndian, &hbyte)
+	if err != nil {
+		return err
+	}
 	switch alg {
 	case tpm2.AlgSHA1:
-		var sha1 [SHA1DigestSize]byte
-
-		err := binary.Read(buf, binary.LittleEndian, &sha1)
-		if err != nil {
-			return err
-		}
-		hash.Sha1 = &sha1
-
+		copy(hash.Sha1[:], hbyte[:h.Size()])
 	case tpm2.AlgSHA256:
-		var sha256 [SHA256DigestSize]byte
-
-		err := binary.Read(buf, binary.LittleEndian, &sha256)
-		if err != nil {
-			return err
-		}
-		hash.Sha256 = &sha256
-
+		copy(hash.Sha256[:], hbyte[:h.Size()])
 	case tpm2.AlgSHA384:
-		var sha384 [SHA384DigestSize]byte
-
-		err := binary.Read(buf, binary.LittleEndian, &sha384)
-		if err != nil {
-			return err
-		}
-		hash.Sha384 = &sha384
-
+		copy(hash.Sha384[:], hbyte[:h.Size()])
 	case tpm2.AlgSHA512:
-		var sha512 [SHA512DigestSize]byte
+		copy(hash.Sha512[:], hbyte[:h.Size()])
 
-		err := binary.Read(buf, binary.LittleEndian, &sha512)
-		if err != nil {
-			return err
-		}
-		hash.Sha512 = &sha512
-
-	//case tpm2.AlgSM3:
-	//	var sm3 [32]byte
-
-	//	err := binary.Read(buf, binary.LittleEndian, &sm3)
-	//	if err != nil {
-	//		return err
-	//	}
-	//	hash.sm3 = &sm3
+		//case tpm2.AlgSM3:
+		//copy(hash.sm3[:], hbyte[:h.Size()])
 
 	default:
 		return fmt.Errorf("unsupported hash algorithm: %x", alg)
@@ -1206,46 +1128,13 @@ func deconstructApprovedHashAlgs(apprHashes ApprovedHashAlgorithm) uint16 {
 func genLCPHash(alg crypto.Hash, hash []byte) (*[]byte, error) {
 	var ret []byte
 	r := bytes.NewReader(hash)
-	switch alg {
-	case crypto.SHA1:
-		var sha1 [SHA1DigestSize]byte
-		err := binary.Read(r, binary.LittleEndian, &sha1)
-		if err != nil {
-			return nil, err
-		}
-		copy(ret[:], sha1[:20])
-		return &ret, nil
-
-	case crypto.SHA256:
-		var sha256 [SHA256DigestSize]byte
-
-		err := binary.Read(r, binary.LittleEndian, &sha256)
-		if err != nil {
-			return nil, err
-		}
-		copy(ret[:], sha256[:32])
-		return &ret, nil
-
-	case crypto.SHA384:
-		var sha384 [SHA384DigestSize]byte
-
-		err := binary.Read(r, binary.LittleEndian, &sha384)
-		if err != nil {
-			return nil, err
-		}
-		copy(ret[:], sha384[:48])
-		return &ret, nil
-	case crypto.SHA512:
-		var sha512 [SHA512DigestSize]byte
-
-		err := binary.Read(r, binary.LittleEndian, &sha512)
-		if err != nil {
-			return nil, err
-		}
-		copy(ret[:], sha512[:64])
-		return &ret, nil
+	hByte := make([]byte, alg.Size())
+	err := binary.Read(r, binary.LittleEndian, &hByte)
+	if err != nil {
+		return nil, err
 	}
-	return nil, fmt.Errorf("Hasl algorithm not supported")
+	copy(ret[:], hByte[:alg.Size()])
+	return &ret, nil
 }
 
 // PrintPolicyControl can print PolicyControl field
@@ -1277,7 +1166,7 @@ func (p *LCPPolicy2) PrettyPrint() {
 	s.WriteString("   DataRevocationCounters: ")
 	for _, item := range p.DataRevocationCounters {
 		if item != 0 {
-			s.WriteString(string(item) + "+")
+			s.WriteString(fmt.Sprintf("%v", item) + "+")
 		}
 	}
 	s.WriteString("\n")

@@ -5,7 +5,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"log"
+
+	"github.com/google/go-tpm/tpm2"
 )
 
 const (
@@ -48,25 +49,6 @@ const (
 	ACMUUIDV3 string = "7fc03aaa-46a7-18db-ac2e-698f8d417f5a"
 	//ACMSizeOffset as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format
 	ACMSizeOffset int64 = 24
-
-	//TPMAlgoSHA1 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
-	TPMAlgoSHA1 uint16 = 0x0004
-	//TPMAlgoSHA256 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
-	TPMAlgoSHA256 uint16 = 0x000b
-	//TPMAlgoSHA384 FIXME
-	TPMAlgoSHA384 uint16 = 0x000c
-	//TPMAlgoSHA512 FIXME
-	TPMAlgoSHA512 uint16 = 0x000d
-	//TPMAlgoNULL as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
-	TPMAlgoNULL uint16 = 0x0010
-	//TPMAlgoSM3_256 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
-	TPMAlgoSM3_256 uint16 = 0x0012
-	//TPMAlgoRSASSA as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
-	TPMAlgoRSASSA uint16 = 0x0014
-	//TPMAlgoECDSA as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
-	TPMAlgoECDSA uint16 = 0x0018
-	//TPMAlgoSM2 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
-	TPMAlgoSM2 uint16 = 0x001B
 
 	//ACMheaderLen as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format (Version 0.0)
 	ACMheaderLen uint32 = 161
@@ -133,14 +115,14 @@ type Processors struct {
 	IDList []ProcessorID
 }
 
-//TPMs describes the required TPM capabilties and algorithm as found in the ACM header
+// TPMs describes the required TPM capabilities and algorithm as found in the ACM header
 type TPMs struct {
 	Capabilities uint32
 	Count        uint16
-	AlgID        []uint16
+	AlgID        []tpm2.Algorithm
 }
 
-// ACMHeader exports the structure of ACM Header found in the firemware interface table
+// ACMHeader exports the structure of ACM Header found in the firmware interface table
 type ACMHeader struct {
 	ModuleType      uint16
 	ModuleSubType   uint16
@@ -164,7 +146,7 @@ type ACMHeader struct {
 	ScratchSize     uint32
 	PubKey          [256]uint8
 	PubExp          uint32
-	Signatur        [256]uint8
+	Signature       [256]uint8
 }
 
 // ACM exports the structure of Authenticated Code Modules found in the Firmware Interface Table(FIT)
@@ -291,7 +273,7 @@ func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error, error) {
 			return nil, nil, nil, nil, nil, err
 		}
 
-		tpms.AlgID = make([]uint16, tpms.Count)
+		tpms.AlgID = make([]tpm2.Algorithm, tpms.Count)
 		for i := 0; i < int(tpms.Count); i++ {
 			err = binary.Read(buf, binary.LittleEndian, &tpms.AlgID[i])
 			if err != nil {
@@ -303,8 +285,8 @@ func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error, error) {
 	return &acm, &chipsets, &processors, &tpms, nil, nil
 }
 
-//LookupSize returns the ACM size
-func LookupSize(header []byte) (int64, error) {
+//LookupACMSize returns the ACM size
+func LookupACMSize(header []byte) (int64, error) {
 	var acmSize uint32
 
 	buf := bytes.NewReader(header[:32])
@@ -328,45 +310,45 @@ func (a *ACMHeader) ParseACMFlags() *ACMFlags {
 
 //PrettyPrint prints a human readable representation of the ACMHeader
 func (a *ACMHeader) PrettyPrint() {
-	log.Println("Authenticated Code Module")
-
+	fmt.Println("----Authenticated Code Module----")
+	fmt.Println()
 	if a.ModuleVendor == ACMVendorIntel {
-		log.Println("Module Vendor: Intel")
+		fmt.Println("   Module Vendor: Intel")
 	} else {
-		log.Println("Module Vendor: Unknown")
+		fmt.Println("   Module Vendor: Unknown")
 	}
 
 	if a.ModuleType == ACMTypeChipset {
-		log.Println("Module Type: ACM_TYPE_CHIPSET")
+		fmt.Println("   Module Type: ACM_TYPE_CHIPSET")
 	} else {
-		log.Println("Module Type: UNKNOWN")
+		fmt.Println("   Module Type: UNKNOWN")
 	}
 
 	if a.ModuleSubType == ACMSubTypeReset {
-		log.Println("Module Subtype: Execute at Reset")
+		fmt.Println("   Module Subtype: Execute at Reset")
 	} else if a.ModuleSubType == 0 {
-		log.Println("Module Subtype: 0x0")
+		fmt.Println("   Module Subtype: 0x0")
 	} else {
-		log.Println("Module Subtype: Unknown")
+		fmt.Println("   Module Subtype: Unknown")
 	}
-	log.Printf("Module Date: 0x%02x\n", a.Date)
-	log.Printf("Module Size: 0x%x (%d)\n", a.Size*4, a.Size*4)
+	fmt.Printf("   Module Date: 0x%02x\n", a.Date)
+	fmt.Printf("   Module Size: 0x%x (%d)\n", a.Size*4, a.Size*4)
 
-	log.Printf("Header Length: 0x%x (%d)\n", a.HeaderLen, a.HeaderLen)
-	log.Printf("Header Version: %d\n", a.HeaderVersion)
-	log.Printf("Chipset ID: 0x%02x\n", a.ChipsetID)
-	log.Printf("Flags: 0x%02x\n", a.Flags)
-	log.Printf("TXT SVN: 0x%08x\n", a.TxtSVN)
-	log.Printf("SE SVN: 0x%08x\n", a.SeSVN)
-	log.Printf("Code Control: 0x%02x\n", a.CodeControl)
-	log.Printf("Entry Point: 0x%08x:%08x\n", a.SegSel, a.EntryPoint)
-	log.Printf("Scratch Size: 0x%x (%d)\n", a.ScratchSize, a.ScratchSize)
+	fmt.Printf("   Header Length: 0x%x (%d)\n", a.HeaderLen, a.HeaderLen)
+	fmt.Printf("   Header Version: %d\n", a.HeaderVersion)
+	fmt.Printf("   Chipset ID: 0x%02x\n", a.ChipsetID)
+	fmt.Printf("   Flags: 0x%02x\n", a.Flags)
+	fmt.Printf("   TXT SVN: 0x%08x\n", a.TxtSVN)
+	fmt.Printf("   SE SVN: 0x%08x\n", a.SeSVN)
+	fmt.Printf("   Code Control: 0x%02x\n", a.CodeControl)
+	fmt.Printf("   Entry Point: 0x%08x:%08x\n", a.SegSel, a.EntryPoint)
+	fmt.Printf("   Scratch Size: 0x%x (%d)\n", a.ScratchSize, a.ScratchSize)
 }
 
 //PrettyPrint prints a human readable representation of the ACM
 func (a *ACM) PrettyPrint() {
 	a.Header.PrettyPrint()
-	log.Println("Info Table:")
+	fmt.Println("   --Info Table--")
 
 	uuidStr := fmt.Sprintf("%08x-%04x-%04x-%04x-%02x%02x%02x%02x%02x%02x",
 		a.Info.UUID.Field1,
@@ -381,98 +363,68 @@ func (a *ACM) PrettyPrint() {
 		a.Info.UUID.Field5[5])
 
 	if uuidStr == ACMUUIDV3 {
-		log.Println("\tUUID: ACM_UUID_V3")
+		fmt.Println("      UUID: ACM_UUID_V3")
 	}
 
 	switch a.Info.ChipsetACMType {
 	case ACMChipsetTypeBios:
-		log.Println("\tChipset ACM: BIOS")
+		fmt.Println("      Chipset ACM: BIOS")
 		break
 	case ACMChipsetTypeBiosRevoc:
-		log.Println("\tChipset ACM: BIOS Revocation")
+		fmt.Println("      Chipset ACM: BIOS Revocation")
 		break
 	case ACMChipsetTypeSinit:
-		log.Println("\tChipset ACM: SINIT")
+		fmt.Println("      Chipset ACM: SINIT")
 		break
 	case ACMChipsetTypeSinitRevoc:
-		log.Println("\tChipset ACM: SINIT Revocation")
+		fmt.Println("      Chipset ACM: SINIT Revocation")
 		break
 	default:
-		log.Println("\tChipset ACM: Unknown")
+		fmt.Println("      Chipset ACM: Unknown")
 	}
 
-	log.Printf("\tVersion: %d\n", a.Info.Version)
-	log.Printf("\tLength: 0x%x (%d)\n", a.Info.Length, a.Info.Length)
-	log.Printf("\tChipset ID List: 0x%02x\n", a.Info.ChipsetIDList)
-	log.Printf("\tOS SINIT Data Version: 0x%02x\n", a.Info.OSSinitDataVersion)
-	log.Printf("\tMin. MLE Header Version: 0x%08x\n", a.Info.MinMleHeaderVersion)
-	log.Printf("\tCapabilities: 0x%08x\n", a.Info.TxtCaps)
-	log.Printf("\tACM Version: %d\n", a.Info.ACMVersion)
+	fmt.Printf("      Version: %d\n", a.Info.Version)
+	fmt.Printf("      Length: 0x%x (%d)\n", a.Info.Length, a.Info.Length)
+	fmt.Printf("      Chipset ID List: 0x%02x\n", a.Info.ChipsetIDList)
+	fmt.Printf("      OS SINIT Data Version: 0x%02x\n", a.Info.OSSinitDataVersion)
+	fmt.Printf("      Min. MLE Header Version: 0x%08x\n", a.Info.MinMleHeaderVersion)
+	fmt.Printf("      Capabilities: 0x%08x\n", a.Info.TxtCaps)
+	fmt.Printf("      ACM Version: %d\n", a.Info.ACMVersion)
 }
 
 //PrettyPrint prints a human readable representation of the Chipsets
 func (c *Chipsets) PrettyPrint() {
-	log.Println("Chipset List:")
-	log.Printf("\tEntries: %d\n", c.Count)
+	fmt.Println("   --Chipset List--")
+	fmt.Printf("      Entries: %d\n", c.Count)
 	for idx, chipset := range c.IDList {
-		log.Printf("\tEntry %d:\n", idx)
-		log.Printf("\t\tFlags: 0x%02x\n", chipset.Flags)
-		log.Printf("\t\tVendor: 0x%02x\n", chipset.VendorID)
-		log.Printf("\t\tDevice: 0x%02x\n", chipset.DeviceID)
-		log.Printf("\t\tRevision: 0x%02x\n", chipset.RevisionID)
+		fmt.Printf("      Entry %d:\n", idx)
+		fmt.Printf("         Flags: 0x%02x\n", chipset.Flags)
+		fmt.Printf("         Vendor: 0x%02x\n", chipset.VendorID)
+		fmt.Printf("         Device: 0x%02x\n", chipset.DeviceID)
+		fmt.Printf("         Revision: 0x%02x\n", chipset.RevisionID)
 	}
 }
 
 //PrettyPrint prints a human readable representation of the Processors
 func (p *Processors) PrettyPrint() {
-	log.Println("Processor List:")
-	log.Printf("\tEntries: %d\n", p.Count)
+	fmt.Println("   --Processor List--")
+	fmt.Printf("      Entries: %d\n", p.Count)
 	for idx, processor := range p.IDList {
-		log.Printf("\tEntry %d:\n", idx)
-		log.Printf("\t\tFMS: 0x%02x\n", processor.FMS)
-		log.Printf("\t\tFMS Maks: 0x%02x\n", processor.FMSMask)
-		log.Printf("\t\tPlatform ID: 0x%02x\n", processor.PlatformID)
-		log.Printf("\t\tPlatform Mask: 0x%02x\n", processor.PlatformMask)
+		fmt.Printf("      Entry %d:\n", idx)
+		fmt.Printf("         FMS: 0x%02x\n", processor.FMS)
+		fmt.Printf("         FMS Maks: 0x%02x\n", processor.FMSMask)
+		fmt.Printf("         Platform ID: 0x%02x\n", processor.PlatformID)
+		fmt.Printf("         Platform Mask: 0x%02x\n", processor.PlatformMask)
 	}
 }
 
 //PrettyPrint prints a human readable representation of the TPMs
 func (t *TPMs) PrettyPrint() {
-	log.Println("TPM Info List:")
-	log.Println("\tCapabilities:")
-	log.Printf("\t\tExternal Policy: %02x\n", t.Capabilities)
-	log.Printf("\tAlgorithms: %d\n", t.Count)
+	fmt.Println("   --TPM Info List--")
+	fmt.Println("      Capabilities:")
+	fmt.Printf("         External Policy: %02x\n", t.Capabilities)
+	fmt.Printf("      Algorithms: %d\n", t.Count)
 	for _, algo := range t.AlgID {
-		switch algo {
-		case TPMAlgoNULL:
-			log.Println("\t\tNULL")
-			break
-		case TPMAlgoSHA1:
-			log.Println("\t\tSHA-1")
-			break
-		case TPMAlgoSHA256:
-			log.Println("\t\tSHA-256")
-			break
-		case TPMAlgoSHA384:
-			log.Println("\t\tSHA-384")
-			break
-		case TPMAlgoSHA512:
-			log.Println("\t\tSHA-512")
-			break
-		case TPMAlgoSM3_256:
-			log.Println("\t\tSM3-256")
-			break
-		case TPMAlgoRSASSA:
-			log.Println("\t\tRSA-SSA")
-			break
-		case TPMAlgoECDSA:
-			log.Println("\t\tEC-DSA")
-			break
-		case TPMAlgoSM2:
-			log.Println("\t\tSM2")
-			break
-		default:
-			log.Println("\t\tUnknown")
-		}
+		fmt.Printf("         %v\n", algo.String())
 	}
 }

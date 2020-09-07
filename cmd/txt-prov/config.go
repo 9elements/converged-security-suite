@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	prov "github.com/9elements/converged-security-suite/v2/pkg/provisioning"
+	txt "github.com/9elements/converged-security-suite/v2/pkg/provisioning/txt"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 )
 
@@ -47,7 +47,7 @@ func loadConfig(filename string) (*tools.LCPPolicy2, error) {
 	if uint16(ver) < uint16(0x300) || uint16(ver) > uint16(0x306) {
 		return nil, fmt.Errorf("Invalid LCP Version. Want: 0x300 - 0x306 - Have: %v", config.Version)
 	}
-	hashAlg, ok := tools.HashAlgMap[prov.HashMapping[config.HashAlg]]
+	hashAlg, ok := tools.HashAlgMap[txt.HashMapping[config.HashAlg]]
 	if ok == false {
 		return nil, fmt.Errorf("Cant determin hash algorithm")
 	}

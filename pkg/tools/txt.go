@@ -34,6 +34,7 @@ const (
 	txtHeapSize          = 0x308
 	txtACMStatus         = 0x328
 	txtDMAProtectedRange = 0x330
+	txtACMPolicyStatus   = 0x378
 	txtPublicKey         = 0x400
 	txtE2STS             = 0x8f0
 )
@@ -398,4 +399,19 @@ func ReadACMStatus(data []byte) (ACMStatus, error) {
 	ret.Valid = (u64>>31)&1 == 1
 
 	return ret, nil
+}
+
+//ReadACMPolicyStatusRaw decodes the raw ACM status register bits
+func ReadACMPolicyStatusRaw(data []byte) (uint64, error) {
+	var u64 uint64
+	buf := bytes.NewReader(data)
+	_, err := buf.Seek(txtACMPolicyStatus, io.SeekStart)
+	if err != nil {
+		return 0, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &u64)
+	if err != nil {
+		return 0, err
+	}
+	return u64, nil
 }
