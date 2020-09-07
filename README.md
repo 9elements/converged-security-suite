@@ -1,7 +1,13 @@
 Converged Security Suite
 ========================
 
-The Converged Security Suite implements all necessary tools for Intel platform features.
+The Converged Security Suite implements all necessary tools for Intel platform security features.
+
+| Technology | Testsuite | Provisioning |
+| --- | --- | --- |
+| Intel Trusted Execution Technology | Supported | Supported |
+| Intel Boot Guard | WIP | WIP |
+| Intel Platform Firmware Resilience | WIP | - |
 
 Build Status
 ------------
