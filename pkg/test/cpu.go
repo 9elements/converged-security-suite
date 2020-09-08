@@ -190,16 +190,23 @@ func TXTRegisterSpaceAccessible(txtAPI hwapi.APIInterfaces, config *tools.Config
 		return false, fmt.Errorf("TXTRegisterSpace: Unexpected VendorID"), nil
 	}
 
-	if regs.HeapBase == 0x0 {
+	if regs.HeapBase == 0xFFFF {
 		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: HeapBase is 0"), nil
 	}
 
-	if regs.SinitBase == 0x0 {
+	if regs.SinitBase == 0xFFFF {
 		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: SinitBase is 0"), nil
 	}
 
-	if regs.Did == 0x0 {
+	if regs.Did == 0xFFFF {
 		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: DeviceID is 0"), nil
+	}
+	keyErr := [4]bool{false, false, false, false}
+	for iterator, item := range regs.PublicKey {
+		keyErr[iterator] = (item == 0xFFFFFFFFFFFFFFFF)
+	}
+	if (keyErr[0] && keyErr[1] && keyErr[2] && keyErr[3]) == true {
+		return false, fmt.Errorf("TXTRegisterSpace: Unexpected public key hash"), nil
 	}
 	return true, nil, nil
 }
