@@ -51,7 +51,7 @@ type APIInterfaces interface {
 
 	// tpm.go
 	NewTPM() (*tss.TPM, error)
-	NVLocked(tpmCon *tss.TPM) (bool, error)
+	IsWriteProtected(tpmCon *tss.TPM) (bool, error)
 	ReadNVPublic(tpmCon *tss.TPM, index uint32) ([]byte, error)
 	NVReadValue(tpmCon *tss.TPM, index uint32, password string, size, offhandle uint32) ([]byte, error)
 	ReadPCR(tpmCon *tss.TPM, pcr uint32) ([]byte, error)

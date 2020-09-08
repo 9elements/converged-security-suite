@@ -125,7 +125,7 @@ func (n nullmock) NewTPM() (*tss.TPM, error) {
 	return nil, fmt.Errorf("Not implemented")
 }
 
-func (n nullmock) NVLocked(tpmCon *tss.TPM) (bool, error) {
+func (n nullmock) IsWriteProtected(tpmCon *tss.TPM) (bool, error) {
 	return false, nil
 }
 

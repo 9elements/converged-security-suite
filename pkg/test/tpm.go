@@ -80,8 +80,8 @@ var (
 		Status:       Implemented,
 	}
 	testtpmnvramislocked = Test{
-		Name:                    "TPM NVRAM is locked",
-		function:                TPMNVRAMIsLocked,
+		Name:                    "TPM NVRAM is write protected",
+		function:                TPMNVRAMIsWriteProtected,
 		Required:                true,
 		dependencies:            []*Test{&testtpmispresent},
 		Status:                  Implemented,
@@ -220,14 +220,14 @@ func TPMIsPresent(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool
 	return false, fmt.Errorf("No TPM present"), nil
 }
 
-// TPMNVRAMIsLocked Checks if NVRAM indexes are write protected
-func TPMNVRAMIsLocked(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+// TPMNVRAMIsWriteProtected Checks if NVRAM indexes are write protected
+func TPMNVRAMIsWriteProtected(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	tpmCon, err := txtAPI.NewTPM()
 	if err != nil {
 		return false, fmt.Errorf("No TPM connection"), nil
 	}
 	defer tpmCon.Close()
-	res, err := txtAPI.NVLocked(tpmCon)
+	res, err := txtAPI.IsWriteProtected(tpmCon)
 	return res, err, nil
 }
 

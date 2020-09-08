@@ -252,7 +252,7 @@ func (n pcmock) NewTPM() (*tss.TPM, error) {
 	return nil, fmt.Errorf("Not implemented")
 }
 
-func (n pcmock) NVLocked(tpmCon *tss.TPM) (bool, error) {
+func (n pcmock) IsWriteProtected(tpmCon *tss.TPM) (bool, error) {
 	return false, nil
 }
 

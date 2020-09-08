@@ -22,8 +22,8 @@ func (t TxtAPI) NewTPM() (*tss.TPM, error) {
 	return tpm, nil
 }
 
-// NVLocked returns true if the NV RAM is locked, otherwise false
-func (t TxtAPI) NVLocked(tpmCon *tss.TPM) (bool, error) {
+// IsWriteProtected returns true if the NV RAM is locked, otherwise false
+func (t TxtAPI) IsWriteProtected(tpmCon *tss.TPM) (bool, error) {
 	var res bool
 	var err error
 	var flags tpm1.PermanentFlags
