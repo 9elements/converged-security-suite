@@ -169,13 +169,24 @@ func ExtractFit(data []byte) ([]FitEntry, error) {
 		return nil, err
 	}
 
+	var completeFit []FitEntry
+	completeFit = append(completeFit, hdr)
+	completeFit = append(completeFit, fitTable...)
+
 	// Intel's Firmware Interface Table Bios Specification recommends
 	// to set CheckSumValid in the header.
 	// Need to verify the whole table in that case, not only the header
 	if hdr.CheckSumValid() {
 		var cksum byte
+		buf := new(bytes.Buffer)
+		err := binary.Write(buf, binary.BigEndian, completeFit)
+		if err != nil {
+			return nil, fmt.Errorf("FIT: Unable to parse FIT Entries: %v", err)
+		}
+		bufSlice := buf.Bytes()
+
 		for j := 0; j < int(hdr.Size()); j++ {
-			cksum += data[j]
+			cksum += bufSlice[j]
 		}
 
 		if cksum != 0 {
