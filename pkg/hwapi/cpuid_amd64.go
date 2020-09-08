@@ -40,5 +40,5 @@ func (t TxtAPI) CPUSignature() uint32 {
 
 //CPULogCount returns number of logical CPU cores
 func (t TxtAPI) CPULogCount() uint32 {
-	return uint32(cpuid.MaxLogocalCPUId)
+	return uint32(cpuid.MaxLogicalCPUId)
 }
