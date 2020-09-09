@@ -199,16 +199,21 @@ var (
 
 // TPMConnect Connects to a TPM device (virtual or real)
 func TPMConnect(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
-	t, err := txtAPI.NewTPM()
-	if err != nil {
-		return false, nil, err
+	tpmCon, err := txtAPI.NewTPM()
+	if err == nil && tpmCon != nil {
+		defer tpmCon.Close()
+		return true, nil, nil
 	}
-	tpmCon = t
-	return true, nil, nil
+	return false, nil, err
 }
 
 // TPMIsPresent validates if one of the two previous tests succeeded
 func TPMIsPresent(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+	tpmCon, err := txtAPI.NewTPM()
+	if err != nil {
+		return false, fmt.Errorf("No TPM connection"), nil
+	}
+	defer tpmCon.Close()
 	if tpmCon.Version == config.TPM {
 		return true, nil, nil
 	}
@@ -217,6 +222,11 @@ func TPMIsPresent(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool
 
 // TPMNVRAMIsLocked Checks if NVRAM indexes are write protected
 func TPMNVRAMIsLocked(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+	tpmCon, err := txtAPI.NewTPM()
+	if err != nil {
+		return false, fmt.Errorf("No TPM connection"), nil
+	}
+	defer tpmCon.Close()
 	res, err := txtAPI.NVLocked(tpmCon)
 	return res, err, nil
 }
@@ -229,6 +239,11 @@ func PSIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (boo
 	var raw []byte
 	var p1 [3]byte
 	var p2 [3]byte
+	tpmCon, err := txtAPI.NewTPM()
+	if err != nil {
+		return false, fmt.Errorf("No TPM connection"), nil
+	}
+	defer tpmCon.Close()
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
 		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm12PSIndex)
@@ -330,6 +345,11 @@ func AUXIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bo
 	var raw []byte
 	var p1 [3]byte
 	var p2 [3]byte
+	tpmCon, err := txtAPI.NewTPM()
+	if err != nil {
+		return false, fmt.Errorf("No TPM connection"), nil
+	}
+	defer tpmCon.Close()
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
 		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm12AUXIndex)
@@ -425,6 +445,11 @@ func AUXIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bo
 
 // AUXTPM2IndexCheckHash checks the PolicyHash of AUX index
 func AUXTPM2IndexCheckHash(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+	tpmCon, err := txtAPI.NewTPM()
+	if err != nil {
+		return false, fmt.Errorf("No TPM connection"), nil
+	}
+	defer tpmCon.Close()
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
 		return false, fmt.Errorf("Only valid for TPM 2.0"), nil
@@ -481,6 +506,11 @@ func POIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (boo
 	var d2 tpm2.NVPublic
 	var err error
 	var raw []byte
+	tpmCon, err := txtAPI.NewTPM()
+	if err != nil {
+		return false, fmt.Errorf("No TPM connection"), nil
+	}
+	defer tpmCon.Close()
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
 		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm12POIndex)
@@ -615,7 +645,11 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration)
 	var pol1 *tools.LCPPolicy
 	var pol2 *tools.LCPPolicy2
 	emptyHash := make([]byte, 20)
-
+	tpmCon, err := txtAPI.NewTPM()
+	if err != nil {
+		return false, fmt.Errorf("No TPM connection"), nil
+	}
+	defer tpmCon.Close()
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
 		_, err := txtAPI.ReadNVPublic(tpmCon, tpm12POIndex)
@@ -728,6 +762,11 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration)
 
 // PCR0IsSet Reads PCR-00 and checks whether if it's not the EmptyDigest
 func PCR0IsSet(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+	tpmCon, err := txtAPI.NewTPM()
+	if err != nil {
+		return false, fmt.Errorf("No TPM connection"), nil
+	}
+	defer tpmCon.Close()
 	pcr, err := txtAPI.ReadPCR(tpmCon, 0)
 	if err != nil {
 		return false, nil, err
@@ -745,7 +784,11 @@ func checkTPM2NVAttr(mask, want, optional tpm2.NVAttr) bool {
 func readPSLCPPolicy(txtAPI hwapi.APIInterfaces) (*tools.LCPPolicy, *tools.LCPPolicy2, error) {
 	var pol1 *tools.LCPPolicy
 	var pol2 *tools.LCPPolicy2
-
+	tpmCon, err := txtAPI.NewTPM()
+	if err != nil {
+		return nil, nil, fmt.Errorf("No TPM connection")
+	}
+	defer tpmCon.Close()
 	switch tpmCon.Version {
 	case tss.TPMVersion12:
 		data, err := txtAPI.NVReadValue(tpmCon, tpm12PSIndex, "", tpm12PSIndexSize, 0)

@@ -213,7 +213,6 @@ var TestsLegacy = []*Test{
 	// TPM tests
 	&testtpmconnection,
 	&testtpmispresent,
-	&testtpmnvramislocked,
 	&testpsindexconfig,
 	&testauxindexconfig,
 	&testpsindexissvalid,
