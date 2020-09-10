@@ -14,7 +14,7 @@ Id | Test | Implemented | Document | Chapter
 11 | IA32 debug interface is disabled                 | :white_check_mark:     |                              |                                                         
 12 | TPM connection                                   | :white_check_mark:     |                              |                                                         
 13 | TPM is present                                   | :white_check_mark:     |                              |                                                         
-14 | TPM NVRAM is locked                              | :white_check_mark:     | Document 558294 Revision 2.0 | 5.6.3.1 Failsafe Hash                                   
+14 | TPM NVRAM is write protected                     | :white_check_mark:     | Document 558294 Revision 2.0 | 5.6.3.1 Failsafe Hash                                   
 15 | PS Index has correct config                      | :white_check_mark:     | Document 315168-016          | I TPM NV                                                
 16 | AUX Index has correct config                     | :white_check_mark:     | Document 315168-016          | I TPM NV                                                
 17 | AUX Index has the correct hash                   | :white_check_mark:     | Document 315168-016          | I TPM NV                                                
