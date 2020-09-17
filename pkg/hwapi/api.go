@@ -1,9 +1,5 @@
 package hwapi
 
-import (
-	"github.com/9elements/go-tss"
-)
-
 //APIInterfaces provides methods to access hardware found on modern x86_64 platforms
 type APIInterfaces interface {
 	// cpu_whitelist.go - cpu_blacklist.go
@@ -50,11 +46,11 @@ type APIInterfaces interface {
 	WritePhys(addr int64, data UintN) error
 
 	// tpm.go
-	NewTPM() (*tss.TPM, error)
-	NVLocked(tpmCon *tss.TPM) (bool, error)
-	ReadNVPublic(tpmCon *tss.TPM, index uint32) ([]byte, error)
-	NVReadValue(tpmCon *tss.TPM, index uint32, password string, size, offhandle uint32) ([]byte, error)
-	ReadPCR(tpmCon *tss.TPM, pcr uint32) ([]byte, error)
+	NewTPM() (*TPM, error)
+	NVLocked(tpmCon *TPM) (bool, error)
+	ReadNVPublic(tpmCon *TPM, index uint32) ([]byte, error)
+	NVReadValue(tpmCon *TPM, index uint32, password string, size, offhandle uint32) ([]byte, error)
+	ReadPCR(tpmCon *TPM, pcr uint32) ([]byte, error)
 
 	// acpi.go
 	GetACPITable(n string) ([]byte, error)

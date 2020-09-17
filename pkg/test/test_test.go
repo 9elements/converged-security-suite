@@ -6,7 +6,6 @@ import (
 
 	"github.com/9elements/converged-security-suite/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/pkg/tools"
-	"github.com/9elements/go-tss"
 )
 
 func TestTest_Run(t *testing.T) {
@@ -191,7 +190,7 @@ func TestTest_Run(t *testing.T) {
 	txtAPI := hwapi.GetAPI()
 	var config tools.Configuration
 	config.LCPHash = tools.LCPPol2HAlgSHA256
-	config.TPM = tss.TPMVersion20
+	config.TPM = hwapi.TPMVersion20
 	config.TXTMode = tools.AutoPromotion
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

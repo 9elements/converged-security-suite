@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-
-	"github.com/9elements/go-tss"
 )
 
 type pcmock struct {
@@ -248,21 +246,21 @@ func (n pcmock) WritePhys(addr int64, data UintN) error {
 	return nil
 }
 
-func (n pcmock) NewTPM() (*tss.TPM, error) {
+func (n pcmock) NewTPM() (*TPM, error) {
 	return nil, fmt.Errorf("Not implemented")
 }
 
-func (n pcmock) NVLocked(tpmCon *tss.TPM) (bool, error) {
+func (n pcmock) NVLocked(tpmCon *TPM) (bool, error) {
 	return false, nil
 }
 
-func (n pcmock) ReadNVPublic(tpmCon *tss.TPM, index uint32) ([]byte, error) {
+func (n pcmock) ReadNVPublic(tpmCon *TPM, index uint32) ([]byte, error) {
 	return []byte{}, fmt.Errorf("Not implemented")
 }
-func (n pcmock) NVReadValue(tpmCon *tss.TPM, index uint32, password string, size, offhandle uint32) ([]byte, error) {
+func (n pcmock) NVReadValue(tpmCon *TPM, index uint32, password string, size, offhandle uint32) ([]byte, error) {
 	return []byte{}, fmt.Errorf("Not implemented")
 }
-func (n pcmock) ReadPCR(tpmCon *tss.TPM, pcr uint32) ([]byte, error) {
+func (n pcmock) ReadPCR(tpmCon *TPM, pcr uint32) ([]byte, error) {
 	return []byte{}, fmt.Errorf("Not implemented")
 }
 

@@ -2,8 +2,6 @@ package hwapi
 
 import (
 	"fmt"
-
-	"github.com/9elements/go-tss"
 )
 
 type nullmock struct{}
@@ -121,21 +119,21 @@ func (n nullmock) WritePhys(addr int64, data UintN) error {
 	return fmt.Errorf("Not implemented")
 }
 
-func (n nullmock) NewTPM() (*tss.TPM, error) {
+func (n nullmock) NewTPM() (*TPM, error) {
 	return nil, fmt.Errorf("Not implemented")
 }
 
-func (n nullmock) NVLocked(tpmCon *tss.TPM) (bool, error) {
+func (n nullmock) NVLocked(tpmCon *TPM) (bool, error) {
 	return false, nil
 }
 
-func (n nullmock) ReadNVPublic(tpmCon *tss.TPM, index uint32) ([]byte, error) {
+func (n nullmock) ReadNVPublic(tpmCon *TPM, index uint32) ([]byte, error) {
 	return []byte{}, fmt.Errorf("Not implemented")
 }
-func (n nullmock) NVReadValue(tpmCon *tss.TPM, index uint32, password string, size, offhandle uint32) ([]byte, error) {
+func (n nullmock) NVReadValue(tpmCon *TPM, index uint32, password string, size, offhandle uint32) ([]byte, error) {
 	return []byte{}, fmt.Errorf("Not implemented")
 }
-func (n nullmock) ReadPCR(tpmCon *tss.TPM, pcr uint32) ([]byte, error) {
+func (n nullmock) ReadPCR(tpmCon *TPM, pcr uint32) ([]byte, error) {
 	return []byte{}, fmt.Errorf("Not implemented")
 }
 

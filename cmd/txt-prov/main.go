@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/9elements/converged-security-suite/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/pkg/provisioning"
 	"github.com/9elements/converged-security-suite/pkg/tools"
-	tss "github.com/9elements/go-tss"
 )
 
 const programName = "Intel TXT Provisioning tool"
@@ -23,7 +23,7 @@ func main() {
 		tools.ShowVersion(programName, gittag, gitcommit)
 		os.Exit(0)
 	}
-	tpmTss, err := tss.NewTPM()
+	tpmTss, err := hwapi.NewTPM()
 	if err != nil {
 		fmt.Printf("Couldn't set up tpm connection: %v\n", err)
 		os.Exit(1)
@@ -31,10 +31,10 @@ func main() {
 	defer tpmTss.Close()
 
 	switch tpmTss.Version {
-	case tss.TPMVersion12:
+	case hwapi.TPMVersion12:
 		fmt.Println("TPM 1.2 not supported yet")
 		os.Exit(1)
-	case tss.TPMVersion20:
+	case hwapi.TPMVersion20:
 		if *auxDelete {
 			lcp, err := loadConfig(*config)
 			if err != nil {
