@@ -3,14 +3,13 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/9elements/converged-security-suite/pkg/hwapi"
 	"io/ioutil"
-
-	"github.com/9elements/go-tss"
 )
 
 // Configuration input
 type Configuration struct {
-	TPM     tss.TPMVersion
+	TPM     hwapi.TPMVersion
 	TXTMode TXTMode
 	LCPHash LCPPol2Hash
 }
@@ -35,9 +34,9 @@ func ParseConfig(filepath string) (*Configuration, error) {
 		return nil, err
 	}
 	if jConfig.TPM == "1.2" {
-		config.TPM = tss.TPMVersion12
+		config.TPM = hwapi.TPMVersion12
 	} else if jConfig.TPM == "2.0" {
-		config.TPM = tss.TPMVersion20
+		config.TPM = hwapi.TPMVersion20
 	} else {
 		return nil, fmt.Errorf("Couldn't parse TPM option: %s", jConfig.TPM)
 	}

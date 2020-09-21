@@ -3,7 +3,6 @@ module github.com/9elements/converged-security-suite
 go 1.11
 
 require (
-	github.com/9elements/go-tss v0.0.0-20200909201337-62a53fe5f013
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/fearful-symmetry/gomsr v0.0.1
 	github.com/golang/protobuf v1.4.2 // indirect

@@ -10,7 +10,6 @@ import (
 
 	"github.com/9elements/converged-security-suite/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/pkg/tools"
-	tss "github.com/9elements/go-tss"
 	tpm1 "github.com/google/go-tpm/tpm"
 	tpm2 "github.com/google/go-tpm/tpm2"
 )
@@ -63,7 +62,7 @@ const (
 )
 
 var (
-	tpmCon                *tss.TPM
+	tpmCon                *hwapi.TPM
 	tpm20AUXIndexHashData = []byte{0xEF, 0x9A, 0x26, 0xFC, 0x22, 0xD1, 0xAE, 0x8C, 0xEC, 0xFF, 0x59, 0xE9, 0x48, 0x1A, 0xC1, 0xEC, 0x53, 0x3D, 0xBE, 0x22, 0x8B, 0xEC, 0x6D, 0x17, 0x93, 0x0F, 0x4C, 0xB2, 0xCC, 0x5B, 0x97, 0x24}
 
 	testtpmconnection = Test{
@@ -245,7 +244,7 @@ func PSIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (boo
 	}
 	defer tpmCon.Close()
 	switch tpmCon.Version {
-	case tss.TPMVersion12:
+	case hwapi.TPMVersion12:
 		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm12PSIndex)
 		if err != nil {
 			return false, nil, err
@@ -282,7 +281,7 @@ func PSIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (boo
 			return true, fmt.Errorf("WriteDefine is not set - This is no error for provisioning"), nil
 		}
 		return true, nil, nil
-	case tss.TPMVersion20:
+	case hwapi.TPMVersion20:
 		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm20PSIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm2NVPublicNotSet) {
@@ -351,7 +350,7 @@ func AUXIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bo
 	}
 	defer tpmCon.Close()
 	switch tpmCon.Version {
-	case tss.TPMVersion12:
+	case hwapi.TPMVersion12:
 		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm12AUXIndex)
 		if err != nil {
 			return false, nil, err
@@ -388,7 +387,7 @@ func AUXIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bo
 		}
 
 		return true, nil, nil
-	case tss.TPMVersion20:
+	case hwapi.TPMVersion20:
 		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm20AUXIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm20NVIndexNotSet) {
@@ -451,9 +450,9 @@ func AUXTPM2IndexCheckHash(txtAPI hwapi.APIInterfaces, config *tools.Configurati
 	}
 	defer tpmCon.Close()
 	switch tpmCon.Version {
-	case tss.TPMVersion12:
+	case hwapi.TPMVersion12:
 		return false, fmt.Errorf("Only valid for TPM 2.0"), nil
-	case tss.TPMVersion20:
+	case hwapi.TPMVersion20:
 		var d tpm2.NVPublic
 		raw, err := txtAPI.ReadNVPublic(tpmCon, tpm20AUXIndex)
 		if err != nil {
@@ -512,7 +511,7 @@ func POIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (boo
 	}
 	defer tpmCon.Close()
 	switch tpmCon.Version {
-	case tss.TPMVersion12:
+	case hwapi.TPMVersion12:
 		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm12POIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm12NVIndexNotSet) {
@@ -535,7 +534,7 @@ func POIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (boo
 		if d1.Size != tpm12POIndexSize {
 			return false, fmt.Errorf("TPM1 PO Index size incorrect. Have: %v - Want: %v", d1.Size, tpm12POIndexSize), nil
 		}
-	case tss.TPMVersion20:
+	case hwapi.TPMVersion20:
 		raw, err = txtAPI.ReadNVPublic(tpmCon, tpm20POIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm2NVPublicNotSet) {
@@ -651,7 +650,7 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration)
 	}
 	defer tpmCon.Close()
 	switch tpmCon.Version {
-	case tss.TPMVersion12:
+	case hwapi.TPMVersion12:
 		_, err := txtAPI.ReadNVPublic(tpmCon, tpm12POIndex)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm12NVIndexNotSet) {
@@ -667,7 +666,7 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration)
 		if err != nil {
 			return false, nil, err
 		}
-	case tss.TPMVersion20:
+	case hwapi.TPMVersion20:
 		var d tpm2.NVPublic
 		var raw []byte
 		var err error
@@ -790,7 +789,7 @@ func readPSLCPPolicy(txtAPI hwapi.APIInterfaces) (*tools.LCPPolicy, *tools.LCPPo
 	}
 	defer tpmCon.Close()
 	switch tpmCon.Version {
-	case tss.TPMVersion12:
+	case hwapi.TPMVersion12:
 		data, err := txtAPI.NVReadValue(tpmCon, tpm12PSIndex, "", tpm12PSIndexSize, 0)
 		if err != nil {
 			if strings.Contains(err.Error(), tpm12NVIndexNotSet) {
@@ -802,7 +801,7 @@ func readPSLCPPolicy(txtAPI hwapi.APIInterfaces) (*tools.LCPPolicy, *tools.LCPPo
 		if err != nil {
 			return nil, nil, err
 		}
-	case tss.TPMVersion20:
+	case hwapi.TPMVersion20:
 		var d tpm2.NVPublic
 		var raw []byte
 		var err error

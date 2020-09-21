@@ -1,10 +1,4 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
-github.com/9elements/go-tss v0.0.0-20200825132442-ad4c8d234e5e h1:pexSCnC1kmB4kbz55qbkl5I35AzI+cCUewK8FdsO8N0=
-github.com/9elements/go-tss v0.0.0-20200825132442-ad4c8d234e5e/go.mod h1:uFwzoPJgdjbA+9ZoOfPeBmEn1NjfHYnH5Kc92OUNQ7w=
-github.com/9elements/go-tss v0.0.0-20200909154824-1d829dd5f7b9 h1:3WgfOeRY97yvVzFz44pTG5mIKB4ZaBtIL3BnqE4nOrA=
-github.com/9elements/go-tss v0.0.0-20200909154824-1d829dd5f7b9/go.mod h1:9xddeuV8WUU5f93S2agMsQH1kmk+qkDLFWE2LuQZWV0=
-github.com/9elements/go-tss v0.0.0-20200909201337-62a53fe5f013 h1:GX1UkX1CEgt66FDzDRoAntg4bX1s/ttfe9lAZEvxbdY=
-github.com/9elements/go-tss v0.0.0-20200909201337-62a53fe5f013/go.mod h1:9xddeuV8WUU5f93S2agMsQH1kmk+qkDLFWE2LuQZWV0=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=

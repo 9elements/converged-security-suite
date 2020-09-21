@@ -8,7 +8,6 @@ import (
 
 	"github.com/9elements/converged-security-suite/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/pkg/tools"
-	"github.com/9elements/go-tss"
 )
 
 // FITSize 16MiB
@@ -704,11 +703,11 @@ func SINITACMcomplyTPMSpec(txtAPI hwapi.APIInterfaces, config *tools.Configurati
 		return false, err, nil
 	}
 	res := (1 >> tpms.Capabilities & (uint32(tools.TPMFamilyDTPM12) | uint32(tools.TPMFamilyDTPMBoth)))
-	if res == 0 && config.TPM == tss.TPMVersion12 && testtpmispresent.Result == ResultPass {
+	if res == 0 && config.TPM == hwapi.TPMVersion12 && testtpmispresent.Result == ResultPass {
 		return true, nil, nil
 	}
 	res = (1 >> tpms.Capabilities & (uint32(tools.TPMFamilyDTPM20) | uint32(tools.TPMFamilyDTPMBoth)))
-	if res == 0 && config.TPM == tss.TPMVersion20 && testtpmispresent.Result == ResultPass {
+	if res == 0 && config.TPM == hwapi.TPMVersion20 && testtpmispresent.Result == ResultPass {
 		return true, nil, nil
 	}
 	return false, fmt.Errorf("SINIT ACM does not support used TPM"), nil

@@ -8,8 +8,8 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/9elements/converged-security-suite/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/pkg/tools"
-	tss "github.com/9elements/go-tss"
 	"github.com/google/go-tpm/tpm"
 	"github.com/google/go-tpm/tpm2"
 	"golang.org/x/crypto/ssh/terminal"
@@ -45,9 +45,9 @@ func writePSPolicy2file(policy *tools.LCPPolicy2, filename string) error {
 }
 
 // IsNVRAMUnlocked checks if NVRAM is locked
-func IsNVRAMUnlocked(tpmTss *tss.TPM) (bool, error) {
+func IsNVRAMUnlocked(tpmTss *hwapi.TPM) (bool, error) {
 	switch tpmTss.Version {
-	case tss.TPMVersion12:
+	case hwapi.TPMVersion12:
 		flags, err := tpm.GetPermanentFlags(tpmTss.RWC)
 		if err != nil {
 			return false, err
@@ -55,7 +55,7 @@ func IsNVRAMUnlocked(tpmTss *tss.TPM) (bool, error) {
 		if !flags.NVLocked {
 			return true, nil
 		}
-	case tss.TPMVersion20:
+	case hwapi.TPMVersion20:
 		err := tpm2.HierarchyChangeAuth(tpmTss.RWC, tpm2.HandlePlatform, tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession}, string(tpm2.EmptyAuth))
 		if err == nil {
 			return false, err

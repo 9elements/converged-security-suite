@@ -12,7 +12,6 @@ import (
 	"github.com/9elements/converged-security-suite/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/pkg/test"
 	"github.com/9elements/converged-security-suite/pkg/tools"
-	"github.com/9elements/go-tss"
 	a "github.com/logrusorgru/aurora"
 )
 
@@ -130,7 +129,7 @@ func main() {
 	} else {
 		// Default TPM 2.0 Intel TXT configuration
 		config.LCPHash = tools.LCPPol2HAlgSHA256
-		config.TPM = tss.TPMVersion20
+		config.TPM = hwapi.TPMVersion20
 		config.TXTMode = tools.AutoPromotion
 	}
 
