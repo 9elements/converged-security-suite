@@ -216,12 +216,24 @@ func ExtractFit(data []byte) ([]FitEntry, error) {
 
 //Size returns the size in bytes of the entry
 func (fit *FitEntry) Size() uint32 {
+
 	var tmpsize uint32
-	for count, item := range fit.OrigSize {
-		tmpsize += uint32(item)
-		if count < 2 {
-			tmpsize = tmpsize << 4
+
+	if fit.Type() == FitHeader || fit.Type() == BIOSStartUpMod {
+		for count, item := range fit.OrigSize {
+			tmpsize += uint32(item)
+			if count < 2 {
+				tmpsize = tmpsize << 4
+			}
 		}
+		return tmpsize / 16
 	}
-	return tmpsize / 16
+
+	buf := bytes.NewBuffer(append(fit.OrigSize[:], 0))
+	err := binary.Read(buf, binary.LittleEndian, &tmpsize)
+	if err != nil {
+		fmt.Printf("Error getting Fit Entry Size: %v\n", err)
+		return 0
+	}
+	return tmpsize
 }
