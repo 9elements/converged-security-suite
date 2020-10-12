@@ -118,6 +118,6 @@ workflows:
           filters:
             tags:
               # vX.Y.Z
-              only: /^v\d+\.\d+$/
+              only: /^v.*/
             branches:
               ignore: /.*/
