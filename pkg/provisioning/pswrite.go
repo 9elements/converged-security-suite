@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	tools "github.com/9elements/converged-security-suite/pkg/tools"
+	tools "github.com/9elements/converged-security-suite/v2/pkg/tools"
 	tpm2 "github.com/google/go-tpm/tpm2"
 	tpmutil "github.com/google/go-tpm/tpmutil"
 )

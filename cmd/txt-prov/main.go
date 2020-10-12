@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/9elements/converged-security-suite/pkg/hwapi"
-	"github.com/9elements/converged-security-suite/pkg/provisioning"
-	"github.com/9elements/converged-security-suite/pkg/tools"
+	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
+	"github.com/9elements/converged-security-suite/v2/pkg/provisioning"
+	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 )
 
 const programName = "Intel TXT Provisioning tool"

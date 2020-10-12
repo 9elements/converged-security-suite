@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/9elements/converged-security-suite/pkg/provisioning"
-	"github.com/9elements/converged-security-suite/pkg/tools"
+	"github.com/9elements/converged-security-suite/v2/pkg/provisioning"
+	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 )
 
 var (

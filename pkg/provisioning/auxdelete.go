@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	tools "github.com/9elements/converged-security-suite/pkg/tools"
+	tools "github.com/9elements/converged-security-suite/v2/pkg/tools"
 )
 
 // DeleteAUXindexTPM20 deletes the AUX index on TPM 2.0

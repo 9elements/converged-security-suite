@@ -8,8 +8,8 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/9elements/converged-security-suite/pkg/hwapi"
-	"github.com/9elements/converged-security-suite/pkg/tools"
+	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
+	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/google/go-tpm/tpm"
 	"github.com/google/go-tpm/tpm2"
 	"golang.org/x/crypto/ssh/terminal"

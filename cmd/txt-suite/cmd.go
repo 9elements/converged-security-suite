@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/9elements/converged-security-suite/pkg/test"
+	"github.com/9elements/converged-security-suite/v2/pkg/test"
 )
 
 var testno = flag.String("t", "", "Select test number 1 - 50. e.g.: -t=1,2,3,4,...")

@@ -1,4 +1,4 @@
-module github.com/9elements/converged-security-suite
+module github.com/9elements/converged-security-suite/v2
 
 go 1.11
 
