@@ -1,4 +1,3 @@
-
 Converged Security Suite ![image](assets/logo.png) 
 ===================================================
 
