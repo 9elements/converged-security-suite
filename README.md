@@ -1,5 +1,5 @@
 
-![](assets/logo.png)
+![image](assets/logo.png)
 
 The Converged Security Suite implements all necessary tools for Intel platform security features.
 
