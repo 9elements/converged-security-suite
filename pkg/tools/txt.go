@@ -11,6 +11,8 @@ import (
 const (
 	// TxtTPMDecode for external use
 	TxtTPMDecode = 0xFED40000
+	// TxtTPMDecodeSize is the size of the TCG defined TIS MMIO space
+	TxtTPMDecodeSize = 0x5000
 	// TxtPublicSpace for external test
 	TxtPublicSpace = 0xFED30000
 	// TxtPublicSpaceSize exports the size of TXTPublicSpace in memory map

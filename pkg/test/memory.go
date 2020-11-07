@@ -343,7 +343,7 @@ func TXTReservedInE820(txtAPI hwapi.APIInterfaces, config *tools.Configuration) 
 
 // TXTTPMDecodeSpaceIn820 checks if TPMDecode area is marked as reserved in e820 map
 func TXTTPMDecodeSpaceIn820(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
-	res, err := txtAPI.IsReservedInE820(uint64(tools.TxtTPMDecode), uint64(tools.TxtTPMDecode+0x10000))
+	res, err := txtAPI.IsReservedInE820(uint64(tools.TxtTPMDecode), uint64(tools.TxtTPMDecode+tools.TxtTPMDecodeSize-1))
 	if err != nil {
 		return false, nil, err
 	}
