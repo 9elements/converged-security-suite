@@ -9,9 +9,9 @@ import (
 
 var (
 	testtxtmemoryrangevalid = Test{
-		Name:                    "TXT memory ranges valid",
+		Name:                    "TXT heap ranges valid",
 		Required:                true,
-		function:                TXTRegisterSpaceValid,
+		function:                TXTHeapSpaceValid,
 		Status:                  Implemented,
 		SpecificationChapter:    "B.1",
 		SpecificiationTitle:     IntelTXTSpecificationTitle,
@@ -230,8 +230,8 @@ var (
 	legacyMinHeapSize = uint32(0xE0000)
 )
 
-// TXTRegisterSpaceValid checks if the registers indicates the correct sizes
-func TXTRegisterSpaceValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+// TXTHeapSpaceValid checks if the registers indicates the correct sizes
+func TXTHeapSpaceValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
 		return false, nil, err
