@@ -270,11 +270,20 @@ func TXTHeapSpaceValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) 
 		return false, fmt.Errorf("Sinit must be at least %v", minSinitSize), nil
 	}
 
+	/* Document Number: 558294 5.5.6 Intel TXT Device Memory */
+	if regs.HeapSize+regs.SinitSize != 1024*1024 {
+		return false, fmt.Errorf("SINIT size and TXT heap size must add to 1 MiB"), nil
+	}
+
 	if uint64(regs.MleJoin) >= tools.FourGiB {
 		return false, fmt.Errorf("MleJoin >= 4Gib"), nil
 	}
 
-	if regs.SinitBase > regs.HeapBase {
+	/* Document Number: 558294  5.5.6.2 SINIT Memory Region */
+	if regs.SinitBase >= regs.HeapBase {
+		return false, fmt.Errorf("Sinit must be below Heapbase"), nil
+	}
+	if regs.SinitBase+regs.SinitSize == regs.HeapBase {
 		return false, fmt.Errorf("Sinit must be below Heapbase"), nil
 	}
 
