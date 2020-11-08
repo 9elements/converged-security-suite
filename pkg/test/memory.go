@@ -76,6 +76,13 @@ var (
 		SpecificiationTitle:     IntelTXTSpecificationTitle,
 		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
+	// Internal precondition to check if the platform registers are known
+	testSupportsHostbridge = Test{
+		Name:     "Hostbridge is supported",
+		Required: true,
+		function: HostbridgeIsSupported,
+		Status:   Implemented,
+	}
 	testhostbridgeDPRcorrect = Test{
 		Name:                    "CPU DPR equals hostbridge DPR",
 		Required:                false,
@@ -84,12 +91,13 @@ var (
 		SpecificationChapter:    "B 1.15 TXT.DPR – DMA Protected Range",
 		SpecificiationTitle:     IntelTXTSpecificationTitle,
 		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
+		dependencies:            []*Test{&testhassmrr, &testSupportsHostbridge},
 	}
 	testhostbridgeDPRislocked = Test{
 		Name:                    "CPU hostbridge DPR register locked",
 		Required:                true,
 		function:                HostbridgeDPRisLocked,
-		dependencies:            []*Test{&testhostbridgeDPRcorrect},
+		dependencies:            []*Test{&testhostbridgeDPRcorrect, &testSupportsHostbridge},
 		Status:                  Implemented,
 		SpecificationChapter:    "B 1.15 TXT.DPR – DMA Protected Range",
 		SpecificiationTitle:     IntelTXTSpecificationTitle,
@@ -169,7 +177,7 @@ var (
 		Name:         "SMRR covers SMM memory",
 		Required:     true,
 		function:     ValidSMRR,
-		dependencies: []*Test{&testhassmrr},
+		dependencies: []*Test{&testhassmrr, &testSupportsHostbridge},
 		Status:       Implemented,
 	}
 	testactivesmrr = Test{
@@ -402,6 +410,16 @@ func TXTDPRisLock(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool
 
 	if regs.Dpr.Lock != true {
 		return false, fmt.Errorf("TXTDPR is not locked"), nil
+	}
+	return true, nil, nil
+}
+
+// HostbridgeIsSupported checks if the suite supports the hostbridge
+func HostbridgeIsSupported(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+
+	_, _, err := txtAPI.ReadHostBridgeTseg()
+	if err != nil {
+		return false, nil, err
 	}
 	return true, nil, nil
 }
