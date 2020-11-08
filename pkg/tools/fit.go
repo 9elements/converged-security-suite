@@ -185,6 +185,15 @@ func ExtractFit(data []byte) ([]FitEntry, error) {
 
 	var lasttype int
 	for i := range fitTable {
+		if fitTable[i].Type() == UnusedEntry {
+			/*
+			 * Specification: Firmware Interface Table Document 599500
+			 * Chapter "4.0 Firmware Interface Table"
+			 *
+			 * The FIT processing code always skips the unused entry and moves on to the next record.
+			 */
+			continue
+		}
 		if int(fitTable[i].Type()) < lasttype {
 			return nil, fmt.Errorf("FIT: Entries aren't sorted - See: Firmware Interface Table - BIOS Specification, Document: 338505-001, P.8")
 		}
