@@ -341,7 +341,6 @@ type ACPIRsdp struct {
 	Revision         uint8
 	RSDTPtr          uint32
 	RSDPLen          uint32
-	XSDTLen          uint32
 	XSDTPtr          uint64
 	ExtendedChecksum uint8
 	Reserved         [3]uint8
@@ -431,6 +430,9 @@ func CheckXSDTPresent(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (
 	if err != nil {
 		return false, nil, err
 	}
+	if rsdp.Revision == 0 {
+		return false, fmt.Errorf("ACPI XSDT not present in ACPI 1.0"), nil
+	}
 	if rsdp.XSDTPtr == 0 || rsdp.XSDTPtr == 0xffffffffffffffff {
 		return false, fmt.Errorf("ACPI XSDT not found in RSDP"), nil
 	}
@@ -451,7 +453,7 @@ func CheckRSDTValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bo
 
 //CheckXSDTValid tests if the XSDT ACPI table is vaid
 func CheckXSDTValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
-	_, err := txtAPI.GetACPITable("RSDT") // HWAPI will validate the table
+	_, err := txtAPI.GetACPITable("XSDT") // HWAPI will validate the table
 	if os.IsNotExist(err) {
 		return false, fmt.Errorf("ACPI table XSDT is invalid"), nil
 	} else if err != nil {
