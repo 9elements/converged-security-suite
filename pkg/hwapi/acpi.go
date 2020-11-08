@@ -1,28 +1,40 @@
 package hwapi
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"os"
+	"strconv"
+	"strings"
 )
 
 const (
-	acpiSysfsPath = "/sys/firmware/acpi/tables"
-	biosRomBase   = 0xe0000
-	biosRomSize   = 0x20000
-	ebdaTop       = 0xa0000
+	acpiSysfsPath       = "/sys/firmware/acpi/tables"
+	acpiSysfsSystabPath = "/sys/firmware/efi/systab"
+
+	biosRomBase = 0xe0000
+	biosRomSize = 0x20000
+	ebdaTop     = 0xa0000
 )
+
+//ACPIRsdpRev1 as defined in ACPI Spec 1
+type ACPIRsdpRev1 struct {
+	Signature [8]uint8
+	Checksum  uint8
+	OEMID     [6]uint8
+	Revision  uint8
+	RSDTPtr   uint32
+}
 
 //ACPIRsdp as defined in ACPI Spec 6.2 "5.2.5.3 Root System Description Pointer (RSDP) Structure"
 type ACPIRsdp struct {
-	Signature        [8]uint8
-	Checksum         uint8
-	OEMID            [6]uint8
-	Revision         uint8
-	RSDTPtr          uint32
+	ACPIRsdpRev1
+
 	RSDPLen          uint32
-	XSDTLen          uint32
 	XSDTPtr          uint64
 	ExtendedChecksum uint8
 	Reserved         [3]uint8
@@ -173,19 +185,85 @@ var (
 	backupRawRSDP []byte
 )
 
-func (t TxtAPI) getACPITableDevMemRSDP() ([]byte, ACPIRsdp, error) {
+func (t TxtAPI) parseSystab() ([]byte, ACPIRsdp, error) {
+	var rsdp ACPIRsdp
+
+	buf := make([]byte, binary.Size(rsdp))
+
+	// Try to get the RSDP address from systab
+	file, err := os.Open(acpiSysfsSystabPath)
+	if err == nil {
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			if !strings.Contains(scanner.Text(), "=") {
+				continue
+			}
+
+			kv := strings.SplitAfter(scanner.Text(), "=")
+
+			if kv[0] == "ACPI20=" || kv[0] == "ACPI=" {
+				address, err := strconv.ParseUint(kv[1], 0, 64)
+				if err != nil || address == 0 {
+					continue
+				}
+				log.Printf("address =%x", address)
+
+				err = t.ReadPhysBuf(int64(address), buf)
+				if err != nil {
+					log.Printf("%v", err)
+					continue
+				}
+				err = binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, &rsdp)
+				if err != nil {
+					return nil, rsdp, err
+				}
+				log.Printf("signature %s", string(rsdp.Signature[:]))
+				if string(rsdp.Signature[:]) == "RSD PTR " {
+					return buf, rsdp, nil
+				}
+			}
+		}
+	}
+	return nil, rsdp, fmt.Errorf("RSDP not found in systab")
+}
+
+func (t TxtAPI) scanLowMem() ([]byte, ACPIRsdp, error) {
 
 	var rsdp ACPIRsdp
 
-	if string(backupRSDP.Signature[:]) == "RSD PTR " {
-		return backupRawRSDP, backupRSDP, nil
-	}
-
-	// RSDP might be in low memory
 	buf := make([]byte, binary.Size(rsdp))
+
 	for i := int64(biosRomBase); i < biosRomBase+biosRomSize-int64(binary.Size(rsdp)); i += 16 {
 		err := t.ReadPhysBuf(i, buf)
 		if err != nil {
+			return nil, rsdp, fmt.Errorf("Failed to read physical memory at %x: %v", i, err)
+		}
+		err = binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, &rsdp)
+		if err != nil {
+			return nil, rsdp, err
+		}
+		if i == 0xF05B0 {
+			log.Printf("string(rsdp.Signature[:]) = %s", string(rsdp.Signature[:]))
+		}
+		if string(rsdp.Signature[:]) == "RSD PTR " {
+			return buf, rsdp, nil
+		}
+	}
+	return nil, rsdp, fmt.Errorf("RSDP not found in low memory")
+}
+
+func (t TxtAPI) scanEBDA() ([]byte, ACPIRsdp, error) {
+
+	var rsdp ACPIRsdp
+
+	buf := make([]byte, binary.Size(rsdp))
+
+	for i := int64(ebdaTop - biosRomSize); i < ebdaTop-int64(binary.Size(rsdp)); i += 16 {
+		err := t.ReadPhysBuf(i, buf)
+		if err != nil {
+			log.Printf("%v", err)
+
 			return nil, rsdp, fmt.Errorf("Failed to read physical memory at %x: %v", i, err)
 		}
 		err = binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, &rsdp)
@@ -198,68 +276,130 @@ func (t TxtAPI) getACPITableDevMemRSDP() ([]byte, ACPIRsdp, error) {
 		}
 	}
 
-	if string(rsdp.Signature[:]) != "RSD PTR " {
-		// RSDP might be in ebda
-		for i := int64(ebdaTop - biosRomSize); i < ebdaTop-int64(binary.Size(rsdp)); i += 16 {
+	return nil, rsdp, fmt.Errorf("RSDP not found in low memory")
+}
+
+func (t TxtAPI) scanReservedMem() ([]byte, ACPIRsdp, error) {
+
+	var rsdp ACPIRsdp
+
+	buf := make([]byte, binary.Size(rsdp))
+
+	IterateOverE820Ranges("ACPI Tables", func(start uint64, end uint64) bool {
+		for i := int64(start); i < int64(end)-int64(binary.Size(rsdp)); i += 16 {
 			err := t.ReadPhysBuf(i, buf)
 			if err != nil {
-				return nil, rsdp, fmt.Errorf("Failed to read physical memory at %x: %v", i, err)
+				log.Printf("%v", err)
+
+				return false
 			}
 			err = binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, &rsdp)
 			if err != nil {
-				return nil, rsdp, err
+				return false
 			}
 
 			if string(rsdp.Signature[:]) == "RSD PTR " {
-				break
+				return true
 			}
 		}
-	}
+		return false
+	})
+	return nil, rsdp, fmt.Errorf("RSDP not found in low memory")
+}
 
-	if string(rsdp.Signature[:]) != "RSD PTR " {
-		// On UEFI platforms search in ACPI reserved memory
-		IterateOverE820Ranges("ACPI Tables", func(start uint64, end uint64) bool {
-			for i := int64(start); i < int64(end)-int64(binary.Size(rsdp)); i += 16 {
-				err := t.ReadPhysBuf(i, buf)
-				if err != nil {
-					return false
-				}
-				err = binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, &rsdp)
-				if err != nil {
-					return false
-				}
+func verifyRSDP(buf []byte, rsdp ACPIRsdp) error {
 
-				if string(rsdp.Signature[:]) == "RSD PTR " {
-					return true
-				}
-			}
-			return false
-		})
-	}
+	var old ACPIRsdpRev1
 
-	if string(rsdp.Signature[:]) != "RSD PTR " {
-		return nil, rsdp, fmt.Errorf("RSDP not found")
-	}
-
-	if rsdp.Revision > 1 {
-		if rsdp.RSDPLen != uint32(len(buf)) {
-			return nil, rsdp, fmt.Errorf("ACPI RSDP has unexpected length")
+	if rsdp.Revision == 0 {
+		if rsdp.RSDPLen != uint32(binary.Size(old)) {
+			return fmt.Errorf("ACPI RSDP has unexpected length %d", rsdp.RSDPLen)
 		}
 
-		chksum := byte(0)
-		for _, i := range buf {
-			chksum = chksum + i
+	}
+	/* Validate first checksum */
+	chksum := byte(0)
+	for i, b := range buf {
+		if i >= binary.Size(old) {
+			break
 		}
+		chksum = chksum + b
+	}
+	if chksum > 0 {
+		return fmt.Errorf("ACPI RSDP has invalid checksum")
+	}
 
-		if chksum > 0 {
-			return nil, rsdp, fmt.Errorf("ACPI RSDP has invalid checksum")
+	if rsdp.Revision == 0 {
+		return nil
+	}
+	if rsdp.Revision == 2 {
+		if rsdp.RSDPLen != uint32(binary.Size(rsdp)) {
+			return fmt.Errorf("ACPI RSDP has unexpected length %d", rsdp.RSDPLen)
+		}
+	}
+	/* Validate second checksum */
+	chksum = byte(0)
+	for _, i := range buf {
+		chksum = chksum + i
+	}
+
+	if chksum > 0 {
+		return fmt.Errorf("ACPI RSDP has invalid checksum")
+	}
+	return nil
+}
+
+func (t TxtAPI) getACPITableDevMemRSDP() ([]byte, ACPIRsdp, error) {
+
+	var rsdp ACPIRsdp
+
+	if string(backupRSDP.Signature[:]) == "RSD PTR " {
+		return backupRawRSDP, backupRSDP, nil
+	}
+
+	// Try to get the RSDP address from systab
+	data, rsdp, err := t.parseSystab()
+	if err == nil {
+		err = verifyRSDP(data, rsdp)
+		if err == nil {
+			backupRSDP = rsdp
+			backupRawRSDP = data
+			return data, rsdp, nil
 		}
 	}
 
-	backupRSDP = rsdp
-	backupRawRSDP = buf
+	data, rsdp, err = t.scanLowMem()
+	if err == nil {
+		err = verifyRSDP(data, rsdp)
+		if err == nil {
+			backupRSDP = rsdp
+			backupRawRSDP = data
+			return data, rsdp, nil
+		}
+	}
 
-	return buf, rsdp, nil
+	data, rsdp, err = t.scanEBDA()
+	if err == nil {
+		err = verifyRSDP(data, rsdp)
+		if err == nil {
+			backupRSDP = rsdp
+			backupRawRSDP = data
+			return data, rsdp, nil
+		}
+	}
+
+	data, rsdp, err = t.scanReservedMem()
+
+	if err == nil {
+		err = verifyRSDP(data, rsdp)
+		if err == nil {
+			backupRSDP = rsdp
+			backupRawRSDP = data
+			return data, rsdp, nil
+		}
+	}
+
+	return nil, rsdp, fmt.Errorf("RSDP not found")
 }
 
 func (t TxtAPI) getACPITableDevMem(n string) ([]byte, error) {
