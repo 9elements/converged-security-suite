@@ -341,7 +341,6 @@ type ACPIRsdp struct {
 	Revision         uint8
 	RSDTPtr          uint32
 	RSDPLen          uint32
-	XSDTLen          uint32
 	XSDTPtr          uint64
 	ExtendedChecksum uint8
 	Reserved         [3]uint8
@@ -431,6 +430,9 @@ func CheckXSDTPresent(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (
 	if err != nil {
 		return false, nil, err
 	}
+	if rsdp.Revision == 0 {
+		return false, fmt.Errorf("ACPI XSDT not present in ACPI 1.0"), nil
+	}
 	if rsdp.XSDTPtr == 0 || rsdp.XSDTPtr == 0xffffffffffffffff {
 		return false, fmt.Errorf("ACPI XSDT not found in RSDP"), nil
 	}
@@ -451,7 +453,7 @@ func CheckRSDTValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bo
 
 //CheckXSDTValid tests if the XSDT ACPI table is vaid
 func CheckXSDTValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
-	_, err := txtAPI.GetACPITable("RSDT") // HWAPI will validate the table
+	_, err := txtAPI.GetACPITable("XSDT") // HWAPI will validate the table
 	if os.IsNotExist(err) {
 		return false, fmt.Errorf("ACPI table XSDT is invalid"), nil
 	} else if err != nil {
@@ -487,30 +489,267 @@ type ACPIMADT struct {
 	ACPIHeader
 	LapicAddress uint32
 	Flags        uint32
-	// TODO: variable interrupt controller structures
+	// Variable interrupt controller structures
+}
+
+//ACPIMADTEntryHeader represent the table header for one MADT entry
+type ACPIMADTEntryHeader struct {
+	Type   uint8
+	Length uint8
+}
+
+//ACPIMADTProcessorLocalAPIC type 0
+type ACPIMADTProcessorLocalAPIC struct {
+	APICProcessorID uint8
+	APICID          uint8
+	Flags           uint32
+}
+
+//ACPIMADTIOAPIC type 1
+type ACPIMADTIOAPIC struct {
+	IOAPICID                  uint8
+	Reserved                  uint8
+	Address                   uint32
+	GlobalSystemInterruptBase uint32
+}
+
+//ACPIMADTInterruptSourceOverride type 2
+type ACPIMADTInterruptSourceOverride struct {
+	BusSource             uint8
+	IRQSource             uint8
+	GlobalSystemInterrupt uint32
+	Flags                 uint16
+}
+
+//ACPIMADTNMISource type 3
+type ACPIMADTNMISource struct {
+	Flags                 uint16
+	GlobalSystemInterrupt uint32
+}
+
+//ACPIMADTLocalNonMaskableInterrupts type 4
+type ACPIMADTLocalNonMaskableInterrupts struct {
+	APICID uint8
+	Flags  uint16
+	LINT   uint8
+}
+
+//ACPIMADTLocalAPICAddressOverwrite type 5
+type ACPIMADTLocalAPICAddressOverwrite struct {
+	Reserved uint16
+	Address  uint64
+}
+
+//ACPIMADTSAPIC type 6
+type ACPIMADTSAPIC struct {
+	IOAPICID                  uint8
+	Reserved                  uint8
+	GlobalSystemInterruptBase uint32
+	IOSAPICAddress            uint64
+}
+
+//ACPIMADTLocalSAPIC type 7
+type ACPIMADTLocalSAPIC struct {
+	ACPIProcessorID   uint8
+	LocalSAPICID      uint8
+	LocalSAPICEID     uint8
+	Reserved          [3]uint8
+	Flags             uint32
+	ACPIProcessorUUID uint32
+	// variable length NULL terminated string
+}
+
+//ACPIMADTLocalx2APIC type 9
+type ACPIMADTLocalx2APIC struct {
+	Reserved          uint16
+	X2ApicID          uint32
+	Flags             uint32
+	ACPIProcessorUUID uint32
+}
+
+//ACPIMADTLocalx2APICNMI type 10
+type ACPIMADTLocalx2APICNMI struct {
+	Flags             uint16
+	ACPIProcessorUUID uint32
+	Localx2APICLint   uint8
+	Reserved          [3]uint8
+}
+
+// ACPIMADTDecoded holds the decoded variable size MADT fields
+type ACPIMADTDecoded struct {
+	LapicAddress   uint32
+	Flags          uint32
+	DecodedEntries []interface{}
+}
+
+//CheckMADTValidAndDecode tests if the MADT ACPI table is valid
+func CheckMADTValidAndDecode(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (ACPIMADTDecoded, bool, error, error) {
+	var m ACPIMADTDecoded
+
+	table, valid, err, interr := checkTableValid(txtAPI, "APIC")
+	if interr != nil {
+		return m, false, nil, interr
+	} else if err != nil {
+		return m, false, err, nil
+	} else if !valid {
+		return m, false, fmt.Errorf("ACPI table MADT not valid"), nil
+	}
+
+	tbl := bytes.NewBuffer(table)
+	var decoded ACPIMADT
+	err = binary.Read(tbl, binary.LittleEndian, &decoded)
+	if err != nil {
+		return m, false, nil, err
+	}
+
+	if decoded.Flags > 1 {
+		return m, false, fmt.Errorf("Unknown flags in ACPI table MADT"), nil
+	}
+
+	type5entrycount := 0
+	for tbl.Len() > 0 {
+		var header ACPIMADTEntryHeader
+
+		err = binary.Read(tbl, binary.LittleEndian, &header)
+		if err != nil {
+			return m, false, nil, err
+		}
+		if header.Type > 10 || header.Type == 8 {
+			return m, false, fmt.Errorf("Invalid MADT entry type %d", header.Type), nil
+		}
+		if int(header.Length) > tbl.Len()+2 {
+			return m, false, fmt.Errorf("Invalid MADT entry size of %d", header.Length), nil
+		}
+
+		if header.Type == 0 {
+			var e ACPIMADTProcessorLocalAPIC
+			err = binary.Read(tbl, binary.LittleEndian, &e)
+			if err != nil {
+				return m, false, nil, err
+			}
+			if e.Flags > 3 {
+				return m, false, fmt.Errorf("Invalid flag %x entry in Processor Local APIC entry", e.Flags), nil
+			}
+			m.DecodedEntries = append(m.DecodedEntries, e)
+		} else if header.Type == 1 {
+			var e ACPIMADTIOAPIC
+			err = binary.Read(tbl, binary.LittleEndian, &e)
+			if err != nil {
+				return m, false, nil, err
+			}
+			if e.Reserved != 0 {
+				return m, false, fmt.Errorf("Reserved bits not clear in I/O APIC entry"), nil
+			}
+			m.DecodedEntries = append(m.DecodedEntries, e)
+		} else if header.Type == 2 {
+			var e ACPIMADTInterruptSourceOverride
+			err = binary.Read(tbl, binary.LittleEndian, &e)
+			if err != nil {
+				return m, false, nil, err
+			}
+			m.DecodedEntries = append(m.DecodedEntries, e)
+		} else if header.Type == 3 {
+			var e ACPIMADTNMISource
+			err = binary.Read(tbl, binary.LittleEndian, &e)
+			if err != nil {
+				return m, false, nil, err
+			}
+			m.DecodedEntries = append(m.DecodedEntries, e)
+		} else if header.Type == 4 {
+			var e ACPIMADTLocalNonMaskableInterrupts
+			err = binary.Read(tbl, binary.LittleEndian, &e)
+			if err != nil {
+				return m, false, nil, err
+			}
+			m.DecodedEntries = append(m.DecodedEntries, e)
+		} else if header.Type == 5 {
+			var e ACPIMADTLocalAPICAddressOverwrite
+			err = binary.Read(tbl, binary.LittleEndian, &e)
+			if err != nil {
+				return m, false, nil, err
+			}
+			if e.Reserved != 0 {
+				return m, false, fmt.Errorf("Reserved bits not clear in APIC Address Overwrite entry"), nil
+			}
+			type5entrycount++
+			m.DecodedEntries = append(m.DecodedEntries, e)
+		} else if header.Type == 6 {
+			var e ACPIMADTSAPIC
+			err = binary.Read(tbl, binary.LittleEndian, &e)
+			if err != nil {
+				return m, false, nil, err
+			}
+			if e.Reserved != 0 {
+				return m, false, fmt.Errorf("Reserved bits not clear in SAPIC entry"), nil
+			}
+			m.DecodedEntries = append(m.DecodedEntries, e)
+		} else if header.Type == 7 {
+			var e ACPIMADTLocalSAPIC
+			err = binary.Read(tbl, binary.LittleEndian, &e)
+			if err != nil {
+				return m, false, nil, err
+			}
+			if e.Reserved[0] != 0 {
+				return m, false, fmt.Errorf("Reserved bits not clear in Local SAPIC entry"), nil
+			}
+			if e.Reserved[1] != 0 {
+				return m, false, fmt.Errorf("Reserved bits not clear in Local SAPIC entry"), nil
+			}
+			if e.Reserved[2] != 0 {
+				return m, false, fmt.Errorf("Reserved bits not clear in Local SAPIC entry"), nil
+			}
+			for {
+				var b byte
+				err = binary.Read(tbl, binary.LittleEndian, &b)
+				if err != nil {
+					return m, false, nil, err
+				}
+				if b == 0 {
+					break
+				}
+			}
+
+			m.DecodedEntries = append(m.DecodedEntries, e)
+		} else if header.Type == 9 {
+			var e ACPIMADTLocalx2APIC
+			err = binary.Read(tbl, binary.LittleEndian, &e)
+			if err != nil {
+				return m, false, nil, err
+			}
+			if e.Reserved != 0 {
+				return m, false, fmt.Errorf("Reserved bits not clear in local x2 APIC entry"), nil
+			}
+			m.DecodedEntries = append(m.DecodedEntries, e)
+		} else if header.Type == 10 {
+			var e ACPIMADTLocalx2APICNMI
+			err = binary.Read(tbl, binary.LittleEndian, &e)
+			if err != nil {
+				return m, false, nil, err
+			}
+			if e.Reserved[0] != 0 {
+				return m, false, fmt.Errorf("Reserved bits not clear in local x2 APIC NMI entry"), nil
+			}
+			if e.Reserved[1] != 0 {
+				return m, false, fmt.Errorf("Reserved bits not clear in local x2 APIC NMI entry"), nil
+			}
+			if e.Reserved[2] != 0 {
+				return m, false, fmt.Errorf("Reserved bits not clear in local x2 APIC NMI entry"), nil
+			}
+			m.DecodedEntries = append(m.DecodedEntries, e)
+		}
+	}
+	if type5entrycount > 1 {
+		return m, false, fmt.Errorf("More than one APIC Address Overwrite entry found"), nil
+	}
+
+	return m, true, nil, nil
 }
 
 //CheckMADTValid tests if the MADT ACPI table is valid
 func CheckMADTValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
-	table, valid, err, interr := checkTableValid(txtAPI, "APIC")
-	if interr != nil {
-		return false, nil, interr
-	} else if err != nil {
-		return false, err, nil
-	} else if !valid {
-		return false, fmt.Errorf("ACPI table MADT not valid"), nil
-	}
+	_, valid, err, interr := CheckMADTValidAndDecode(txtAPI, config)
 
-	var decoded ACPIMADT
-	err = binary.Read(bytes.NewBuffer(table), binary.LittleEndian, &decoded)
-	if err != nil {
-		return false, nil, err
-	}
-
-	if decoded.Flags > 1 {
-		return false, fmt.Errorf("Unknown flags in ACPI table MADT"), nil
-	}
-	return true, nil, nil
+	return valid, err, interr
 }
 
 //CheckDMARPresence tests if the MADT ACPI table exists

@@ -470,7 +470,7 @@ func PolicyAllowsTXT(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (b
 		if ent.Type() == tools.TXTPolicyRec {
 			switch ent.Version {
 			case 0:
-				return false, fmt.Errorf("Indexed IO type pointer are not supported - See Intel Firmware Interface Table BIOS Specification Document Number: 338505-001, P. 11"), nil
+				return false, nil, fmt.Errorf("Indexed IO type pointer are not supported")
 			case 1:
 				var b hwapi.Uint8
 

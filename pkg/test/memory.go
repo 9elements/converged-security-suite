@@ -76,6 +76,13 @@ var (
 		SpecificiationTitle:     IntelTXTSpecificationTitle,
 		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
 	}
+	// Internal precondition to check if the platform registers are known
+	testSupportsHostbridge = Test{
+		Name:     "Hostbridge is supported",
+		Required: true,
+		function: HostbridgeIsSupported,
+		Status:   Implemented,
+	}
 	testhostbridgeDPRcorrect = Test{
 		Name:                    "CPU DPR equals hostbridge DPR",
 		Required:                false,
@@ -84,12 +91,13 @@ var (
 		SpecificationChapter:    "B 1.15 TXT.DPR – DMA Protected Range",
 		SpecificiationTitle:     IntelTXTSpecificationTitle,
 		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
+		dependencies:            []*Test{&testhassmrr, &testSupportsHostbridge},
 	}
 	testhostbridgeDPRislocked = Test{
 		Name:                    "CPU hostbridge DPR register locked",
 		Required:                true,
 		function:                HostbridgeDPRisLocked,
-		dependencies:            []*Test{&testhostbridgeDPRcorrect},
+		dependencies:            []*Test{&testhostbridgeDPRcorrect, &testSupportsHostbridge},
 		Status:                  Implemented,
 		SpecificationChapter:    "B 1.15 TXT.DPR – DMA Protected Range",
 		SpecificiationTitle:     IntelTXTSpecificationTitle,
@@ -169,7 +177,7 @@ var (
 		Name:         "SMRR covers SMM memory",
 		Required:     true,
 		function:     ValidSMRR,
-		dependencies: []*Test{&testhassmrr},
+		dependencies: []*Test{&testhassmrr, &testSupportsHostbridge},
 		Status:       Implemented,
 	}
 	testactivesmrr = Test{
@@ -344,7 +352,7 @@ func TXTReservedInE820(txtAPI hwapi.APIInterfaces, config *tools.Configuration) 
 
 // TXTTPMDecodeSpaceIn820 checks if TPMDecode area is marked as reserved in e820 map
 func TXTTPMDecodeSpaceIn820(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
-	res, err := txtAPI.IsReservedInE820(uint64(tools.TxtTPMDecode), uint64(tools.TxtTPMDecode+0x10000))
+	res, err := txtAPI.IsReservedInE820(uint64(tools.TxtTPMDecode), uint64(tools.TxtTPMDecode+tools.TxtTPMDecodeSize-1))
 	if err != nil {
 		return false, nil, err
 	}
@@ -411,6 +419,16 @@ func TXTDPRisLock(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool
 
 	if regs.Dpr.Lock != true {
 		return false, fmt.Errorf("TXTDPR is not locked"), nil
+	}
+	return true, nil, nil
+}
+
+// HostbridgeIsSupported checks if the suite supports the hostbridge
+func HostbridgeIsSupported(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+
+	_, _, err := txtAPI.ReadHostBridgeTseg()
+	if err != nil {
+		return false, nil, err
 	}
 	return true, nil, nil
 }
