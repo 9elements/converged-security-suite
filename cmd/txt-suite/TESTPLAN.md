@@ -44,7 +44,7 @@ Id | Test | Implemented | Document | Chapter
 41 | BIOSACM matches processor                        | :white_check_mark:     | Document 315168-016          | 2.2.3.1 Matching an AC Module to the Platform           
 42 | SINIT/BIOS ACM has no NPW flag set               | :white_check_mark:     | Document 558294 Revision 2.0 | 4.1.4 Supported Platform Configurations                 
 43 | SINIT ACM supports used TPM                      | :white_check_mark:     | Document 315168-016          | 4.1.4 Supported Platform Configurations                 
-44 | TXT memory ranges valid                          | :white_check_mark:     | Document 315168-016          | B.1                                                     
+44 | TXT heap ranges valid                            | :white_check_mark:     | Document 315168-016          | B.1                                                     
 45 | TXT public area reserved in e820                 | :white_check_mark:     | Document 558294 Revision 2.0 | 5.5.3 Intel TXT Public Space                            
 46 | TXT private area reserved in e820                | :white_check_mark:     | Document 558294 Revision 2.0 | 5.5.2 Intel TXT Private Space                           
 47 | TXT memory reserved in e820                      | :white_check_mark:     | Document 558294 Revision 2.0 | 5.5.4 Intel TPM Decode Area                             

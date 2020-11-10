@@ -9,9 +9,9 @@ import (
 
 var (
 	testtxtmemoryrangevalid = Test{
-		Name:                    "TXT memory ranges valid",
+		Name:                    "TXT heap ranges valid",
 		Required:                true,
-		function:                TXTRegisterSpaceValid,
+		function:                TXTHeapSpaceValid,
 		Status:                  Implemented,
 		SpecificationChapter:    "B.1",
 		SpecificiationTitle:     IntelTXTSpecificationTitle,
@@ -230,8 +230,8 @@ var (
 	legacyMinHeapSize = uint32(0xE0000)
 )
 
-// TXTRegisterSpaceValid checks if the registers indicates the correct sizes
-func TXTRegisterSpaceValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+// TXTHeapSpaceValid checks if the registers indicates the correct sizes
+func TXTHeapSpaceValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -270,11 +270,20 @@ func TXTRegisterSpaceValid(txtAPI hwapi.APIInterfaces, config *tools.Configurati
 		return false, fmt.Errorf("Sinit must be at least %v", minSinitSize), nil
 	}
 
+	/* Document Number: 558294 5.5.6 Intel TXT Device Memory */
+	if regs.HeapSize+regs.SinitSize != 1024*1024 {
+		return false, fmt.Errorf("SINIT size and TXT heap size must add to 1 MiB"), nil
+	}
+
 	if uint64(regs.MleJoin) >= tools.FourGiB {
 		return false, fmt.Errorf("MleJoin >= 4Gib"), nil
 	}
 
-	if regs.SinitBase > regs.HeapBase {
+	/* Document Number: 558294  5.5.6.2 SINIT Memory Region */
+	if regs.SinitBase >= regs.HeapBase {
+		return false, fmt.Errorf("Sinit must be below Heapbase"), nil
+	}
+	if regs.SinitBase+regs.SinitSize == regs.HeapBase {
 		return false, fmt.Errorf("Sinit must be below Heapbase"), nil
 	}
 

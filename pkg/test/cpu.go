@@ -189,13 +189,11 @@ func TXTRegisterSpaceAccessible(txtAPI hwapi.APIInterfaces, config *tools.Config
 	if regs.Vid != 0x8086 {
 		return false, fmt.Errorf("TXTRegisterSpace: Unexpected VendorID"), nil
 	}
-
-	if regs.HeapBase == 0x0 {
-		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: HeapBase is 0"), nil
-	}
-
-	if regs.SinitBase == 0x0 {
-		return false, fmt.Errorf("TXTRegisterSpace: Unexpected: SinitBase is 0"), nil
+	if regs.PublicKey[0] == 0xffffffffffffffff ||
+		regs.PublicKey[1] == 0xffffffffffffffff ||
+		regs.PublicKey[2] == 0xffffffffffffffff ||
+		regs.PublicKey[3] == 0xffffffffffffffff {
+		return false, fmt.Errorf("TXTRegisterSpace: Unexpected ACM public key"), nil
 	}
 
 	if regs.Did == 0x0 {
