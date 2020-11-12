@@ -21,7 +21,7 @@ var (
 		Name:                    "TXT public area reserved in e820",
 		Required:                true,
 		function:                TXTPublicReservedInE820,
-		dependencies:            []*Test{&testtxtmemoryrangevalid},
+		dependencies:            []*Test{&testtxtregisterspaceaccessible},
 		Status:                  Implemented,
 		SpecificationChapter:    "5.5.3 Intel TXT Public Space",
 		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
@@ -31,7 +31,7 @@ var (
 		Name:                    "TXT private area reserved in e820",
 		Required:                true,
 		function:                TXTPrivateReservedInE820,
-		dependencies:            []*Test{&testtxtmemoryrangevalid},
+		dependencies:            []*Test{&testtxtregisterspaceaccessible},
 		Status:                  Implemented,
 		SpecificationChapter:    "5.5.2 Intel TXT Private Space",
 		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
@@ -51,7 +51,6 @@ var (
 		Name:                    "MMIO TPMDecode space reserved in e820",
 		Required:                true,
 		function:                TXTTPMDecodeSpaceIn820,
-		dependencies:            []*Test{&testtxtmemoryrangevalid},
 		Status:                  Implemented,
 		SpecificationChapter:    "5.5.4 TPM Decode Area",
 		SpecificiationTitle:     IntelTXTBGSBIOSSpecificationTitle,
@@ -269,7 +268,9 @@ func TXTHeapSpaceValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) 
 	if uint64(regs.SinitBase) >= tools.FourGiB {
 		return false, fmt.Errorf("SinitBase >= 4Gib"), nil
 	}
-
+	if uint64(regs.SinitBase)&0xfff > 0 {
+		return false, fmt.Errorf("SinitBase must be 4 KiB aligned"), nil
+	}
 	if uint64(regs.SinitBase+regs.SinitSize) >= tools.FourGiB {
 		return false, fmt.Errorf("SinitBase + SinitSize >= 4Gib"), nil
 	}
@@ -278,21 +279,16 @@ func TXTHeapSpaceValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) 
 		return false, fmt.Errorf("Sinit must be at least %v", minSinitSize), nil
 	}
 
-	/* Document Number: 558294 5.5.6 Intel TXT Device Memory */
-	if regs.HeapSize+regs.SinitSize != 1024*1024 {
-		return false, fmt.Errorf("SINIT size and TXT heap size must add to 1 MiB"), nil
-	}
-
 	if uint64(regs.MleJoin) >= tools.FourGiB {
 		return false, fmt.Errorf("MleJoin >= 4Gib"), nil
 	}
 
 	/* Document Number: 558294  5.5.6.2 SINIT Memory Region */
 	if regs.SinitBase >= regs.HeapBase {
-		return false, fmt.Errorf("Sinit must be below Heapbase"), nil
+		return false, fmt.Errorf("Sinit region must be below Heap region"), nil
 	}
-	if regs.SinitBase+regs.SinitSize == regs.HeapBase {
-		return false, fmt.Errorf("Sinit must be below Heapbase"), nil
+	if regs.SinitBase > 0 && regs.SinitBase+regs.SinitSize != regs.HeapBase {
+		return false, fmt.Errorf("Sinit region must end at start of Heap region"), nil
 	}
 
 	return true, nil, nil
@@ -373,34 +369,37 @@ func TXTMemoryIsDPR(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bo
 		return false, nil, err
 	}
 
-	var memBase uint32
-	var memLimit uint32
-
 	var dprBase uint32
 	var dprSize uint32
 	var dprLimit uint32
-
-	if regs.HeapBase > regs.SinitBase {
-		memBase = regs.SinitBase
-	} else {
-		memBase = regs.HeapBase
-	}
-
-	if regs.HeapBase+regs.HeapSize > regs.SinitBase+regs.SinitSize {
-		memLimit = regs.HeapBase + regs.HeapSize
-	} else {
-		memLimit = regs.SinitBase + regs.SinitSize
-	}
 
 	dprSize = uint32(regs.Dpr.Size) * 1024 * 1024
 	dprLimit = uint32(regs.Dpr.Top+1) * 1024 * 1024
 	dprBase = dprLimit - dprSize
 
-	if memBase < dprBase {
-		return false, fmt.Errorf("DPR doesn't protect bottom of TXT memory"), nil
+	/* Chapter 5.5.6.1 DMA Protection Memory Region */
+	if dprSize < 3*1024*1024 {
+		return false, fmt.Errorf("DPR region is smaller than 3 MiB"), nil
 	}
-	if memLimit > dprLimit {
-		return false, fmt.Errorf("DPR doesn't protect top of TXT memory"), nil
+	if dprBase > regs.HeapBase {
+		return false, fmt.Errorf("TXT Heap region not covered by DPR region"), nil
+	}
+	if regs.SinitBase > 0 && dprBase > regs.SinitBase {
+		return false, fmt.Errorf("TXT Sinit region not covered by DPR region"), nil
+	}
+	if dprLimit < regs.HeapBase+regs.HeapSize {
+		return false, fmt.Errorf("TXT Heap region not covered by DPR region"), nil
+	}
+	if regs.SinitBase > 0 && dprLimit < regs.SinitBase+regs.SinitSize {
+		return false, fmt.Errorf("TXT Sinit region not covered by DPR region"), nil
+	}
+	/* Chapter 5.5.6.3 Intel TXT Heap Memory Region */
+	if dprLimit != regs.HeapBase+regs.HeapSize {
+		return false, fmt.Errorf("TXT heap region must end at top of DPR region"), nil
+	}
+	/* Chapter 5.5.6.1 DMA Protection Memory Region */
+	if dprBase > dprLimit-2*1024*1024-regs.HeapSize-regs.SinitSize {
+		return false, fmt.Errorf("MLE region in DPR region is less than 2 MiB"), nil
 	}
 
 	return true, nil, nil
