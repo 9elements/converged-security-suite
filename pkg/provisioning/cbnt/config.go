@@ -40,7 +40,7 @@ type Options struct {
 	KeyManifest        *key.Manifest
 }
 
-// ParseConfig parses a boot guard option json file
+// ParseConfig parses a CBnT options json file
 func ParseConfig(filepath string) (*Options, error) {
 	var cbnto Options
 	data, err := ioutil.ReadFile(filepath)
