@@ -314,6 +314,11 @@ func NoBIOSACMErrors(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (b
 
 // IA32DebugInterfaceLockedDisabled checks if IA32 debug interface is locked
 func IA32DebugInterfaceLockedDisabled(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+	// Check for IA32_DEBUG_INTERFACE support
+	if !cpuid.HasFeature(1 << 11) {
+		// Nothing to check. Return success.
+		return true, nil, nil
+	}
 	debug, err := txtAPI.IA32DebugInterfaceEnabledOrLocked()
 	if err != nil {
 		return false, nil, err
