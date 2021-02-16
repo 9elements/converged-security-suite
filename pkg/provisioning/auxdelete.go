@@ -9,6 +9,9 @@ import (
 
 // DeleteAUXindexTPM20 deletes the AUX index on TPM 2.0
 func DeleteAUXindexTPM20(rw io.ReadWriter, pol *tools.LCPPolicy2, passHash []byte) error {
+	if !pol.ParsePolicyControl2().AuxDelete {
+		return fmt.Errorf("AuxDelete not set in LCP Policy")
+	}
 	err := WritePSIndexTPM20(rw, pol, passHash)
 	if err != nil {
 		return err
