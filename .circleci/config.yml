@@ -13,13 +13,13 @@ jobs:
       - checkout
       - run: sudo apt install -y golint
       # specify any bash command here prefixed with `run: `
-      - run: go run ./pkg/intel/metadata/manifest/internal/manifestcodegen/cmd/manifestcodegen -check ./pkg/intel/metadata/manifest ./pkg/intel/metadata/manifest/bootpolicy ./pkg/intel/metadata/manifest/key
+      - run: GO111MODULE=off go get github.com/google/go-tpm/tpm2 && go run ./pkg/intel/metadata/manifest/internal/manifestcodegen/cmd/manifestcodegen -check ./pkg/intel/metadata/manifest ./pkg/intel/metadata/manifest/bootpolicy ./pkg/intel/metadata/manifest/key
       - run: if [ "$(gofmt -l .)" != "" ]; then exit 1; fi
       - run: golint -set_exit_status ./pkg/test
       - run: golint -set_exit_status ./pkg/tools
       - run: golint -set_exit_status ./pkg/hwapi
       - run: golint -set_exit_status ./pkg/provisioning/txt
-      - run: golint -set_exit_stATUS ./pkg/provisioning/bg
+      - run: golint -set_exit_status ./pkg/provisioning/bg
       - run: golint -set_exit_status ./pkg/intel/metadata/manifest/
       - run: golint -set_exit_status ./pkg/intel/metadata/manifest/bootpolicy
       - run: golint -set_exit_status ./pkg/intel/metadata/manifest/key
