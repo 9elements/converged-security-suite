@@ -19,7 +19,7 @@ func DefinePSIndexTPM20(rw io.ReadWriter, passHash []byte) error {
 	}
 	tpm2PSIndexDef.AuthPolicy = psPolicyHash
 	authArea := tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession, Auth: []byte(tpm2.EmptyAuth)}
-	err = tpm2.NVDefineSpaceEx(rw, tpm2.HandlePlatform, authArea, "", tpm2PSIndexDef)
+	err = tpm2.NVDefineSpaceEx(rw, tpm2.HandlePlatform, "", tpm2PSIndexDef, authArea)
 	if err != nil {
 		return fmt.Errorf("NVDefineSpaceEx() failed: %v", err)
 	}
