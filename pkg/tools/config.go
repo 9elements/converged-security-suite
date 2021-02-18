@@ -3,15 +3,17 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
 	"io/ioutil"
+
+	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
+	"github.com/google/go-tpm/tpm2"
 )
 
 // Configuration input
 type Configuration struct {
 	TPM     hwapi.TPMVersion
 	TXTMode TXTMode
-	LCPHash LCPPol2Hash
+	LCPHash tpm2.Algorithm
 }
 
 // Configuration input
@@ -48,15 +50,16 @@ func ParseConfig(filepath string) (*Configuration, error) {
 		return nil, fmt.Errorf("Couldn't parse TXT mode option: %s", jConfig.TXTMode)
 	}
 	if jConfig.LCP2Hash == "SHA1" {
-		config.LCPHash = LCPPol2HAlgSHA1
+		config.LCPHash = tpm2.AlgSHA1
 	} else if jConfig.LCP2Hash == "SHA256" {
-		config.LCPHash = LCPPol2HAlgSHA256
+		config.LCPHash = tpm2.AlgSHA256
 	} else if jConfig.LCP2Hash == "SHA384" {
-		config.LCPHash = LCPPol2HAlgSHA384
+		config.LCPHash = tpm2.AlgSHA384
 	} else if jConfig.LCP2Hash == "SM3" {
-		config.LCPHash = LCPPol2HAlgSM3
+		// SM3 is not implemented
+		//config.LCPHash = tpm2.AlgSM3
 	} else if jConfig.LCP2Hash == "NULL" {
-		config.LCPHash = LCPPol2HAlgNULL
+		config.LCPHash = tpm2.AlgNull
 	} else {
 		return nil, fmt.Errorf("Couldn't parse LCP hash option: %s", jConfig.LCP2Hash)
 	}

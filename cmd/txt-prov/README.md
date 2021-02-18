@@ -60,28 +60,30 @@ Run it as root:
 ./txt-prov -config lcp.json -prov
 ```
 
-Commandline arguments
+Commandline subcommands
+--------------
 ```bash
 Usage of ./txt-prov:
-  -adef
-        Define AUX index if not exists in TPM NVRAM
-  -adel
-        Delete AUX index if exists in TPM NVRAM
-  -config string
-        Provide a json filename with LCP configuration. Default: lcp.json (default "lcp.json")
-  -out string
-        Stores written binary PS index LCP policy into file
-  -pdef
-        Define PS index if not exists in TPM NVRAM
-  -pdel
-        Delete PS index if exists in TPM NVRAM
-  -pp
-        Provision PS & AUX index with LCP config
-  -pup
-        Update PS index content in TPM NVRAM
-  -show
-        Shows current provisioned PS & AUX index in NVRAM on stdout
-  -v    Shows version and license information
+  aux-define
+      Define AUX index if not exists in TPM NVRAM
+  aux-delete
+      Delete AUX index if exists in TPM NVRAM
+  ps-define
+      Define PS index if not exists in TPM NVRAM
+  ps-delete
+      Delete PS index if exists in TPM NVRAM
+  platform-prov
+      Provision PS & AUX index with LCP config
+  ps-update
+      Update PS index content in TPM NVRAM
+  show
+      Shows current provisioned PS & AUX index in NVRAM on stdout
+  version    
+      Shows version and license information
+```
+Further information are available via:
+```bash
+./txt-prov <subcommand> -h
 ```
 
 Showing the NVRAM indices and LCP policy

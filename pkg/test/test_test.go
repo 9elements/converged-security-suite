@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/google/go-tpm/tpm2"
+
 	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 )
@@ -189,7 +191,7 @@ func TestTest_Run(t *testing.T) {
 
 	txtAPI := hwapi.GetAPI()
 	var config tools.Configuration
-	config.LCPHash = tools.LCPPol2HAlgSHA256
+	config.LCPHash = tpm2.AlgSHA256
 	config.TPM = hwapi.TPMVersion20
 	config.TXTMode = tools.AutoPromotion
 	for _, tt := range tests {
