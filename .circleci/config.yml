@@ -20,9 +20,9 @@ jobs:
       - run: golint -set_exit_status ./pkg/hwapi
       - run: golint -set_exit_status ./pkg/provisioning/txt
       - run: golint -set_exit_status ./pkg/provisioning/bg
-      - run: golint -set_exit_status ./pkg/intel/metadata/manifest/
-      - run: golint -set_exit_status ./pkg/intel/metadata/manifest/bootpolicy
-      - run: golint -set_exit_status ./pkg/intel/metadata/manifest/key
+      #- run: golint -set_exit_status ./pkg/intel/metadata/manifest/
+      #- run: golint -set_exit_status ./pkg/intel/metadata/manifest/bootpolicy
+      #- run: golint -set_exit_status ./pkg/intel/metadata/manifest/key
       - run: golint -set_exit_status ./cmd/txt-suite
       - run: golint -set_exit_status ./cmd/txt-prov
       - run: golint -set_exit_status ./cmd/bg-prov
@@ -65,7 +65,7 @@ jobs:
       - run: go build github.com/goreleaser/nfpm/cmd/nfpm
       - run: cp /tmp/out/txt-suite .
       - run: cp /tmp/out/txt-prov .
-      - run: cp /tmp/out/bg-prov
+      - run: cp /tmp/out/bg-prov .
       - run: if [ -z "$CIRCLE_TAG" ]; then echo "export CIRCLE_TAG=$(git describe --tags|cut -d'-' -f1);" >> $BASH_ENV; fi
       - run: if [ -z "$CIRCLE_BUILD_NUM" ]; then echo "export CIRCLE_BUILD_NUM=$(git describe --tags|cut -d'-' -f2);" >> $BASH_ENV; fi
       - run: MY_APP_VERSION=${CIRCLE_TAG} MY_APP_BUILDNUMBER=${CIRCLE_BUILD_NUM} go run github.com/goreleaser/nfpm/cmd/nfpm pkg --config ./build/package/nfpm_rpm.yaml --target golang-css-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}.x86_64.rpm

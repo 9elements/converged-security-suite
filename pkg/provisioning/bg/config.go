@@ -21,7 +21,7 @@ import (
 	"github.com/tidwall/pretty"
 )
 
-// IbbSegments exports the struct of IBB Segments
+// IbbSegment exports the struct of IBB Segments
 type IbbSegment struct {
 	Offset uint32 `json:"offset"` //
 	Size   uint32 `json:"size"`   //

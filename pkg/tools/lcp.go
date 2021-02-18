@@ -885,13 +885,21 @@ func parseLCPHash2(buf *bytes.Reader, hash *LCPHash, alg tpm2.Algorithm) error {
 	}
 	switch alg {
 	case tpm2.AlgSHA1:
-		copy(hash.Sha1[:], hbyte[:h.Size()])
+		var tmp [SHA1DigestSize]byte
+		copy(tmp[:], hbyte[:])
+		hash.Sha1 = &tmp
 	case tpm2.AlgSHA256:
-		copy(hash.Sha256[:], hbyte[:h.Size()])
+		var tmp [SHA256DigestSize]byte
+		copy(tmp[:], hbyte[:])
+		hash.Sha256 = &tmp
 	case tpm2.AlgSHA384:
-		copy(hash.Sha384[:], hbyte[:h.Size()])
+		var tmp [SHA384DigestSize]byte
+		copy(tmp[:], hbyte[:])
+		hash.Sha384 = &tmp
 	case tpm2.AlgSHA512:
-		copy(hash.Sha512[:], hbyte[:h.Size()])
+		var tmp [SHA512DigestSize]byte
+		copy(tmp[:], hbyte[:])
+		hash.Sha512 = &tmp
 
 		//case tpm2.AlgSM3:
 		//copy(hash.sm3[:], hbyte[:h.Size()])
