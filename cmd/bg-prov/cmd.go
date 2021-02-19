@@ -303,21 +303,40 @@ func (g *generateKMCmd) Run(ctx *context) error {
 		options = bgo
 	} else {
 		var bgo bg.BootGuardOptions
-		bgo.KeyManifest.Revision = g.Revision
-		bgo.KeyManifest.KMSVN = g.SVN
-		bgo.KeyManifest.KMID = g.ID
-		bgo.KeyManifest.PubKeyHashAlg = g.PKHashAlg
-		bgo.KeyManifest.Hash = g.KMHashes
+		tmpKM := key.NewManifest()
+		tmpKM.Revision = g.Revision
+		tmpKM.KMSVN = g.SVN
+		tmpKM.KMID = g.ID
+		tmpKM.PubKeyHashAlg = g.PKHashAlg
+		tmpKM.Hash = g.KMHashes
 		// Create KM_Hash for BPM pub signing key
 		if g.BpmPubkey != "" {
 			kh, err := bg.GetBPMPubHash(g.BpmPubkey, g.BpmHashAlg)
 			if err != nil {
 				return err
 			}
-			bgo.KeyManifest.Hash = kh
-
+			tmpKM.Hash = kh
 		}
+		bgo.KeyManifest = *tmpKM
 		options = &bgo
+	}
+
+	key, err := bg.ReadPubKey(g.Key)
+	if err != nil {
+		return err
+	}
+
+	if err := options.KeyManifest.KeyAndSignature.Key.SetPubKey(key); err != nil {
+		return err
+	}
+	if g.PrintME {
+		if err := options.KeyManifest.KeyAndSignature.Key.PrintMEKey(); err != nil {
+			return err
+		}
+	}
+	bKM, err := bg.WriteKM(&options.KeyManifest)
+	if err != nil {
+		return err
 	}
 	if g.Out != "" {
 		out, err := os.Create(g.Out)
@@ -328,30 +347,10 @@ func (g *generateKMCmd) Run(ctx *context) error {
 			return err
 		}
 	}
-	km, err := bg.SetKM(options)
-	if err != nil {
-		return err
-	}
-	key, err := bg.ReadPubKey(g.Key)
-	if err != nil {
-		return err
-	}
 
-	if err := km.KeyAndSignature.Key.SetPubKey(key); err != nil {
-		return err
-	}
-	if g.PrintME {
-		if err := km.KeyAndSignature.Key.PrintMEKey(); err != nil {
-			return err
-		}
-	}
-	bKM, err := bg.WriteKM(km)
-	if err != nil {
-		return err
-	}
 	if g.Cut == true {
 		//Cut signature from binary
-		bKM = bKM[:int(km.KeyManifestSignatureOffset)]
+		bKM = bKM[:int(options.KeyManifest.KeyManifestSignatureOffset)]
 	}
 	if err = ioutil.WriteFile(g.KM, bKM, 0600); err != nil {
 		return fmt.Errorf("unable to write KM to file: %w", err)
