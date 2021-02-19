@@ -405,7 +405,7 @@ func GetBPMPubHash(path string, hashAlg tpm2.Algorithm) ([]key.Hash, error) {
 	hStruc := &manifest.HashStructure{
 		HashAlg: tpm2.Algorithm(hashAlg),
 	}
-	copy(hStruc.HashBuffer, data)
+	hStruc.HashBuffer = data
 
 	kH := key.Hash{
 		Usage:  key.UsageBPMSigningPKD,
