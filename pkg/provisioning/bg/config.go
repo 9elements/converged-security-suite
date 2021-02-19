@@ -35,13 +35,6 @@ type KeyHash struct {
 	Algorithm tpm2.Algorithm `json:"algorithm"` //
 }
 
-// TODO: remove this structure, it could be replaced with something like:
-//           type BootGuardOptions struct {
-//		         BPM *bootpolicy.Manifest
-//               KM *key.Manifest
-//           }
-//       It will also remove a lot of extra code.
-
 // BootGuardOptions presents all available options for BootGuard configuarion file.
 type BootGuardOptions struct {
 	BootPolicyManifest bootpolicy.Manifest
@@ -249,70 +242,6 @@ func GenerateBPM(bgo *BootGuardOptions, biosFilepath string) (*bootpolicy.Manife
 	bpm.PMSE = *pmse
 
 	return bpm, nil
-}
-
-// CreateManifests takes a boot guard options configuration file in json format and a firmware image and extracts km and bpm
-func CreateManifests(configFilepath, biosFilepath string) (*bootpolicy.Manifest, *key.Manifest, error) {
-	bpm := bootpolicy.NewManifest()
-	bgo, err := ParseConfig(configFilepath)
-	if err != nil {
-		return nil, nil, err
-	}
-	data, err := ioutil.ReadFile(biosFilepath)
-	if err != nil {
-		return nil, nil, err
-	}
-	_, _, acmBuf, err := ParseFITEntries(data)
-	if err != nil {
-		return nil, nil, err
-	}
-	acm, _, _, _, err, err2 := tools.ParseACM(acmBuf)
-	if err != nil {
-		return nil, nil, err
-	}
-	if err2 != nil {
-		return nil, nil, err
-	}
-	se, err := setIBBSegment(bgo, data)
-	if err != nil {
-		return nil, nil, err
-	}
-	bpm.SE = append(bpm.SE, *se)
-	bpm.TXTE, err = setTXTElement(bgo)
-	if err != nil {
-		return nil, nil, err
-	}
-	bpm.PCDE, err = setPCDElement(bgo)
-	if err != nil {
-		return nil, nil, err
-	}
-	bpm.PME, err = setPMElement(bgo)
-	if err != nil {
-		return nil, nil, err
-	}
-	bpmh, err := setBPMHeader(bgo, bpm)
-	if err != nil {
-		return nil, nil, err
-	}
-	bpm.BPMH = *bpmh
-	pmse, err := setPMSElement(bgo, bpm)
-	if err != nil {
-		return nil, nil, err
-	}
-	bpm.PMSE = *pmse
-	km, err := SetKM(bgo)
-	if err != nil {
-		return nil, nil, err
-	}
-	if bgo.BootPolicyManifest.NEMDataStack <= 0 {
-		bpm.BPMH.NEMDataStack, err = CalculateNEMSize(data, bpm, km, acm)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-	bpm.RehashRecursive()
-	km.RehashRecursive()
-	return bpm, km, nil
 }
 
 // WriteConfig writes a BootGuard config file to the given path with given options.

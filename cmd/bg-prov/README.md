@@ -58,9 +58,9 @@ Usage of ./bg-prov:
     read-config 
             Reads config from existing BIOS file and translates it to a JSON configuration
     km-gen       
-            Generate KM file based von json configuration
+            Generate KM file based on json configuration
     bpm-gen    
-            Generate BPM file based von json configuration
+            Generate BPM file based on json configuration
     km-sign    
             Sign key manifest with given key
     bpm-sign       
@@ -144,7 +144,7 @@ Extended documentation about subcommands:
 ```
  
 ```bash
-./bg-prov bpm-gen             Generate BPM file based of json configuration and full bios image
+./bg-prov bpm-gen             Generate BPM file based of json configuration and complete firmware image
         <bpm>                 Path to the newly generated Boot Policy Manifest binary file.
         <bios>                Path to the firmware image binary file.
         
