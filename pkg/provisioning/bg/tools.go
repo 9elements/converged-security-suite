@@ -14,7 +14,6 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/bootpolicy"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/key"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
-	"github.com/google/go-tpm/tpm2"
 )
 
 // WriteBootGuardStructures takes a firmware image and extracts boot policy manifest, key manifest and acm into seperate files.
@@ -246,7 +245,7 @@ func generatePCR0Content(status uint64, km *key.Manifest, bpm *bootpolicy.Manife
 
 	for _, se := range bpm.SE {
 		for i := 0; i < len(se.DigestList.List); i++ {
-			if se.DigestList.List[i].HashAlg == tpm2.AlgSHA1 {
+			if se.DigestList.List[i].HashAlg == manifest.AlgSHA1 {
 				if err = binary.Write(buf, binary.LittleEndian, se.DigestList.List[i].HashBuffer); err != nil {
 					return nil, nil, err
 				}

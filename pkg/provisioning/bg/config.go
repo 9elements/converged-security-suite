@@ -11,8 +11,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/google/go-tpm/tpm2"
-
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/bootpolicy"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/key"
@@ -30,9 +28,9 @@ type IbbSegment struct {
 
 // KeyHash export for usage as cmd line argument type
 type KeyHash struct {
-	Usage     uint64         `json:"usage"`     //
-	Hash      string         `json:"hash"`      //
-	Algorithm tpm2.Algorithm `json:"algorithm"` //
+	Usage     uint64             `json:"usage"`     //
+	Hash      string             `json:"hash"`      //
+	Algorithm manifest.Algorithm `json:"algorithm"` //
 }
 
 // BootGuardOptions presents all available options for BootGuard configuarion file.
@@ -94,10 +92,10 @@ func getIBBSegment(ibbs []bootpolicy.IBBSegment, image []byte) ([][]byte, error)
 	return ibbSegments, nil
 }
 
-func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo tpm2.Algorithm) ([]byte, error) {
+func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo manifest.Algorithm) ([]byte, error) {
 	var hash []byte
 	switch algo {
-	case tpm2.AlgSHA1:
+	case manifest.AlgSHA1:
 		h := sha1.New()
 		segments, err := getIBBSegment(ibbs, image)
 		if err != nil {
@@ -110,7 +108,7 @@ func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo tpm2.Algorit
 			}
 		}
 		hash = h.Sum(nil)
-	case tpm2.AlgSHA256:
+	case manifest.AlgSHA256:
 		h := sha256.New()
 		segments, err := getIBBSegment(ibbs, image)
 		if err != nil {
@@ -123,7 +121,7 @@ func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo tpm2.Algorit
 			}
 		}
 		hash = h.Sum(nil)
-	case tpm2.AlgSHA384:
+	case manifest.AlgSHA384:
 		h := sha512.New384()
 		segments, err := getIBBSegment(ibbs, image)
 		if err != nil {
@@ -136,7 +134,7 @@ func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo tpm2.Algorit
 			}
 		}
 		hash = h.Sum(nil)
-	case tpm2.AlgSHA512:
+	case manifest.AlgSHA512:
 		h := sha512.New512_256()
 		segments, err := getIBBSegment(ibbs, image)
 		if err != nil {
@@ -149,7 +147,7 @@ func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo tpm2.Algorit
 			}
 		}
 		hash = h.Sum(nil)
-	case tpm2.AlgNull:
+	case manifest.AlgNull:
 		return nil, nil
 	default:
 		return nil, fmt.Errorf("couldn't match requested hash algorithm: 0x%x", algo)
@@ -310,7 +308,7 @@ func ReadConfigFromBIOSImage(biosFilepath string, configFilepath *os.File) (*Boo
 
 // GetBPMPubHash takes the path to public BPM signing key and hash algorithm
 // and returns a hash with hashAlg of pub BPM singing key
-func GetBPMPubHash(path string, hashAlg tpm2.Algorithm) ([]key.Hash, error) {
+func GetBPMPubHash(path string, hashAlg manifest.Algorithm) ([]key.Hash, error) {
 	var data []byte
 	pubkey, err := ReadPubKey(path)
 	if err != nil {
@@ -332,7 +330,7 @@ func GetBPMPubHash(path string, hashAlg tpm2.Algorithm) ([]key.Hash, error) {
 	data = hash.Sum(nil)
 	var keyHashes []key.Hash
 	hStruc := &manifest.HashStructure{
-		HashAlg: tpm2.Algorithm(hashAlg),
+		HashAlg: manifest.Algorithm(hashAlg),
 	}
 	hStruc.HashBuffer = data
 
