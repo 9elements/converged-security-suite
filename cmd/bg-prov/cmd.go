@@ -16,7 +16,6 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/key"
 	"github.com/9elements/converged-security-suite/v2/pkg/provisioning/bg"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
-	"github.com/google/go-tpm/tpm2"
 )
 
 type context struct {
@@ -43,7 +42,7 @@ type templateCmd struct {
 	DMABase1    uint64               `flag optional name:"dmabase1" help:"High DMA protected range base."`
 	DMASize1    uint64               `flag optional name:"dmasize1" help:"High DMA protected range limit."`
 	EntryPoint  uint32               `flag optional name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
-	IbbHash     []tpm2.Algorithm     `flag optional name:"ibbhash" help:"IBB Hash Algorithm"`
+	IbbHash     []manifest.Algorithm `flag optional name:"ibbhash" help:"IBB Hash Algorithm"`
 	IbbSegbase  uint32               `flag optional name:"ibbsegbase" help:"Value for IbbSegment structure"`
 	IbbSegsize  uint32               `flag optional name:"ibbsegsize" help:"Value for IBB segment structure"`
 	IbbSegFlag  uint16               `flag optional name:"ibbsegflag" help:"Reducted"`
@@ -89,19 +88,19 @@ type bpmExportCmd struct {
 }
 
 type generateKMCmd struct {
-	KM         string         `arg required name:"km" help:"Path to the newly generated Key Manifest binary file." type:"path"`
-	Key        string         `arg required name:"key" help:"Public signing key"`
-	Config     string         `flag optional name:"config" help:"Path to the JSON config file." type:"path"`
-	Revision   uint8          `flag optional name:"revision" help:"Platform Manufacturer’s BPM revision number."`
-	SVN        manifest.SVN   `flag optional name:"svn" help:"Boot Policy Manifest Security Version Number"`
-	ID         uint8          `flag optional name:"id" help:"The key Manifest Identifier"`
-	PKHashAlg  tpm2.Algorithm `flag optional name:"pkhashalg" help:"Hash algorithm of OEM public key digest"`
-	KMHashes   []key.Hash     `flag optional name:"kmhashes" help:"Key hashes for BPM, ACM, uCode etc"`
-	BpmPubkey  string         `flag optional name:"bpmpubkey" help:"Path to bpm public signing key"`
-	BpmHashAlg tpm2.Algorithm `flag optional name:"bpmhashalgo" help:"Hash algorithm for bpm public signing key"`
-	Out        string         `flag optional name:"out" help:"Path to write applied config to"`
-	Cut        bool           `flag optional name:"cut" help:"Cuts the signature before writing to binary."`
-	PrintME    bool           `flag optional name:"printme" help:"Prints the hash of KM public signing key"`
+	KM         string             `arg required name:"km" help:"Path to the newly generated Key Manifest binary file." type:"path"`
+	Key        string             `arg required name:"key" help:"Public signing key"`
+	Config     string             `flag optional name:"config" help:"Path to the JSON config file." type:"path"`
+	Revision   uint8              `flag optional name:"revision" help:"Platform Manufacturer’s BPM revision number."`
+	SVN        manifest.SVN       `flag optional name:"svn" help:"Boot Policy Manifest Security Version Number"`
+	ID         uint8              `flag optional name:"id" help:"The key Manifest Identifier"`
+	PKHashAlg  manifest.Algorithm `flag optional name:"pkhashalg" help:"Hash algorithm of OEM public key digest"`
+	KMHashes   []key.Hash         `flag optional name:"kmhashes" help:"Key hashes for BPM, ACM, uCode etc"`
+	BpmPubkey  string             `flag optional name:"bpmpubkey" help:"Path to bpm public signing key"`
+	BpmHashAlg manifest.Algorithm `flag optional name:"bpmhashalgo" help:"Hash algorithm for bpm public signing key"`
+	Out        string             `flag optional name:"out" help:"Path to write applied config to"`
+	Cut        bool               `flag optional name:"cut" help:"Cuts the signature before writing to binary."`
+	PrintME    bool               `flag optional name:"printme" help:"Prints the hash of KM public signing key"`
 }
 
 type generateBPMCmd struct {
@@ -123,7 +122,7 @@ type generateBPMCmd struct {
 	DMABase1    uint64               `flag optional name:"dmabase1" help:"High DMA protected range base."`
 	DMASize1    uint64               `flag optional name:"dmasize1" help:"High DMA protected range limit."`
 	EntryPoint  uint32               `flag optional name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
-	IbbHash     []tpm2.Algorithm     `flag optional name:"ibbhash" help:"IBB Hash Algorithm"`
+	IbbHash     []manifest.Algorithm `flag optional name:"ibbhash" help:"IBB Hash Algorithm"`
 	IbbSegbase  uint32               `flag optional name:"ibbsegbase" help:"Value for IbbSegment structure"`
 	IbbSegsize  uint32               `flag optional name:"ibbsegsize" help:"Value for IBB segment structure"`
 	IbbSegFlag  uint16               `flag optional name:"ibbsegflag" help:"Reducted"`
@@ -188,11 +187,9 @@ func (kmp *kmPrintCmd) Run(ctx *context) error {
 		return err
 	}
 	km.Print()
-
-	if err := km.KeyAndSignature.Key.PrintMEKey(); err != nil {
+	if err := km.KeyAndSignature.Key.PrintKMPubKey(km.PubKeyHashAlg); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -207,6 +204,9 @@ func (bpmp *bpmPrintCmd) Run(ctx *context) error {
 		return err
 	}
 	bpm.Print()
+	if err := bpm.PMSE.KeySignature.Key.PrintBPMPubKey(bpm.PMSE.Signature.HashAlg); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -330,7 +330,7 @@ func (g *generateKMCmd) Run(ctx *context) error {
 		return err
 	}
 	if g.PrintME {
-		if err := options.KeyManifest.KeyAndSignature.Key.PrintMEKey(); err != nil {
+		if err := options.KeyManifest.KeyAndSignature.Key.PrintKMPubKey(options.KeyManifest.PubKeyHashAlg); err != nil {
 			return err
 		}
 	}
