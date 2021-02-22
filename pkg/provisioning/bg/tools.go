@@ -12,6 +12,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/bootpolicy"
+	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/common/pretty"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/key"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 )
@@ -75,9 +76,9 @@ func PrintBootGuardStructures(image []byte) error {
 	}
 	if km != nil {
 		if km.KeyAndSignature.Signature.DataTotalSize() < 1 {
-			fmt.Println(km.PrettyString(0, true, false))
+			fmt.Println(km.PrettyString(0, true, pretty.OptionOmitKeySignature(true)))
 		} else {
-			fmt.Println(km.PrettyString(0, true, true))
+			fmt.Println(km.PrettyString(0, true, pretty.OptionOmitKeySignature(false)))
 		}
 	}
 	if acm != nil {
