@@ -74,7 +74,11 @@ func PrintBootGuardStructures(image []byte) error {
 		fmt.Println(bpm.PrettyString(0, true))
 	}
 	if km != nil {
-		fmt.Println(km.PrettyString(0, true))
+		if km.KeyAndSignature.Signature.DataTotalSize() < 1 {
+			fmt.Println(km.PrettyString(0, true, false))
+		} else {
+			fmt.Println(km.PrettyString(0, true, true))
+		}
 	}
 	if acm != nil {
 		acm.PrettyPrint()
