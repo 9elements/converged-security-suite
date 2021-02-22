@@ -17,6 +17,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/creasty/defaults"
 	"github.com/tidwall/pretty"
+	"github.com/tjfoc/gmsm/sm3"
 )
 
 // IbbSegment exports the struct of IBB Segments
@@ -136,6 +137,19 @@ func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo manifest.Alg
 		hash = h.Sum(nil)
 	case manifest.AlgSHA512:
 		h := sha512.New512_256()
+		segments, err := getIBBSegment(ibbs, image)
+		if err != nil {
+			return nil, err
+		}
+		for _, segment := range segments {
+			_, err = h.Write(segment)
+			if err != nil {
+				return nil, err
+			}
+		}
+		hash = h.Sum(nil)
+	case manifest.AlgSM3_256:
+		h := sm3.New()
 		segments, err := getIBBSegment(ibbs, image)
 		if err != nil {
 			return nil, err
@@ -314,11 +328,10 @@ func GetBPMPubHash(path string, hashAlg manifest.Algorithm) ([]key.Hash, error) 
 	if err != nil {
 		return nil, err
 	}
-	alg, err := hashAlg.Hash()
+	hash, err := hashAlg.Hash()
 	if err != nil {
 		return nil, err
 	}
-	hash := alg.New()
 	var kAs manifest.Key
 	if err := kAs.SetPubKey(pubkey); err != nil {
 		return nil, err

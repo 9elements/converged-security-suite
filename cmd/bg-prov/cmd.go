@@ -187,8 +187,10 @@ func (kmp *kmPrintCmd) Run(ctx *context) error {
 		return err
 	}
 	km.Print()
-	if err := km.KeyAndSignature.Key.PrintKMPubKey(km.PubKeyHashAlg); err != nil {
-		return err
+	if km.KeyAndSignature.Signature.DataTotalSize() > 1 {
+		if err := km.KeyAndSignature.Key.PrintKMPubKey(km.PubKeyHashAlg); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -204,8 +206,10 @@ func (bpmp *bpmPrintCmd) Run(ctx *context) error {
 		return err
 	}
 	bpm.Print()
-	if err := bpm.PMSE.KeySignature.Key.PrintBPMPubKey(bpm.PMSE.Signature.HashAlg); err != nil {
-		return err
+	if bpm.PMSE.Signature.DataTotalSize() > 1 {
+		if err := bpm.PMSE.KeySignature.Key.PrintBPMPubKey(bpm.PMSE.Signature.HashAlg); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -330,8 +334,10 @@ func (g *generateKMCmd) Run(ctx *context) error {
 		return err
 	}
 	if g.PrintME {
-		if err := options.KeyManifest.KeyAndSignature.Key.PrintKMPubKey(options.KeyManifest.PubKeyHashAlg); err != nil {
-			return err
+		if options.KeyManifest.KeyAndSignature.Signature.DataTotalSize() > 1 {
+			if err := options.KeyManifest.KeyAndSignature.Key.PrintKMPubKey(options.KeyManifest.PubKeyHashAlg); err != nil {
+				return err
+			}
 		}
 	}
 	bKM, err := bg.WriteKM(&options.KeyManifest)
