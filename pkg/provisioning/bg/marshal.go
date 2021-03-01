@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"fmt"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/bootpolicy"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/key"
 )
@@ -23,6 +24,30 @@ func WriteBPM(bpm *bootpolicy.Manifest) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	_, err := bpm.WriteTo(buf)
 	return buf.Bytes(), err
+}
+
+// StitchKM returns a key manifest manifest as byte slice
+func StitchKM(km *key.Manifest, pubKey crypto.PublicKey, signature []byte) ([]byte, error) {
+	if err := km.KeyAndSignature.FillSignature(0, pubKey, signature, km.PubKeyHashAlg); err != nil {
+		return nil, err
+	}
+	km.RehashRecursive()
+	if err := km.Validate(); err != nil {
+		return nil, err
+	}
+	return WriteKM(km)
+}
+
+// StitchBPM returns a boot policy manifest as byte slice
+func StitchBPM(bpm *bootpolicy.Manifest, pubKey crypto.PublicKey, signature []byte) ([]byte, error) {
+	if err := bpm.PMSE.KeySignature.FillSignature(0, pubKey, signature, manifest.AlgNull); err != nil {
+		return nil, err
+	}
+	bpm.RehashRecursive()
+	if err := bpm.Validate(); err != nil {
+		return nil, err
+	}
+	return WriteBPM(bpm)
 }
 
 func parsePrivateKey(raw []byte) (crypto.Signer, error) {

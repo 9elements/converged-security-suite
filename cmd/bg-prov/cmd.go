@@ -158,6 +158,20 @@ type readConfigCmd struct {
 	BIOS   string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
 }
 
+type stitchingKMCmd struct {
+	KM        string `arg required name:"km" help:"Path to the Key Manifest binary file." type:"path"`
+	Signature string `arg required name:"signature" help:"Path to the Key Manifest signature file." type:"path"`
+	PubKey    string `arg required name:"pubkey" help:"Path to the Key Manifest public key file." type:"path"`
+	Out       string `arg required name:"out" help:"Path to the newly stitched KM binary file." type:"path"`
+}
+
+type stitchingBPMCmd struct {
+	BPM       string `arg required name:"bpm" help:"Path to the Boot Policy Manifest binary file." type:"path"`
+	Signature string `arg required name:"signature" help:"Path to the Boot Policy Manifest signature file." type:"path"`
+	PubKey    string `arg required name:"pubkey" help:"Path to the Boot Policy Manifest public key file." type:"path"`
+	Out       string `arg required name:"out" help:"Path to the newly stitched BPM binary file." type:"path"`
+}
+
 type stitchingCmd struct {
 	BIOS string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
 	ACM  string `arg required name:"acm" help:"Path to the ACM binary file." type:"path"`
@@ -592,6 +606,68 @@ func (rc *readConfigCmd) Run(ctx *context) error {
 	return nil
 }
 
+func (s *stitchingKMCmd) Run(ctx *context) error {
+	kmData, err := ioutil.ReadFile(s.KM)
+	if err != nil {
+		return err
+	}
+	sig, err := ioutil.ReadFile(s.Signature)
+	if err != nil {
+		return err
+	}
+	pub, err := bg.ReadPubKey(s.PubKey)
+	if err != nil {
+		return err
+	}
+	if len(kmData) < 1 || len(sig) < 1 {
+		return fmt.Errorf("loaded files are empty")
+	}
+	reader := bytes.NewReader(kmData)
+	km, err := bg.ParseKM(reader)
+	if err != nil {
+		return err
+	}
+	kmRaw, err := bg.StitchKM(km, pub, sig)
+	if err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(s.Out, kmRaw, 0644); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *stitchingBPMCmd) Run(ctx *context) error {
+	bpmData, err := ioutil.ReadFile(s.BPM)
+	if err != nil {
+		return err
+	}
+	sig, err := ioutil.ReadFile(s.Signature)
+	if err != nil {
+		return err
+	}
+	pub, err := bg.ReadPubKey(s.PubKey)
+	if err != nil {
+		return err
+	}
+	if len(bpmData) < 1 || len(sig) < 1 {
+		return fmt.Errorf("loaded files are empty")
+	}
+	reader := bytes.NewReader(bpmData)
+	bpm, err := bg.ParseBPM(reader)
+	if err != nil {
+		return err
+	}
+	bpmRaw, err := bg.StitchBPM(bpm, pub, sig)
+	if err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(s.Out, bpmRaw, 0644); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *stitchingCmd) Run(ctx *context) error {
 	bpm, _ := ioutil.ReadFile(s.BPM)
 	km, _ := ioutil.ReadFile(s.KM)
@@ -655,20 +731,25 @@ var cli struct {
 	Debug                    bool `help:"Enable debug mode."`
 	ManifestStrictOrderCheck bool `help:"Enable checking of manifest elements order"`
 
-	Version    versionCmd     `cmd help:"Prints the version of the program"`
-	ShowKm     kmPrintCmd     `cmd help:"Prints Key Manifest binary in human-readable format"`
-	ShowBpm    bpmPrintCmd    `cmd help:"Prints Boot Policy Manifest binary in human-readable format"`
-	ShowAcm    acmPrintCmd    `cmd help:"Prints ACM binary in human-readable format"`
-	ShowAll    biosPrintCmd   `cmd help:"Prints BPM, KM, FIT and ACM from BIOS binary in human-readable format"`
-	ExportAcm  acmExportCmd   `cmd help:"Exports ACM structures from BIOS image into file"`
-	ExportKm   kmExportCmd    `cmd help:"Exports KM structures from BIOS image into file"`
-	ExportBpm  bpmExportCmd   `cmd help:"Exports BPM structures from BIOS image into file"`
-	Template   templateCmd    `cmd help:"Writes template JSON configuration into file"`
-	ReadConfig readConfigCmd  `cmd help:"Reads config from existing BIOS file and translates it to a JSON configuration"`
-	KmGen      generateKMCmd  `cmd help:"Generate KM file based von json configuration"`
-	BpmGen     generateBPMCmd `cmd help:"Generate BPM file based von json configuration"`
-	KmSign     signKMCmd      `cmd help:"Sign key manifest with given key"`
-	BpmSign    signBPMCmd     `cmd help:"Sign Boot Policy Manifest with given key"`
-	Stitch     stitchingCmd   `cmd help:"Stitches BPM, KM and ACM into given BIOS image file"`
-	KeyGen     keygenCmd      `cmd help:"Generates key for KM and BPM signing"`
+	KMShow   kmPrintCmd     `cmd help:"Prints Key Manifest binary in human-readable format"`
+	KMGen    generateKMCmd  `cmd help:"Generate KM file based von json configuration"`
+	KMSign   signKMCmd      `cmd help:"Sign key manifest with given key"`
+	KMStitch stitchingKMCmd `cmd help:"Stitches KM Signatue into unsigned KM"`
+	KMExport kmExportCmd    `cmd help:"Exports KM structures from BIOS image into file"`
+
+	BPMShow   bpmPrintCmd     `cmd help:"Prints Boot Policy Manifest binary in human-readable format"`
+	BPMGen    generateBPMCmd  `cmd help:"Generate BPM file based von json configuration"`
+	BPMSign   signBPMCmd      `cmd help:"Sign Boot Policy Manifest with given key"`
+	BPMStitch stitchingBPMCmd `cmd help:"Stitches BPM Signatue into unsigned BPM"`
+	BPMExport bpmExportCmd    `cmd help:"Exports BPM structures from BIOS image into file"`
+
+	ACMExport acmExportCmd `cmd help:"Exports ACM structures from BIOS image into file"`
+	ACMShow   acmPrintCmd  `cmd help:"Prints ACM binary in human-readable format"`
+
+	ShowAll    biosPrintCmd  `cmd help:"Prints BPM, KM, FIT and ACM from BIOS binary in human-readable format"`
+	Stitch     stitchingCmd  `cmd help:"Stitches BPM, KM and ACM into given BIOS image file"`
+	KeyGen     keygenCmd     `cmd help:"Generates key for KM and BPM signing"`
+	Template   templateCmd   `cmd help:"Writes template JSON configuration into file"`
+	ReadConfig readConfigCmd `cmd help:"Reads config from existing BIOS file and translates it to a JSON configuration"`
+	Version    versionCmd    `cmd help:"Prints the version of the program"`
 }
