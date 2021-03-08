@@ -455,7 +455,7 @@ func (g *generateBPMCmd) Run(ctx *context) error {
 		return err
 	}
 	if g.Cut {
-		bBPM = bBPM[:bpm.PMSEOffset()]
+		bBPM = bBPM[:bpm.KeySignatureOffset]
 	}
 	if err = ioutil.WriteFile(g.BPM, bBPM, 0600); err != nil {
 		return fmt.Errorf("unable to write BPM to file: %w", err)
