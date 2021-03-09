@@ -40,9 +40,15 @@ func StitchKM(km *key.Manifest, pubKey crypto.PublicKey, signature []byte) ([]by
 
 // StitchBPM returns a boot policy manifest as byte slice
 func StitchBPM(bpm *bootpolicy.Manifest, pubKey crypto.PublicKey, signature []byte) ([]byte, error) {
+	PMSEString := [8]byte{0x5f, 0x5f, 0x50, 0x4d, 0x53, 0x47, 0x5f, 0x5f}
+	bpm.PMSE.StructInfo = bootpolicy.StructInfo{}
+	bpm.PMSE.StructInfo.ID = PMSEString
+	bpm.PMSE.StructInfo.Version = 0x20
+
 	if err := bpm.PMSE.KeySignature.FillSignature(0, pubKey, signature, manifest.AlgNull); err != nil {
 		return nil, err
 	}
+
 	bpm.RehashRecursive()
 	if err := bpm.Validate(); err != nil {
 		return nil, err
