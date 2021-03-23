@@ -95,6 +95,13 @@ func (uefi *UEFI) PhysAddrToOffset(physAddr uint64) uint64 {
 	return physAddr - startAddr
 }
 
+// OffsetToPhysAddr returns the `physAddr` of offset relatively
+// to the beginning of the firmware.
+func (uefi *UEFI) OffsetToPhysAddr(offset uint64) uint64 {
+	startAddr := uint64(consts.BasePhysAddr - len(uefi.ImageBytes()))
+	return offset + startAddr
+}
+
 // GetFIT returns parsed FIT-entries
 func (uefi *UEFI) GetFIT() ([]fit.Entry, error) {
 	return fit.GetEntries(uefi.Buf())
