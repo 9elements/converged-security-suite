@@ -192,6 +192,13 @@ type printFITCmd struct {
 	BIOS string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
 }
 
+type validateCmd struct {
+	Path        string `arg required name:"path" help:"Path to firmware image under test"`
+	BpmPubKey   string `arg required name:"bpmpubkey" help:"Path to the Boot Policy Manifest public key file." type:"path"`
+	KmPubKey    string `arg required name:"kmpubkey" help:"Path to the Key Manifest public key file." type:"path"`
+	Interactive bool   `flag optional name:"interactive" help:"Set this flag to pause after each error"`
+}
+
 func (v *versionCmd) Run(ctx *context) error {
 	tools.ShowVersion(programName, gittag, gitcommit)
 	return nil
@@ -797,6 +804,14 @@ func (p printFITCmd) Run(ctx *context) error {
 	return nil
 }
 
+func (v *validateCmd) Run(ctx *context) error {
+	if err := cbnt.ValidateImage(v.Path, v.BpmPubKey, v.KmPubKey, v.Interactive); err != nil {
+		return err
+	}
+	return nil
+
+}
+
 var cli struct {
 	Debug                    bool `help:"Enable debug mode."`
 	ManifestStrictOrderCheck bool `help:"Enable checking of manifest elements order"`
@@ -823,5 +838,6 @@ var cli struct {
 	KeyGen     keygenCmd     `cmd help:"Generates key for KM and BPM signing"`
 	Template   templateCmd   `cmd help:"Writes template JSON configuration into file"`
 	ReadConfig readConfigCmd `cmd help:"Reads config from existing BIOS file and translates it to a JSON configuration"`
+	Validate   validateCmd   `cmd help:"Verifies a CBnt enabled firmware image"`
 	Version    versionCmd    `cmd help:"Prints the version of the program"`
 }
