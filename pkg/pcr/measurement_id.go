@@ -35,6 +35,7 @@ const (
 	MeasurementIDInit
 	MeasurementIDPCR0_DATA
 	MeasurementIDACMDate
+	MeasurementIDACMDateWithPadding
 	MeasurementIDBIOSStartupModule
 	MeasurementIDSCRTMSeparator
 	MeasurementIDPCDFirmwareVendorVersionData
@@ -211,6 +212,10 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 	case MeasurementIDACMDate:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			return MeasureACMDate(provider.FITEntries())
+		}
+	case MeasurementIDACMDateWithPadding:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			return MeasureACMDateWithPadding(config.PCR0DataIbbDigestHashAlgorithm, provider.FITEntries())
 		}
 	case MeasurementIDBIOSStartupModule:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {

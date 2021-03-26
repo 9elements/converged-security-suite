@@ -16,6 +16,8 @@ func (f Flow) String() string {
 		return "LegacyTXTDisabled"
 	case FlowIntelLegacyTXTEnabled:
 		return "LegacyTXTEnabled"
+	case FlowIntelLegacyTXTEnabledTPM12:
+		return "LegacyTXTEnabledTPM12"
 	case FlowIntelCBnT0T:
 		return "CBnT0T"
 	}
@@ -30,6 +32,8 @@ func FlowFromString(s string) (Flow, error) {
 		return FlowIntelLegacyTXTDisabled, nil
 	case "legacytxtenabled":
 		return FlowIntelLegacyTXTEnabled, nil
+	case "legacytxtenabledtpm12":
+		return FlowIntelLegacyTXTEnabledTPM12, nil
 	case "cbnt0t":
 		return FlowIntelCBnT0T, nil
 	}
@@ -45,6 +49,9 @@ const (
 
 	// FlowIntelLegacyTXTEnabled means a pre-CBnT flow with enabled TXT.
 	FlowIntelLegacyTXTEnabled
+
+	// FlowIntelLegacyTXTEnabledTPM12 means a pre-CBnT flow with enabled TXT for TPM 1.2
+	FlowIntelLegacyTXTEnabledTPM12
 
 	// FlowIntelCBnT0T means CBnT flow with profile "0T".
 	FlowIntelCBnT0T
@@ -102,6 +109,19 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 		return MeasurementIDs{
 			MeasurementIDInit, // is fake measurement
 			MeasurementIDACMDate,
+			MeasurementIDBIOSStartupModule,
+			MeasurementIDSCRTMSeparator,
+			MeasurementIDPCDFirmwareVendorVersionData,
+			MeasurementIDPCDFirmwareVendorVersionCode, // is fake measurement
+			MeasurementIDDXE,
+			MeasurementIDSeparator,
+			MeasurementIDFITPointer, // is fake measurement
+			MeasurementIDFITHeaders, // is fake measurement
+		}
+	case FlowIntelLegacyTXTEnabledTPM12:
+		return MeasurementIDs{
+			MeasurementIDInit, // is fake measurement
+			MeasurementIDACMDateWithPadding,
 			MeasurementIDBIOSStartupModule,
 			MeasurementIDSCRTMSeparator,
 			MeasurementIDPCDFirmwareVendorVersionData,
