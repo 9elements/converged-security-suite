@@ -14,11 +14,14 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (registers.TPMType, 
 	// We have two approaches:
 	// - based on registers provides a reliable results, but these values may not exist
 	// - based on firmware may provide hints that TPM2.0 is not supported
-	if regs != nil {
-		acmPolicyStatus, found := registers.FindACMPolicyStatus(regs)
-		if found {
-			return acmPolicyStatus.TPMType(), nil
-		}
+	btgACMInfo, found := registers.FindBTGSACMInfo(regs)
+	if found {
+		return btgACMInfo.TPMType(), nil
+	}
+
+	acmPolicyStatus, found := registers.FindACMPolicyStatus(regs)
+	if found {
+		return acmPolicyStatus.TPMType(), nil
 	}
 
 	if firmware != nil {
