@@ -3,10 +3,12 @@ module github.com/9elements/converged-security-suite/v2
 go 1.13
 
 require (
+	github.com/9elements/tpmtool v0.0.0-20191130171819-da1d98c3e72c
 	github.com/alecthomas/kong v0.2.11
 	github.com/creasty/defaults v1.5.1
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/dustin/go-humanize v1.0.0
+	github.com/edsrzf/mmap-go v1.0.0
 	github.com/fatih/camelcase v1.0.0
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/fearful-symmetry/gomsr v0.0.1
@@ -19,13 +21,14 @@ require (
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/pierrec/lz4 v2.6.0+incompatible // indirect
+	github.com/rekby/gpt v0.0.0-20200614112001-7da10aec5566 // indirect
 	github.com/spf13/pflag v1.0.3
 	github.com/stretchr/testify v1.2.2
 	github.com/tidwall/pretty v1.0.2
 	github.com/tjfoc/gmsm v1.4.0
 	github.com/ulikunitz/xz v0.5.8 // indirect
 	github.com/xaionaro-go/gosrc v0.0.0-20201124181305-3fdf8476a735
-	github.com/xaionaro-go/unsafetools v0.0.0-20200202162159-021b112c4d30 // indirect
+	github.com/xaionaro-go/unsafetools v0.0.0-20200202162159-021b112c4d30
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	golang.org/x/crypto v0.0.0-20201012173705-84dcc777aaee
 	golang.org/x/sys v0.0.0-20210218155724-8ebf48af031b // indirect
