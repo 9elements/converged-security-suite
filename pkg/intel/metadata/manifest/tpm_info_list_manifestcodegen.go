@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/common/pretty"
-	"github.com/google/go-tpm/tpm2"
 )
 
 var (
@@ -55,7 +54,7 @@ func (s *TPMInfoList) ReadFrom(r io.Reader) (int64, error) {
 			return totalN, fmt.Errorf("unable to read the count for field 'Algorithms': %w", err)
 		}
 		totalN += int64(binary.Size(count))
-		s.Algorithms = make([]tpm2.Algorithm, count)
+		s.Algorithms = make([]Algorithm, count)
 
 		for idx := range s.Algorithms {
 			err := binary.Read(r, binary.LittleEndian, &s.Algorithms[idx])

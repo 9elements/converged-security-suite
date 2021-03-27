@@ -44,9 +44,9 @@ func MeasureACMDate(fitEntries []fit.Entry) (*Measurement, error) {
 	return &m, mErr.ReturnValue()
 }
 
-func MeasureACMDateWithPadding(hashAlg tpm2.Algorithm, fitEntries []fit.Entry) (*Measurement, error) {
+func MeasureACMDateInPlace(hashAlg tpm2.Algorithm, fitEntries []fit.Entry) (*Measurement, error) {
 	m := Measurement{
-		ID: MeasurementIDACMDateWithPadding,
+		ID: MeasurementIDACMDateInPlace,
 	}
 
 	var hashSize int

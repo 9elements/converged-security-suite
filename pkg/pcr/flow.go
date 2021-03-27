@@ -121,9 +121,8 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 	case FlowIntelLegacyTXTEnabledTPM12:
 		return MeasurementIDs{
 			MeasurementIDInit, // is fake measurement
-			MeasurementIDACMDateWithPadding,
+			MeasurementIDACMDateInPlace,
 			MeasurementIDBIOSStartupModule,
-			MeasurementIDSCRTMSeparator,
 			MeasurementIDPCDFirmwareVendorVersionData,
 			MeasurementIDPCDFirmwareVendorVersionCode, // is fake measurement
 			MeasurementIDDXE,

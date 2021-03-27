@@ -1,6 +1,5 @@
+//go:generate manifestcodegen
 package manifest
-
-import "github.com/google/go-tpm/tpm2"
 
 type TPM2PCRExtendPolicySupport uint8
 
@@ -38,5 +37,5 @@ func (cap TPMCapabilities) TPMFamilySupport() TPMFamilySupport {
 // TPMInfoList represents TPM capabilities supported by ACM
 type TPMInfoList struct {
 	Capabilities TPMCapabilities
-	Algorithms   []tpm2.Algorithm
+	Algorithms   []Algorithm
 }
