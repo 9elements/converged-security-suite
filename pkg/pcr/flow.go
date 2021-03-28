@@ -50,11 +50,11 @@ const (
 	// FlowIntelLegacyTXTEnabled means a pre-CBnT flow with enabled TXT.
 	FlowIntelLegacyTXTEnabled
 
-	// FlowIntelLegacyTXTEnabledTPM12 means a pre-CBnT flow with enabled TXT for TPM 1.2
-	FlowIntelLegacyTXTEnabledTPM12
-
 	// FlowIntelCBnT0T means CBnT flow with profile "0T".
 	FlowIntelCBnT0T
+
+	// FlowIntelLegacyTXTEnabledTPM12 means a pre-CBnT flow with enabled TXT for TPM 1.2
+	FlowIntelLegacyTXTEnabledTPM12
 )
 
 // Flows contains all supported PCR measurements flows
@@ -62,6 +62,7 @@ var Flows = []Flow{
 	FlowAuto,
 	FlowIntelLegacyTXTDisabled,
 	FlowIntelLegacyTXTEnabled,
+	FlowIntelLegacyTXTEnabledTPM12,
 	FlowIntelCBnT0T,
 }
 

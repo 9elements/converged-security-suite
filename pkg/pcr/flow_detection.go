@@ -35,11 +35,11 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (registers.TPMType, 
 			case *fit.EntrySACM:
 				data, err := fitEntry.ParseData()
 				if data == nil {
-					return 0, fmt.Errorf("unable to parse EntrySACM: %v", err)
+					return 0, fmt.Errorf("unable to parse EntrySACM: %w", err)
 				}
 				_, chipset, err := manifest.ParseChipsetACModuleInformation(bytes.NewBuffer(data.UserArea))
 				if err != nil {
-					return 0, fmt.Errorf("failed to read ChipsetACModuleInformation, err: %v", err)
+					return 0, fmt.Errorf("failed to read ChipsetACModuleInformation, err: %w", err)
 				}
 
 				// From Intel TXT Software Development Guide:
@@ -54,7 +54,7 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (registers.TPMType, 
 				var tpmInfo manifest.TPMInfoList
 				_, err = tpmInfo.ReadFrom(bytes.NewBuffer(image[fitEntry.GetDataOffset()+uint64(chipset.TPMInfoList):]))
 				if err != nil {
-					return 0, fmt.Errorf("failed to read TPMInfoList, err: %v", err)
+					return 0, fmt.Errorf("failed to read TPMInfoList, err: %w", err)
 				}
 
 				bool2Int := func(b bool) int {
@@ -74,13 +74,12 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (registers.TPMType, 
 					return registers.TPMTypeNoTpm, nil
 				}
 				if s == 1 {
-					if tpmFamilySupport.IsDiscreteTPM12Supported() {
+					switch {
+					case tpmFamilySupport.IsDiscreteTPM12Supported():
 						return registers.TPMType12, nil
-					}
-					if tpmFamilySupport.IsDiscreteTPM20Supported() {
+					case tpmFamilySupport.IsDiscreteTPM20Supported():
 						return registers.TPMType20, nil
-					}
-					if tpmFamilySupport.IsFirmwareTPM20Supported() {
+					case tpmFamilySupport.IsFirmwareTPM20Supported():
 						return registers.TPMTypeIntelPTT, nil
 					}
 				}
@@ -144,7 +143,7 @@ func isCBnT(fitEntries []fit.Entry) (bool, error) {
 		case *fit.EntryKeyManifestRecord:
 			data, err := fitEntry.ParseData()
 			if data == nil {
-				return false, fmt.Errorf("unable to parse KeyManifest policy record: %v", err)
+				return false, fmt.Errorf("unable to parse KeyManifest policy record: %w", err)
 			}
 			if data.Version < 0x21 {
 				return false, nil
