@@ -9,47 +9,55 @@ import (
 	"strings"
 )
 
-type DetectedTPM uint8
+type Type uint8
 
 const (
-	DetectedNoTPM DetectedTPM = iota
-	DetectedTPM12
-	DetectedTPM20
+	TypeNoTPM Type = iota
+	TypeTPM12
+	TypeTPM20
 )
 
-// DetectLocal provides an easy way of TPM detection based on files heuristics
-func DetectLocal() (DetectedTPM, error) {
+// Local provides an easy way of TPM detection based on files heuristics
+func Local() (Type, error) {
 	if runtime.GOOS != "linux" {
 		return 0, fmt.Errorf("tpm.DetectLocal is supported for Linux only")
 	}
+	return local("/dev/tpm0", "/sys/class/tpm/tpm0/device/caps")
+}
 
-	_, err := os.Stat("/dev/tpm0")
+func local(devicePath, capabilities string) (Type, error) {
+	_, err := os.Stat(devicePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return DetectedNoTPM, nil
+			return TypeNoTPM, nil
 		}
-		return 0, fmt.Errorf("failed to check existance of /dev/tpm0, err: %v", err)
+		return 0, fmt.Errorf("failed to check existance of %s, err: %w", devicePath, err)
 	}
 
-	caps, err := ioutil.ReadFile("/sys/class/tpm/tpm0/device/caps")
+	caps, err := ioutil.ReadFile(capabilities)
 	if err != nil {
 		// This file may not exist for TPM2.0
 		if os.IsNotExist(err) {
-			return DetectedTPM20, nil
+			return TypeTPM20, nil
 		}
-		return 0, fmt.Errorf("failed to check existance of /sys/class/tpm/tpm0/device/caps, err: %v", err)
+		return 0, fmt.Errorf("failed to check existance of %s, err: %w", capabilities, err)
 	}
 
-	specPrefix := "TCG version: "
+	specPrefix := "TCG version"
 	var tpmVersion string
 	for _, lineBytes := range bytes.Split(caps, []byte{'\n'}) {
 		line := string(lineBytes)
-		if strings.HasPrefix(line, specPrefix) {
-			tpmVersion = line[len(specPrefix):]
+		parts := strings.SplitN(line, ":", 2)
+		key := strings.TrimSpace(parts[0])
+		val := strings.TrimSpace(parts[1])
+		if key == specPrefix {
+			tpmVersion = val
+			break
 		}
 	}
 	if tpmVersion == "2.0" {
-		return DetectedTPM20, nil
+		return TypeTPM20, nil
 	}
-	return DetectedTPM12, nil
+	// should be 1.2, because the capabilities file should not even exist for TPM2.0
+	return TypeTPM12, nil
 }
