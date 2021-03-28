@@ -44,6 +44,7 @@ const (
 	MeasurementIDFITPointer
 	MeasurementIDFITHeaders
 	MeasurementIDDeepAnalysis
+	MeasurementIDACMDateInPlace
 	EndOfMeasurementID
 )
 
@@ -78,6 +79,8 @@ func (id MeasurementID) String() string {
 		return "PCR0_DATA"
 	case MeasurementIDACMDate:
 		return "ACM_date"
+	case MeasurementIDACMDateInPlace:
+		return "ACM_date_in_place"
 	case MeasurementIDBIOSStartupModule:
 		return "BIOS_startup_module"
 	case MeasurementIDSCRTMSeparator:
@@ -107,6 +110,8 @@ func (id MeasurementID) PCRIDs() []ID {
 	case MeasurementIDPCR0_DATA:
 		return []ID{0}
 	case MeasurementIDACMDate:
+		return []ID{0}
+	case MeasurementIDACMDateInPlace:
 		return []ID{0}
 	case MeasurementIDBIOSStartupModule:
 		return []ID{0}
@@ -140,6 +145,8 @@ func (id MeasurementID) EventLogEventType() *tpmeventlog.EventType {
 	case MeasurementIDPCR0_DATA:
 		return eventTypePtr(tpmeventlog.EV_S_CRTM_CONTENTS)
 	case MeasurementIDACMDate:
+		return eventTypePtr(tpmeventlog.EV_S_CRTM_CONTENTS)
+	case MeasurementIDACMDateInPlace:
 		return eventTypePtr(tpmeventlog.EV_S_CRTM_CONTENTS)
 	case MeasurementIDBIOSStartupModule:
 		return eventTypePtr(tpmeventlog.EV_S_CRTM_CONTENTS)
@@ -211,6 +218,10 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 	case MeasurementIDACMDate:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			return MeasureACMDate(provider.FITEntries())
+		}
+	case MeasurementIDACMDateInPlace:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			return MeasureACMDateInPlace(config.PCR0DataIbbDigestHashAlgorithm, provider.FITEntries())
 		}
 	case MeasurementIDBIOSStartupModule:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
