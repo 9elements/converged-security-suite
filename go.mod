@@ -14,7 +14,7 @@ require (
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/google/go-tpm v0.3.3-0.20210120190357-1ff48daca32f
 	github.com/intel-go/cpuid v0.0.0-20200819041909-2aa72927c3e2
-	github.com/linuxboot/fiano v5.0.0+incompatible
+	github.com/linuxboot/fiano v6.0.0-rc+incompatible
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/nwaples/rardecode v1.1.0 // indirect
