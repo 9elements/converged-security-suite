@@ -11,6 +11,8 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/linuxboot/fiano/pkg/uefi"
+
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/bootpolicy"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/key"
@@ -174,9 +176,10 @@ type stitchingBPMCmd struct {
 
 type stitchingCmd struct {
 	BIOS string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
-	ACM  string `arg required name:"acm" help:"Path to the ACM binary file." type:"path"`
-	KM   string `arg required name:"km" help:"Path to the Key Manifest binary file." type:"path"`
-	BPM  string `arg required name:"bpm" help:"Path to the Boot Policy Manifest binary file." type:"path"`
+	ACM  string `flag optional name:"acm" help:"Path to the ACM binary file." type:"path"`
+	KM   string `flag optional name:"km" help:"Path to the Key Manifest binary file." type:"path"`
+	BPM  string `flag optional name:"bpm" help:"Path to the Boot Policy Manifest binary file." type:"path"`
+	ME   string `flag optional name:"me" help:"Path to the Management Engine binary file." type:"path"`
 }
 
 type keygenCmd struct {
@@ -669,14 +672,55 @@ func (s *stitchingBPMCmd) Run(ctx *context) error {
 }
 
 func (s *stitchingCmd) Run(ctx *context) error {
-	bpm, _ := ioutil.ReadFile(s.BPM)
-	km, _ := ioutil.ReadFile(s.KM)
-	acm, _ := ioutil.ReadFile(s.ACM)
-	if len(acm) == 0 && len(km) == 0 && len(bpm) == 0 {
+	var err error
+	var bpm, km, acm, me []byte
+	if s.BPM != "" {
+		if bpm, err = ioutil.ReadFile(s.BPM); err != nil {
+			return err
+		}
+	}
+	if s.KM != "" {
+		if km, err = ioutil.ReadFile(s.KM); err != nil {
+			return err
+		}
+	}
+	if s.ACM != "" {
+		if acm, err = ioutil.ReadFile(s.ACM); err != nil {
+			return err
+		}
+	}
+	if s.ME != "" {
+		if me, err = ioutil.ReadFile(s.ME); err != nil {
+			return err
+		}
+	}
+	if len(acm) == 0 && len(km) == 0 && len(bpm) == 0 && len(me) == 0 {
 		return fmt.Errorf("at least one optional parameter required")
 	}
 	if err := bg.StitchFITEntries(s.BIOS, acm, bpm, km); err != nil {
 		return err
+	}
+	if len(me) != 0 {
+		image, err := ioutil.ReadFile(s.BIOS)
+		if err != nil {
+			return err
+		}
+		meRegionOffset, meRegionSize, err := tools.GetRegion(image, uefi.RegionTypeME)
+		if len(me) > int(meRegionSize) {
+			return fmt.Errorf("ME size exceeds region size! (%d > %d)", len(me), meRegionSize)
+		}
+		file, err := os.OpenFile(s.BIOS, os.O_RDWR, 0600)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		size, err := file.WriteAt(me, int64(meRegionOffset))
+		if err != nil {
+			return err
+		}
+		if size != len(me) {
+			return fmt.Errorf("couldn't write new ME")
+		}
 	}
 	return nil
 }
