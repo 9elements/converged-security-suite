@@ -252,6 +252,12 @@ func readTPM20Information(rwc io.ReadWriter) (TPMInfo, error) {
 	// for a maximum length of 16 octets of ASCII text. We iterate
 	// through the 4 indexes to get all 16 bytes & construct vendorInfo.
 	// See: TPM_PT_VENDOR_STRING_1 in TPM 2.0 Structures reference.
+	uint32ToBytes := func(ui32 uint32) []byte {
+		b := make([]byte, 4)
+		binary.BigEndian.PutUint32(b, ui32)
+		return b
+	}
+
 	for i := 0; i < 4; i++ {
 		caps, _, err := tpm2.GetCapability(rwc, tpm2.CapabilityTPMProperties, 1, uint32(tpm2.VendorString1)+uint32(i))
 		if err != nil {
@@ -262,7 +268,7 @@ func readTPM20Information(rwc io.ReadWriter) (TPMInfo, error) {
 			return TPMInfo{}, fmt.Errorf("got capability of type %T, want tpm2.TaggedProperty", caps[0])
 		}
 		// Reconstruct the 4 ASCII octets from the uint32 value.
-		vendorInfo += string(subset.Value&0xFF000000) + string(subset.Value&0xFF0000) + string(subset.Value&0xFF00) + string(subset.Value&0xFF)
+		vendorInfo += string(uint32ToBytes(subset.Value))
 	}
 
 	caps, _, err := tpm2.GetCapability(rwc, tpm2.CapabilityTPMProperties, 1, uint32(tpm2.Manufacturer))
