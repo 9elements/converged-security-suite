@@ -13,7 +13,7 @@ jobs:
       - checkout
       - run: sudo apt install -y golint
       # specify any bash command here prefixed with `run: `
-      - run: GO111MODULE=off go get github.com/tjfoc/gmsm/sm2 && go run ./pkg/intel/metadata/manifest/common/manifestcodegen/cmd/manifestcodegen -check ./pkg/intel/metadata/manifest ./pkg/intel/metadata/manifest/bootpolicy ./pkg/intel/metadata/manifest/key
+      - run: GO111MODULE=off go get github.com/tjfoc/gmsm/sm2 github.com/dustin/go-humanize && go run ./pkg/intel/metadata/manifest/common/manifestcodegen/cmd/manifestcodegen -check ./pkg/intel/metadata/manifest ./pkg/intel/metadata/manifest/bootpolicy ./pkg/intel/metadata/manifest/key
       - run: if [ "$(gofmt -l .)" != "" ]; then exit 1; fi
       - run: golint -set_exit_status ./pkg/test
       - run: golint -set_exit_status ./pkg/tools

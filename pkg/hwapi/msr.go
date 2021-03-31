@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/fearful-symmetry/gomsr"
 )
 
@@ -138,4 +139,9 @@ func (t TxtAPI) IA32DebugInterfaceEnabledOrLocked() (*IA32Debug, error) {
 	debugMSR.Locked = (debugInterfaceCtrl>>30)&1 != 0
 	debugMSR.PCHStrap = (debugInterfaceCtrl>>31)&1 != 0
 	return &debugMSR, nil
+}
+
+// GetMSRRegisters returns MSR registers.
+func (t TxtAPI) GetMSRRegisters() (registers.Registers, error) {
+	return registers.ReadMSRRegisters(&t.msrReader)
 }

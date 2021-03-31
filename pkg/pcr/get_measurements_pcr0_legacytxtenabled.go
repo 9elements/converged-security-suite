@@ -8,7 +8,7 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
-	"github.com/google/go-tpm/tpm2"
+	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 )
 
 func MeasureInit() *Measurement {
@@ -44,16 +44,16 @@ func MeasureACMDate(fitEntries []fit.Entry) (*Measurement, error) {
 	return &m, mErr.ReturnValue()
 }
 
-func MeasureACMDateInPlace(hashAlg tpm2.Algorithm, fitEntries []fit.Entry) (*Measurement, error) {
+func MeasureACMDateInPlace(hashAlg manifest.Algorithm, fitEntries []fit.Entry) (*Measurement, error) {
 	m := Measurement{
 		ID: MeasurementIDACMDateInPlace,
 	}
 
 	var hashSize int
 	switch hashAlg {
-	case tpm2.AlgSHA1:
+	case manifest.AlgSHA1:
 		hashSize = sha1.New().Size()
-	case tpm2.AlgSHA256:
+	case manifest.AlgSHA256:
 		hashSize = sha256.New().Size()
 	default:
 		return nil, fmt.Errorf("unknown hash algorithm: %v", hashAlg)

@@ -1,8 +1,7 @@
 package pcr
 
 import (
-	"github.com/google/go-tpm/tpm2"
-
+	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 )
 
@@ -25,7 +24,7 @@ type MeasurementConfig struct {
 
 	// PCR0DataIbbDigestHashAlgorithm defines hash algorithm that should be used for pcr0Data.ibbDigest
 	// TPM_ALG_ERROR will use the first element (by default)
-	PCR0DataIbbDigestHashAlgorithm tpm2.Algorithm
+	PCR0DataIbbDigestHashAlgorithm manifest.Algorithm
 }
 
 // DefaultMeasurementConfig defines the default values for MeasurementConfig.
