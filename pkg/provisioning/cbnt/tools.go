@@ -1,4 +1,4 @@
-package bg
+package cbnt
 
 import (
 	"bytes"
@@ -18,8 +18,8 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 )
 
-// WriteBootGuardStructures takes a firmware image and extracts boot policy manifest, key manifest and acm into seperate files.
-func WriteBootGuardStructures(image []byte, bpmFile, kmFile, acmFile *os.File) error {
+// WriteCBnTStructures takes a firmware image and extracts boot policy manifest, key manifest and acm into seperate files.
+func WriteCBnTStructures(image []byte, bpmFile, kmFile, acmFile *os.File) error {
 	bpm, km, acm, err := ParseFITEntries(image)
 	if err != nil {
 		return err
@@ -42,8 +42,8 @@ func WriteBootGuardStructures(image []byte, bpmFile, kmFile, acmFile *os.File) e
 	return nil
 }
 
-// PrintBootGuardStructures takes a firmware image and prints boot policy manifest, key manifest, ACM, chipset, processor and tpm information if available.
-func PrintBootGuardStructures(image []byte) error {
+// PrintCBnTStructures takes a firmware image and prints boot policy manifest, key manifest, ACM, chipset, processor and tpm information if available.
+func PrintCBnTStructures(image []byte) error {
 	var acm *tools.ACM
 	var chipsets *tools.Chipsets
 	var processors *tools.Processors
