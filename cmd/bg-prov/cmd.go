@@ -552,10 +552,13 @@ func (s *signBPMCmd) Run(ctx *context) error {
 
 func (t *templateCmd) Run(ctx *context) error {
 	var bgo bg.BootGuardOptions
-	bgo.BootPolicyManifest.BPMH.BPMRevision = t.Revision
-	bgo.BootPolicyManifest.BPMH.BPMSVN = t.SVN
-	bgo.BootPolicyManifest.BPMH.ACMSVNAuth = t.ACMSVN
-	bgo.BootPolicyManifest.BPMH.NEMDataStack = t.NEMS
+	km := *key.NewManifest()
+	bpm := *bootpolicy.NewManifest()
+
+	bpm.BPMRevision = t.Revision
+	bpm.BPMSVN = t.SVN
+	bpm.ACMSVNAuth = t.ACMSVN
+	bpm.NEMDataStack = t.NEMS
 
 	se := bootpolicy.NewSE()
 	se.PBETValue = t.PBET
@@ -574,7 +577,7 @@ func (t *templateCmd) Run(ctx *context) error {
 	seg.Flags = t.IbbSegFlag
 	se.IBBSegments = append(se.IBBSegments, seg)
 
-	bgo.BootPolicyManifest.SE = append(bgo.BootPolicyManifest.SE, *se)
+	bpm.SE = append(bpm.SE, *se)
 
 	txt := bootpolicy.NewTXT()
 	txt.SInitMinSVNAuth = t.SintMin
@@ -585,7 +588,10 @@ func (t *templateCmd) Run(ctx *context) error {
 	txt.PTTCMOSOffset0 = t.CMOSOff0
 	txt.PTTCMOSOffset1 = t.CMOSOff1
 
-	bgo.BootPolicyManifest.TXTE = txt
+	bpm.TXTE = txt
+
+	bgo.BootPolicyManifest = bpm
+	bgo.KeyManifest = km
 
 	out, err := os.Create(t.Path)
 	if err != nil {
