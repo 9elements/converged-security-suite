@@ -1,4 +1,4 @@
-package bg
+package cbnt
 
 const (
 	keySignatureElementMaxSize = 3072 // how this value was calculated?
