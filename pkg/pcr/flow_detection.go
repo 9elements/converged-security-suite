@@ -4,24 +4,38 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
+	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 )
 
-func DetectTPM(firmware Firmware, regs registers.Registers) (registers.TPMType, error) {
+func DetectTPM(firmware Firmware, regs registers.Registers) (tpmdetection.Type, error) {
 	// We have two approaches:
 	// - based on registers provides a reliable results, but these values may not exist
 	// - based on firmware may provide hints that TPM2.0 is not supported
+
+	convert := func(tpmType registers.TPMType) (tpmdetection.Type, error) {
+		switch tpmType {
+		case registers.TPMTypeNoTpm:
+			return tpmdetection.TypeNoTPM, nil
+		case registers.TPMType12:
+			return tpmdetection.TypeTPM12, nil
+		case registers.TPMType20, registers.TPMTypeIntelPTT:
+			return tpmdetection.TypeTPM20, nil
+		}
+		return tpmdetection.TypeNoTPM, fmt.Errorf("unknown registers TPM type: %d", tpmType)
+	}
+
 	btgACMInfo, found := registers.FindBTGSACMInfo(regs)
 	if found {
-		return btgACMInfo.TPMType(), nil
+		return convert(btgACMInfo.TPMType())
 	}
 
 	acmPolicyStatus, found := registers.FindACMPolicyStatus(regs)
 	if found {
-		return acmPolicyStatus.TPMType(), nil
+		return convert(acmPolicyStatus.TPMType())
 	}
 
 	if firmware != nil {
@@ -46,7 +60,7 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (registers.TPMType, 
 				// Version 5 included all
 				// changes added to support TPM 2.0 family.
 				if chipset.Base.Version < 5 {
-					return registers.TPMType12, nil
+					return tpmdetection.TypeTPM12, nil
 				}
 
 				// chipset.TPMInfoList is an offset in bytes from ACM start.
@@ -71,16 +85,16 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (registers.TPMType, 
 					bool2Int(tpmFamilySupport.IsDiscreteTPM12Supported())
 
 				if s == 0 {
-					return registers.TPMTypeNoTpm, nil
+					return tpmdetection.TypeNoTPM, nil
 				}
 				if s == 1 {
 					switch {
 					case tpmFamilySupport.IsDiscreteTPM12Supported():
-						return registers.TPMType12, nil
+						return tpmdetection.TypeTPM12, nil
 					case tpmFamilySupport.IsDiscreteTPM20Supported():
-						return registers.TPMType20, nil
+						return tpmdetection.TypeTPM20, nil
 					case tpmFamilySupport.IsFirmwareTPM20Supported():
-						return registers.TPMTypeIntelPTT, nil
+						return tpmdetection.TypeTPM20, nil
 					}
 				}
 			}
@@ -90,7 +104,7 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (registers.TPMType, 
 	return 0, fmt.Errorf("unable to detect TPM type")
 }
 
-func DetectAttestationFlow(firmware Firmware, regs registers.Registers) (Flow, error) {
+func DetectAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevice tpmdetection.Type) (Flow, error) {
 	fitEntries, err := fit.GetEntries(firmware.Buf())
 	if err != nil {
 		return FlowAuto, fmt.Errorf("unable to parse FIT entries: %w", err)
@@ -106,8 +120,14 @@ func DetectAttestationFlow(firmware Firmware, regs registers.Registers) (Flow, e
 		return FlowAuto, err
 	}
 	if isTXTEnabledValue {
-		tpmType, err := DetectTPM(firmware, regs)
-		if err != nil && tpmType == registers.TPMType12 {
+		var usedTPM tpmdetection.Type
+		var err error
+		if tpmDevice != tpmdetection.TypeNoTPM {
+			usedTPM = tpmDevice
+		} else {
+			usedTPM, err = DetectTPM(firmware, regs)
+		}
+		if err != nil && usedTPM == tpmdetection.TypeTPM12 {
 			return FlowIntelLegacyTXTEnabledTPM12, nil
 		}
 		return FlowIntelLegacyTXTEnabled, nil
