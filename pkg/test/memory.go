@@ -249,11 +249,11 @@ func TXTHeapSpaceValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) 
 		return false, nil, err
 	}
 
-	if uint64(regs.HeapBase) >= tools.FourGiB {
+	if uint64(regs.HeapBase) >= FourGiB {
 		return false, fmt.Errorf("HeapBase > 4Gib"), nil
 	}
 
-	if uint64(regs.HeapBase+regs.HeapSize) >= tools.FourGiB {
+	if uint64(regs.HeapBase+regs.HeapSize) >= FourGiB {
 		return false, fmt.Errorf("HeapBase + HeapSize >= 4Gib"), nil
 	}
 
@@ -265,13 +265,13 @@ func TXTHeapSpaceValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) 
 
 	}
 
-	if uint64(regs.SinitBase) >= tools.FourGiB {
+	if uint64(regs.SinitBase) >= FourGiB {
 		return false, fmt.Errorf("SinitBase >= 4Gib"), nil
 	}
 	if uint64(regs.SinitBase)&0xfff > 0 {
 		return false, fmt.Errorf("SinitBase must be 4 KiB aligned"), nil
 	}
-	if uint64(regs.SinitBase+regs.SinitSize) >= tools.FourGiB {
+	if uint64(regs.SinitBase+regs.SinitSize) >= FourGiB {
 		return false, fmt.Errorf("SinitBase + SinitSize >= 4Gib"), nil
 	}
 
@@ -279,7 +279,7 @@ func TXTHeapSpaceValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) 
 		return false, fmt.Errorf("Sinit must be at least %v", minSinitSize), nil
 	}
 
-	if uint64(regs.MleJoin) >= tools.FourGiB {
+	if uint64(regs.MleJoin) >= FourGiB {
 		return false, fmt.Errorf("MleJoin >= 4Gib"), nil
 	}
 

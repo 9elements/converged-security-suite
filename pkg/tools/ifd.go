@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/linuxboot/fiano/pkg/uefi"
+
+	"github.com/9elements/converged-security-suite/v2/pkg/uefi/consts"
 )
 
 // CalcImageOffset returns the offset of a given uefi flash image
@@ -12,7 +14,7 @@ func CalcImageOffset(image []byte, addr uint64) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return uint64(off+size) - FourGiB + addr, nil
+	return uint64(off+size) - consts.BasePhysAddr + addr, nil
 }
 
 // GetRegion returns offset and size of the given region type.
