@@ -1,5 +1,9 @@
 package hwapi
 
+import (
+	"github.com/9elements/converged-security-suite/v2/pkg/registers"
+)
+
 //APIInterfaces provides methods to access hardware found on modern x86_64 platforms
 type APIInterfaces interface {
 	// cpu_whitelist.go - cpu_blacklist.go
@@ -30,6 +34,7 @@ type APIInterfaces interface {
 	AllowsVMXInSMX() (bool, error)
 	TXTLeavesAreEnabled() (bool, error)
 	IA32DebugInterfaceEnabledOrLocked() (*IA32Debug, error)
+	GetMSRRegisters() (registers.Registers, error)
 
 	// pci.go
 	PCIReadConfigSpace(bus int, device int, devFn int, off int, buf interface{}) error
@@ -57,7 +62,9 @@ type APIInterfaces interface {
 }
 
 //TxtAPI The context object for TXT Api
-type TxtAPI struct{}
+type TxtAPI struct {
+	msrReader registers.DefaultMSRReader
+}
 
 //GetAPI Returns an initialized TxtApi object
 func GetAPI() APIInterfaces {

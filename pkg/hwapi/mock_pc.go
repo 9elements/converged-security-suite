@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+
+	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 )
 
 type pcmock struct {
@@ -80,6 +82,10 @@ func (n pcmock) TXTLeavesAreEnabled() (bool, error) {
 	return false, fmt.Errorf("Not implemented")
 }
 func (n pcmock) IA32DebugInterfaceEnabledOrLocked() (*IA32Debug, error) {
+	return nil, fmt.Errorf("Not implemented")
+}
+
+func (n pcmock) GetMSRRegisters() (registers.Registers, error) {
 	return nil, fmt.Errorf("Not implemented")
 }
 

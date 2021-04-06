@@ -2,6 +2,8 @@ package hwapi
 
 import (
 	"fmt"
+
+	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 )
 
 type nullmock struct{}
@@ -76,6 +78,10 @@ func (n nullmock) TXTLeavesAreEnabled() (bool, error) {
 	return false, fmt.Errorf("Not implemented")
 }
 func (n nullmock) IA32DebugInterfaceEnabledOrLocked() (*IA32Debug, error) {
+	return nil, fmt.Errorf("Not implemented")
+}
+
+func (n nullmock) GetMSRRegisters() (registers.Registers, error) {
 	return nil, fmt.Errorf("Not implemented")
 }
 
