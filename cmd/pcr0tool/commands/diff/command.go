@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math"
 	"net/http"
@@ -18,11 +17,11 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/diff/format"
+	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
 	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
 	"github.com/9elements/converged-security-suite/v2/pkg/diff"
 	"github.com/9elements/converged-security-suite/v2/pkg/ostools"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
-	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
 )
 
@@ -85,7 +84,7 @@ type Command struct {
 	flow          *string
 	netPprof      *string
 	deepAnalysis  *bool
-	registers     *string
+	registers     helpers.FlagRegisters
 	hashFunc      *string
 }
 
@@ -112,7 +111,7 @@ but ignore the overridden bytes. The value is represented in hex characters sepa
 	cmd.deepAnalysis = flag.Bool("deep-analysis", false,
 		`Also perform slow procedures to find more byte ranges which could affect the PCR0 calculation. This is experimental feature! Values: "true", "false"`)
 	cmd.netPprof = flag.String("net-pprof", "", `start listening for "net/http/pprof", example value: "127.0.0.1:6060"`)
-	cmd.registers = flag.String("registers", "", "[optional] file that contains registers as a json array")
+	flag.Var(&cmd.registers, "registers", "[optional] file that contains registers as a json array (use value '/dev' to use registers of the local machine)")
 	cmd.hashFunc = flag.String("hash-func", "", `which hash function use to hash measurements and to extend the PCR0; values: "sha1", "sha256"`)
 }
 
@@ -154,14 +153,7 @@ func (cmd Command) Execute(args []string) {
 	ignoreByteSet, err := parseByteSet(*cmd.ignoreByteSet)
 	assertNoError(err)
 
-	var regs registers.Registers
-	if len(*cmd.registers) > 0 {
-		contents, err := ioutil.ReadFile(*cmd.registers)
-		assertNoError(err)
-		err = json.Unmarshal(contents, &regs)
-		assertNoError(err)
-	}
-	measureOpts = append(measureOpts, pcr.SetRegisters(regs))
+	measureOpts = append(measureOpts, pcr.SetRegisters(cmd.registers))
 
 	switch strings.ToLower(*cmd.hashFunc) {
 	case "sha1":
