@@ -1,6 +1,7 @@
 package pcr
 
 import (
+	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
 	"github.com/google/go-tpm/tpm2"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
@@ -49,5 +50,12 @@ type SetRegisters registers.Registers
 
 func (opt SetRegisters) Apply(config *MeasurementConfig) error {
 	config.Registers = registers.Registers(opt)
+	return nil
+}
+
+type SetTPMDevice tpmdetection.Type
+
+func (opt SetTPMDevice) Apply(config *MeasurementConfig) error {
+	config.TPMDevice = tpmdetection.Type(opt)
 	return nil
 }
