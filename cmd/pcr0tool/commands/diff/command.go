@@ -22,6 +22,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/diff"
 	"github.com/9elements/converged-security-suite/v2/pkg/ostools"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
+	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
 )
 
@@ -86,6 +87,7 @@ type Command struct {
 	deepAnalysis  *bool
 	registers     helpers.FlagRegisters
 	hashFunc      *string
+	tpmDevice     *string
 }
 
 // Usage prints the syntax of arguments for this command
@@ -113,6 +115,7 @@ but ignore the overridden bytes. The value is represented in hex characters sepa
 	cmd.netPprof = flag.String("net-pprof", "", `start listening for "net/http/pprof", example value: "127.0.0.1:6060"`)
 	flag.Var(&cmd.registers, "registers", "[optional] file that contains registers as a json array (use value '/dev' to use registers of the local machine)")
 	cmd.hashFunc = flag.String("hash-func", "", `which hash function use to hash measurements and to extend the PCR0; values: "sha1", "sha256"`)
+	cmd.tpmDevice = flag.String("tpm-device", "", "[optional] tpm device used for measurements, values: "+commands.TPMTypeCommandLineValues())
 }
 
 // Execute is the main function here. It is responsible to
@@ -154,6 +157,14 @@ func (cmd Command) Execute(args []string) {
 	assertNoError(err)
 
 	measureOpts = append(measureOpts, pcr.SetRegisters(cmd.registers))
+
+	if len(*cmd.tpmDevice) > 0 {
+		tpmDevice, err := tpmdetection.FromString(*cmd.tpmDevice)
+		if err != nil {
+			usageAndExit()
+		}
+		measureOpts = append(measureOpts, pcr.SetTPMDevice(tpmDevice))
+	}
 
 	switch strings.ToLower(*cmd.hashFunc) {
 	case "sha1":

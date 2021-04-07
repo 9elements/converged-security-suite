@@ -14,6 +14,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
+	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
 	"github.com/google/go-tpm/tpm2"
 )
@@ -35,6 +36,7 @@ type Command struct {
 	flow      *string
 	hashFunc  *string
 	registers helpers.FlagRegisters
+	tpmDevice *string
 }
 
 // Usage prints the syntax of arguments for this command
@@ -54,6 +56,7 @@ func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
 	cmd.flow = flag.String("flow", pcr.FlowAuto.String(), "values: "+commands.FlowCommandLineValues())
 	cmd.hashFunc = flag.String("hash-func", "sha1", `which hash function use to hash measurements and to extend the PCR0; values: "sha1", "sha256"`)
 	flag.Var(&cmd.registers, "registers", "[optional] file that contains registers as a json array (use value '/dev' to use registers of the local machine)")
+	cmd.tpmDevice = flag.String("tpm-device", "", "[optional] tpm device used for measurements, values: "+commands.TPMTypeCommandLineValues())
 }
 
 // Execute is the main function here. It is responsible to
@@ -93,6 +96,14 @@ func (cmd Command) Execute(args []string) {
 	default:
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "error: invalid value of option 'hash-func': '%s'\n", hashFuncString)
 		usageAndExit()
+	}
+
+	if len(*cmd.tpmDevice) > 0 {
+		tpmDevice, err := tpmdetection.FromString(*cmd.tpmDevice)
+		if err != nil {
+			usageAndExit()
+		}
+		measureOpts = append(measureOpts, pcr.SetTPMDevice(tpmDevice))
 	}
 
 	firmware, err := uefi.ParseUEFIFirmwareFile(imagePath)

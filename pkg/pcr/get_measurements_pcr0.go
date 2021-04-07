@@ -24,7 +24,7 @@ func getMeasurementsPCR0(
 	}
 
 	// Detect attestation flow
-	detectedFlow, err := DetectAttestationFlow(firmware, config.Registers)
+	detectedFlow, err := DetectAttestationFlow(firmware, config.Registers, config.TPMDevice)
 	debugInfo["errorFlowDetection"] = err
 	if err == nil {
 		debugInfo["detectedAttestationFlow"] = detectedFlow.String()
