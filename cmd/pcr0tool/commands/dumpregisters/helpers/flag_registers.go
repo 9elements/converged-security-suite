@@ -20,6 +20,12 @@ func (f *FlagRegisters) String() string {
 func (f *FlagRegisters) Set(in string) error {
 	switch in {
 	case "":
+		// We do not fallthrough to "/dev" here to do not mislead the end user.
+		//
+		// The user should explicitly ask to use local-machine registers to
+		// do not mislead them about expected PCR0 value on CBnT systems.
+		// Otherwise the user might not know that the value is constructed
+		// using local values.
 		return nil
 	case "/dev":
 		regs, err := GetLocalRegisters()
