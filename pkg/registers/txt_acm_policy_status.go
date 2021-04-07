@@ -57,6 +57,10 @@ func (reg ACMPolicyStatus) BitSize() uint8 {
 	return 64
 }
 
+func (reg ACMPolicyStatus) Address() uint64 {
+	return TxtPublicSpace + ACMPolicyStatusRegisterOffset
+}
+
 func (reg ACMPolicyStatus) Fields() []Field {
 	fieldsRaw := []fieldDescription{
 		{

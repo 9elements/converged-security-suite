@@ -13,6 +13,10 @@ func (reg BTGSACMInfo) BitSize() uint8 {
 	return 64
 }
 
+func (reg BTGSACMInfo) Address() uint64 {
+	return BTGSACMInfoRegisterOffset
+}
+
 func (reg BTGSACMInfo) Fields() []Field {
 	fieldsRaw := []fieldDescription{
 		{

@@ -19,6 +19,10 @@ func (reg ACMStatus) BitSize() uint8 {
 	return 64
 }
 
+func (reg ACMStatus) Address() uint64 {
+	return TxtPublicSpace + ACMStatusRegisterOffset
+}
+
 func (reg ACMStatus) Fields() []Field {
 	fieldsRaw := []fieldDescription{
 		{

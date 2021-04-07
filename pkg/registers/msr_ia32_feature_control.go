@@ -13,6 +13,10 @@ func (reg IA32FeatureControl) BitSize() uint8 {
 	return 64
 }
 
+func (reg IA32FeatureControl) Address() uint64 {
+	return IA32FeatureControlRegisterOffset
+}
+
 func (reg IA32FeatureControl) Fields() []Field {
 	fieldsRaw := []fieldDescription{
 		{

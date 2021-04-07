@@ -30,6 +30,10 @@ func (reg TXTErrorCode) BitSize() uint8 {
 	return 32
 }
 
+func (reg TXTErrorCode) Address() uint64 {
+	return TxtPublicSpace + TXTErrorCodeRegisterOffset
+}
+
 func (reg TXTErrorCode) Fields() []Field {
 	fieldsRaw := []fieldDescription{
 		{

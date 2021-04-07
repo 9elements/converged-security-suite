@@ -22,6 +22,10 @@ func (reg TXTDeviceID) BitSize() uint8 {
 	return uint8(binary.Size(reg) * 8)
 }
 
+func (reg TXTDeviceID) Address() uint64 {
+	return TxtPublicSpace + TXTDeviceIDRegisterOffset
+}
+
 func (reg TXTDeviceID) Fields() []Field {
 	fieldsRaw := []fieldDescription{
 		{

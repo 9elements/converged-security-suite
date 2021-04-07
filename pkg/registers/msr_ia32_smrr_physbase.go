@@ -13,6 +13,10 @@ func (reg IA32SMRRPhysBase) BitSize() uint8 {
 	return 64
 }
 
+func (reg IA32SMRRPhysBase) Address() uint64 {
+	return IA32SMRRPhysBaseRegisterOffset
+}
+
 func (reg IA32SMRRPhysBase) Fields() []Field {
 	fieldsRaw := []fieldDescription{
 		{

@@ -31,6 +31,10 @@ func (reg TXTDMAProtectedRange) BitSize() uint8 {
 	return 32
 }
 
+func (reg TXTDMAProtectedRange) Address() uint64 {
+	return TxtPublicSpace + TXTDMAProtectedRangeRegisterOffset
+}
+
 func (reg TXTDMAProtectedRange) Fields() []Field {
 	fieldsRaw := []fieldDescription{
 		{

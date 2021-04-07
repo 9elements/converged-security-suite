@@ -13,6 +13,10 @@ func (reg BootGuardPBEC) BitSize() uint8 {
 	return 64
 }
 
+func (reg BootGuardPBEC) Address() uint64 {
+	return BootGuardPBECRegisterOffset
+}
+
 func (reg BootGuardPBEC) Fields() []Field {
 	fieldsRaw := []fieldDescription{
 		{

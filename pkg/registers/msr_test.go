@@ -147,6 +147,12 @@ func TestIA32FeatureControlRegister(t *testing.T) {
 	if reg.BitSize() != 64 {
 		t.Errorf("Bit size %d is incorrect", reg.BitSize())
 	}
+	if reg.Address() != registers.IA32FeatureControlRegisterOffset {
+		t.Errorf("Incorrect Address, expected: %d. actual: %d",
+			registers.IA32FeatureControlRegisterOffset,
+			reg.Address(),
+		)
+	}
 
 	type parsedIA32FeatureControl struct {
 		Locked                 bool
@@ -240,6 +246,12 @@ func TestIA32SMRRPhysBaseRegister(t *testing.T) {
 	if reg.BitSize() != 64 {
 		t.Errorf("Bit size %d is incorrect", reg.BitSize())
 	}
+	if reg.Address() != registers.IA32SMRRPhysBaseRegisterOffset {
+		t.Errorf("Incorrect Address, expected: %d. actual: %d",
+			registers.IA32SMRRPhysBaseRegisterOffset,
+			reg.Address(),
+		)
+	}
 
 	type parsedIA32SMRRPhysBase struct {
 		Type     uint8
@@ -318,6 +330,12 @@ func TestIA32SMRRPhysMaskRegister(t *testing.T) {
 	if reg.BitSize() != 64 {
 		t.Errorf("Bit size %d is incorrect", reg.BitSize())
 	}
+	if reg.Address() != registers.IA32SMRRPhysMaskRegisterOffset {
+		t.Errorf("Incorrect Address, expected: %d. actual: %d",
+			registers.IA32SMRRPhysMaskRegisterOffset,
+			reg.Address(),
+		)
+	}
 
 	type parsedIA32SMRRPhysMask struct {
 		Valid    bool
@@ -395,6 +413,12 @@ func TestIA32MTRCAPRegister(t *testing.T) {
 	}
 	if reg.BitSize() != 64 {
 		t.Errorf("Bit size %d is incorrect", reg.BitSize())
+	}
+	if reg.Address() != registers.IA32MTRRCAPRegisterOffset {
+		t.Errorf("Incorrect Address, expected: %d. actual: %d",
+			registers.IA32MTRRCAPRegisterOffset,
+			reg.Address(),
+		)
 	}
 
 	type parsedIA32MTRRCAP struct {
@@ -484,6 +508,12 @@ func TestIA32PlatformIDRegister(t *testing.T) {
 	if reg.BitSize() != 64 {
 		t.Errorf("Bit size %d is incorrect", reg.BitSize())
 	}
+	if reg.Address() != registers.IA32PlatformIDRegisterOffset {
+		t.Errorf("Incorrect Address, expected: %d. actual: %d",
+			registers.IA32PlatformIDRegisterOffset,
+			reg.Address(),
+		)
+	}
 
 	type parsedIA32PlatformID struct {
 		ProcessorFlags uint8
@@ -556,6 +586,12 @@ func TestIA32DebugInterfaceRegister(t *testing.T) {
 	}
 	if reg.BitSize() != 64 {
 		t.Errorf("Bit size %d is incorrect", reg.BitSize())
+	}
+	if reg.Address() != registers.IA32DebugInterfaceRegisterOffset {
+		t.Errorf("Incorrect Address, expected: %d. actual: %d",
+			registers.IA32DebugInterfaceRegisterOffset,
+			reg.Address(),
+		)
 	}
 
 	type parsedIA32DebugInterface struct {

@@ -13,6 +13,10 @@ func (reg IA32DebugInterface) BitSize() uint8 {
 	return 64
 }
 
+func (reg IA32DebugInterface) Address() uint64 {
+	return IA32DebugInterfaceRegisterOffset
+}
+
 func (reg IA32DebugInterface) Fields() []Field {
 	fieldsRaw := []fieldDescription{
 		{
