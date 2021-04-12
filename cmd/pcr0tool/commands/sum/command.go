@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
 	"hash"
 	"io/ioutil"
 	"log"
@@ -16,6 +15,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
+	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
 	"github.com/google/go-tpm/tpm2"
 )
@@ -38,6 +38,8 @@ type Command struct {
 	hashFunc  *string
 	registers *string
 	tpmDevice *string
+
+	printMeasurementLengthLimit *uint
 }
 
 // Usage prints the syntax of arguments for this command
@@ -58,6 +60,7 @@ func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
 	cmd.hashFunc = flag.String("hash-func", "sha1", `which hash function use to hash measurements and to extend the PCR0; values: "sha1", "sha256"`)
 	cmd.registers = flag.String("registers", "", "[optional] file that contains registers as a json array")
 	cmd.tpmDevice = flag.String("tpm-device", "", "[optional] tpm device used for measurements, values: "+commands.TPMTypeCommandLineValues())
+	cmd.printMeasurementLengthLimit = flag.Uint("print-measurement-length-limit", 20, "length limit of measured data to be printed")
 }
 
 // Execute is the main function here. It is responsible to
@@ -136,6 +139,7 @@ func (cmd Command) Execute(args []string) {
 	if measurements == nil {
 		os.Exit(1)
 	}
+	pcr.LoggingDataLimit = *cmd.printMeasurementLengthLimit
 	result := measurements.Calculate(firmware.Buf(), flow.TPMLocality(), hashFunc, pcrLogger)
 
 	if !*cmd.isQuiet {
