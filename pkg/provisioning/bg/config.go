@@ -279,30 +279,21 @@ func ReadConfigFromBIOSImage(biosFilepath string, configFilepath *os.File) (*Boo
 	if err != nil {
 		return nil, err
 	}
-	bpmBuf, kmBuf, _, err := ParseFITEntries(bios)
+	bpmEntry, kmEntry, _, err := ParseFITEntries(bios)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(bpmBuf) == 0 {
-		return nil, fmt.Errorf("ReadConfigurationFromBIOSImage: No BPM found to read config from")
-	}
-
-	reader := bytes.NewReader(bpmBuf)
-	bpm, err = ParseBPM(reader)
+	bpm, err = bpmEntry.ParseData()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ReadConfigurationFromBIOSImage: unable to get BPM: %w", err)
 	}
 
-	if len(kmBuf) == 0 {
-		return nil, fmt.Errorf("ReadConfigurationFromBIOSImage: No KM found to read config from")
-	}
-
-	reader = bytes.NewReader(kmBuf)
-	km, err = ParseKM(reader)
+	km, err = kmEntry.ParseData()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ReadConfigurationFromBIOSImage: unable to get KM: %w", err)
 	}
+
 	/* Boot Policy Manifest */
 	// BPMH
 	bgo.BootPolicyManifest = *bpm

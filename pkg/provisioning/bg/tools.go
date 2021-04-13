@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
+	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/bootpolicy"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/common/pretty"
@@ -19,22 +20,22 @@ import (
 
 // WriteBootGuardStructures takes a firmware image and extracts boot policy manifest, key manifest and acm into seperate files.
 func WriteBootGuardStructures(image []byte, bpmFile, kmFile, acmFile *os.File) error {
-	bpmBuf, kmBuf, acmBuf, err := ParseFITEntries(image)
+	bpm, km, acm, err := ParseFITEntries(image)
 	if err != nil {
 		return err
 	}
-	if bpmFile != nil && len(bpmBuf) > 0 {
-		if _, err = bpmFile.Write(bpmBuf); err != nil {
+	if bpmFile != nil && len(bpm.DataBytes) > 0 {
+		if _, err = bpmFile.Write(bpm.DataBytes); err != nil {
 			return err
 		}
 	}
-	if kmFile != nil && len(kmBuf) > 0 {
-		if _, err = kmFile.Write(kmBuf); err != nil {
+	if kmFile != nil && len(km.DataBytes) > 0 {
+		if _, err = kmFile.Write(km.DataBytes); err != nil {
 			return err
 		}
 	}
-	if acmFile != nil && len(acmBuf) > 0 {
-		if _, err = acmFile.Write(acmBuf); err != nil {
+	if acmFile != nil && len(acm.DataBytes) > 0 {
+		if _, err = acmFile.Write(acm.DataBytes); err != nil {
 			return err
 		}
 	}
@@ -43,30 +44,27 @@ func WriteBootGuardStructures(image []byte, bpmFile, kmFile, acmFile *os.File) e
 
 // PrintBootGuardStructures takes a firmware image and prints boot policy manifest, key manifest, ACM, chipset, processor and tpm information if available.
 func PrintBootGuardStructures(image []byte) error {
-	var km *key.Manifest
-	var bpm *bootpolicy.Manifest
 	var acm *tools.ACM
 	var chipsets *tools.Chipsets
 	var processors *tools.Processors
 	var tpms *tools.TPMs
 	var err, err2 error
-	bpmBuf, kmBuf, acmBuf, err := ParseFITEntries(image)
-	if err != nil {
-		return err
-	}
-	reader := bytes.NewReader(bpmBuf)
-	bpm, err = ParseBPM(reader)
+	bpmEntry, kmEntry, acmEntry, err := ParseFITEntries(image)
 	if err != nil {
 		return err
 	}
 
-	reader = bytes.NewReader(kmBuf)
-	km, err = ParseKM(reader)
+	bpm, err := bpmEntry.ParseData()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to parse BPM: %w", err)
 	}
 
-	acm, chipsets, processors, tpms, err, err2 = tools.ParseACM(acmBuf)
+	km, err := kmEntry.ParseData()
+	if err != nil {
+		return fmt.Errorf("unable to parse KM: %w", err)
+	}
+
+	acm, chipsets, processors, tpms, err, err2 = tools.ParseACM(acmEntry.DataBytes)
 	if err != nil || err2 != nil {
 		return err
 	}
@@ -92,15 +90,19 @@ func PrintBootGuardStructures(image []byte) error {
 
 // PrintFIT takes a firmware image and prints the Firmware Interface Table
 func PrintFIT(image []byte) error {
-	fitEntries, err := tools.ExtractFit(image)
+	fitTable, err := fit.GetTable(image)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get FIT: %w", err)
 	}
+	fitEntries := fitTable.GetEntries(image)
 	fmt.Println("----Firmware Interface Table----")
 	fmt.Println()
 	for idx, entry := range fitEntries {
+		if entry.GetType() == fit.EntryTypeSkip || entry.GetType() == fit.EntryTypeFITHeaderEntry {
+			continue
+		}
 		fmt.Printf("Entry %d\n", idx)
-		entry.FancyPrint()
+		fmt.Println(entry.GoString())
 		fmt.Println()
 	}
 	fmt.Println()
@@ -108,77 +110,24 @@ func PrintFIT(image []byte) error {
 }
 
 // ParseFITEntries takes a firmware image and extract Boot policy manifest, key manifest and acm information.
-func ParseFITEntries(image []byte) ([]byte, []byte, []byte, error) {
-	fitEntries, err := tools.ExtractFit(image)
+func ParseFITEntries(image []byte) (bpm *fit.EntryBootPolicyManifestRecord, km *fit.EntryKeyManifestRecord, acm *fit.EntrySACM, err error) {
+	fitTable, err := fit.GetTable(image)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, fmt.Errorf("unable to get FIT: %w", err)
 	}
-	var bpm, km, acm []byte
-	reader := bytes.NewReader(image)
+	fitEntries := fitTable.GetEntries(image)
 	for _, entry := range fitEntries {
-		if entry.Type() == tools.BootPolicyManifest {
-			if entry.Size() == 0 {
-				return nil, nil, nil, fmt.Errorf("FIT entry size is zero for BPM")
-			}
-			addr, err := tools.CalcImageOffset(image, entry.Address)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			reader.Seek(int64(addr), io.SeekStart)
-			bpm = make([]byte, entry.Size())
-			len, err := reader.Read(bpm)
-			if err != nil || uint32(len) != entry.Size() {
-				return nil, nil, nil, err
-			}
-		}
-		if entry.Type() == tools.KeyManifestRec {
-			if entry.Size() == 0 {
-				return nil, nil, nil, fmt.Errorf("FIT entry size is zero for KM")
-			}
-			addr, err := tools.CalcImageOffset(image, entry.Address)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			reader.Seek(int64(addr), io.SeekStart)
-			km = make([]byte, entry.Size())
-			len, err := reader.Read(km)
-			if err != nil || uint32(len) != entry.Size() {
-				return nil, nil, nil, err
-			}
-		}
-		if entry.Type() == tools.StartUpACMod {
-			addr, err := tools.CalcImageOffset(image, entry.Address)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			reader.Seek(int64(addr), io.SeekStart)
-			if entry.Size() == 0 {
-				buf := make([]byte, 32)
-				_, err := reader.Read(buf)
-				if err != nil {
-					return nil, nil, nil, err
-				}
-				reader.Seek(int64(addr), io.SeekStart)
-				size, err := tools.LookupACMSize(buf)
-				if err != nil {
-					return nil, nil, nil, err
-				}
-				acm = make([]byte, size)
-				len, err := reader.Read(acm)
-				if err != nil || int64(len) != size {
-					return nil, nil, nil, err
-				}
-			} else {
-				acm = make([]byte, entry.Size())
-				len, err := reader.Read(acm)
-				if err != nil || uint32(len) != entry.Size() {
-					return nil, nil, nil, err
-				}
-			}
+		switch entry := entry.(type) {
+		case *fit.EntryBootPolicyManifestRecord:
+			bpm = entry
+		case *fit.EntryKeyManifestRecord:
+			km = entry
+		case *fit.EntrySACM:
+			acm = entry
 		}
 	}
-	if len(bpm) == 0 || len(km) == 0 || len(acm) == 0 {
-		return nil, nil, nil, fmt.Errorf("Image has no BPM, KM, ACM")
+	if bpm == nil || km == nil || acm == nil {
+		return nil, nil, nil, fmt.Errorf("image has no BPM (isNil:%v) or/and KM (isNil:%v) or/and ACM (isNil:%v)", bpm == nil, km == nil, acm == nil)
 	}
 	return bpm, km, acm, nil
 }
@@ -268,52 +217,29 @@ func generatePCR0Content(status uint64, km *key.Manifest, bpm *bootpolicy.Manife
 
 // PrecalcPCR0 takes a firmware image and ACM Policy status and returns the Pcr0Data structure and its hash.
 func PrecalcPCR0(data []byte, acmPolicySts uint64) (*Pcr0Data, []byte, error) {
-	fitEntries, err := tools.ExtractFit(data)
+	fitTable, err := fit.GetTable(data)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("unable to get FIT: %w", err)
 	}
+	fitEntries := fitTable.GetEntries(data)
 	var km *key.Manifest
 	var bpm *bootpolicy.Manifest
 	var acm *tools.ACM
 	for _, entry := range fitEntries {
-		if entry.Type() == tools.BootPolicyManifest {
-			addr, err := tools.CalcImageOffset(data, entry.Address)
-			if err != nil {
-				return nil, nil, err
-			}
-			reader := bytes.NewReader(data)
-			reader.Seek(int64(addr), io.SeekStart)
-			bpm, err = ParseBPM(reader)
-			if err != nil {
-				return nil, nil, err
-			}
+		var err, err2 error
+		switch entry := entry.(type) {
+		case *fit.EntryBootPolicyManifestRecord:
+			bpm, err = entry.ParseData()
+		case *fit.EntryKeyManifestRecord:
+			km, err = entry.ParseData()
+		case *fit.EntrySACM:
+			acm, _, _, _, err, err2 = tools.ParseACM(entry.GetDataBytes())
 		}
-		if entry.Type() == tools.KeyManifestRec {
-			addr, err := tools.CalcImageOffset(data, entry.Address)
-			if err != nil {
-				return nil, nil, err
-			}
-			reader := bytes.NewReader(data)
-			reader.Seek(int64(addr), io.SeekStart)
-			km, err = ParseKM(reader)
-			if err != nil {
-				return nil, nil, err
-			}
+		if err != nil {
+			return nil, nil, err
 		}
-		if entry.Type() == tools.StartUpACMod {
-			addr, err := tools.CalcImageOffset(data, entry.Address)
-			if err != nil {
-				return nil, nil, err
-			}
-			reader := bytes.NewReader(data)
-			reader.Seek(int64(addr), io.SeekStart)
-			buf := new(bytes.Buffer)
-			buf.ReadFrom(reader)
-			var err2 error
-			acm, _, _, _, err, err2 = tools.ParseACM(buf.Bytes())
-			if err != nil || err2 != nil {
-				return nil, nil, err
-			}
+		if err2 != nil {
+			return nil, nil, err2
 		}
 	}
 	if acmPolicySts == 0 {
@@ -336,14 +262,21 @@ func CalculateNEMSize(image []byte, bpm *bootpolicy.Manifest, km *key.Manifest, 
 	if bpm == nil || km == nil || acm == nil {
 		return 0, fmt.Errorf("BPM, KM or ACM are nil")
 	}
-	fit := bytes.NewReader(image)
-	hdr, err := tools.GetFitHeader(fit)
+	fitTable, err := fit.GetTable(image)
+	if err != nil {
+		return 0, fmt.Errorf("unable to get FIT: %w", err)
+	}
+	fitEntries := fitTable.GetEntries(image)
+	if len(fitEntries) == 0 || fitEntries[0].GetType() != fit.EntryTypeFITHeaderEntry {
+		return 0, fmt.Errorf("unable to get FIT headers")
+	}
+	hdr := fitEntries[0]
 	if err != nil {
 		return 0, err
 	}
 	totalSize += uint32(km.KeyManifestSignatureOffset)
 	totalSize += keySignatureElementMaxSize
-	totalSize += hdr.Size()
+	totalSize += hdr.GetHeaders().Size.Size()
 	totalSize += uint32(2048)
 	totalSize += keySignatureElementMaxSize
 	totalSize += uint32((&bootpolicy.BPMH{}).TotalSize())
@@ -382,27 +315,29 @@ func StitchFITEntries(biosFilename string, acm, bpm, km []byte) error {
 	if err != nil {
 		return err
 	}
-	fitEntries, err := tools.ExtractFit(image)
+	fitTable, err := fit.GetTable(image)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get FIT: %w", err)
 	}
+	fitEntries := fitTable.GetEntries(image)
 	file, err := os.OpenFile(biosFilename, os.O_RDWR, 0600)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 	for _, entry := range fitEntries {
-		if entry.Type() == tools.BootPolicyManifest {
+		switch entry := entry.(type) {
+		case *fit.EntryBootPolicyManifestRecord:
 			if len(bpm) <= 0 {
 				continue
 			}
-			if entry.Size() == 0 {
+			if entry.Headers.Size.Size() == 0 {
 				return fmt.Errorf("FIT entry size is zero for BPM")
 			}
-			if len(bpm) > int(entry.Size()) {
+			if len(bpm) > int(entry.Headers.Size.Size()) {
 				return fmt.Errorf("new BPM bigger than older BPM")
 			}
-			addr, err := tools.CalcImageOffset(image, entry.Address)
+			addr, err := tools.CalcImageOffset(image, entry.Headers.Address.Pointer())
 			if err != nil {
 				return err
 			}
@@ -417,18 +352,17 @@ func StitchFITEntries(biosFilename string, acm, bpm, km []byte) error {
 			if size != len(bpm) {
 				return fmt.Errorf("couldn't write new BPM")
 			}
-		}
-		if entry.Type() == tools.KeyManifestRec {
+		case *fit.EntryKeyManifestRecord:
 			if len(km) <= 0 {
 				continue
 			}
-			if entry.Size() == 0 {
+			if entry.Headers.Size.Size() == 0 {
 				return fmt.Errorf("FIT entry size is zero for KM")
 			}
-			if len(km) > int(entry.Size()) {
+			if len(km) > int(entry.Headers.Size.Size()) {
 				return fmt.Errorf("new KM bigger than older KM")
 			}
-			addr, err := tools.CalcImageOffset(image, entry.Address)
+			addr, err := tools.CalcImageOffset(image, entry.Headers.Address.Pointer())
 			if err != nil {
 				return err
 			}
@@ -443,12 +377,11 @@ func StitchFITEntries(biosFilename string, acm, bpm, km []byte) error {
 			if size != len(km) {
 				return fmt.Errorf("couldn't write new KM")
 			}
-		}
-		if entry.Type() == tools.StartUpACMod {
+		case *fit.EntrySACM:
 			if len(acm) <= 0 {
 				continue
 			}
-			addr, err := tools.CalcImageOffset(image, entry.Address)
+			addr, err := tools.CalcImageOffset(image, entry.Headers.Address.Pointer())
 			if err != nil {
 				return err
 			}
