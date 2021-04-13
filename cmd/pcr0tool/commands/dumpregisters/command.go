@@ -81,7 +81,7 @@ func (cmd Command) Execute(args []string) {
 }
 
 func printRegister(reg registers.Register) {
-	fmt.Printf("Register: %s\n", reg.ID())
+	fmt.Printf("Register: %s, address: 0x%X\n", reg.ID(), reg.Address())
 	switch r := reg.(type) {
 	case registers.RawRegister:
 		for idx, b := range r.Raw() {

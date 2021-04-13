@@ -271,6 +271,7 @@ func createSimpleRegister32Reader(registerID RegisterID, offset uint64) func(dat
 		return &simpleRegister32{
 			id:    registerID,
 			Value: ui32,
+			Addr:  TxtPublicSpace + offset,
 		}, nil
 	}
 }

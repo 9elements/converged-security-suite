@@ -109,6 +109,12 @@ func TestTXTErrorStatus(t *testing.T) {
 	if txtErrorStatus.BitSize() != 8 {
 		t.Errorf("Incorrect BitSize, expected: 64. actual: %v", txtErrorStatus.BitSize())
 	}
+	if txtErrorStatus.Address() != registers.TxtPublicSpace+registers.TXTStatusRegisterOffset {
+		t.Errorf("Incorrect Address, expected: %d. actual: %d",
+			registers.TxtPublicSpace+registers.TXTStatusRegisterOffset,
+			txtErrorStatus.Address(),
+		)
+	}
 
 	type parsedErrorStatus struct {
 		reset bool
@@ -304,6 +310,13 @@ func TestACMPolicyStatus(t *testing.T) {
 		t.Errorf("Incorrect BitSize, expected: 64. actual: %v", acmPolicyStatus.BitSize())
 	}
 
+	if acmPolicyStatus.Address() != registers.TxtPublicSpace+registers.ACMPolicyStatusRegisterOffset {
+		t.Errorf("Incorrect Address, expected: %d. actual: %d",
+			registers.TxtPublicSpace+registers.ACMPolicyStatusRegisterOffset,
+			acmPolicyStatus.Address(),
+		)
+	}
+
 	for _, testCase := range testCases {
 		txtAPI := hwapi.GetPcMock(func(addr uint64) byte {
 			if addr >= (registers.TxtPublicSpace+registers.ACMPolicyStatusRegisterOffset) &&
@@ -450,11 +463,19 @@ func TestReadACMStatus(t *testing.T) {
 				t.Errorf("ReadACMStatus() failed, got unexpected error: %v", err)
 			}
 			if err == nil && tt.wantErr {
-				t.Errorf("ReadACMStatus() failed, expected an error")
+				t.Errorf("ReadACMStatus() succeeded, expected an error")
 			}
-			actual := convert(got)
-			if actual != tt.wantACMStatus {
-				t.Errorf("Result missmatch: got %v, want %v", actual, tt.wantACMStatus)
+			if err != nil {
+				if got.Address() != registers.TxtPublicSpace+registers.ACMStatusRegisterOffset {
+					t.Errorf("Incorrect Address, expected: %d. actual: %d",
+						registers.TxtPublicSpace+registers.ACMStatusRegisterOffset,
+						got.Address(),
+					)
+				}
+				actual := convert(got)
+				if actual != tt.wantACMStatus {
+					t.Errorf("Result missmatch: got %v, want %v", actual, tt.wantACMStatus)
+				}
 			}
 		})
 	}
