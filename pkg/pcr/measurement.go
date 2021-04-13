@@ -12,10 +12,10 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 )
 
-const (
-	// loggingDataLimit is a limit of how many bytes of a measured data
+var (
+	// LoggingDataLimit is a limit of how many bytes of a measured data
 	// to write per measurement. It is takes arbitrary (feel free to change it):
-	loggingDataLimit = 20
+	LoggingDataLimit = uint(20)
 )
 
 // DataChunk contains a chunk of data that is measured during one measurement.
@@ -333,8 +333,8 @@ func (s Measurements) Calculate(image []byte, initialValue uint8, hashFunc hash.
 		hashValue := hashFunc.Sum(nil)
 		hashFunc.Reset()
 
-		if len(measurementData) > loggingDataLimit {
-			logger.Printf("Event '%s': %x... (len: %d) (%T)\n", measurement.ID, measurementData[:loggingDataLimit], len(measurementData), hashFunc)
+		if uint(len(measurementData)) > LoggingDataLimit {
+			logger.Printf("Event '%s': %x... (len: %d) (%T)\n", measurement.ID, measurementData[:LoggingDataLimit], len(measurementData), hashFunc)
 		} else {
 			logger.Printf("Event '%s': %x (%T)\n", measurement.ID, measurementData, hashFunc)
 		}
