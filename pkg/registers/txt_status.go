@@ -23,6 +23,10 @@ func (reg TXTStatus) BitSize() uint8 {
 	return uint8(binary.Size(reg) * 8)
 }
 
+func (reg TXTStatus) Address() uint64 {
+	return TxtPublicSpace + TXTStatusRegisterOffset
+}
+
 func (reg TXTStatus) Fields() []Field {
 	fieldsRaw := []fieldDescription{
 		{

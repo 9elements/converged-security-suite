@@ -10,6 +10,7 @@ type Register interface {
 	ID() RegisterID
 	BitSize() uint8
 	Fields() []Field
+	Address() uint64
 }
 
 // RawRegister is a simple accessor to variable length registers
@@ -100,6 +101,7 @@ func (regs *Registers) UnmarshalJSON(b []byte) error {
 type simpleRegister32 struct {
 	id    RegisterID
 	Value uint32
+	Addr  uint64
 }
 
 func (r simpleRegister32) ID() RegisterID {
@@ -123,6 +125,10 @@ func (r simpleRegister32) Fields() []Field {
 
 func (r simpleRegister32) Raw() uint32 {
 	return r.Value
+}
+
+func (r simpleRegister32) Address() uint64 {
+	return r.Addr
 }
 
 var _ RawRegister32 = simpleRegister32{}

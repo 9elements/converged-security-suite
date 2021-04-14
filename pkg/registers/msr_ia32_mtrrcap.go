@@ -13,6 +13,10 @@ func (reg IA32MTRRCAP) BitSize() uint8 {
 	return 64
 }
 
+func (reg IA32MTRRCAP) Address() uint64 {
+	return IA32MTRRCAPRegisterOffset
+}
+
 func (reg IA32MTRRCAP) Fields() []Field {
 	fieldsRaw := []fieldDescription{
 		{

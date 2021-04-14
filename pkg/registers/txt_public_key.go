@@ -24,6 +24,10 @@ func (reg TXTPublicKey) BitSize() uint8 {
 	return uint8(binary.Size(reg) * 8)
 }
 
+func (reg TXTPublicKey) Address() uint64 {
+	return TxtPublicSpace + TXTPublicKeyRegisterOffset
+}
+
 func (reg TXTPublicKey) Fields() []Field {
 	keyField := Field{
 		Name:      "Hash of the public key used for verification of AC modules",

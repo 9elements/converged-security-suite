@@ -13,6 +13,10 @@ func (reg IA32PlatformID) BitSize() uint8 {
 	return 64
 }
 
+func (reg IA32PlatformID) Address() uint64 {
+	return IA32PlatformIDRegisterOffset
+}
+
 func (reg IA32PlatformID) Fields() []Field {
 	fieldsRaw := []fieldDescription{
 		{
