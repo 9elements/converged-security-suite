@@ -39,7 +39,7 @@ func (f *FlagRegisters) Set(in string) error {
 		if err != nil {
 			return fmt.Errorf("unable to parse file '%s': %w", in, err)
 		}
-		err = json.Unmarshal(contents, f)
+		err = json.Unmarshal(contents, (*registers.Registers)(f))
 		if err != nil {
 			return fmt.Errorf("unable to unmarshal JSON from file '%s': %w", in, err)
 		}
