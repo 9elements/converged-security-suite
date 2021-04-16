@@ -43,17 +43,19 @@ func CalcImageOffset(image []byte, addr uint64) (uint64, error) {
 
 // GetRegion returns offset and size of the given region type.
 func GetRegion(image []byte, regionType uefi.FlashRegionType) (uint32, uint32, error) {
+	defer suppressFianoLog()()
+
 	if _, err := uefi.FindSignature(image); err != nil {
-		return 0, 0, err
+		return 0, 0, fmt.Errorf("count not find the signature: %w", err)
 	}
 	flash, err := uefi.NewFlashImage(image)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, fmt.Errorf("count not initialize a flash image: %w", err)
 	}
 	if flash.IFD.Region.FlashRegions[regionType].Valid() {
 		offset := flash.IFD.Region.FlashRegions[regionType].BaseOffset()
 		size := flash.IFD.Region.FlashRegions[regionType].EndOffset() - offset
 		return offset, size, nil
 	}
-	return 0, 0, fmt.Errorf("Couldn't find region %d", regionType)
+	return 0, 0, fmt.Errorf("could not find region %d", regionType)
 }
