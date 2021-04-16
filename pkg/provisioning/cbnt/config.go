@@ -1,4 +1,4 @@
-package bg
+package cbnt
 
 import (
 	"bytes"
@@ -34,34 +34,34 @@ type KeyHash struct {
 	Algorithm manifest.Algorithm `json:"algorithm"` //
 }
 
-// BootGuardOptions presents all available options for BootGuard configuarion file.
-type BootGuardOptions struct {
-	BootPolicyManifest bootpolicy.Manifest
-	KeyManifest        key.Manifest
+// Options presents all available options for CBnT configuarion file.
+type Options struct {
+	BootPolicyManifest *bootpolicy.Manifest
+	KeyManifest        *key.Manifest
 }
 
 // ParseConfig parses a boot guard option json file
-func ParseConfig(filepath string) (*BootGuardOptions, error) {
-	var bgo BootGuardOptions
+func ParseConfig(filepath string) (*Options, error) {
+	var cbnto Options
 	data, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		return nil, err
 	}
-	if err = json.Unmarshal(data, &bgo); err != nil {
+	if err = json.Unmarshal(data, &cbnto); err != nil {
 		return nil, err
 	}
-	return &bgo, nil
+	return &cbnto, nil
 }
 
-func setBPMHeader(bgo *BootGuardOptions, bpm *bootpolicy.Manifest) (*bootpolicy.BPMH, error) {
+func setBPMHeader(cbnto *Options, bpm *bootpolicy.Manifest) (*bootpolicy.BPMH, error) {
 	header := bootpolicy.NewBPMH()
 	if err := defaults.Set(header); err != nil {
 		return nil, err
 	}
-	header.BPMRevision = bgo.BootPolicyManifest.BPMRevision
-	header.BPMSVN = manifest.SVN(bgo.BootPolicyManifest.BPMH.BPMSVN)
-	header.ACMSVNAuth = manifest.SVN(bgo.BootPolicyManifest.BPMH.ACMSVNAuth)
-	header.NEMDataStack = bootpolicy.Size4K(bgo.BootPolicyManifest.BPMH.NEMDataStack)
+	header.BPMRevision = cbnto.BootPolicyManifest.BPMRevision
+	header.BPMSVN = manifest.SVN(cbnto.BootPolicyManifest.BPMH.BPMSVN)
+	header.ACMSVNAuth = manifest.SVN(cbnto.BootPolicyManifest.BPMH.ACMSVNAuth)
+	header.NEMDataStack = bootpolicy.Size4K(cbnto.BootPolicyManifest.BPMH.NEMDataStack)
 	header.KeySignatureOffset = uint16(bpm.PMSEOffset() + bpm.PMSE.KeySignatureOffset())
 
 	return header, nil
@@ -169,85 +169,85 @@ func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo manifest.Alg
 	return hash, nil
 }
 
-func setIBBSegment(bgo *BootGuardOptions, image []byte) (*bootpolicy.SE, error) {
-	for iterator, item := range bgo.BootPolicyManifest.SE[0].DigestList.List {
-		d, err := getIBBsDigest(bgo.BootPolicyManifest.SE[0].IBBSegments, image, item.HashAlg)
+func setIBBSegment(cbnto *Options, image []byte) (*bootpolicy.SE, error) {
+	for iterator, item := range cbnto.BootPolicyManifest.SE[0].DigestList.List {
+		d, err := getIBBsDigest(cbnto.BootPolicyManifest.SE[0].IBBSegments, image, item.HashAlg)
 		if err != nil {
 			return nil, err
 		}
-		bgo.BootPolicyManifest.SE[0].DigestList.List[iterator].HashBuffer = make([]byte, len(d))
-		copy(bgo.BootPolicyManifest.SE[0].DigestList.List[iterator].HashBuffer, d)
+		cbnto.BootPolicyManifest.SE[0].DigestList.List[iterator].HashBuffer = make([]byte, len(d))
+		copy(cbnto.BootPolicyManifest.SE[0].DigestList.List[iterator].HashBuffer, d)
 	}
 
-	return &bgo.BootPolicyManifest.SE[0], nil
+	return &cbnto.BootPolicyManifest.SE[0], nil
 }
 
-func setTXTElement(bgo *BootGuardOptions) (*bootpolicy.TXT, error) {
+func setTXTElement(cbnto *Options) (*bootpolicy.TXT, error) {
 	txte := bootpolicy.NewTXT()
-	txte = bgo.BootPolicyManifest.TXTE
+	txte = cbnto.BootPolicyManifest.TXTE
 	return txte, nil
 }
 
-func setPCDElement(bgo *BootGuardOptions) (*bootpolicy.PCD, error) {
+func setPCDElement(cbnto *Options) (*bootpolicy.PCD, error) {
 	pcde := bootpolicy.NewPCD()
-	if bgo.BootPolicyManifest.PCDE == nil {
+	if cbnto.BootPolicyManifest.PCDE == nil {
 		return nil, nil
 	}
-	pcde.Data = bgo.BootPolicyManifest.PCDE.Data
+	pcde.Data = cbnto.BootPolicyManifest.PCDE.Data
 	return pcde, nil
 }
 
-func setPMElement(bgo *BootGuardOptions) (*bootpolicy.PM, error) {
+func setPMElement(cbnto *Options) (*bootpolicy.PM, error) {
 	pme := bootpolicy.NewPM()
-	if bgo.BootPolicyManifest.PME == nil {
+	if cbnto.BootPolicyManifest.PME == nil {
 		return nil, nil
 	}
-	pme.Data = bgo.BootPolicyManifest.PME.Data
+	pme.Data = cbnto.BootPolicyManifest.PME.Data
 	return pme, nil
 }
 
-func setPMSElement(bgo *BootGuardOptions, bpm *bootpolicy.Manifest) (*bootpolicy.Signature, error) {
+func setPMSElement(cbnto *Options, bpm *bootpolicy.Manifest) (*bootpolicy.Signature, error) {
 	psme := bootpolicy.NewSignature()
 	return psme, nil
 }
 
-// SetKM takes BootGuardOptiones struct and initializes a new KM with the given configuration.
-func SetKM(bgo *BootGuardOptions) (*key.Manifest, error) {
+// SetKM takes Options struct and initializes a new KM with the given configuration.
+func SetKM(cbnto *Options) (*key.Manifest, error) {
 	km := key.NewManifest()
-	km = &bgo.KeyManifest
+	km = cbnto.KeyManifest
 	return km, nil
 }
 
 // GenerateBPM generates a Boot Policy Manifest with the given config and firmware image
-func GenerateBPM(bgo *BootGuardOptions, biosFilepath string) (*bootpolicy.Manifest, error) {
+func GenerateBPM(cbnto *Options, biosFilepath string) (*bootpolicy.Manifest, error) {
 	bpm := bootpolicy.NewManifest()
 	data, err := ioutil.ReadFile(biosFilepath)
 	if err != nil {
 		return nil, err
 	}
-	se, err := setIBBSegment(bgo, data)
+	se, err := setIBBSegment(cbnto, data)
 	if err != nil {
 		return nil, err
 	}
 	bpm.SE = append(bpm.SE, *se)
-	bpm.TXTE, err = setTXTElement(bgo)
+	bpm.TXTE, err = setTXTElement(cbnto)
 	if err != nil {
 		return nil, err
 	}
-	bpm.PCDE, err = setPCDElement(bgo)
+	bpm.PCDE, err = setPCDElement(cbnto)
 	if err != nil {
 		return nil, err
 	}
-	bpm.PME, err = setPMElement(bgo)
+	bpm.PME, err = setPMElement(cbnto)
 	if err != nil {
 		return nil, err
 	}
-	bpmh, err := setBPMHeader(bgo, bpm)
+	bpmh, err := setBPMHeader(cbnto, bpm)
 	if err != nil {
 		return nil, err
 	}
 	bpm.BPMH = *bpmh
-	pmse, err := setPMSElement(bgo, bpm)
+	pmse, err := setPMSElement(cbnto, bpm)
 	if err != nil {
 		return nil, err
 	}
@@ -256,9 +256,9 @@ func GenerateBPM(bgo *BootGuardOptions, biosFilepath string) (*bootpolicy.Manife
 	return bpm, nil
 }
 
-// WriteConfig writes a BootGuard config file to the given path with given options.
-func WriteConfig(f *os.File, bgo *BootGuardOptions) error {
-	cfg, err := json.Marshal(bgo)
+// WriteConfig writes a CBnT config file to the given path with given options.
+func WriteConfig(f *os.File, cbnto *Options) error {
+	cfg, err := json.Marshal(cbnto)
 	if err != nil {
 		return err
 	}
@@ -271,8 +271,8 @@ func WriteConfig(f *os.File, bgo *BootGuardOptions) error {
 
 // ReadConfigFromBIOSImage reads boot guard options, boot policy manifest and key manifest from a given firmware image
 // and writes that to a given file in json format
-func ReadConfigFromBIOSImage(biosFilepath string, configFilepath *os.File) (*BootGuardOptions, error) {
-	var bgo BootGuardOptions
+func ReadConfigFromBIOSImage(biosFilepath string, configFilepath *os.File) (*Options, error) {
+	var cbnto Options
 	var bpm *bootpolicy.Manifest
 	var km *key.Manifest
 	bios, err := ioutil.ReadFile(biosFilepath)
@@ -296,11 +296,11 @@ func ReadConfigFromBIOSImage(biosFilepath string, configFilepath *os.File) (*Boo
 
 	/* Boot Policy Manifest */
 	// BPMH
-	bgo.BootPolicyManifest = *bpm
+	cbnto.BootPolicyManifest = bpm
 
 	/* Key Manifest */
-	bgo.KeyManifest = *km
-	data, err := json.Marshal(bgo)
+	cbnto.KeyManifest = km
+	data, err := json.Marshal(cbnto)
 	if err != nil {
 		return nil, err
 	}
@@ -308,7 +308,7 @@ func ReadConfigFromBIOSImage(biosFilepath string, configFilepath *os.File) (*Boo
 	if _, err = configFilepath.Write(json); err != nil {
 		return nil, err
 	}
-	return &bgo, nil
+	return &cbnto, nil
 }
 
 // GetBPMPubHash takes the path to public BPM signing key and hash algorithm

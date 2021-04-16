@@ -1,4 +1,4 @@
-package bg
+package cbnt
 
 import "testing"
 
@@ -14,7 +14,7 @@ func TestSetBPMHeaderValid(T *testing.T) {
 
 }
 
-func TestSetBPMHeaderInvalidBadBGO(T *testing.T) {
+func TestSetBPMHeaderInvalidBadCBnTO(T *testing.T) {
 
 }
 
@@ -26,7 +26,7 @@ func TestSetIBBSegmentValid(T *testing.T) {
 
 }
 
-func TestSetIBBSegmentInvalidBGO(T *testing.T) {
+func TestSetIBBSegmentInvalidCBnTO(T *testing.T) {
 
 }
 
@@ -38,7 +38,7 @@ func TestTXTElementValid(T *testing.T) {
 
 }
 
-func TestTXTElementInvalidBadBGO(T *testing.T) {
+func TestTXTElementInvalidBadCBnTO(T *testing.T) {
 
 }
 
@@ -46,7 +46,7 @@ func TestSetPCDElementValid(T *testing.T) {
 
 }
 
-func TestSetPCDElementInvalidBGO(T *testing.T) {
+func TestSetPCDElementInvalidCBnTO(T *testing.T) {
 
 }
 
@@ -54,6 +54,6 @@ func TestPMElementValid(T *testing.T) {
 
 }
 
-func TestPMElementInvalidBGO(T *testing.T) {
+func TestPMElementInvalidCBnTO(T *testing.T) {
 
 }
