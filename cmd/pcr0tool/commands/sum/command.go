@@ -7,14 +7,13 @@ import (
 	"flag"
 	"fmt"
 	"hash"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands"
+	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
-	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
 	"github.com/google/go-tpm/tpm2"
@@ -36,7 +35,7 @@ type Command struct {
 	isQuiet   *bool
 	flow      *string
 	hashFunc  *string
-	registers *string
+	registers helpers.FlagRegisters
 	tpmDevice *string
 
 	printMeasurementLengthLimit *uint
@@ -58,7 +57,7 @@ func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
 	cmd.isQuiet = flag.Bool("quiet", false, `display only the result`)
 	cmd.flow = flag.String("flow", pcr.FlowAuto.String(), "values: "+commands.FlowCommandLineValues())
 	cmd.hashFunc = flag.String("hash-func", "sha1", `which hash function use to hash measurements and to extend the PCR0; values: "sha1", "sha256"`)
-	cmd.registers = flag.String("registers", "", "[optional] file that contains registers as a json array")
+	flag.Var(&cmd.registers, "registers", "[optional] file that contains registers as a json array (use value '/dev' to use registers of the local machine)")
 	cmd.tpmDevice = flag.String("tpm-device", "", "[optional] tpm device used for measurements, values: "+commands.TPMTypeCommandLineValues())
 	cmd.printMeasurementLengthLimit = flag.Uint("print-measurement-length-limit", 20, "length limit of measured data to be printed")
 }
@@ -78,14 +77,6 @@ func (cmd Command) Execute(args []string) {
 	}
 	imagePath := args[0]
 
-	var regs registers.Registers
-	if len(*cmd.registers) > 0 {
-		contents, err := ioutil.ReadFile(*cmd.registers)
-		assertNoError(err)
-		err = json.Unmarshal(contents, &regs)
-		assertNoError(err)
-	}
-
 	flow, err := pcr.FlowFromString(*cmd.flow)
 	if err != nil {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "unknown attestation flow: '%s'\n", *cmd.flow)
@@ -94,7 +85,7 @@ func (cmd Command) Execute(args []string) {
 
 	var measureOpts []pcr.MeasureOption
 	measureOpts = append(measureOpts, pcr.SetFlow(flow))
-	measureOpts = append(measureOpts, pcr.SetRegisters(regs))
+	measureOpts = append(measureOpts, pcr.SetRegisters(cmd.registers))
 
 	var hashFunc hash.Hash
 	hashFuncString := strings.ToLower(*cmd.hashFunc)

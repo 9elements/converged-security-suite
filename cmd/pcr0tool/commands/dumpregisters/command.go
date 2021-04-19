@@ -5,9 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"runtime"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
+	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 )
 
@@ -44,32 +43,17 @@ func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
 //
 // `args` are the arguments left unused by verb itself and options.
 func (cmd Command) Execute(args []string) {
-	if runtime.GOOS != "linux" {
-		panic("command is supported only on Linux platform")
+	regs, err := helpers.GetLocalRegisters()
+	if regs == nil && err != nil {
+		panic(err)
 	}
-
-	txtAPI := hwapi.GetAPI()
-
-	txtConfig, err := registers.FetchTXTConfigSpace(txtAPI)
-	assertNoError(err)
-	txtRegisters, err := registers.ReadTXTRegisters(txtConfig)
-	if err != nil {
-		fmt.Printf("[WARNING]: Reading TXT registers returned an error: %v\n", err)
-	}
-
-	msrRegisters, err := txtAPI.GetMSRRegisters()
-	if err != nil {
-		fmt.Printf("[WARNING]: Reading MSR registers returned an error: %v\n", err)
-	}
-
-	allRegisters := append(txtRegisters, msrRegisters...)
-	for _, reg := range allRegisters {
+	for _, reg := range regs {
 		fmt.Printf("\n")
 		printRegister(reg)
 	}
 
 	if len(*cmd.outputFile) > 0 {
-		b, err := json.Marshal(allRegisters)
+		b, err := json.Marshal(regs)
 		if err != nil {
 			panic(fmt.Sprintf("failed to marshal registers into json, err: %v", err))
 		}
