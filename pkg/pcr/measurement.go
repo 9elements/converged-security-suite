@@ -120,9 +120,6 @@ type Measurement struct {
 
 	// Data contains chunks of data to be measured as contiguous sequence of bytes
 	Data DataChunks `json:",omitempty"`
-
-	// NoHashing tells that the data of this measurement should not be hashed and should be treated as hash
-	NoHashing bool
 }
 
 func eventTypePtr(t tpmeventlog.EventType) *tpmeventlog.EventType {
@@ -132,6 +129,11 @@ func eventTypePtr(t tpmeventlog.EventType) *tpmeventlog.EventType {
 // IsFake forces to skip this measurement in real PCR value calculation
 func (m Measurement) IsFake() bool {
 	return m.ID.IsFake()
+}
+
+// NoHash forces to skip hashing of this measurement's data during PCR calculation
+func (m Measurement) NoHash() bool {
+	return m.ID.NoHash()
 }
 
 // MeasureFunc returns the function to be used for the measurement.
@@ -333,7 +335,7 @@ func (s Measurements) Calculate(image []byte, initialValue uint8, hashFunc hash.
 		measurementData := measurement.CompileMeasurableData(image)
 
 		var hashValue []byte
-		if measurement.NoHashing {
+		if measurement.NoHash() {
 			hashValue = measurementData
 		} else {
 			hashFunc.Write(measurementData)

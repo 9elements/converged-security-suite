@@ -46,8 +46,7 @@ func MeasureACMDate(fitEntries []fit.Entry) (*Measurement, error) {
 
 func MeasureACMDateInPlace(hashAlg manifest.Algorithm, fitEntries []fit.Entry) (*Measurement, error) {
 	m := Measurement{
-		ID:        MeasurementIDACMDateInPlace,
-		NoHashing: true,
+		ID: MeasurementIDACMDateInPlace,
 	}
 
 	var hashSize int
