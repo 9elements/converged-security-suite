@@ -68,6 +68,15 @@ func (id MeasurementID) IsFake() bool {
 	return false
 }
 
+// NoHash forces to skip hashing of this measurement's data during PCR calculation
+func (id MeasurementID) NoHash() bool {
+	switch id {
+	case MeasurementIDACMDateInPlace:
+		return true
+	}
+	return false
+}
+
 // String implements fmt.Stringer
 func (id MeasurementID) String() string {
 	switch id {
