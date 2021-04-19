@@ -120,16 +120,22 @@ func DetectAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevic
 		return FlowAuto, err
 	}
 	if isTXTEnabledValue {
-		var usedTPM tpmdetection.Type
-		var err error
-		if tpmDevice != tpmdetection.TypeNoTPM {
-			usedTPM = tpmDevice
-		} else {
-			usedTPM, err = DetectTPM(firmware, regs)
+		switch tpmDevice {
+		case tpmdetection.TypeTPM12:
+			return FlowIntelLegacyTXTEnabledTPM12, nil
+		case tpmdetection.TypeTPM20:
+			return FlowIntelLegacyTXTEnabled, nil
+		case tpmdetection.TypeNoTPM:
+		default:
+			return FlowAuto, fmt.Errorf("unexpected tpm device value: %d", tpmDevice)
 		}
-		if err != nil && usedTPM == tpmdetection.TypeTPM12 {
+
+		// try to detect based on registers/firmware
+		detectedTPM, err := DetectTPM(firmware, regs)
+		if err != nil && detectedTPM == tpmdetection.TypeTPM12 {
 			return FlowIntelLegacyTXTEnabledTPM12, nil
 		}
+		// TPM2.0 is more likely
 		return FlowIntelLegacyTXTEnabled, nil
 	}
 	return FlowIntelLegacyTXTDisabled, nil

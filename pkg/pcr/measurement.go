@@ -120,6 +120,9 @@ type Measurement struct {
 
 	// Data contains chunks of data to be measured as contiguous sequence of bytes
 	Data DataChunks `json:",omitempty"`
+
+	// NoHashing tells that the data of this measurement should not be hashed and should be treated as hash
+	NoHashing bool
 }
 
 func eventTypePtr(t tpmeventlog.EventType) *tpmeventlog.EventType {
@@ -329,9 +332,14 @@ func (s Measurements) Calculate(image []byte, initialValue uint8, hashFunc hash.
 		}
 		measurementData := measurement.CompileMeasurableData(image)
 
-		hashFunc.Write(measurementData)
-		hashValue := hashFunc.Sum(nil)
-		hashFunc.Reset()
+		var hashValue []byte
+		if measurement.NoHashing {
+			hashValue = measurementData
+		} else {
+			hashFunc.Write(measurementData)
+			hashValue = hashFunc.Sum(nil)
+			hashFunc.Reset()
+		}
 
 		if uint(len(measurementData)) > LoggingDataLimit {
 			logger.Printf("Event '%s': %x... (len: %d) (%T)\n", measurement.ID, measurementData[:LoggingDataLimit], len(measurementData), hashFunc)
