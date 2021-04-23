@@ -1,7 +1,9 @@
 /txt-suite
 /txt-prov
 /cbnt-prov
+/bg-prov
 cmd/txt-prov/txt-prov
 cmd/txt-suite/test_log.json
 cmd/txt-suite/txt-suite
 cmd/cbnt-prov/cbnt-prov
+cmd/bg-prov/bg-prov
