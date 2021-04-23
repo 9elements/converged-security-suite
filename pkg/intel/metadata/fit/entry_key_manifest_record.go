@@ -5,11 +5,22 @@ import (
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/key"
+	bg "github.com/9elements/converged-security-suite/v2/pkg/provisioning/bootguard/key"
 )
 
 // ParseData creates EntryKeyManifestRecord from EntryKeyManifest
 func (entry *EntryKeyManifestRecord) ParseData() (*key.Manifest, error) {
 	var km key.Manifest
+	_, err := km.ReadFrom(bytes.NewReader(entry.GetDataBytes()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse KeyManifest, err: %v", err)
+	}
+	return &km, nil
+}
+
+// ParseDataBG creates EntryKeyManifestRecord from EntryKeyManifest
+func (entry *EntryKeyManifestRecord) ParseDataBG() (*bg.Manifest, error) {
+	var km bg.Manifest
 	_, err := km.ReadFrom(bytes.NewReader(entry.GetDataBytes()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse KeyManifest, err: %v", err)
