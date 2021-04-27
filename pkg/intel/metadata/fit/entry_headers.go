@@ -210,9 +210,9 @@ func (hdr *EntryHeaders) getDataCoordinates(firmware io.ReadSeeker, firmwareLeng
 			return nil, nil, nil, []error{err}
 		}
 	case EntryTypeDiagnosticACModuleEntry:
-		panic("not implemented, yet")
+		return nil, nil, nil, []error{fmt.Errorf("support of EntryTypeDiagnosticACModuleEntry is not implemented, yet")}
 	case EntryTypeTPMPolicyRecord:
-		panic("not implemented, yet")
+		return nil, nil, nil, []error{fmt.Errorf("support of EntryTypeTPMPolicyRecord is not implemented, yet")}
 	case EntryTypeTXTPolicyRecord:
 		// See "1.2.8" of the specification.
 		// The "Address" field is actually the structure in this case :(
