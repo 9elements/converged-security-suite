@@ -92,13 +92,33 @@ func getRegister64Parser(regID RegisterID) func(ui64 uint64) Register {
 
 func getRegister32Parser(regID RegisterID) func(ui32 uint32) Register {
 	switch regID {
-	case TXTVerFSBIfRegisterID, TXTVerEMIfRegisterID, TXTSINITBaseRegisterID, TXTSINITSizeRegisterID,
-		TXTMLEJoinRegisterID, TXTHeapBaseRegisterID, TXTHeapSizeRegisterID:
+	case TXTVerFSBIfRegisterID:
 		return func(ui32 uint32) Register {
-			return &simpleRegister32{
-				id:    regID,
-				Value: ui32,
-			}
+			return ParseTXTVerFSBIF(ui32)
+		}
+	case TXTVerEMIfRegisterID:
+		return func(ui32 uint32) Register {
+			return ParseTXTVerEMIF(ui32)
+		}
+	case TXTSINITBaseRegisterID:
+		return func(ui32 uint32) Register {
+			return ParseTXTSInitBase(ui32)
+		}
+	case TXTSINITSizeRegisterID:
+		return func(ui32 uint32) Register {
+			return ParseTXTSInitSize(ui32)
+		}
+	case TXTMLEJoinRegisterID:
+		return func(ui32 uint32) Register {
+			return ParseTXTMLEJoin(ui32)
+		}
+	case TXTHeapBaseRegisterID:
+		return func(ui32 uint32) Register {
+			return ParseTXTHeapBase(ui32)
+		}
+	case TXTHeapSizeRegisterID:
+		return func(ui32 uint32) Register {
+			return ParseTXTHeapSize(ui32)
 		}
 	case TXTDMAProtectedRangeRegisterID:
 		return func(ui32 uint32) Register {

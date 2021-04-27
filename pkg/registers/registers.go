@@ -96,39 +96,3 @@ func (regs *Registers) UnmarshalJSON(b []byte) error {
 	*regs = resultRegisters
 	return nil
 }
-
-// simpleRegister32 is used to support 32bit registers
-type simpleRegister32 struct {
-	id    RegisterID
-	Value uint32
-	Addr  uint64
-}
-
-func (r simpleRegister32) ID() RegisterID {
-	return r.id
-}
-
-func (r simpleRegister32) BitSize() uint8 {
-	return 32
-}
-
-func (r simpleRegister32) Fields() []Field {
-	return []Field{
-		{
-			Name:      "<reserved>",
-			BitOffset: 0,
-			BitSize:   r.BitSize(),
-			Value:     NumberToFieldValue(uint64(r.Value)),
-		},
-	}
-}
-
-func (r simpleRegister32) Raw() uint32 {
-	return r.Value
-}
-
-func (r simpleRegister32) Address() uint64 {
-	return r.Addr
-}
-
-var _ RawRegister32 = simpleRegister32{}
