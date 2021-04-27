@@ -50,12 +50,12 @@ func (hdr *EntryHeaders) GoString() string {
 	return result.String()
 }
 
-// Uint24 is a 24 bit value of a size in multiple of 16 bytes
+// Uint24 is a 24 bit unsigned little-endian integer value.
 type Uint24 struct {
 	Value [3]byte
 }
 
-// Uint32 returns the value of "size" as parsed uint32.
+// Uint32 returns the value as parsed uint32.
 //
 // If the value is used in "Size" then in the most cases the value should be
 // shifted with "<< 4" to get the real size value.
