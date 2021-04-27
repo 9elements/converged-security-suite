@@ -289,14 +289,14 @@ func HasFIT(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, erro
 		return false, nil, err
 	}
 
-	if int64(fitPointer)+int64(hdr.Size.Size()) > FourGiB {
+	if int64(fitPointer)+int64(hdr.DataSize()) > FourGiB {
 		return false, fmt.Errorf("FIT isn't part of 32bit address-space"), nil
 	}
-	if int64(fitPointer)+int64(hdr.Size.Size()) > FITVector {
+	if int64(fitPointer)+int64(hdr.DataSize()) > FITVector {
 		return false, fmt.Errorf("FIT isn't in the range (4 GB - 16 MB) to (4 GB - 40h)"), nil
 	}
 
-	fitblob := make([]byte, hdr.Size.Size())
+	fitblob := make([]byte, hdr.DataSize())
 	err = txtAPI.ReadPhysBuf(int64(fitPointer), fitblob)
 
 	fitHeaders, err = fit.ParseTable(fitblob)
@@ -371,7 +371,7 @@ func IBBCoversResetVector(txtAPI hwapi.APIInterfaces, config *tools.Configuratio
 	for _, hdr := range fitHeaders {
 		if hdr.Type() == fit.EntryTypeBIOSStartupModuleEntry {
 			addr := hdr.Address.Pointer()
-			coversRv := addr <= ResetVector && addr+uint64(hdr.Size.Size()) >= ResetVector+4
+			coversRv := addr <= ResetVector && addr+uint64(hdr.DataSize()) >= ResetVector+4
 
 			if coversRv {
 				return true, nil, nil
@@ -387,7 +387,7 @@ func IBBCoversFITVector(txtAPI hwapi.APIInterfaces, config *tools.Configuration)
 	for _, hdr := range fitHeaders {
 		if hdr.Type() == fit.EntryTypeBIOSStartupModuleEntry {
 			addr := hdr.Address.Pointer()
-			coversRv := addr <= FITVector && addr+uint64(hdr.Size.Size()) >= FITVector+4
+			coversRv := addr <= FITVector && addr+uint64(hdr.DataSize()) >= FITVector+4
 			if coversRv {
 				return true, nil, nil
 			}
@@ -402,7 +402,7 @@ func IBBCoversFIT(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool
 	for _, hdr := range fitHeaders {
 		if hdr.Type() == fit.EntryTypeBIOSStartupModuleEntry {
 			addr := hdr.Address.Pointer()
-			coversRv := addr <= uint64(fitPointer) && addr+uint64(hdr.Size.Size()) >= uint64(fitPointer+uint32(len(fitHeaders)*16))
+			coversRv := addr <= uint64(fitPointer) && addr+uint64(hdr.DataSize()) >= uint64(fitPointer+uint32(len(fitHeaders)*16))
 
 			if coversRv {
 				return true, nil, nil
@@ -419,8 +419,8 @@ func NoIBBOverlap(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool
 		if hdr1.Type() == fit.EntryTypeBIOSStartupModuleEntry {
 			for j, hdr2 := range fitHeaders {
 				if i < j && hdr2.Type() == fit.EntryTypeBIOSStartupModuleEntry {
-					a := hdr1.Address.Pointer() > hdr2.Address.Pointer()+uint64(hdr2.Size.Size())
-					b := hdr2.Address.Pointer() > hdr1.Address.Pointer()+uint64(hdr1.Size.Size())
+					a := hdr1.Address.Pointer() > hdr2.Address.Pointer()+uint64(hdr2.DataSize())
+					b := hdr2.Address.Pointer() > hdr1.Address.Pointer()+uint64(hdr1.DataSize())
 
 					if !a && !b {
 						return false, fmt.Errorf("BIOS Startup Module Entries overlap "), nil
@@ -439,8 +439,8 @@ func NoBIOSACMOverlap(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (
 		if hdr1.Type() == fit.EntryTypeBIOSStartupModuleEntry {
 			for j, hdr2 := range fitHeaders {
 				if i < j && hdr2.Type() == fit.EntryTypeStartupACModuleEntry {
-					a := hdr1.Address.Pointer() > hdr2.Address.Pointer()+uint64(hdr2.Size.Size())
-					b := hdr2.Address.Pointer() > hdr1.Address.Pointer()+uint64(hdr1.Size.Size())
+					a := hdr1.Address.Pointer() > hdr2.Address.Pointer()+uint64(hdr2.DataSize())
+					b := hdr2.Address.Pointer() > hdr1.Address.Pointer()+uint64(hdr1.DataSize())
 
 					if !a && !b {
 						return false, fmt.Errorf("startup AC Module Entries overlap"), nil
@@ -457,7 +457,7 @@ func NoBIOSACMOverlap(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (
 func BIOSACMIsBelow4G(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	for _, hdr := range fitHeaders {
 		if hdr.Type() == fit.EntryTypeStartupACModuleEntry {
-			if hdr.Address.Pointer()+uint64(hdr.Size.Size()) > uint64(FourGiB) {
+			if hdr.Address.Pointer()+uint64(hdr.DataSize()) > uint64(FourGiB) {
 				return false, fmt.Errorf("startup AC Module Entry is above 4Gib"), nil
 			}
 		}

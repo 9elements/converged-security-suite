@@ -276,7 +276,7 @@ func CalculateNEMSize(image []byte, bpm *bootpolicy.Manifest, km *key.Manifest, 
 	}
 	totalSize += uint32(km.KeyManifestSignatureOffset)
 	totalSize += keySignatureElementMaxSize
-	totalSize += hdr.GetHeaders().Size.Size()
+	totalSize += hdr.GetHeaders().DataSize()
 	totalSize += uint32(2048)
 	totalSize += keySignatureElementMaxSize
 	totalSize += uint32((&bootpolicy.BPMH{}).TotalSize())
@@ -331,10 +331,10 @@ func StitchFITEntries(biosFilename string, acm, bpm, km []byte) error {
 			if len(bpm) <= 0 {
 				continue
 			}
-			if entry.Headers.Size.Size() == 0 {
+			if len(entry.DataBytes) == 0 {
 				return fmt.Errorf("FIT entry size is zero for BPM")
 			}
-			if len(bpm) > int(entry.Headers.Size.Size()) {
+			if len(bpm) > len(entry.DataBytes) {
 				return fmt.Errorf("new BPM bigger than older BPM")
 			}
 			addr, err := tools.CalcImageOffset(image, entry.Headers.Address.Pointer())
@@ -356,10 +356,10 @@ func StitchFITEntries(biosFilename string, acm, bpm, km []byte) error {
 			if len(km) <= 0 {
 				continue
 			}
-			if entry.Headers.Size.Size() == 0 {
+			if len(entry.DataBytes) == 0 {
 				return fmt.Errorf("FIT entry size is zero for KM")
 			}
-			if len(km) > int(entry.Headers.Size.Size()) {
+			if len(km) > len(entry.DataBytes) {
 				return fmt.Errorf("new KM bigger than older KM")
 			}
 			addr, err := tools.CalcImageOffset(image, entry.Headers.Address.Pointer())
