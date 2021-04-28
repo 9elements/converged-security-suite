@@ -13,7 +13,7 @@ type Range struct {
 }
 
 func (r Range) String() string {
-	return fmt.Sprintf(`{"Offset":"%d", "Length":"%d"}`, r.Offset, r.Length)
+	return fmt.Sprintf(`{"Offset":"0x%x", "Length":"0x%x"}`, r.Offset, r.Length)
 }
 
 // Intersect returns True if ranges "r" and "cmp" has at least
