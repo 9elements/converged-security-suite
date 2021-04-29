@@ -128,6 +128,7 @@ type generateBPMCmd struct {
 	IbbSegbase  uint32               `flag optional name:"ibbsegbase" help:"Value for IbbSegment structure"`
 	IbbSegsize  uint32               `flag optional name:"ibbsegsize" help:"Value for IBB segment structure"`
 	IbbSegFlag  uint16               `flag optional name:"ibbsegflag" help:"Reducted"`
+	Coreboot    bool                 `flag optional name:"coreboot" help:"Required when BIOS binary file is a coreboot image"`
 	// TXT args
 	SinitMin          uint8                       `flag optional name:"sinitmin" help:"OEM authorized SinitMinSvn value"`
 	TXTFlags          bootpolicy.TXTControlFlags  `flag optional name:"txtflags" help:"TXT Element control flags"`
@@ -420,6 +421,13 @@ func (g *generateBPMCmd) Run(ctx *context) error {
 		seg.Size = g.IbbSegsize
 		seg.Flags = g.IbbSegFlag
 		se.IBBSegments = append(se.IBBSegments, seg)
+		if g.Coreboot {
+			ibbs, err := cbnt.FindAdditionalIBBs(g.BIOS)
+			if err != nil {
+				return err
+			}
+			se.IBBSegments = append(se.IBBSegments, ibbs...)
+		}
 
 		cbnto.BootPolicyManifest.SE = append(cbnto.BootPolicyManifest.SE, *se)
 
