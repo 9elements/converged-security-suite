@@ -128,6 +128,7 @@ type generateBPMCmd struct {
 	IbbSegbase  uint32               `flag optional name:"ibbsegbase" help:"Value for IbbSegment structure"`
 	IbbSegsize  uint32               `flag optional name:"ibbsegsize" help:"Value for IBB segment structure"`
 	IbbSegFlag  uint16               `flag optional name:"ibbsegflag" help:"Reducted"`
+	Coreboot    bool                 `flag optional name:"coreboot" help:"Required when BIOS binary file is a coreboot image"`
 	// TXT args
 	SinitMin          uint8                       `flag optional name:"sinitmin" help:"OEM authorized SinitMinSvn value"`
 	TXTFlags          bootpolicy.TXTControlFlags  `flag optional name:"txtflags" help:"TXT Element control flags"`
@@ -383,6 +384,9 @@ func (g *generateKMCmd) Run(ctx *context) error {
 
 func (g *generateBPMCmd) Run(ctx *context) error {
 	var options *cbnt.Options
+	var err error
+	var ibbs []bootpolicy.IBBSegment
+	ibbcount := len(g.IbbHash)
 	if g.Config != "" {
 		cbnto, err := cbnt.ParseConfig(g.Config)
 		if err != nil {
@@ -408,21 +412,27 @@ func (g *generateBPMCmd) Run(ctx *context) error {
 		se.DMAProtBase1 = g.DMABase1
 		se.DMAProtLimit1 = g.DMASize1
 		se.IBBEntryPoint = g.EntryPoint
-
-		se.DigestList.List = make([]manifest.HashStructure, len(g.IbbHash))
-		se.DigestList.Size = uint16(len(g.IbbHash))
-		for iterator := range se.DigestList.List {
-			se.DigestList.List[iterator].HashAlg = g.IbbHash[iterator]
+		if g.Coreboot {
+			ibbs, err = cbnt.FindAdditionalIBBs(g.BIOS)
+			if err != nil {
+				return err
+			}
 		}
-
+		se.DigestList.List = make([]manifest.HashStructure, ibbcount)
+		se.DigestList.Size = uint16(ibbcount)
+		for count, alg := range g.IbbHash {
+			se.DigestList.List[count].HashAlg = alg
+		}
 		seg := *bootpolicy.NewIBBSegment()
 		seg.Base = g.IbbSegbase
 		seg.Size = g.IbbSegsize
 		seg.Flags = g.IbbSegFlag
 		se.IBBSegments = append(se.IBBSegments, seg)
+		if len(ibbs) > 0 {
+			se.IBBSegments = append(se.IBBSegments, ibbs...)
+		}
 
 		cbnto.BootPolicyManifest.SE = append(cbnto.BootPolicyManifest.SE, *se)
-
 		txt := bootpolicy.NewTXT()
 		txt.SInitMinSVNAuth = g.SinitMin
 		txt.ControlFlags = g.TXTFlags
