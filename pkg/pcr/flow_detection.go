@@ -3,6 +3,7 @@ package pcr
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
 
@@ -149,11 +150,33 @@ func isTXTEnabled(fitEntries []fit.Entry) (bool, error) {
 			if data == nil {
 				return false, fmt.Errorf("unable to parse TXT policy record: %w", err)
 			}
-			return data.IsTXTEnabled(), errors.MultiError(fitEntry.HeadersErrors).ReturnValue()
+			switch s := data.(type) {
+			case fit.EntryTXTPolicyRecordDataFlatPointer:
+				// Document #599500 says:
+				// > if this structure is not present or is invalid,
+				// > the Startup ACM will behave, as if TXT Config Policy = 1
+				if s.TPMPolicyPointer() >= 4<<30 {
+					// Document #599500 says:
+					// > The memory address should be under 4 GB.
+					return true, nil
+				}
+				if fitEntry.EntryBase.Headers.IsChecksumValid() || fitEntry.EntryBase.Headers.Type() != 0 {
+					// Document #599500 says:
+					// > The C_V bit in this entry should be cleared to 0
+					return true, nil
+				}
+
+				return data.IsTXTEnabled(), errors.MultiError(fitEntry.HeadersErrors).ReturnValue()
+			default:
+				return true, fmt.Errorf("struct type %T is not supported, yet", s)
+			}
 		}
 	}
 
-	return false, &ErrNoTXTPolicyRecord{}
+	// Document #599500 says:
+	// > If there are zero records of this type Intel® TXT state defaults to be in
+	// > ENABLED state.
+	return true, nil
 }
 
 // isCBnT checks if firmware supports CBnT
