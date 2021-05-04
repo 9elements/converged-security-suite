@@ -129,7 +129,7 @@ type generateBPMCmd struct {
 	IbbSegsize  uint32               `flag optional name:"ibbsegsize" help:"Value for IBB segment structure"`
 	IbbSegFlag  uint16               `flag optional name:"ibbsegflag" help:"Reducted"`
 	// TXT args
-	SintMin           uint8                       `flag optional name:"sintmin" help:"OEM authorized SinitMinSvn value"`
+	SinitMin          uint8                       `flag optional name:"sinitmin" help:"OEM authorized SinitMinSvn value"`
 	TXTFlags          bootpolicy.TXTControlFlags  `flag optional name:"txtflags" help:"TXT Element control flags"`
 	PowerDownInterval bootpolicy.Duration16In5Sec `flag optional name:"powerdowninterval" help:"Duration of Power Down in 5 sec increments"`
 	ACPIBaseOffset    uint16                      `flag optional name:"acpibaseoffset" help:"ACPI IO offset."`
@@ -391,6 +391,8 @@ func (g *generateBPMCmd) Run(ctx *context) error {
 		options = cbnto
 	} else {
 		var cbnto cbnt.Options
+		cbnto.BootPolicyManifest = bootpolicy.NewManifest()
+		cbnto.KeyManifest = key.NewManifest()
 		cbnto.BootPolicyManifest.BPMH.BPMRevision = g.Revision
 		cbnto.BootPolicyManifest.BPMH.BPMSVN = g.SVN
 		cbnto.BootPolicyManifest.BPMH.ACMSVNAuth = g.ACMSVN
@@ -422,7 +424,7 @@ func (g *generateBPMCmd) Run(ctx *context) error {
 		cbnto.BootPolicyManifest.SE = append(cbnto.BootPolicyManifest.SE, *se)
 
 		txt := bootpolicy.NewTXT()
-		txt.SInitMinSVNAuth = g.SintMin
+		txt.SInitMinSVNAuth = g.SinitMin
 		txt.ControlFlags = g.TXTFlags
 		txt.PwrDownInterval = g.PowerDownInterval
 		txt.ACPIBaseOffset = g.ACPIBaseOffset
