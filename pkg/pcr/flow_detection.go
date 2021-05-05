@@ -105,7 +105,9 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (tpmdetection.Type, 
 	return 0, fmt.Errorf("unable to detect TPM type")
 }
 
-func DetectAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevice tpmdetection.Type) (Flow, error) {
+// DetectMainAttestationFlow returns the PCR0 measurements flow assuming
+// no validation errors occurred.
+func DetectMainAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevice tpmdetection.Type) (Flow, error) {
 	fitEntries, err := fit.GetEntries(firmware.Buf())
 	if err != nil {
 		return FlowAuto, fmt.Errorf("unable to parse FIT entries: %w", err)
@@ -140,6 +142,26 @@ func DetectAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevic
 		return FlowIntelLegacyTXTEnabled, nil
 	}
 	return FlowIntelLegacyTXTDisabled, nil
+}
+
+// DetectAttestationFlow return the PCR0 measurements flow.
+//
+// For example CBnT-0T falls back to TXT-disabled if BPM signature is invalid.
+func DetectAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevice tpmdetection.Type) (Flow, error) {
+	flow, err := DetectMainAttestationFlow(firmware, regs, tpmDevice)
+	if err != nil {
+		return flow, err
+	}
+
+	switch flow {
+	case FlowIntelCBnT0T, FlowIntelLegacyTXTEnabled, FlowIntelLegacyTXTEnabledTPM12:
+		err := flow.ValidateFlow().Validate(firmware)
+		if err != nil {
+			return FlowIntelLegacyTXTDisabled, fmt.Errorf("TXT disabled: %w", err)
+		}
+	}
+
+	return flow, nil
 }
 
 func isTXTEnabled(fitEntries []fit.Entry) (bool, error) {

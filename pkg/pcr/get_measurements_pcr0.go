@@ -24,16 +24,15 @@ func getMeasurementsPCR0(
 	}
 
 	// Detect attestation flow
-	detectedFlow, err := DetectAttestationFlow(firmware, config.Registers, config.TPMDevice)
-	debugInfo["errorFlowDetection"] = err
-	if err == nil {
+	detectedFlow, detectFlowErr := DetectAttestationFlow(firmware, config.Registers, config.TPMDevice)
+	if detectedFlow != FlowAuto {
 		debugInfo["detectedAttestationFlow"] = detectedFlow.String()
 	}
 
 	if resultConfig.Flow == FlowAuto {
-		if err != nil {
+		if detectedFlow == FlowAuto {
 			return nil, FlowAuto, nil,
-				fmt.Errorf("unable to detect attestation flow (try option manually selecting flow using --flow option): %w", err)
+				fmt.Errorf("unable to detect attestation flow (try option manually selecting flow using --flow option): %w", detectFlowErr)
 		}
 		resultConfig.Flow = detectedFlow
 	}
@@ -43,7 +42,7 @@ func getMeasurementsPCR0(
 	if err != nil {
 		err = fmt.Errorf("unable to collect measurements: %w", err)
 	}
-	debugInfo["warnings"] = warnings
+	debugInfo["warnings"] = (&errors.MultiError{}).Add(warnings, detectFlowErr).ReturnValue()
 
 	return measurements, resultConfig.Flow, debugInfo, err
 }
