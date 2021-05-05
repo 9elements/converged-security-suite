@@ -422,11 +422,6 @@ func StitchFITEntries(biosFilename string, acm, bpm, km []byte) error {
 	return nil
 }
 
-const (
-	fspt     = "fspt.bin"
-	verstage = "fallback/verstage"
-)
-
 // FindAdditionalIBBs takes a coreboot image and finds componentName to create
 // additional IBBSegment.
 func FindAdditionalIBBs(imagepath string) ([]bootpolicy.IBBSegment, error) {
@@ -450,7 +445,12 @@ func FindAdditionalIBBs(imagepath string) ([]bootpolicy.IBBSegment, error) {
 	flashBase := 0xffffffff - stat.Size() + 1
 	cbfsbaseaddr := img.Area.Offset
 	for _, seg := range img.Segs {
-		if seg.GetFile().Name == fspt || seg.GetFile().Name == verstage {
+		switch seg.GetFile().Name {
+		case
+			"fspt.bin",
+			"fallback/verstage",
+			"bootblock":
+
 			ibb := bootpolicy.NewIBBSegment()
 			ibb.Base = uint32(flashBase) + cbfsbaseaddr + seg.GetFile().RecordStart + seg.GetFile().SubHeaderOffset
 			ibb.Size = seg.GetFile().Size

@@ -416,11 +416,13 @@ func (g *generateBPMCmd) Run(ctx *context) error {
 			se.DigestList.List[iterator].HashAlg = g.IbbHash[iterator]
 		}
 
-		seg := *bootpolicy.NewIBBSegment()
-		seg.Base = g.IbbSegbase
-		seg.Size = g.IbbSegsize
-		seg.Flags = g.IbbSegFlag
-		se.IBBSegments = append(se.IBBSegments, seg)
+		if g.IbbSegbase != 0 {
+			seg := *bootpolicy.NewIBBSegment()
+			seg.Base = g.IbbSegbase
+			seg.Size = g.IbbSegsize
+			seg.Flags = g.IbbSegFlag
+			se.IBBSegments = append(se.IBBSegments, seg)
+		}
 		if g.Coreboot {
 			ibbs, err := cbnt.FindAdditionalIBBs(g.BIOS)
 			if err != nil {
