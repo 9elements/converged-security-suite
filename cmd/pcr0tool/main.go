@@ -12,6 +12,8 @@ import (
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/printnodes"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/sum"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
+	"github.com/9elements/converged-security-suite/v2/pkg/log"
+	fianoLog "github.com/linuxboot/fiano/pkg/log"
 )
 
 var knownCommands = map[string]commands.Command{
@@ -47,6 +49,7 @@ func setupFlag() {
 
 func main() {
 	manifest.StrictOrderCheck = false // some firmwares have incorrect elements order, should parse them anyway
+	fianoLog.DefaultLogger = log.DummyLogger{}
 
 	setupFlag()
 

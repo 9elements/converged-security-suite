@@ -146,3 +146,17 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 	}
 	panic(fmt.Sprintf("should not happen: %v", f))
 }
+
+// ValidateFlow returns a validator could be used if the flow will indeed
+// be active on a real machine. For example CBnT flow works only on firmwares
+// with valid manifests, otherwise it falls back to TXT-disabled flow.
+func (f Flow) ValidateFlow() ValidateFlow {
+	switch f {
+	case FlowIntelCBnT0T:
+		return ValidateFlow{
+			ValidateManifests{},
+		}
+	}
+
+	return nil
+}

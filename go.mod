@@ -17,7 +17,7 @@ require (
 	github.com/intel-go/cpuid v0.0.0-20200819041909-2aa72927c3e2
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/linuxboot/cbfs v0.0.0-20210504130259-7e6ab4ccb5aa
-	github.com/linuxboot/fiano v6.0.0-rc.0.20210212032429-91b79e9335d4+incompatible
+	github.com/linuxboot/fiano v6.0.0-rc.0.20210427094458-991eadf32b6a+incompatible
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3
 	github.com/stretchr/testify v1.6.1

@@ -2,7 +2,9 @@ package main
 
 import (
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
+	"github.com/9elements/converged-security-suite/v2/pkg/log"
 	"github.com/alecthomas/kong"
+	fianoLog "github.com/linuxboot/fiano/pkg/log"
 )
 
 const programName = "txt-prov"
@@ -23,6 +25,7 @@ func main() {
 			Summary: true,
 		}))
 	manifest.StrictOrderCheck = cli.ManifestStrictOrderCheck
+	fianoLog.DefaultLogger = log.DummyLogger{}
 
 	// Run commands
 	err := ctx.Run(&context{
