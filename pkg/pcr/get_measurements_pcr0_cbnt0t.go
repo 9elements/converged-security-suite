@@ -51,36 +51,36 @@ func MeasurePCR0Data(config MeasurementConfig, fitEntries []fit.Entry) (*Measure
 	}
 	data.acmPolicyStatus = acmPolicyStatus.Raw()
 
-	acmEntry, acmOffset, err := getACM(fitEntries)
+	acmEntry, acmFITEntry, err := getACM(fitEntries)
 	if err != nil {
 		return nil, err
 	}
 	// From Intel CBnT doc: "SVN field of ACM header (offset 28) indicates..."
 	// Offset 28 == TxtSVN
 	data.acmHeaderSVN = pkgbytes.Range{
-		Offset: acmOffset + acmEntry.GetCommon().TXTSVNBinaryOffset(),
+		Offset: acmFITEntry.GetDataOffset() + acmEntry.GetCommon().TXTSVNBinaryOffset(),
 		Length: uint64(binary.Size(acmEntry.GetTXTSVN())),
 	}
 	data.acmSignature = pkgbytes.Range{
-		Offset: acmOffset + acmEntry.RSASigBinaryOffset(),
+		Offset: acmFITEntry.GetDataOffset() + acmEntry.RSASigBinaryOffset(),
 		Length: uint64(len(acmEntry.GetRSASig())),
 	}
 
-	keyManifest, keyManifestOffset, err := getKeyManifest(fitEntries)
+	keyManifest, keyManifestFITEntry, err := getKeyManifest(fitEntries)
 	if err != nil {
 		return nil, err
 	}
 	data.kmSignature = pkgbytes.Range{
-		Offset: keyManifestOffset + keyManifest.KeyAndSignatureOffset() + keyManifest.KeyAndSignature.SignatureOffset() + keyManifest.KeyAndSignature.Signature.DataOffset(),
+		Offset: keyManifestFITEntry.GetDataOffset() + keyManifest.KeyAndSignatureOffset() + keyManifest.KeyAndSignature.SignatureOffset() + keyManifest.KeyAndSignature.Signature.DataOffset(),
 		Length: uint64(len(keyManifest.KeyAndSignature.Signature.Data)),
 	}
 
-	bpManifest, bpManifestOffset, err := getBootPolicyManifest(fitEntries)
+	bpManifest, bpManifestFITEntry, err := getBootPolicyManifest(fitEntries)
 	if err != nil {
 		return nil, err
 	}
 	data.bpmSignature = pkgbytes.Range{
-		Offset: bpManifestOffset + uint64(bpManifest.KeySignatureOffset) + bpManifest.PMSE.SignatureOffset() + bpManifest.PMSE.Signature.DataOffset(),
+		Offset: bpManifestFITEntry.GetDataOffset() + uint64(bpManifest.KeySignatureOffset) + bpManifest.PMSE.SignatureOffset() + bpManifest.PMSE.Signature.DataOffset(),
 		Length: uint64(len(bpManifest.PMSE.Signature.Data)),
 	}
 
@@ -89,7 +89,7 @@ func MeasurePCR0Data(config MeasurementConfig, fitEntries []fit.Entry) (*Measure
 		return nil, fmt.Errorf("IBBDigest list is empty")
 	}
 	// Note: +2 - skip array size field to get the first element
-	offsetToTheFirstDigest := bpManifestOffset + bpManifest.SEOffset() +
+	offsetToTheFirstDigest := bpManifestFITEntry.GetDataOffset() + bpManifest.SEOffset() +
 		bpManifest.SE[0].DigestListOffset() + (bpManifest.SE[0].DigestList.ListOffset() + 2)
 	if config.PCR0DataIbbDigestHashAlgorithm == manifest.AlgUnknown || config.PCR0DataIbbDigestHashAlgorithm == manifest.AlgNull {
 		// take the fist element as stated in the doc above
@@ -121,44 +121,44 @@ func MeasurePCR0Data(config MeasurementConfig, fitEntries []fit.Entry) (*Measure
 	return data.Measurement(), nil
 }
 
-func getACM(fitEntries []fit.Entry) (*fit.EntrySACMData, uint64, error) {
+func getACM(fitEntries []fit.Entry) (*fit.EntrySACMData, *fit.EntrySACM, error) {
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntrySACM:
 			acmData, err := fitEntry.ParseData()
 			if err != nil {
-				return nil, 0, fmt.Errorf("failed to parse ACM, err: %v", err)
+				return nil, nil, fmt.Errorf("failed to parse ACM, err: %v", err)
 			}
-			return acmData, fitEntry.GetDataOffset(), nil
+			return acmData, fitEntry, nil
 		}
 	}
-	return nil, 0, fmt.Errorf("ACM FIT entry is not found")
+	return nil, nil, fmt.Errorf("ACM FIT entry is not found")
 }
 
-func getKeyManifest(fitEntries []fit.Entry) (*key.Manifest, uint64, error) {
+func getKeyManifest(fitEntries []fit.Entry) (*key.Manifest, *fit.EntryKeyManifestRecord, error) {
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntryKeyManifestRecord:
 			km, err := fitEntry.ParseData()
 			if err != nil {
-				return nil, 0, err
+				return nil, nil, err
 			}
-			return km, fitEntry.GetDataOffset(), nil
+			return km, fitEntry, nil
 		}
 	}
-	return nil, 0, fmt.Errorf("key manifest FIT entry is not found")
+	return nil, nil, fmt.Errorf("key manifest FIT entry is not found")
 }
 
-func getBootPolicyManifest(fitEntries []fit.Entry) (*bootpolicy.Manifest, uint64, error) {
+func getBootPolicyManifest(fitEntries []fit.Entry) (*bootpolicy.Manifest, *fit.EntryBootPolicyManifestRecord, error) {
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntryBootPolicyManifestRecord:
 			bpManifest, err := fitEntry.ParseData()
 			if err != nil {
-				return nil, 0, err
+				return nil, nil, err
 			}
-			return bpManifest, fitEntry.GetDataOffset(), nil
+			return bpManifest, fitEntry, nil
 		}
 	}
-	return nil, 0, fmt.Errorf("boot policy manifest FIT entry is not found")
+	return nil, nil, fmt.Errorf("boot policy manifest FIT entry is not found")
 }

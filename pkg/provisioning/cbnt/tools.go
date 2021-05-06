@@ -1,21 +1,18 @@
 package cbnt
 
 import (
-	"bytes"
-	"crypto/sha1"
-	"encoding/binary"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/bootpolicy"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/common/pretty"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/key"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
+
+	"github.com/linuxboot/cbfs/pkg/cbfs"
 )
 
 // WriteCBnTStructures takes a firmware image and extracts boot policy manifest, key manifest and acm into seperate files.
@@ -130,130 +127,6 @@ func ParseFITEntries(image []byte) (bpm *fit.EntryBootPolicyManifestRecord, km *
 		return nil, nil, nil, fmt.Errorf("image has no BPM (isNil:%v) or/and KM (isNil:%v) or/and ACM (isNil:%v)", bpm == nil, km == nil, acm == nil)
 	}
 	return bpm, km, acm, nil
-}
-
-func generatePCR0Content(status uint64, km *key.Manifest, bpm *bootpolicy.Manifest, acm *tools.ACM) (*Pcr0Data, []byte, error) {
-	var err error
-	var pcr0 Pcr0Data
-	buf := new(bytes.Buffer)
-	if err = binary.Write(buf, binary.BigEndian, status); err != nil {
-		return nil, nil, err
-	}
-	fmt.Printf("\nStatus: 0x%x\n ", status)
-	if err = binary.Write(buf, binary.LittleEndian, acm.Header.TxtSVN); err != nil {
-		return nil, nil, err
-	}
-	fmt.Printf("ACM SVN: 0x%x\n ", acm.Header.TxtSVN)
-	if err = binary.Write(buf, binary.LittleEndian, acm.Header.Signature); err != nil {
-		return nil, nil, err
-	}
-	fmt.Printf("ACM Sig: 0x%x\n ", acm.Header.Signature)
-
-	{
-		kmSignature, err := km.KeyAndSignature.Signature.SignatureData()
-		if err != nil {
-			return nil, nil, fmt.Errorf("unable to extract BPM signature: %w", err)
-		}
-		fmt.Printf("KM Sig: %s\n", kmSignature.String())
-		switch kmSignature := kmSignature.(type) {
-		case manifest.SignatureRSAASA:
-			if err = binary.Write(buf, binary.LittleEndian, kmSignature); err != nil {
-				return nil, nil, err
-			}
-		case manifest.SignatureECDSA:
-			if err = binary.Write(buf, binary.LittleEndian, kmSignature.R); err != nil {
-				return nil, nil, err
-			}
-		case manifest.SignatureSM2:
-			if err = binary.Write(buf, binary.LittleEndian, kmSignature.R); err != nil {
-				return nil, nil, err
-			}
-		default:
-			return nil, nil, fmt.Errorf("unknown KM sig type: %T", kmSignature)
-		}
-	}
-
-	{
-		bpmSignature, err := bpm.PMSE.KeySignature.Signature.SignatureData()
-		if err != nil {
-			return nil, nil, fmt.Errorf("unable to extract BPM signature: %w", err)
-		}
-		fmt.Printf("BPM Sig: %s\n", bpmSignature.String())
-		switch bpmSignature := bpmSignature.(type) {
-		case manifest.SignatureRSAASA:
-			if err = binary.Write(buf, binary.LittleEndian, bpmSignature); err != nil {
-				return nil, nil, err
-			}
-		case manifest.SignatureECDSA:
-			if err = binary.Write(buf, binary.LittleEndian, bpmSignature.R); err != nil {
-				return nil, nil, err
-			}
-		case manifest.SignatureSM2:
-			if err = binary.Write(buf, binary.LittleEndian, bpmSignature.R); err != nil {
-				return nil, nil, err
-			}
-		default:
-			return nil, nil, fmt.Errorf("unknown BPM sig type: %T", bpmSignature)
-		}
-	}
-
-	for _, se := range bpm.SE {
-		for i := 0; i < len(se.DigestList.List); i++ {
-			if se.DigestList.List[i].HashAlg == manifest.AlgSHA1 {
-				if err = binary.Write(buf, binary.LittleEndian, se.DigestList.List[i].HashBuffer); err != nil {
-					return nil, nil, err
-				}
-				fmt.Printf("IBB Hash: 0x%x\n ", se.DigestList.List[i].HashBuffer)
-			}
-		}
-	}
-
-	h := sha1.New()
-	h.Write(buf.Bytes())
-	finalHash := h.Sum(nil)
-	fmt.Printf("PCR-0 pre hash: 0x%x\n", finalHash)
-	return &pcr0, finalHash, nil
-}
-
-// PrecalcPCR0 takes a firmware image and ACM Policy status and returns the Pcr0Data structure and its hash.
-func PrecalcPCR0(data []byte, acmPolicySts uint64) (*Pcr0Data, []byte, error) {
-	fitTable, err := fit.GetTable(data)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to get FIT: %w", err)
-	}
-	fitEntries := fitTable.GetEntries(data)
-	var km *key.Manifest
-	var bpm *bootpolicy.Manifest
-	var acm *tools.ACM
-	for _, entry := range fitEntries {
-		var err, err2 error
-		switch entry := entry.(type) {
-		case *fit.EntryBootPolicyManifestRecord:
-			bpm, err = entry.ParseData()
-		case *fit.EntryKeyManifestRecord:
-			km, err = entry.ParseData()
-		case *fit.EntrySACM:
-			acm, _, _, _, err, err2 = tools.ParseACM(entry.GetDataBytes())
-		}
-		if err != nil {
-			return nil, nil, err
-		}
-		if err2 != nil {
-			return nil, nil, err2
-		}
-	}
-	if acmPolicySts == 0 {
-		txtAPI := hwapi.GetAPI()
-		regs, err := tools.FetchTXTRegs(txtAPI)
-		if err != nil {
-			return nil, nil, err
-		}
-		acmPolicySts, err = tools.ReadACMPolicyStatusRaw(regs)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-	return generatePCR0Content(acmPolicySts, km, bpm, acm)
 }
 
 // CalculateNEMSize calculates No Eviction Memory and returns it as count of 4K pages.
@@ -418,4 +291,43 @@ func StitchFITEntries(biosFilename string, acm, bpm, km []byte) error {
 		}
 	}
 	return nil
+}
+
+// FindAdditionalIBBs takes a coreboot image and finds componentName to create
+// additional IBBSegment.
+func FindAdditionalIBBs(imagepath string) ([]bootpolicy.IBBSegment, error) {
+	ibbs := make([]bootpolicy.IBBSegment, 0)
+	image, err := os.Open(imagepath)
+	if err != nil {
+		return nil, err
+	}
+	defer image.Close()
+
+	stat, err := image.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	img, err := cbfs.NewImage(image)
+	if err != nil {
+		return nil, err
+	}
+
+	flashBase := 0xffffffff - stat.Size() + 1
+	cbfsbaseaddr := img.Area.Offset
+	for _, seg := range img.Segs {
+		switch seg.GetFile().Name {
+		case
+			"fspt.bin",
+			"fallback/verstage",
+			"bootblock":
+
+			ibb := bootpolicy.NewIBBSegment()
+			ibb.Base = uint32(flashBase) + cbfsbaseaddr + seg.GetFile().RecordStart + seg.GetFile().SubHeaderOffset
+			ibb.Size = seg.GetFile().Size
+			ibb.Flags = 0
+			ibbs = append(ibbs, *ibb)
+		}
+	}
+	return ibbs, nil
 }

@@ -3,6 +3,7 @@ package pcr
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
 
@@ -104,7 +105,9 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (tpmdetection.Type, 
 	return 0, fmt.Errorf("unable to detect TPM type")
 }
 
-func DetectAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevice tpmdetection.Type) (Flow, error) {
+// DetectMainAttestationFlow returns the PCR0 measurements flow assuming
+// no validation errors occurred.
+func DetectMainAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevice tpmdetection.Type) (Flow, error) {
 	fitEntries, err := fit.GetEntries(firmware.Buf())
 	if err != nil {
 		return FlowAuto, fmt.Errorf("unable to parse FIT entries: %w", err)
@@ -141,6 +144,26 @@ func DetectAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevic
 	return FlowIntelLegacyTXTDisabled, nil
 }
 
+// DetectAttestationFlow return the PCR0 measurements flow.
+//
+// For example CBnT-0T falls back to TXT-disabled if BPM signature is invalid.
+func DetectAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevice tpmdetection.Type) (Flow, error) {
+	flow, err := DetectMainAttestationFlow(firmware, regs, tpmDevice)
+	if err != nil {
+		return flow, err
+	}
+
+	switch flow {
+	case FlowIntelCBnT0T, FlowIntelLegacyTXTEnabled, FlowIntelLegacyTXTEnabledTPM12:
+		err := flow.ValidateFlow().Validate(firmware)
+		if err != nil {
+			return FlowIntelLegacyTXTDisabled, fmt.Errorf("TXT disabled: %w", err)
+		}
+	}
+
+	return flow, nil
+}
+
 func isTXTEnabled(fitEntries []fit.Entry) (bool, error) {
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
@@ -149,11 +172,33 @@ func isTXTEnabled(fitEntries []fit.Entry) (bool, error) {
 			if data == nil {
 				return false, fmt.Errorf("unable to parse TXT policy record: %w", err)
 			}
-			return data.IsTXTEnabled(), errors.MultiError(fitEntry.HeadersErrors).ReturnValue()
+			switch s := data.(type) {
+			case fit.EntryTXTPolicyRecordDataFlatPointer:
+				// Document #599500 says:
+				// > if this structure is not present or is invalid,
+				// > the Startup ACM will behave, as if TXT Config Policy = 1
+				if s.TPMPolicyPointer() >= 4<<30 {
+					// Document #599500 says:
+					// > The memory address should be under 4 GB.
+					return true, nil
+				}
+				if fitEntry.EntryBase.Headers.IsChecksumValid() || fitEntry.EntryBase.Headers.Type() != 0 {
+					// Document #599500 says:
+					// > The C_V bit in this entry should be cleared to 0
+					return true, nil
+				}
+
+				return data.IsTXTEnabled(), errors.MultiError(fitEntry.HeadersErrors).ReturnValue()
+			default:
+				return true, fmt.Errorf("struct type %T is not supported, yet", s)
+			}
 		}
 	}
 
-	return false, &ErrNoTXTPolicyRecord{}
+	// Document #599500 says:
+	// > If there are zero records of this type Intel® TXT state defaults to be in
+	// > ENABLED state.
+	return true, nil
 }
 
 // isCBnT checks if firmware supports CBnT
