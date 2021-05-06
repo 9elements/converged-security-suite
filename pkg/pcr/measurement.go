@@ -48,6 +48,19 @@ func (chunk DataChunk) String() string {
 	return string(b)
 }
 
+// Find returns the chunk with the specified DataChunkID.
+// Or returns nil if such data chunk was not found.
+func (s DataChunks) Find(id DataChunkID) *DataChunk {
+	for idx := range s {
+		d := &s[idx]
+		if d.ID == id {
+			return d
+		}
+	}
+
+	return nil
+}
+
 // Copy performs a deep copy.
 func (chunk DataChunk) Copy() *DataChunk {
 	if chunk.ForceData != nil {
@@ -248,6 +261,18 @@ func (s Measurements) AddOffset(offset int64) {
 			data.Range.Offset = uint64(int64(data.Range.Offset) + offset)
 		}
 	}
+}
+
+// Find returns the first measurement with the specified MeasurementID.
+// Or returns nil, if such measurement was not found.
+func (s Measurements) Find(id MeasurementID) *Measurement {
+	for _, measurement := range s {
+		if measurement.ID == id {
+			return measurement
+		}
+	}
+
+	return nil
 }
 
 // Copy performs a deep copy.
