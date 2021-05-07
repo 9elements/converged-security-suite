@@ -15,10 +15,10 @@ import (
 	"github.com/linuxboot/cbfs/pkg/cbfs"
 )
 
-// WriteCBnTStructures takes a firmware image and extracts boot policy manifest, key manifest and acm into seperate files.
+// WriteCBnTStructures takes a firmware image and extracts boot policy manifest, key manifest and acm into separate files.
 func WriteCBnTStructures(image []byte, bpmFile, kmFile, acmFile *os.File) error {
 	bpm, km, acm, err := ParseFITEntries(image)
-	if err != nil {
+	if err != nil && (bpm == nil && bpmFile != nil || km == nil && kmFile != nil || acm == nil && acmFile != nil) {
 		return err
 	}
 	if bpmFile != nil && len(bpm.DataBytes) > 0 {
@@ -124,7 +124,7 @@ func ParseFITEntries(image []byte) (bpm *fit.EntryBootPolicyManifestRecord, km *
 		}
 	}
 	if bpm == nil || km == nil || acm == nil {
-		return nil, nil, nil, fmt.Errorf("image has no BPM (isNil:%v) or/and KM (isNil:%v) or/and ACM (isNil:%v)", bpm == nil, km == nil, acm == nil)
+		return bpm, km, acm, fmt.Errorf("image has no BPM (isNil:%v) or/and KM (isNil:%v) or/and ACM (isNil:%v)", bpm == nil, km == nil, acm == nil)
 	}
 	return bpm, km, acm, nil
 }
