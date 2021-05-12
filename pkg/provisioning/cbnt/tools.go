@@ -11,6 +11,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/common/pretty"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/key"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
+	"github.com/9elements/converged-security-suite/v2/pkg/uefi/consts"
 
 	"github.com/linuxboot/cbfs/pkg/cbfs"
 )
@@ -313,7 +314,7 @@ func FindAdditionalIBBs(imagepath string) ([]bootpolicy.IBBSegment, error) {
 		return nil, err
 	}
 
-	flashBase := 0xffffffff - stat.Size() + 1
+	flashBase := consts.BasePhysAddr - stat.Size()
 	cbfsbaseaddr := img.Area.Offset
 	for _, seg := range img.Segs {
 		switch seg.GetFile().Name {
