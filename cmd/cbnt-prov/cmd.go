@@ -127,10 +127,7 @@ type generateBPMCmd struct {
 	DMASize1    uint64               `flag optional name:"dmasize1" help:"High DMA protected range limit."`
 	EntryPoint  uint32               `flag optional name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
 	IbbHash     []manifest.Algorithm `flag optional name:"ibbhash" help:"IBB Hash Algorithm"`
-	IbbSegbase  uint32               `flag optional name:"ibbsegbase" help:"Value for IbbSegment structure"`
-	IbbSegsize  uint32               `flag optional name:"ibbsegsize" help:"Value for IBB segment structure"`
 	IbbSegFlag  uint16               `flag optional name:"ibbsegflag" help:"Reducted"`
-	Coreboot    bool                 `flag optional name:"coreboot" help:"Required when BIOS binary file is a coreboot image"`
 	// TXT args
 	SinitMin          uint8                       `flag optional name:"sinitmin" help:"OEM authorized SinitMinSvn value"`
 	TXTFlags          bootpolicy.TXTControlFlags  `flag optional name:"txtflags" help:"TXT Element control flags"`
@@ -423,20 +420,14 @@ func (g *generateBPMCmd) Run(ctx *context) error {
 			se.DigestList.List[iterator].HashAlg = g.IbbHash[iterator]
 		}
 
-		if g.IbbSegbase != 0 {
-			seg := *bootpolicy.NewIBBSegment()
-			seg.Base = g.IbbSegbase
-			seg.Size = g.IbbSegsize
-			seg.Flags = g.IbbSegFlag
-			se.IBBSegments = append(se.IBBSegments, seg)
+		ibbs, err := cbnt.FindAdditionalIBBs(g.BIOS)
+		if err != nil {
+			return err
 		}
-		if g.Coreboot {
-			ibbs, err := cbnt.FindAdditionalIBBs(g.BIOS)
-			if err != nil {
-				return err
-			}
-			se.IBBSegments = append(se.IBBSegments, ibbs...)
+		for counter := range ibbs {
+			ibbs[counter].Flags = g.IbbSegFlag
 		}
+		se.IBBSegments = append(se.IBBSegments, ibbs...)
 
 		cbnto.BootPolicyManifest.SE = append(cbnto.BootPolicyManifest.SE, *se)
 

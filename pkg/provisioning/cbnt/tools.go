@@ -273,7 +273,7 @@ func StitchFITEntries(biosFilename string, acm, bpm, km []byte) error {
 	return nil
 }
 
-// FindAdditionalIBBs takes a coreboot image and finds componentName to create
+// FindAdditionalIBBs takes a coreboot image, searches cbfs files for
 // additional IBBSegment.
 func FindAdditionalIBBs(imagepath string) ([]bootpolicy.IBBSegment, error) {
 	ibbs := make([]bootpolicy.IBBSegment, 0)
@@ -289,10 +289,29 @@ func FindAdditionalIBBs(imagepath string) ([]bootpolicy.IBBSegment, error) {
 	}
 
 	img, err := cbfs.NewImage(image)
+	// If this returns an error, we assume it's an UEFI image
 	if err != nil {
-		return nil, err
+		// To be sure the image file is closed before reading from it again
+		image.Close()
+		img, err := ioutil.ReadFile(imagepath)
+		if err != nil {
+			return ibbs, err
+		}
+		fitentries, err := fit.GetEntries(img)
+		if err != nil {
+			return ibbs, err
+		}
+		for _, entry := range fitentries {
+			if entry.GetType() == fit.EntryTypeBIOSStartupModuleEntry {
+				ibb := bootpolicy.NewIBBSegment()
+				ibb.Base = uint32(entry.GetHeaders().Address.Pointer())
+				ibb.Size = entry.GetHeaders().Size.Uint32() << 4
+				ibbs = append(ibbs, *ibb)
+			}
+		}
+		return ibbs, nil
 	}
-
+	// From here we consider it is a coreboot image
 	flashBase := consts.BasePhysAddr - stat.Size()
 	cbfsbaseaddr := img.Area.Offset
 	for _, seg := range img.Segs {
