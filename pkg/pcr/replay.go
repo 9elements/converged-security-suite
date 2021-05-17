@@ -2,13 +2,18 @@ package pcr
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
 
 	pcr "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 )
 
 // Replay reproduces a PCR value given events, PCR index and hash algorithm.
-func Replay(eventLog *tpmeventlog.TPMEventLog, pcrIndex pcr.ID, hashAlgo tpmeventlog.TPMAlgorithm) ([]byte, error) {
+func Replay(eventLog *tpmeventlog.TPMEventLog, pcrIndex pcr.ID, hashAlgo tpmeventlog.TPMAlgorithm, logOut io.Writer) ([]byte, error) {
+	if logOut == nil {
+		logOut = ioutil.Discard
+	}
 	hash, err := hashAlgo.Hash()
 	if err != nil {
 		return nil, tpmeventlog.ErrNotSupportedHashAlgo{TPMAlgo: hashAlgo}
@@ -38,6 +43,7 @@ func Replay(eventLog *tpmeventlog.TPMEventLog, pcrIndex pcr.ID, hashAlgo tpmeven
 				}
 				result = make([]byte, hasher.Size())
 				result[len(result)-1] = locality
+				fmt.Fprintf(logOut, "set(0x%X)\n", result)
 			default:
 				return nil, ErrNotSupportedIndex{Index: pcrIndex}
 			}
@@ -48,15 +54,18 @@ func Replay(eventLog *tpmeventlog.TPMEventLog, pcrIndex pcr.ID, hashAlgo tpmeven
 					// There was no event about PCR value initializing, therefore
 					// assuming the zero value.
 					result = make([]byte, hasher.Size())
+					fmt.Fprintf(logOut, "set(0x%X)\n", result)
 				default:
 					return nil, ErrNotSupportedIndex{Index: pcrIndex}
 				}
 			}
 
+			fmt.Fprintf(logOut, "%T(0x%X 0x%X)", hasher, result, event.Digest.Digest)
 			hasher.Write(result)
 			hasher.Write(event.Digest.Digest)
 			result = hasher.Sum(nil)
 			hasher.Reset()
+			fmt.Fprintf(logOut, " -> %X\n", result)
 		}
 	}
 
