@@ -86,27 +86,6 @@ func PrintCBnTStructures(image []byte) error {
 	return nil
 }
 
-// PrintFIT takes a firmware image and prints the Firmware Interface Table
-func PrintFIT(image []byte) error {
-	fitTable, err := fit.GetTable(image)
-	if err != nil {
-		return fmt.Errorf("unable to get FIT: %w", err)
-	}
-	fitEntries := fitTable.GetEntries(image)
-	fmt.Println("----Firmware Interface Table----")
-	fmt.Println()
-	for idx, entry := range fitEntries {
-		if entry.GetType() == fit.EntryTypeSkip || entry.GetType() == fit.EntryTypeFITHeaderEntry {
-			continue
-		}
-		fmt.Printf("Entry %d\n", idx)
-		fmt.Println(entry.GoString())
-		fmt.Println()
-	}
-	fmt.Println()
-	return nil
-}
-
 // ParseFITEntries takes a firmware image and extract Boot policy manifest, key manifest and acm information.
 func ParseFITEntries(image []byte) (bpm *fit.EntryBootPolicyManifestRecord, km *fit.EntryKeyManifestRecord, acm *fit.EntrySACM, err error) {
 	fitTable, err := fit.GetTable(image)
