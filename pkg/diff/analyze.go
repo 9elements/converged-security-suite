@@ -124,10 +124,22 @@ type AnalysisReportEntry struct {
 	Nodes []NodeInfo
 }
 
+// AnalysisReportEntries is a set of multiple AnalysisReportEntry-ies.
+type AnalysisReportEntries []AnalysisReportEntry
+
+// DiffRanges returns DiffRange-s.
+func (s AnalysisReportEntries) DiffRanges() pkgbytes.Ranges {
+	result := make(pkgbytes.Ranges, 0, len(s))
+	for _, entry := range s {
+		result = append(result, entry.DiffRange)
+	}
+	return result
+}
+
 // AnalysisReport contains an analyzed report for an UEFI image diff.
 type AnalysisReport struct {
 	// Entries contains each block with different data.
-	Entries []AnalysisReportEntry
+	Entries AnalysisReportEntries
 
 	// FirstProblemOffset is the offset of the first byte with a different value.
 	FirstProblemOffset uint64
