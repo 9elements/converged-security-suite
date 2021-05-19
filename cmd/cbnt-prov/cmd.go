@@ -342,6 +342,8 @@ func (g *generateKMCmd) Run(ctx *context) error {
 				return err
 			}
 			tmpKM.Hash = kh
+		} else {
+			return fmt.Errorf("Add --bpmpubkey=</path/to/bpm-pub-key.pem> as argument")
 		}
 		cbnto.KeyManifest = tmpKM
 		options = &cbnto
