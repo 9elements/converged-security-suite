@@ -11,6 +11,8 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
+
 	"github.com/linuxboot/fiano/pkg/uefi"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
@@ -189,6 +191,10 @@ type keygenCmd struct {
 	Path     string `flag optional name:"path" help:"Path to store keys. File names are 'yourname_bpm/yourname_bpm.pub' and 'yourname_km/yourname_km.pub' respectivly"`
 }
 
+type printFITCmd struct {
+	BIOS string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
+}
+
 func (v *versionCmd) Run(ctx *context) error {
 	tools.ShowVersion(programName, gittag, gitcommit)
 	return nil
@@ -256,10 +262,11 @@ func (biosp *biosPrintCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	err = cbnt.PrintFIT(data)
+	table, err := fit.GetTable(data)
 	if err != nil {
 		return err
 	}
+	fmt.Printf("%s", table.String())
 	err = cbnt.PrintCBnTStructures(data)
 	if err != nil {
 		return err
@@ -786,6 +793,19 @@ func (k *keygenCmd) Run(ctx *context) error {
 	return nil
 }
 
+func (p printFITCmd) Run(ctx *context) error {
+	img, err := ioutil.ReadFile(p.BIOS)
+	if err != nil {
+		return err
+	}
+	table, err := fit.GetTable(img)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s", table.String())
+	return nil
+}
+
 var cli struct {
 	Debug                    bool `help:"Enable debug mode."`
 	ManifestStrictOrderCheck bool `help:"Enable checking of manifest elements order"`
@@ -804,6 +824,8 @@ var cli struct {
 
 	ACMExport acmExportCmd `cmd help:"Exports ACM structures from BIOS image into file"`
 	ACMShow   acmPrintCmd  `cmd help:"Prints ACM binary in human-readable format"`
+
+	FITShow printFITCmd `cmd help:"Prints the FIT Table of given BIOS image file"`
 
 	ShowAll    biosPrintCmd  `cmd help:"Prints BPM, KM, FIT and ACM from BIOS binary in human-readable format"`
 	Stitch     stitchingCmd  `cmd help:"Stitches BPM, KM and ACM into given BIOS image file"`
