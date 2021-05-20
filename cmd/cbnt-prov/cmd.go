@@ -176,9 +176,9 @@ type stitchingBPMCmd struct {
 
 type stitchingCmd struct {
 	BIOS string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
-	ACM  string `flag optional name:"acm" help:"Path to the ACM binary file." type:"path"`
-	KM   string `flag optional name:"km" help:"Path to the Key Manifest binary file." type:"path"`
-	BPM  string `flag optional name:"bpm" help:"Path to the Boot Policy Manifest binary file." type:"path"`
+	ACM  string `arg required name:"acm" help:"Path to the ACM binary file." type:"path"`
+	KM   string `arg required name:"km" help:"Path to the Key Manifest binary file." type:"path"`
+	BPM  string `arg required name:"bpm" help:"Path to the Boot Policy Manifest binary file." type:"path"`
 	ME   string `flag optional name:"me" help:"Path to the Management Engine binary file." type:"path"`
 }
 
