@@ -13,7 +13,7 @@ func ParseLocality(eventData []byte) (uint8, error) {
 	// but here we will add working recipes for specific cases.
 
 	// event.Data example: "StartupLocality\x00\x03"
-	descrWords := bytes.Split(eventData, []byte{0})
+	descrWords := bytes.SplitN(eventData, []byte{0}, 2)
 	switch {
 	case bytes.Compare(descrWords[0], []byte("StartupLocality")) == 0:
 		if len(descrWords) > 0 && len(descrWords[1]) == 1 {
