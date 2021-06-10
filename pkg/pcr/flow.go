@@ -91,14 +91,15 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 			 13      0               4        4     9069CA78E7450A285173431B3E52C5C25299E473        00000000                                                  <- Separator
 		*/
 		return MeasurementIDs{
-			MeasurementIDInit, // is fake measurement
+			MeasurementIDInit, // is a fake measurement
+			MeasurementIDACM,  // is a fake measurement
 			MeasurementIDPCR0_DATA,
 			MeasurementIDPCDFirmwareVendorVersionData,
-			MeasurementIDPCDFirmwareVendorVersionCode, // is fake measurement
+			MeasurementIDPCDFirmwareVendorVersionCode, // is a fake measurement
 			MeasurementIDDXE,
 			MeasurementIDSeparator,
-			MeasurementIDFITPointer, // is fake measurement
-			MeasurementIDFITHeaders, // is fake measurement
+			MeasurementIDFITPointer, // is a fake measurement
+			MeasurementIDFITHeaders, // is a fake measurement
 		}
 	case FlowIntelLegacyTXTEnabled:
 		// See also:
@@ -108,40 +109,42 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 		// * https://www.trustedcomputinggroup.org/wp-content/uploads/PC-ClientSpecific_Platform_Profile_for_TPM_2p0_Systems_v21.pdf (Section 9.3.1)
 		// * doc/log/ymm03.txt
 		return MeasurementIDs{
-			MeasurementIDInit, // is fake measurement
+			MeasurementIDInit, // is a fake measurement
+			MeasurementIDACM,  // is a fake measurement
 			MeasurementIDACMDate,
 			MeasurementIDBIOSStartupModule,
 			MeasurementIDSCRTMSeparator,
 			MeasurementIDPCDFirmwareVendorVersionData,
-			MeasurementIDPCDFirmwareVendorVersionCode, // is fake measurement
+			MeasurementIDPCDFirmwareVendorVersionCode, // is a fake measurement
 			MeasurementIDDXE,
 			MeasurementIDSeparator,
-			MeasurementIDFITPointer, // is fake measurement
-			MeasurementIDFITHeaders, // is fake measurement
+			MeasurementIDFITPointer, // is a fake measurement
+			MeasurementIDFITHeaders, // is a fake measurement
 		}
 	case FlowIntelLegacyTXTEnabledTPM12:
 		return MeasurementIDs{
-			MeasurementIDInit, // is fake measurement
+			MeasurementIDInit, // is a fake measurement
+			MeasurementIDACM,  // is a fake measurement
 			MeasurementIDACMDateInPlace,
 			MeasurementIDBIOSStartupModule,
 			MeasurementIDPCDFirmwareVendorVersionData,
-			MeasurementIDPCDFirmwareVendorVersionCode, // is fake measurement
+			MeasurementIDPCDFirmwareVendorVersionCode, // is a fake measurement
 			MeasurementIDDXE,
 			MeasurementIDSeparator,
-			MeasurementIDFITPointer, // is fake measurement
-			MeasurementIDFITHeaders, // is fake measurement
+			MeasurementIDFITPointer, // is a fake measurement
+			MeasurementIDFITHeaders, // is a fake measurement
 		}
 	case FlowIntelLegacyTXTDisabled:
 		return MeasurementIDs{
 			MeasurementIDPCDFirmwareVendorVersionData,
-			MeasurementIDPCDFirmwareVendorVersionCode, // is fake measurement
+			MeasurementIDPCDFirmwareVendorVersionCode, // is a fake measurement
 			MeasurementIDDXE,
 			MeasurementIDSeparator,
 
 			// Also we include as fake measurements the byte ranges which a known
 			// to be necessary to correctly parse the firmware.
-			MeasurementIDFITPointer, // is fake measurement
-			MeasurementIDFITHeaders, // is fake measurement
+			MeasurementIDFITPointer, // is a fake measurement
+			MeasurementIDFITHeaders, // is a fake measurement
 		}
 	}
 	panic(fmt.Sprintf("should not happen: %v", f))
