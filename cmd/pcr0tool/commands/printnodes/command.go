@@ -82,6 +82,7 @@ func (cmd Command) Execute(args []string) {
 	}
 	imagePath := args[0]
 
+	fianoUEFI.DisableDecompression = false
 	firmware, err := uefi.ParseUEFIFirmwareFile(imagePath)
 	assertNoError(err)
 

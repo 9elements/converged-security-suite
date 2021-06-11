@@ -109,7 +109,7 @@ func TestTXTErrorStatus(t *testing.T) {
 	if txtErrorStatus.BitSize() != 8 {
 		t.Errorf("Incorrect BitSize, expected: 64. actual: %v", txtErrorStatus.BitSize())
 	}
-	if txtErrorStatus.Address() != registers.TxtPublicSpace+registers.TXTStatusRegisterOffset {
+	if txtErrorStatus.Address() != registers.TxtPublicSpace+registers.TXTErrorStatusRegisterOffset {
 		t.Errorf("Incorrect Address, expected: %d. actual: %d",
 			registers.TxtPublicSpace+registers.TXTStatusRegisterOffset,
 			txtErrorStatus.Address(),
