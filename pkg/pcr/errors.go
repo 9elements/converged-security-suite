@@ -79,3 +79,11 @@ type ErrUnexpectedEventType struct {
 func (err ErrUnexpectedEventType) Error() string {
 	return fmt.Sprintf("unexpected event type, reason: '%s'; event: '%#+v'", err.Reason, err.Event)
 }
+
+// ErrNoSACM means no S-ACM was found.
+type ErrNoSACM struct{}
+
+// Error implements interface `error`.
+func (err ErrNoSACM) Error() string {
+	return fmt.Sprintf("S-ACM not found")
+}
