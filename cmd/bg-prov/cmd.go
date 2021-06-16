@@ -16,6 +16,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/provisioning/bootguard/bootpolicy"
 	"github.com/9elements/converged-security-suite/v2/pkg/provisioning/bootguard/common"
 	"github.com/9elements/converged-security-suite/v2/pkg/provisioning/bootguard/key"
+	"github.com/9elements/converged-security-suite/v2/pkg/provisioning/cbnt"
 )
 
 type context struct {
@@ -100,6 +101,11 @@ type readAllCmd struct {
 
 type printFITCmd struct {
 	BIOS string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
+}
+
+type keygenCmd struct {
+	Password string `arg required name:"password" help:"Password for AES256 encryption of private keys"`
+	Path     string `flag optional name:"path" help:"Path to store keys. File names are 'yourname_bpm/yourname_bpm.pub' and 'yourname_km/yourname_km.pub' respectivly"`
 }
 
 func (g generateKMCmd) Run(ctx *context) error {
@@ -406,6 +412,32 @@ func (p *printFITCmd) Run(ctx *context) error {
 	return nil
 }
 
+func (k *keygenCmd) Run(ctx *context) error {
+	kmPubFile, err := os.Create(k.Path + "km_pub.pem")
+	if err != nil {
+		return err
+	}
+	kmPrivFile, err := os.Create(k.Path + "km_priv.pem")
+	if err != nil {
+		return err
+	}
+	bpmPubFile, err := os.Create(k.Path + "bpm_pub.pem")
+	if err != nil {
+		return err
+	}
+	bpmPrivFile, err := os.Create(k.Path + "bpm_priv.pem")
+	if err != nil {
+		return err
+	}
+
+	err = cbnt.GenRSAKey(2048, k.Password, kmPubFile, kmPrivFile, bpmPubFile, bpmPrivFile)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 var cli struct {
 	Version    versionCmd    `cmd help:"Show version information of Intel BootGuard provisioning tool"`
 	KmGen      generateKMCmd `cmd help:"Generate a BootGuard Key Manifest"`
@@ -418,4 +450,5 @@ var cli struct {
 	BpmSign    bpmSignCmd    `cmd help:"Signs a given Bootpolicy Manifest with the supplied private key"`
 	ReadConfig readAllCmd    `cmd help:"Reads config from given image file and saves it in config file in json format"`
 	PrintFIT   printFITCmd   `cmd help:"Takes a firmware image and prints it FIT table in tabular form"`
+	KeyGen     keygenCmd     `cmd help:"Generates key for KM and BPM signing"`
 }
