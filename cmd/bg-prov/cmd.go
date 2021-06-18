@@ -27,17 +27,16 @@ type versionCmd struct {
 }
 
 type generateKMCmd struct {
-	KM         string           `arg required name:"path" help:"Path to the newly generated km binary file"`
-	Key        string           `arg required name:"key" help:"Public signing key"`
-	Config     string           `flag optional name:"config" help:"Path to the JSON config file." type:"path"`
-	KMVersion  uint8            `flag optional name:"kmversion" help:"Platform Manufacturer’s BPM version number."`
-	SVN        common.SVN       `flag optional name:"svn" help:"Boot Policy Manifest Security Version Number"`
-	ID         uint8            `flag optional name:"id" help:"The key Manifest Identifier"`
-	BpmPubkey  string           `flag optional name:"bpmpubkey" help:"Path to bpm public signing key"`
-	BpmHashAlg common.Algorithm `flag optional name:"bpmhashalgo" help:"Hash algorithm for bpm public signing key"`
-	Out        string           `flag optional name:"out" help:"Path to write applied config to"`
-	Cut        bool             `flag optional name:"cut" help:"Cuts the signature before writing to binary."`
-	PrintME    bool             `flag optional name:"printme" help:"Prints the hash of KM public signing key"`
+	KM        string     `arg required name:"path" help:"Path to the newly generated km binary file"`
+	Key       string     `arg required name:"key" help:"Public signing key"`
+	Config    string     `flag optional name:"config" help:"Path to the JSON config file." type:"path"`
+	KMVersion uint8      `flag optional name:"kmversion" help:"Platform Manufacturer’s BPM version number."`
+	SVN       common.SVN `flag optional name:"svn" help:"Boot Policy Manifest Security Version Number"`
+	ID        uint8      `flag optional name:"id" help:"The key Manifest Identifier"`
+	BpmPubkey string     `flag optional name:"bpmpubkey" help:"Path to bpm public signing key"`
+	Out       string     `flag optional name:"out" help:"Path to write applied config to"`
+	Cut       bool       `flag optional name:"cut" help:"Cuts the signature before writing to binary."`
+	PrintME   bool       `flag optional name:"printme" help:"Prints the hash of KM public signing key"`
 }
 
 type signKMCmd struct {
@@ -70,26 +69,26 @@ type bpmGenCmd struct {
 	BIOS   string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
 	Config string `flag optional name:"config" help:"Path to the JSON config file." type:"path"`
 
-	PMBPMVersion uint8                `flag optional name:"pmbpmversion" help:"Platform Manufacturer’s BPM revision number."`
-	SVN          common.SVN           `flag optional name:"svn" help:"Boot Policy Manifest Security Version Number"`
-	ACMSVN       common.SVN           `flag optional name:"acmsvn" help:"Authorized ACM Security Version Number"`
-	NEMS         bootpolicy.Size4K    `flag optional name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
+	PMBPMVersion uint8             `flag optional name:"pmbpmversion" help:"Platform Manufacturer’s BPM revision number."`
+	SVN          common.SVN        `flag optional name:"svn" help:"Boot Policy Manifest Security Version Number"`
+	ACMSVN       common.SVN        `flag optional name:"acmsvn" help:"Authorized ACM Security Version Number"`
+	NEMS         bootpolicy.Size4K `flag optional name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
+	// IBB args
 	PBET         bootpolicy.PBETValue `flag optional name:"pbet" help:"Protect BIOS Environment Timer (PBET) value."`
-	IBBSegFlags  bootpolicy.SEFlags   `flag optional name:"ibbflags" help:"IBB Control flags"`
+	IbbElemFlags bootpolicy.SEFlags   `flag optional name:"ibbelemflags" help:"IBB Element flags"`
 	MCHBAR       uint64               `flag optional name:"mchbar" help:"MCHBAR address"`
 	VDTBAR       uint64               `flag optional name:"vdtbar" help:"VTDPVC0BAR address"`
-	PMRLBase     uint32               `flag optional name:"dmabase0" help:"Low DMA protected range base"`
-	PMRLLimit    uint32               `flag optional name:"dmasize0" help:"Low DMA protected range limit"`
+	PMRLBase     uint32               `flag optional name:"pmrlbase" help:"Low DMA protected range base"`
+	PMRLLimit    uint32               `flag optional name:"pmrllimit" help:"Low DMA protected range limit"`
 	EntryPoint   uint32               `flag optional name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
-
-	IbbSegFlag uint16 `flag optional name:"ibbsegflag" help:"Reducted"`
+	IbbSegFlags  uint16               `flag required name:"ibbflags" help:"Ibb segment flags"`
 
 	Out string `flag optional name:"out" help:"Path to write applied config to"`
 }
 
 type bpmSignCmd struct {
 	BpmIn    string `arg required name:"bpmin" help:"Path to the newly generated Boot Policy Manifest binary file." type:"path"`
-	BpmOut   string `arg required name."bpmout" help:"Path to write the signed BPM to"`
+	BpmOut   string `arg required name."bpmout" help:"Path to write the signed BPM to" type:"path"`
 	Key      string `arg required name:"bpm-keyfile" help:"Path to the encrypted PKCS8 private key file." type:"path"`
 	Password string `arg required name:"password" help:"Password to decrypt PKCS8 private key file"`
 }
@@ -105,7 +104,30 @@ type printFITCmd struct {
 
 type keygenCmd struct {
 	Password string `arg required name:"password" help:"Password for AES256 encryption of private keys"`
-	Path     string `flag optional name:"path" help:"Path to store keys. File names are 'yourname_bpm/yourname_bpm.pub' and 'yourname_km/yourname_km.pub' respectivly"`
+	Path     string `flag optional name:"path" help:"Path to store keys. File names are 'yourname_bpm/yourname_bpm.pub' and 'yourname_km/yourname_km.pub' respectivly" type:"path"`
+}
+
+type templateCmd struct {
+	Path string `arg required name:"path" help:"Path to the newly generated JSON configuration file." type:"path"`
+	//BG BPM Manifest Header args
+	PMBPMVersion uint8             `flag optional name:"pmbpmversion" help:"Platform Manufacturer’s BPM revision number."`
+	BPMSVN       common.SVN        `flag optional name:"bpmsvn" help:"Boot Policy Manifest Security Version Number"`
+	ACMSVN       common.SVN        `flag optional name:"acmsvn" help:"Authorized ACM Security Version Number"`
+	NEMS         bootpolicy.Size4K `flag optional name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
+	// IBB args
+	PBET         bootpolicy.PBETValue `flag optional name:"pbet" help:"Protect BIOS Environment Timer (PBET) value."`
+	IbbElemFlags bootpolicy.SEFlags   `flag optional name:"ibbelemflags" help:"IBB Control flags"`
+	MCHBAR       uint64               `flag optional name:"mchbar" help:"MCHBAR address"`
+	VDTBAR       uint64               `flag optional name:"vdtbar" help:"VTDPVC0BAR address"`
+	PMRLBase     uint32               `flag optional name:"pmrlbase" help:"Low DMA protected range base"`
+	PMRLLimit    uint32               `flag optional name:"pmrllimit" help:"Low DMA protected range limit"`
+	EntryPoint   uint32               `flag optional name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
+	// Key Manifest arguments
+	KMPubKey  string     `flag optional name:"kmpubkey" help:"KM Public signing key" type:"path"`
+	KMVersion uint8      `flag optional name:"kmversion" help:"Platform Manufacturer’s BPM version number."`
+	KMSVN     common.SVN `flag optional name:"kmsvn" help:"Boot Policy Manifest Security Version Number"`
+	KMID      uint8      `flag optional name:"kmid" help:"The key Manifest Identifier"`
+	BpmPubkey string     `flag optional name:"bpmpubkey" help:"Path to bpm public signing key" type:"path"`
 }
 
 func (g generateKMCmd) Run(ctx *context) error {
@@ -288,35 +310,37 @@ func (g *bpmGenCmd) Run(ctx *context) error {
 
 		se := bootpolicy.NewSE()
 		se.PBETValue = g.PBET
-		se.Flags = g.IBBSegFlags
+		se.Flags = g.IbbElemFlags
 		se.IBBMCHBAR = g.MCHBAR
 		se.VTdBAR = g.VDTBAR
 		se.PMRLBase = g.PMRLBase
 		se.PMRLLimit = g.PMRLLimit
 
 		se.IBBEntryPoint = g.EntryPoint
-
-		ibbs, err := bootguard.FindAdditionalIBBs(g.BIOS)
-		if err != nil {
-			return err
-		}
-		for counter := range ibbs {
-			ibbs[counter].Flags = g.IbbSegFlag
-		}
-		se.IBBSegments = append(se.IBBSegments, ibbs...)
-
 		bgo.BootPolicyManifest.SE = append(bgo.BootPolicyManifest.SE, *se)
 
 		options = &bgo
 	}
+
+	ibbs, err := bootguard.FindAdditionalIBBs(g.BIOS)
+	if err != nil {
+		return err
+	}
+	for counter := range ibbs {
+		ibbs[counter].Flags = g.IbbSegFlags
+	}
+	options.BootPolicyManifest.SE[0].IBBSegments = ibbs
 
 	bpm, err := bootguard.GenerateBPM(options, g.BIOS)
 	if err != nil {
 		return err
 	}
 	// This section is hacky, just to make the parsing work
-	bpm.PMSE.Key.KeyAlg = 0x01
-	bpm.PMSE.Signature.HashAlg = 0x01
+	if len(bpm.PMSE.Key.Data) < 1 {
+		bpm.PMSE.Key.KeyAlg = 0x01
+		bpm.PMSE.Signature.HashAlg = 0x01
+	}
+
 	// End of hacky section
 	if g.Out != "" {
 		out, err := os.Create(g.Out)
@@ -438,6 +462,66 @@ func (k *keygenCmd) Run(ctx *context) error {
 	return nil
 }
 
+func (t *templateCmd) Run(ctx *context) error {
+	bgo := bootguard.NewOptions()
+
+	bgo.BootPolicyManifest.BPMH.PMBPMVersion = t.PMBPMVersion
+	bgo.BootPolicyManifest.BPMH.BPMSVN = t.BPMSVN
+	bgo.BootPolicyManifest.BPMH.ACMSVNAuth = t.ACMSVN
+	bgo.BootPolicyManifest.BPMH.NEMDataStack = t.NEMS
+
+	se := bootpolicy.NewSE()
+	se.PBETValue = t.PBET
+	se.Flags = t.IbbElemFlags
+	se.IBBMCHBAR = t.MCHBAR
+	se.VTdBAR = t.VDTBAR
+	se.PMRLBase = t.PMRLBase
+	se.PMRLLimit = t.PMRLLimit
+	se.IBBEntryPoint = t.EntryPoint
+
+	bgo.BootPolicyManifest.SE = append(bgo.BootPolicyManifest.SE, *se)
+
+	bgo.KeyManifest.KMVersion = t.KMVersion
+	bgo.KeyManifest.KMSVN = t.KMSVN
+	bgo.KeyManifest.KMID = t.KMID
+
+	if t.BpmPubkey != "" {
+		bpkeyhash, err := bootguard.GetBPMPubHash(t.BpmPubkey)
+		if err != nil {
+			return err
+		}
+		bgo.KeyManifest.BPKey = *bpkeyhash
+
+		bppubkey, err := bootguard.ReadPubKey(t.BpmPubkey)
+		if err != nil {
+			return err
+		}
+		if err := bgo.BootPolicyManifest.PMSE.Key.SetPubKey(bppubkey); err != nil {
+			return err
+		}
+	}
+
+	if t.KMPubKey != "" {
+		kmpubkey, err := bootguard.ReadPubKey(t.KMPubKey)
+		if err != nil {
+			return err
+		}
+		if err := bgo.KeyManifest.KeyAndSignature.Key.SetPubKey(kmpubkey); err != nil {
+			return err
+		}
+
+	}
+
+	out, err := os.Create(t.Path)
+	if err != nil {
+		return err
+	}
+	if err := bootguard.WriteConfig(out, &bgo); err != nil {
+		return err
+	}
+	return nil
+}
+
 var cli struct {
 	Version    versionCmd    `cmd help:"Show version information of Intel BootGuard provisioning tool"`
 	KmGen      generateKMCmd `cmd help:"Generate a BootGuard Key Manifest"`
@@ -451,4 +535,5 @@ var cli struct {
 	ReadConfig readAllCmd    `cmd help:"Reads config from given image file and saves it in config file in json format"`
 	PrintFIT   printFITCmd   `cmd help:"Takes a firmware image and prints it FIT table in tabular form"`
 	KeyGen     keygenCmd     `cmd help:"Generates key for KM and BPM signing"`
+	Template   templateCmd   `cmd help:"Writes template JSON configuration into file"`
 }

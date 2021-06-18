@@ -116,15 +116,12 @@ func setPMElement(bgo *Options) (*bootpolicy.PM, error) {
 }
 
 func setPMSElement(bgo *Options, bpm *bootpolicy.Manifest) (*bootpolicy.Signature, error) {
-	psme := bootpolicy.NewSignature()
-	return psme, nil
+	return &bgo.BootPolicyManifest.PMSE, nil
 }
 
 // SetKM takes Options struct and initializes a new KM with the given configuration.
 func SetKM(bgo *Options) (*key.Manifest, error) {
-	km := key.NewManifest()
-	km = bgo.KeyManifest
-	return km, nil
+	return bgo.KeyManifest, nil
 }
 
 func setIBBSegment(bgo *Options, image []byte) (*bootpolicy.SE, error) {
