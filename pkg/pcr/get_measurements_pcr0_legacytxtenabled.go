@@ -15,15 +15,39 @@ func MeasureInit() *Measurement {
 	return NewStaticDataMeasurement(MeasurementIDInit, nil)
 }
 
+func MeasureACM(fitEntries []fit.Entry) (*Measurement, error) {
+	m := Measurement{
+		ID: MeasurementIDACM,
+	}
+
+	mErr := &errors.MultiError{}
+
+	for _, fitEntry := range fitEntries {
+		switch fitEntry := fitEntry.(type) {
+		case *fit.EntrySACM: // startup AC module entry
+			mErr.Add(fitEntry.HeadersErrors...)
+			m.Data = append(m.Data, *NewRangeDataChunk(0, fitEntry.GetDataOffset(), uint64(len(fitEntry.GetDataBytes()))))
+		}
+	}
+
+	if len(m.Data) == 0 {
+		return nil, ErrNoSACM{}
+	}
+
+	return &m, mErr.ReturnValue()
+}
+
 func MeasureACMDate(fitEntries []fit.Entry) (*Measurement, error) {
 	m := Measurement{
 		ID: MeasurementIDACMDate,
 	}
 
 	mErr := &errors.MultiError{}
+	found := false
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntrySACM: // startup AC module entry
+			found = true
 
 			mErr.Add(fitEntry.HeadersErrors...)
 			data, err := fitEntry.ParseData()
@@ -41,6 +65,13 @@ func MeasureACMDate(fitEntries []fit.Entry) (*Measurement, error) {
 		}
 	}
 
+	if !found {
+		mErr.Add(ErrNoSACM{})
+	}
+
+	if len(m.Data) == 0 {
+		return nil, mErr.ReturnValue()
+	}
 	return &m, mErr.ReturnValue()
 }
 
@@ -60,9 +91,11 @@ func MeasureACMDateInPlace(hashAlg manifest.Algorithm, fitEntries []fit.Entry) (
 	}
 
 	mErr := &errors.MultiError{}
+	found := false
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntrySACM: // startup AC module entry
+			found = true
 
 			mErr.Add(fitEntry.HeadersErrors...)
 			data, err := fitEntry.ParseData()
@@ -80,6 +113,14 @@ func MeasureACMDateInPlace(hashAlg manifest.Algorithm, fitEntries []fit.Entry) (
 			padding := make([]byte, uint64(hashSize)-length)
 			m.Data = append(m.Data, *NewStaticDataChunk(DataChunkIDUndefined, padding))
 		}
+	}
+
+	if !found {
+		mErr.Add(ErrNoSACM{})
+	}
+
+	if len(m.Data) == 0 {
+		return nil, mErr.ReturnValue()
 	}
 	return &m, mErr.ReturnValue()
 }
