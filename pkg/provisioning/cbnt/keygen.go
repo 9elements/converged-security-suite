@@ -105,6 +105,15 @@ func writePrivKeyToFile(k crypto.PrivateKey, f *os.File, password string) error 
 	bpemBlock := &pem.Block{
 		Bytes: b,
 	}
+	switch k.(type) {
+	case *rsa.PrivateKey:
+		bpemBlock.Type = "RSA PRIVATE KEY"
+	case *ecdsa.PrivateKey:
+		bpemBlock.Type = "ECDSA PRIVATE KEY"
+	default:
+		return fmt.Errorf("trying to write unknown key type")
+	}
+
 	bpem := pem.EncodeToMemory(bpemBlock)
 	if password != "" {
 		encKey, err := encryptPrivFile(&bpem, password)
@@ -130,6 +139,14 @@ func writePubKeyToFile(k crypto.PublicKey, f *os.File) error {
 	}
 	bpemBlock := &pem.Block{
 		Bytes: b,
+	}
+	switch k.(type) {
+	case *rsa.PublicKey:
+		bpemBlock.Type = "RSA PUBLIC KEY"
+	case *ecdsa.PublicKey:
+		bpemBlock.Type = "ECDSA PUBLIC KEY"
+	default:
+		return fmt.Errorf("trying to write unknown key type")
 	}
 	bpem := pem.EncodeToMemory(bpemBlock)
 	_, err = f.Write(bpem)
