@@ -1,3 +1,14 @@
 * @ChriMarMe @zaolin @walterchris @flanfly @PatrickRudolph @ArthurHeymans
 cmd/pcr0tool/ @xaionaro @marcoguerri @rihter007
 pkg/intel/metadata/ @xaionaro @ChriMarMe
+pkg/registers @rihter007 @xaionaro
+pkg/bytes @xaionaro @rihter007
+pkg/pcr @rihter007 @xaionaro
+pkg/pcd @xaionaro
+pkg/amd @rihter007 @xaionaro
+pkg/diff @xaionaro @rihter007
+pkg/errors @xaionaro @rihter007
+pkg/check @xaionaro
+pkg/tpmdetection @rihter007 @xaionaro
+pkg/tpmeventlog @xaionaro @rihter007
+pkg/uefi @xaionaro @rihter007
