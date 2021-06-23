@@ -10,9 +10,9 @@ import (
 func TestTXT(t *testing.T) {
 	txtAPI := hwapi.GetPcMock(func(addr uint64) byte { return hwapi.MockPCReadMemory(addr) })
 
-	got, err := registers.FetchTXTConfigSpace(txtAPI)
+	got, err := registers.FetchTXTConfigSpaceSafe(txtAPI)
 	if err != nil {
-		t.Errorf("FetchTXTConfigSpace() failed: %v", err)
+		t.Errorf("FetchTXTConfigSpaceSafe() failed: %v", err)
 	}
 
 	t.Logf("TXT: %+v", got)
@@ -21,9 +21,9 @@ func TestTXT(t *testing.T) {
 func TestReadTXTRegisters(t *testing.T) {
 	txtAPI := hwapi.GetPcMock(func(addr uint64) byte { return hwapi.MockPCReadMemory(addr) })
 
-	data, err := registers.FetchTXTConfigSpace(txtAPI)
+	data, err := registers.FetchTXTConfigSpaceSafe(txtAPI)
 	if err != nil {
-		t.Errorf("FetchTXTConfigSpace() failed: %v", err)
+		t.Errorf("FetchTXTConfigSpaceSafe() failed: %v", err)
 		t.Skip()
 	}
 
@@ -157,7 +157,7 @@ func TestTXTErrorStatus(t *testing.T) {
 			return hwapi.MockPCReadMemory(addr)
 		})
 
-		data, err := registers.FetchTXTConfigSpace(txtAPI)
+		data, err := registers.FetchTXTConfigSpaceSafe(txtAPI)
 		if err != nil {
 			t.Errorf("ParseTXTRegs() failed: %v", err)
 			t.Skip()
@@ -327,7 +327,7 @@ func TestACMPolicyStatus(t *testing.T) {
 			return hwapi.MockPCReadMemory(addr)
 		})
 
-		data, err := registers.FetchTXTConfigSpace(txtAPI)
+		data, err := registers.FetchTXTConfigSpaceSafe(txtAPI)
 		if err != nil {
 			t.Errorf("ParseTXTRegs() failed: %v", err)
 			t.Skip()
@@ -453,9 +453,9 @@ func TestReadACMStatus(t *testing.T) {
 				return hwapi.MockPCReadMemory(addr)
 			})
 
-			data, err := registers.FetchTXTConfigSpace(txtAPI)
+			data, err := registers.FetchTXTConfigSpaceSafe(txtAPI)
 			if err != nil {
-				t.Errorf("FetchTXTConfigSpace() failed: %v", err)
+				t.Errorf("FetchTXTConfigSpaceSafe() failed: %v", err)
 				t.Skip()
 			}
 			got, err := registers.ReadACMStatusRegister(data)
