@@ -61,7 +61,7 @@ var (
 
 // FetchTXTConfigSpaceSafe returns a filtered raw copy of the TXT config space,
 // it excludes registers, which is not supposed to be read (in contrast
-// to FetchTXTConfigSpaceSafe).
+// to FetchTXTConfigSpaceRaw).
 func FetchTXTConfigSpaceSafe(mem PhysicalMemoryReader) (TXTConfigSpace, error) {
 	data := make([]byte, TxtPublicSpaceSize)
 
