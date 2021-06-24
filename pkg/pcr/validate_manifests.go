@@ -39,5 +39,9 @@ func (v ValidateManifests) Validate(firmware Firmware) error {
 		return fmt.Errorf("key chain is invalid: %w", err)
 	}
 
+	if err := bpm.ValidateIBBs(firmware); err != nil {
+		return fmt.Errorf("IBB signature in BPM is not valid: %w", err)
+	}
+
 	return nil
 }
