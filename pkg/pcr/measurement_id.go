@@ -34,6 +34,7 @@ const (
 	MeasurementIDUndefined = MeasurementID(iota)
 	MeasurementIDInit
 	MeasurementIDPCR0_DATA
+	MeasurementIDACM
 	MeasurementIDACMDate
 	MeasurementIDBIOSStartupModule
 	MeasurementIDSCRTMSeparator
@@ -54,6 +55,8 @@ func (id MeasurementID) IsFake() bool {
 	case MeasurementIDUndefined:
 		return true
 	case MeasurementIDInit:
+		return true
+	case MeasurementIDACM:
 		return true
 	case MeasurementIDPCDFirmwareVendorVersionCode:
 		return true
@@ -84,6 +87,8 @@ func (id MeasurementID) String() string {
 		return "undefined"
 	case MeasurementIDInit:
 		return "init"
+	case MeasurementIDACM:
+		return "ACM"
 	case MeasurementIDPCR0_DATA:
 		return "PCR0_DATA"
 	case MeasurementIDACMDate:
@@ -117,6 +122,8 @@ func (id MeasurementID) PCRIDs() []ID {
 	case MeasurementIDInit:
 		return []ID{0}
 	case MeasurementIDPCR0_DATA:
+		return []ID{0}
+	case MeasurementIDACM:
 		return []ID{0}
 	case MeasurementIDACMDate:
 		return []ID{0}
@@ -223,6 +230,10 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 	case MeasurementIDPCR0_DATA:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			return MeasurePCR0Data(config, provider.FITEntries())
+		}
+	case MeasurementIDACM:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			return MeasureACM(provider.FITEntries())
 		}
 	case MeasurementIDACMDate:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
