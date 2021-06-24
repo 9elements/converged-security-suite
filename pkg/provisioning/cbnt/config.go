@@ -148,7 +148,7 @@ func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo manifest.Alg
 			}
 		}
 		hash = h.Sum(nil)
-	case manifest.AlgSM3_256:
+	case manifest.AlgSM3:
 		h := sm3.New()
 		segments, err := getIBBSegment(ibbs, image)
 		if err != nil {

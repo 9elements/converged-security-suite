@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"math"
-	_ "net/http/pprof"
 	"strings"
 
 	"github.com/golang-collections/go-datastructures/augmentedtree"

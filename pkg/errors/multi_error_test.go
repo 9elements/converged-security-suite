@@ -9,7 +9,7 @@ import (
 )
 
 func TestMultiErrorMarshalJSON(t *testing.T) {
-	mErr := MultiError{errors.New("simple error message"), errors.New(`I am a citizen of "Earth"!`)}
+	mErr := MultiError{errors.New("simple error message"), errors.New(`I am a citizen of "Earth"`)}
 	b, err := mErr.MarshalJSON()
 	require.NoError(t, err)
 	var errDescr string
