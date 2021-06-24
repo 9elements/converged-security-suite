@@ -105,6 +105,7 @@ func (err *ErrAmiTcgPlatformPeiAfterMemUnableToFindPcdFirmwareVendorStart) Error
 	return "[AmiTcgPlatformPeiAfterMem] unable to find the pcdFirmwareVendor beginning"
 }
 
+// ErrUnknownVendorType means the vendor type is not supported
 type ErrUnknownVendorType struct{}
 
 func (err *ErrUnknownVendorType) Error() string {

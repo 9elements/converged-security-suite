@@ -38,6 +38,7 @@ type ParsedFirmware interface {
 	GetFirmwareVendorVersionFFSGUID() guid.GUID
 }
 
+// ParsedFirmwareGeneric is a generic parsed PCD
 type ParsedFirmwareGeneric struct {
 	FirmwareImage FirmwareImage
 
@@ -46,22 +47,29 @@ type ParsedFirmwareGeneric struct {
 	FirmwareVendorVersionFFSGUID    guid.GUID
 }
 
+// GetFirmwareVendorVersion returns firmware vendor version
 func (pcd *ParsedFirmwareGeneric) GetFirmwareVendorVersion() []byte {
 	return pcd.FirmwareVendorVersionRanges.Compile(pcd.FirmwareImage.ImageBytes())
 }
 
+// GetFirmwareVendorVersionRanges returns where the firmware vendor version is stored.
 func (pcd *ParsedFirmwareGeneric) GetFirmwareVendorVersionRanges() pkgbytes.Ranges {
 	return pcd.FirmwareVendorVersionRanges
 }
 
+// GetFirmwareVendorVersionCodeRanges return the address of the whole executable,
+// containing the firmware vendor version (if it is stored in the executable file).
 func (pcd *ParsedFirmwareGeneric) GetFirmwareVendorVersionCodeRanges() pkgbytes.Ranges {
 	return pcd.FirmwareVendorVersionCodeRanges
 }
 
+// GetFirmwareVendorVersionFFSGUID returns the GUID of the component which
+// stores the firmware vendor version
 func (pcd *ParsedFirmwareGeneric) GetFirmwareVendorVersionFFSGUID() guid.GUID {
 	return pcd.FirmwareVendorVersionFFSGUID
 }
 
+// FirmwareImage is an UEFI firmware image.
 type FirmwareImage = *uefi.UEFI
 
 // ParseFirmware extracts PCD values from an UEFI firmware.

@@ -11,6 +11,7 @@ import (
 	ffsConsts "github.com/9elements/converged-security-suite/v2/pkg/uefi/ffs/consts"
 )
 
+// MeasurePCDFirmwareVendorVersionData returns PCD firmware vendor version measurement.
 func MeasurePCDFirmwareVendorVersionData(pcdData pcd.ParsedFirmware) (*Measurement, error) {
 	if pcdData == nil {
 		return nil, fmt.Errorf("pcdData is nil")
@@ -29,6 +30,8 @@ func MeasurePCDFirmwareVendorVersionData(pcdData pcd.ParsedFirmware) (*Measureme
 	return NewRangesMeasurement(MeasurementIDPCDFirmwareVendorVersionData, dataRanges), nil
 }
 
+// MeasurePCDFirmwareVendorVersionCode returns a fake measurement which includes
+// the executable containing the PCD firmware vendor version value.
 func MeasurePCDFirmwareVendorVersionCode(pcdData pcd.ParsedFirmware) (*Measurement, error) {
 	if pcdData == nil {
 		return nil, fmt.Errorf("pcdData is nil")
@@ -45,6 +48,7 @@ func MeasurePCDFirmwareVendorVersionCode(pcdData pcd.ParsedFirmware) (*Measureme
 	), nil
 }
 
+// MeasureDXE returns the DXE measurement.
 func MeasureDXE(firmware Firmware) (*Measurement, error) {
 	mErr := &errors.MultiError{}
 
@@ -78,6 +82,7 @@ func MeasureDXE(firmware Firmware) (*Measurement, error) {
 	return NewRangesMeasurement(MeasurementIDDXE, dxeRanges), mErr.ReturnValue()
 }
 
+// MeasureFITPointer returns a fake measurement for FIT pointer.
 func MeasureFITPointer(firmware Firmware) *Measurement {
 	fitHeadersPtrStartIdx, fitHeadersPtrEndIdx := fit.GetPointerCoordinates(firmware.Buf())
 	return NewRangeMeasurement(
@@ -87,6 +92,7 @@ func MeasureFITPointer(firmware Firmware) *Measurement {
 	)
 }
 
+// MeasureFITHeaders returns a fake measurement for FIT headers.
 func MeasureFITHeaders(firmware Firmware) (*Measurement, error) {
 	fitHeadersStartIdx, fitHeadersEndIdx, err := fit.GetHeadersTableRange(firmware.Buf())
 	if err != nil {
@@ -100,6 +106,7 @@ func MeasureFITHeaders(firmware Firmware) (*Measurement, error) {
 	), nil
 }
 
+// MeasureSeparator returns the separator measurement.
 func MeasureSeparator() *Measurement {
 	return NewStaticDataMeasurement(MeasurementIDSeparator, Separator)
 }

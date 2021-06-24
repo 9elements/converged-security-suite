@@ -8,6 +8,7 @@ import (
 // Flow defines which measurements are used to get the final PCR values.
 type Flow int
 
+// String implements fmt.Stringer
 func (f Flow) String() string {
 	switch f {
 	case FlowAuto:
@@ -24,6 +25,7 @@ func (f Flow) String() string {
 	panic(fmt.Sprintf("Flow's %d string representation is not supported", f))
 }
 
+// FlowFromString parses Flow from a string.
 func FlowFromString(s string) (Flow, error) {
 	switch strings.ToLower(s) {
 	case "auto":
@@ -93,7 +95,7 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 		return MeasurementIDs{
 			MeasurementIDInit, // is a fake measurement
 			MeasurementIDACM,  // is a fake measurement
-			MeasurementIDPCR0_DATA,
+			MeasurementIDPCR0DATA,
 			MeasurementIDPCDFirmwareVendorVersionData,
 			MeasurementIDPCDFirmwareVendorVersionCode, // is a fake measurement
 			MeasurementIDDXE,

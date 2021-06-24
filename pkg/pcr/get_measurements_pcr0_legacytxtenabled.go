@@ -11,10 +11,13 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 )
 
+// MeasureInit returns the fake measurement for TPM initialization, it
+// is used to match EventLog with expected measurements.
 func MeasureInit() *Measurement {
 	return NewStaticDataMeasurement(MeasurementIDInit, nil)
 }
 
+// MeasureACM returns a fake measurement of ACM.
 func MeasureACM(fitEntries []fit.Entry) (*Measurement, error) {
 	m := Measurement{
 		ID: MeasurementIDACM,
@@ -37,6 +40,7 @@ func MeasureACM(fitEntries []fit.Entry) (*Measurement, error) {
 	return &m, mErr.ReturnValue()
 }
 
+// MeasureACMDate returns a measurement of ACM date.
 func MeasureACMDate(fitEntries []fit.Entry) (*Measurement, error) {
 	m := Measurement{
 		ID: MeasurementIDACMDate,
@@ -75,6 +79,8 @@ func MeasureACMDate(fitEntries []fit.Entry) (*Measurement, error) {
 	return &m, mErr.ReturnValue()
 }
 
+// MeasureACMDateInPlace returns a measurement of ACM date, but without hashing
+// it (it is used in obsolete TPM1.2 flows; a bug of the initial implementation?).
 func MeasureACMDateInPlace(hashAlg manifest.Algorithm, fitEntries []fit.Entry) (*Measurement, error) {
 	m := Measurement{
 		ID: MeasurementIDACMDateInPlace,
@@ -125,6 +131,7 @@ func MeasureACMDateInPlace(hashAlg manifest.Algorithm, fitEntries []fit.Entry) (
 	return &m, mErr.ReturnValue()
 }
 
+// MeasureBIOSStartupModule return the measurement of BIOS startup module.
 func MeasureBIOSStartupModule(fitEntries []fit.Entry) (*Measurement, error) {
 	m := Measurement{
 		ID: MeasurementIDBIOSStartupModule,
@@ -149,6 +156,8 @@ func MeasureBIOSStartupModule(fitEntries []fit.Entry) (*Measurement, error) {
 	return &m, mErr.ReturnValue()
 }
 
+// MeasureSCRTMSeparator return the measurement which separates hardware S-RTM
+// measurements from the rest firmware measurements.
 func MeasureSCRTMSeparator() *Measurement {
 	return NewStaticDataMeasurement(MeasurementIDSCRTMSeparator, Separator)
 }

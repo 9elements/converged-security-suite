@@ -21,8 +21,8 @@ jobs:
       - run: golint -set_exit_status ./pkg/diff
       - run: golint -set_exit_status ./pkg/errors
       - run: golint -set_exit_status ./pkg/hwapi
-      - run: golint -set_exit_status ./pkg/intel/fit
-      - run: golint -set_exit_status ./pkg/intel/fit/consts
+      - run: golint -set_exit_status ./pkg/intel/metadata/fit
+      - run: golint -set_exit_status ./pkg/intel/metadata/fit/consts
       - run: golint -set_exit_status ./pkg/mathtools
       - run: golint -set_exit_status ./pkg/ostools
       - run: golint -set_exit_status ./pkg/pcd

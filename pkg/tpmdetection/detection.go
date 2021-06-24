@@ -9,8 +9,10 @@ import (
 	"strings"
 )
 
+// Type is the TPM type.
 type Type uint8
 
+// The list of available TPM types.
 const (
 	TypeNoTPM Type = iota
 	TypeTPM12
