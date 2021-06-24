@@ -3,6 +3,7 @@ package registers
 import (
 	"fmt"
 
+	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
 )
 
@@ -29,12 +30,54 @@ type PhysicalMemoryReader interface {
 	ReadPhysBuf(addr int64, buf []byte) error
 }
 
-//FetchTXTConfigSpace returns a raw copy of the TXT config space
-func FetchTXTConfigSpace(txtAPI PhysicalMemoryReader) (TXTConfigSpace, error) {
+// FetchTXTConfigSpaceRaw returns a raw copy of the TXT config space
+//
+// Warning, this function may trigger undocumented registers which affects
+// other registers or anything else.
+func FetchTXTConfigSpaceRaw(mem PhysicalMemoryReader) (TXTConfigSpace, error) {
 	data := make([]byte, TxtPublicSpaceSize)
-	if err := txtAPI.ReadPhysBuf(TxtPublicSpace, data); err != nil {
+	if err := mem.ReadPhysBuf(TxtPublicSpace, data); err != nil {
 		return nil, err
 	}
+	return data, nil
+}
+
+// FetchTXTConfigSpace is a deprecated alias for FetchTXTConfigSpaceRaw.
+// DEPRECATED: The function was renamed to FetchTXTConfigSpaceRaw.
+func FetchTXTConfigSpace(mem PhysicalMemoryReader) (TXTConfigSpace, error) {
+	return FetchTXTConfigSpaceRaw(mem)
+}
+
+var (
+	physMemDenyList = pkgbytes.Ranges{
+		{
+			// This is an undocumented register which triggers ACM_POLICY_STATUS
+			// corruption.
+			Offset: 0xFED30370,
+			Length: 8,
+		},
+	}
+)
+
+// FetchTXTConfigSpaceSafe returns a filtered raw copy of the TXT config space,
+// it excludes registers, which is not supposed to be read (in contrast
+// to FetchTXTConfigSpaceSafe).
+func FetchTXTConfigSpaceSafe(mem PhysicalMemoryReader) (TXTConfigSpace, error) {
+	data := make([]byte, TxtPublicSpaceSize)
+
+	byteRanges := pkgbytes.Range{
+		Offset: TxtPublicSpace,
+		Length: TxtPublicSpaceSize,
+	}.Exclude(physMemDenyList...)
+
+	for _, byteRange := range byteRanges {
+		startIdx := byteRange.Offset - TxtPublicSpace
+		endIdx := byteRange.Offset - TxtPublicSpace + byteRange.Length
+		if err := mem.ReadPhysBuf(int64(byteRange.Offset), data[startIdx:endIdx]); err != nil {
+			return nil, err
+		}
+	}
+
 	return data, nil
 }
 
