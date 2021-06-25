@@ -15,7 +15,6 @@ jobs:
       # specify any bash command here prefixed with `run: `
       - run: GO111MODULE=off go get github.com/tjfoc/gmsm/sm2 github.com/dustin/go-humanize github.com/linuxboot/fiano/pkg/uefi && go run ./pkg/intel/metadata/manifest/common/manifestcodegen/cmd/manifestcodegen -check ./pkg/intel/metadata/manifest ./pkg/intel/metadata/manifest/bootpolicy ./pkg/intel/metadata/manifest/key
       - run: if [ "$(gofmt -l .)" != "" ]; then exit 1; fi
-      - run: golangci-lint run ./pkg/...
       - run: golint -set_exit_status ./cmd/txt-suite
       - run: golint -set_exit_status ./cmd/txt-prov
       - run: golint -set_exit_status ./cmd/cbnt-prov
