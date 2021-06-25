@@ -15,5 +15,5 @@ func TestMultiErrorMarshalJSON(t *testing.T) {
 	var errDescr string
 	err = json.Unmarshal(b, &errDescr)
 	require.NoError(t, err, string(b))
-	require.Equal(t, `"errors: simple error message; I am a citizen of \"Earth\"!"`, string(b))
+	require.Equal(t, `"errors: simple error message; I am a citizen of \"Earth\""`, string(b))
 }
