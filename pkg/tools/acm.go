@@ -381,16 +381,12 @@ func (a *ACM) PrettyPrint() {
 	switch a.Info.ChipsetACMType {
 	case ACMChipsetTypeBios:
 		fmt.Println("      Chipset ACM: BIOS")
-		break
 	case ACMChipsetTypeBiosRevoc:
 		fmt.Println("      Chipset ACM: BIOS Revocation")
-		break
 	case ACMChipsetTypeSinit:
 		fmt.Println("      Chipset ACM: SINIT")
-		break
 	case ACMChipsetTypeSinitRevoc:
 		fmt.Println("      Chipset ACM: SINIT Revocation")
-		break
 	default:
 		fmt.Println("      Chipset ACM: Unknown")
 	}

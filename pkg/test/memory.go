@@ -304,7 +304,7 @@ func TXTPublicReservedInE820(txtAPI hwapi.APIInterfaces, config *tools.Configura
 	if err != nil {
 		return false, nil, err
 	}
-	if res != true {
+	if !res {
 		return false, fmt.Errorf("TXTPublic area is not marked reserved in e820 map"), nil
 	}
 	return true, nil, nil
@@ -317,7 +317,7 @@ func TXTPrivateReservedInE820(txtAPI hwapi.APIInterfaces, config *tools.Configur
 	if err != nil {
 		return false, nil, err
 	}
-	if res != true {
+	if !res {
 		return false, fmt.Errorf("TXTPrivate area is not marked reserved in e820 map"), nil
 	}
 	return true, nil, nil
@@ -356,7 +356,7 @@ func TXTTPMDecodeSpaceIn820(txtAPI hwapi.APIInterfaces, config *tools.Configurat
 	if err != nil {
 		return false, nil, err
 	}
-	if res != true {
+	if !res {
 		return false, fmt.Errorf("TPMDecode area not reserved in e820"), nil
 	}
 	return true, nil, nil
@@ -420,7 +420,7 @@ func TXTDPRisLock(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool
 		return false, nil, err
 	}
 
-	if regs.Dpr.Lock != true {
+	if !regs.Dpr.Lock {
 		return false, fmt.Errorf("TXTDPR is not locked"), nil
 	}
 	return true, nil, nil
@@ -450,13 +450,16 @@ func HostbridgeDPRCorrect(txtAPI hwapi.APIInterfaces, config *tools.Configuratio
 	hostbridgeDpr, err := txtAPI.ReadHostBridgeDPR()
 	// No need to validate hostbridge register, already done for TXT DPR
 	// Just make sure they match.
+	if err != nil {
+		return false, fmt.Errorf("unable to read the hostbridge DPR: %w", err), nil
+	}
 
 	if hostbridgeDpr.Top != regs.Dpr.Top {
-		return false, fmt.Errorf("Hostbridge DPR Top doesn't match TXT DPR Top"), nil
+		return false, fmt.Errorf("hostbridge DPR Top doesn't match TXT DPR Top"), nil
 	}
 
 	if hostbridgeDpr.Size != regs.Dpr.Size {
-		return false, fmt.Errorf("Hostbridge DPR Size doesn't match TXT DPR Size"), nil
+		return false, fmt.Errorf("hostbridge DPR Size doesn't match TXT DPR Size"), nil
 	}
 
 	return true, nil, nil
@@ -652,7 +655,7 @@ func BIOSDATAREGIONValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration
 
 // HasMTRR checks if MTRR is supported by CPU
 func HasMTRR(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
-	if txtAPI.HasMTRR() != true {
+	if !txtAPI.HasMTRR() {
 		return false, fmt.Errorf("CPU does not have MTRR"), nil
 	}
 	return true, nil, nil
@@ -664,7 +667,7 @@ func HasSMRR(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, err
 	if err != nil {
 		return false, nil, err
 	}
-	if ret != true {
+	if !ret {
 		return false, fmt.Errorf("CPU has no SMRR"), nil
 	}
 	return true, nil, nil
@@ -718,7 +721,7 @@ func ActiveSMRR(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, 
 		return false, nil, err
 	}
 
-	if smrr.Active != true {
+	if !smrr.Active {
 		return false, fmt.Errorf("SMRR not active"), nil
 	}
 	return true, nil, nil
@@ -735,7 +738,7 @@ func ActiveIOMMU(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool,
 	if err != nil {
 		return false, fmt.Errorf("Failed to check SMRR DMA protection: %s", err), nil
 	}
-	if ret != true {
+	if !ret {
 		return false, fmt.Errorf("IOMMU does not protect SMRR (%x-%x) from DMA", smrr.PhysBase, smrrPhysEnd), nil
 	}
 	return true, nil, nil
