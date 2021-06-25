@@ -75,6 +75,8 @@ type RelatedMeasurement struct {
 // RelatedMeasurementsLaconic is a helper to print measurements in a laconic way
 type RelatedMeasurementsLaconic []RelatedMeasurement
 
+// String implements fmt.Stringer
+//nolint:typecheck
 func (s RelatedMeasurementsLaconic) String() string {
 	var ids []string
 	for _, measurement := range s {
@@ -338,6 +340,7 @@ func (t *intervalTree) FindOverlapping(r pkgbytes.Range) []interface{} {
 }
 
 // AddOffset just adds the offset to all offsets of the report
+//nolint:typecheck
 func (report *AnalysisReport) AddOffset(offset int64) {
 	if report == nil {
 		return

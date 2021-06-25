@@ -46,6 +46,7 @@ func (f dummyFirmware) NameToRangesMap() map[string]pkgbytes.Ranges {
 	return map[string]pkgbytes.Ranges{}
 }
 
+//nolint:typecheck
 func TestAnalysisReportAddOffset(t *testing.T) {
 	report0 := Analyze(
 		pkgbytes.Ranges{{
