@@ -17,7 +17,7 @@ func GetLocalRegisters() (registers.Registers, error) {
 
 	txtAPI := hwapi.GetAPI()
 
-	txtConfig, err := registers.FetchTXTConfigSpace(txtAPI)
+	txtConfig, err := registers.FetchTXTConfigSpaceSafe(txtAPI)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch TXT public space: %w", err)
 	}
