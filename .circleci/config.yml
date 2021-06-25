@@ -23,7 +23,7 @@ jobs:
       - run: CGO_ENABLED=0 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-suite cmd/txt-suite/*.go
       - run: CGO_ENABLED=0 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-prov cmd/txt-prov/*.go
       - run: CGO_ENABLED=0 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o cbnt-prov cmd/cbnt-prov/*.go
-      - run: go test ./pkg/amd/
+      - run: go test ./pkg/amd/...
       - run: go test ./pkg/check/
       - run: go test ./pkg/diff/
       - run: go test ./pkg/errors/
