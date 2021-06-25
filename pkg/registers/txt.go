@@ -150,7 +150,7 @@ func ReadTXTRegisters(data TXTConfigSpace) (Registers, error) {
 	for _, registerInfo := range supportedTXTRegistersIDs {
 		reg, err := registerInfo.fetch(data)
 		if err != nil {
-			mErr.Add(fmt.Errorf("failed to fetch MSR register %s, err: %v", registerInfo.id, err))
+			_ = mErr.Add(fmt.Errorf("failed to fetch MSR register %s, err: %v", registerInfo.id, err))
 			continue
 		}
 		result = append(result, reg)

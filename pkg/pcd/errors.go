@@ -10,7 +10,7 @@ import (
 type ErrTooManyTCGPEIModules struct{}
 
 func (err *ErrTooManyTCGPEIModules) Error() string {
-	return fmt.Sprintf(`[HP signed file] too many TCG PEI modules`)
+	return `[HP signed file] too many TCG PEI modules`
 }
 
 // ErrTcgPieUnableToFindPcdFirmwareVendorStart means it was unable to find
@@ -18,7 +18,7 @@ func (err *ErrTooManyTCGPEIModules) Error() string {
 type ErrTcgPieUnableToFindPcdFirmwareVendorStart struct{}
 
 func (err *ErrTcgPieUnableToFindPcdFirmwareVendorStart) Error() string {
-	return fmt.Sprintf(`[HP signed file] unable to find the beginning of the pcdFirmwareVendor`)
+	return `[HP signed file] unable to find the beginning of the pcdFirmwareVendor`
 }
 
 // ErrHPPcdFirmwareVendorEndNotFound means it was unable to find the end
@@ -26,7 +26,7 @@ func (err *ErrTcgPieUnableToFindPcdFirmwareVendorStart) Error() string {
 type ErrHPPcdFirmwareVendorEndNotFound struct{}
 
 func (err *ErrHPPcdFirmwareVendorEndNotFound) Error() string {
-	return fmt.Sprintf(`[HP signed file] pcdFirmwareVendor end not found`)
+	return `[HP signed file] pcdFirmwareVendor end not found`
 }
 
 // ErrInvalidTCGPEIModule means it was unable to parse the TCG PEI module volume
@@ -34,7 +34,7 @@ func (err *ErrHPPcdFirmwareVendorEndNotFound) Error() string {
 type ErrInvalidTCGPEIModule struct{}
 
 func (err *ErrInvalidTCGPEIModule) Error() string {
-	return fmt.Sprintf(`[HP signed file] invalid TcgPei module`)
+	return `[HP signed file] invalid TcgPei module`
 }
 
 // ErrTcgPiePEFileNotFound means it was unable to find the beginning of the
@@ -42,7 +42,7 @@ func (err *ErrInvalidTCGPEIModule) Error() string {
 type ErrTcgPiePEFileNotFound struct{}
 
 func (err *ErrTcgPiePEFileNotFound) Error() string {
-	return fmt.Sprintf(`[HP signed file] PE32 file not found`)
+	return `[HP signed file] PE32 file not found`
 }
 
 // ErrDoesNotMatch means a value was received with multiple ways, but the

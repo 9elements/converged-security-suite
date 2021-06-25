@@ -373,7 +373,8 @@ func (s Measurements) Calculate(image []byte, initialValue uint8, hashFunc hash.
 		if measurement.NoHash() {
 			hashValue = measurementData
 		} else {
-			hashFunc.Write(measurementData)
+			_, err := hashFunc.Write(measurementData)
+			assertNoError(err)
 			hashValue = hashFunc.Sum(nil)
 			hashFunc.Reset()
 		}
@@ -384,12 +385,21 @@ func (s Measurements) Calculate(image []byte, initialValue uint8, hashFunc hash.
 			logger.Printf("Event '%s': %x (%T)\n", measurement.ID, measurementData, hashFunc)
 		}
 
-		hashFunc.Write(result)
-		hashFunc.Write(hashValue)
+		_, err := hashFunc.Write(result)
+		assertNoError(err)
+		_, err = hashFunc.Write(hashValue)
+		assertNoError(err)
+
 		oldResult := result
 		result = hashFunc.Sum(nil)
 		hashFunc.Reset()
 		logger.Printf("%T(0x %X %X) == 0x%X\n\n", hashFunc, oldResult, hashValue, result)
 	}
 	return result
+}
+
+func assertNoError(err error) {
+	if err != nil {
+		panic(err)
+	}
 }

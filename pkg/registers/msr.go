@@ -105,7 +105,7 @@ func ReadMSRRegisters(msrReader MSRReader) (Registers, error) {
 	for _, registerInfo := range supportedMSRRegistersIDs {
 		reg, err := registerInfo.fetch(msrReader)
 		if err != nil {
-			mErr.Add(fmt.Errorf("failed to fetch MSR register %s, err: %v", registerInfo.id, err))
+			_ = mErr.Add(fmt.Errorf("failed to fetch MSR register %s, err: %v", registerInfo.id, err))
 			continue
 		}
 		result = append(result, reg)

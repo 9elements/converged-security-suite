@@ -28,7 +28,7 @@ func MeasureACM(fitEntries []fit.Entry) (*Measurement, error) {
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntrySACM: // startup AC module entry
-			mErr.Add(fitEntry.HeadersErrors...)
+			_ = mErr.Add(fitEntry.HeadersErrors...)
 			m.Data = append(m.Data, *NewRangeDataChunk(0, fitEntry.GetDataOffset(), uint64(len(fitEntry.GetDataBytes()))))
 		}
 	}
@@ -53,10 +53,10 @@ func MeasureACMDate(fitEntries []fit.Entry) (*Measurement, error) {
 		case *fit.EntrySACM: // startup AC module entry
 			found = true
 
-			mErr.Add(fitEntry.HeadersErrors...)
+			_ = mErr.Add(fitEntry.HeadersErrors...)
 			data, err := fitEntry.ParseData()
 			if err != nil {
-				mErr.Add(err)
+				_ = mErr.Add(err)
 			}
 			if data == nil {
 				continue
@@ -70,7 +70,7 @@ func MeasureACMDate(fitEntries []fit.Entry) (*Measurement, error) {
 	}
 
 	if !found {
-		mErr.Add(ErrNoSACM{})
+		_ = mErr.Add(ErrNoSACM{})
 	}
 
 	if len(m.Data) == 0 {
@@ -103,10 +103,10 @@ func MeasureACMDateInPlace(hashAlg manifest.Algorithm, fitEntries []fit.Entry) (
 		case *fit.EntrySACM: // startup AC module entry
 			found = true
 
-			mErr.Add(fitEntry.HeadersErrors...)
+			_ = mErr.Add(fitEntry.HeadersErrors...)
 			data, err := fitEntry.ParseData()
 			if err != nil {
-				mErr.Add(err)
+				_ = mErr.Add(err)
 			}
 			if data == nil {
 				continue
@@ -122,7 +122,7 @@ func MeasureACMDateInPlace(hashAlg manifest.Algorithm, fitEntries []fit.Entry) (
 	}
 
 	if !found {
-		mErr.Add(ErrNoSACM{})
+		_ = mErr.Add(ErrNoSACM{})
 	}
 
 	if len(m.Data) == 0 {
@@ -141,7 +141,7 @@ func MeasureBIOSStartupModule(fitEntries []fit.Entry) (*Measurement, error) {
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntryBIOSStartupModuleEntry:
-			mErr.Add(fitEntry.HeadersErrors...)
+			_ = mErr.Add(fitEntry.HeadersErrors...)
 
 			m.Data = append(m.Data,
 				*NewRangeDataChunk(

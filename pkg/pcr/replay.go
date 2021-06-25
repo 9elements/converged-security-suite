@@ -39,11 +39,11 @@ func Replay(eventLog *tpmeventlog.TPMEventLog, pcrIndex pcr.ID, hashAlgo tpmeven
 			case 0:
 				locality, err := tpmeventlog.ParseLocality(event.Data)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("unable to parse locality: %w", err)
 				}
 				result = make([]byte, hasher.Size())
 				result[len(result)-1] = locality
-				fmt.Fprintf(logOut, "set(0x%X)\n", result)
+				_, _ = fmt.Fprintf(logOut, "set(0x%X)\n", result)
 			default:
 				return nil, ErrNotSupportedIndex{Index: pcrIndex}
 			}
@@ -54,18 +54,22 @@ func Replay(eventLog *tpmeventlog.TPMEventLog, pcrIndex pcr.ID, hashAlgo tpmeven
 					// There was no event about PCR value initializing, therefore
 					// assuming the zero value.
 					result = make([]byte, hasher.Size())
-					fmt.Fprintf(logOut, "set(0x%X)\n", result)
+					_, _ = fmt.Fprintf(logOut, "set(0x%X)\n", result)
 				default:
 					return nil, ErrNotSupportedIndex{Index: pcrIndex}
 				}
 			}
 
-			fmt.Fprintf(logOut, "%T(0x%X 0x%X)", hasher, result, event.Digest.Digest)
-			hasher.Write(result)
-			hasher.Write(event.Digest.Digest)
+			_, _ = fmt.Fprintf(logOut, "%T(0x%X 0x%X)", hasher, result, event.Digest.Digest)
+			if _, err := hasher.Write(result); err != nil {
+				return nil, fmt.Errorf("unable to hash: %w", err)
+			}
+			if _, err := hasher.Write(event.Digest.Digest); err != nil {
+				return nil, fmt.Errorf("unable to hash: %w", err)
+			}
 			result = hasher.Sum(nil)
 			hasher.Reset()
-			fmt.Fprintf(logOut, " -> %X\n", result)
+			_, _ = fmt.Fprintf(logOut, " -> %X\n", result)
 		}
 	}
 

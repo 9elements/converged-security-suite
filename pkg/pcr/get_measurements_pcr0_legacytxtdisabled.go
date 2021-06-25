@@ -59,7 +59,7 @@ func MeasureDXE(firmware Firmware) (*Measurement, error) {
 	if len(dxeVolumes) == 0 {
 		dxeVolumes, err = firmware.GetByGUID(ffsConsts.GUIDDXE)
 	}
-	mErr.Add(err)
+	_ = mErr.Add(err)
 
 	if len(dxeVolumes) == 0 {
 		return nil, mErr.ReturnValue()
@@ -70,7 +70,7 @@ func MeasureDXE(firmware Firmware) (*Measurement, error) {
 		if dxeVolume.Offset == math.MaxUint64 {
 			// Was unable to detect the offset; it is expected
 			// if the volume is in a compressed area.
-			mErr.Add(fmt.Errorf("unable to detect the offset of a DXE volume"))
+			_ = mErr.Add(fmt.Errorf("unable to detect the offset of a DXE volume"))
 			continue
 		}
 		dxeRanges = append(dxeRanges, dxeVolume.Range)

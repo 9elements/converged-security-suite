@@ -230,6 +230,10 @@ var (
 
 var (
 	biosdata tools.TXTBiosData
+)
+
+//nolint
+const (
 	//Heapsize from newer spec - Document 575623
 	minHeapSize  = uint32(0xF0000)
 	minSinitSize = uint32(0x10000)

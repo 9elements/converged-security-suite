@@ -1,7 +1,6 @@
 package tpmdetection
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -62,7 +61,6 @@ func TestTPMDetection(t *testing.T) {
 			t.Errorf("Failed to create local file: %s, err: %v", devicePath, err)
 			t.Skip()
 		}
-		_, err = f.WriteString(fmt.Sprintf("TCG version: %s", capTPMVersion))
 		_ = f.Close()
 		defer func() {
 			err := os.Remove(capabilitiesPath)

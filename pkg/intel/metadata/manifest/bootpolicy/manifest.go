@@ -63,11 +63,13 @@ func (bpm *Manifest) ValidateIBBs(firmware uefi.Firmware) error {
 
 		for _, seg := range bpm.SE[0].IBBSegments {
 			startIdx := consts.CalculateOffsetFromPhysAddr(uint64(seg.Base), uint64(len(firmware.Buf())))
-			h.Write(firmware.Buf()[startIdx : startIdx+uint64(seg.Size)])
+			if _, err := h.Write(firmware.Buf()[startIdx : startIdx+uint64(seg.Size)]); err != nil {
+				return fmt.Errorf("unable to hash: %w", err)
+			}
 		}
 		hashValue := h.Sum(nil)
 
-		if bytes.Compare(hashValue, digest.HashBuffer) != 0 {
+		if !bytes.Equal(hashValue, digest.HashBuffer) {
 			return fmt.Errorf("IBB %s hash mismatch: %X != %X", digest.HashAlg, hashValue, digest.HashBuffer)
 		}
 	}

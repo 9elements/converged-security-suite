@@ -1,12 +1,9 @@
 package pcd
 
 import (
-	"bytes"
-
 	"github.com/linuxboot/fiano/pkg/guid"
 
 	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
-	"github.com/9elements/converged-security-suite/v2/pkg/pcd/consts"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
 )
 
@@ -109,18 +106,4 @@ var firmwareParsers []firmwareParser
 // an additional vendor (see parse_firmware_*.go files).
 func addFirmwareParser(parserFunc firmwareParser) {
 	firmwareParsers = append(firmwareParsers, parserFunc)
-}
-
-// See: https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Portable_Executable_32_bit_Structure_in_SVG_fixed.svg/1280px-Portable_Executable_32_bit_Structure_in_SVG_fixed.svg.png
-func findPEFileStart(data []byte) (result int) {
-	end := len(data) - 0x125
-	for result = 0; result < end; result++ {
-		if bytes.Compare(data[result:result+2], consts.MZSignature) != 0 {
-			continue
-		}
-
-		return
-	}
-
-	return -1
 }

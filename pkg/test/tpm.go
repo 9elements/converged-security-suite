@@ -4,16 +4,16 @@ import (
 	"bytes"
 	"crypto"
 	"encoding/binary"
-
 	"fmt"
 	"strings"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	tpm1 "github.com/google/go-tpm/tpm"
-	tpm2 "github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/tpm2"
 )
 
+//nolint
 const (
 	// Intel Trusted Execution Technology Software Development Guide - Measured Launched Environment Developer’s Guide
 	// August 2016 - Revision 013 - Document: 315168-013
@@ -62,7 +62,6 @@ const (
 )
 
 var (
-	tpmCon                *hwapi.TPM
 	tpm20AUXIndexHashData = []byte{0xEF, 0x9A, 0x26, 0xFC, 0x22, 0xD1, 0xAE, 0x8C, 0xEC, 0xFF, 0x59, 0xE9, 0x48, 0x1A, 0xC1, 0xEC, 0x53, 0x3D, 0xBE, 0x22, 0x8B, 0xEC, 0x6D, 0x17, 0x93, 0x0F, 0x4C, 0xB2, 0xCC, 0x5B, 0x97, 0x24}
 
 	testtpmconnection = Test{

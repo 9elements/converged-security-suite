@@ -596,7 +596,9 @@ func parsePolicyElementMLE(buf *bytes.Reader, pol *LCPPolicyMLE) error {
 
 	pol.Hashes = make([][20]byte, pol.NumHashes)
 	for i := 0; i < int(pol.NumHashes); i++ {
-		binary.Read(buf, binary.LittleEndian, &pol.Hashes[i])
+		if err := binary.Read(buf, binary.LittleEndian, &pol.Hashes[i]); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -827,7 +829,9 @@ func parsePolicyList2(buf *bytes.Reader, list *LCPPolicyList2) error {
 
 	list.PolicyElements = make([]LCPPolicyElement, list.PolicyElementSize)
 	for i := 0; i < int(list.PolicyElementSize); i++ {
-		parsePolicyElement(buf, &list.PolicyElements[i])
+		if err := parsePolicyElement(buf, &list.PolicyElements[i]); err != nil {
+			return fmt.Errorf("unable to parse policy element %d: %w", i, err)
+		}
 	}
 
 	return nil

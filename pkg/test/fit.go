@@ -27,7 +27,6 @@ const FITVector = 0xFFFFFFC0
 const ValidFitRange = 0xFF000000
 
 var (
-	fitImage []byte
 	// set by FITVectorIsSet
 	fitPointer uint32
 	// set by testhasfit
@@ -298,6 +297,9 @@ func HasFIT(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, erro
 
 	fitblob := make([]byte, hdr.DataSize())
 	err = txtAPI.ReadPhysBuf(int64(fitPointer), fitblob)
+	if err != nil {
+		return false, fmt.Errorf("unable to read physical memory: %w", err), nil
+	}
 
 	fitHeaders, err = fit.ParseTable(fitblob)
 	if err != nil {

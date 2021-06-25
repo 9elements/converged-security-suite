@@ -14,6 +14,7 @@ func notImplemented(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bo
 	return false, nil, fmt.Errorf("Not implemented")
 }
 
+//nolint
 var (
 	testRSDPChecksum = Test{
 		Name:                    "ACPI RSDP exists and has valid checksum",

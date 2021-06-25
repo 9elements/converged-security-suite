@@ -32,7 +32,7 @@ func ParseFirmwareOCP(
 	err := errors.MultiError{}
 
 	generic, errGeneric := parseFirmwareOCPGeneric(firmwareImage)
-	err.Add(errGeneric)
+	_ = err.Add(errGeneric)
 	if generic != nil {
 		return generic, err.ReturnValue()
 	}

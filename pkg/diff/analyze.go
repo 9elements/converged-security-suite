@@ -56,7 +56,7 @@ type NodeInfo struct {
 var emptyUUID uuid.UUID
 
 func (nodeInfo NodeInfo) String() string {
-	if nodeInfo.Description == "" && bytes.Compare(nodeInfo.UUID[:], emptyUUID[:]) == 0 {
+	if nodeInfo.Description == "" && bytes.Equal(nodeInfo.UUID[:], emptyUUID[:]) {
 		return "unknown"
 	}
 	if nodeInfo.Description != "" {
