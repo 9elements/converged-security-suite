@@ -16,9 +16,9 @@ func (m *dummyMSReaderMock) Read(msr int64) (uint64, error) {
 func TestMarshalUnmarshal(t *testing.T) {
 	txtAPI := hwapi.GetPcMock(func(addr uint64) byte { return hwapi.MockPCReadMemory(addr) })
 
-	data, err := registers.FetchTXTConfigSpace(txtAPI)
+	data, err := registers.FetchTXTConfigSpaceSafe(txtAPI)
 	if err != nil {
-		t.Errorf("FetchTXTConfigSpace() failed: %v", err)
+		t.Errorf("FetchTXTConfigSpaceSafe() failed: %v", err)
 		t.Skip()
 	}
 
