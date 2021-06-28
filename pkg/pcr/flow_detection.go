@@ -111,7 +111,7 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (tpmdetection.Type, 
 // DetectMainAttestationFlow returns the PCR0 measurements flow assuming
 // no validation errors occurred.
 func DetectMainAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevice tpmdetection.Type) (Flow, error) {
-	if _, _, err := amd_manifest.FindEmbeddedFirmwareStructure(firmware); err != nil {
+	if _, _, err := amd_manifest.FindEmbeddedFirmwareStructure(firmware); err == nil {
 		// AMD
 		if msg37Register, found := amd_registers.FindMP0C2PMsg37(regs); found {
 			if msg37Register.IsPlatformSecureBootEnabled() {
