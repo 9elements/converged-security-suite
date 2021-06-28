@@ -18,29 +18,29 @@ func (reg IA32DebugInterface) Address() uint64 {
 }
 
 func (reg IA32DebugInterface) Fields() []Field {
-	fieldsRaw := []fieldDescription{
+	fieldsRaw := []FieldDescription{
 		{
-			name:      "Enable",
-			bitOffset: 0,
+			Name:      "Enable",
+			BitOffset: 0,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 1,
+			Name:      "<reserved>",
+			BitOffset: 1,
 		},
 		{
-			name:      "Lock",
-			bitOffset: 30,
+			Name:      "Lock",
+			BitOffset: 30,
 		},
 		{
-			name:      "DebugOccurred",
-			bitOffset: 31,
+			Name:      "DebugOccurred",
+			BitOffset: 31,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 32,
+			Name:      "<reserved>",
+			BitOffset: 32,
 		},
 	}
-	return calculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
 }
 
 func (reg IA32DebugInterface) Raw() uint64 {

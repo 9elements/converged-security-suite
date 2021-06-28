@@ -69,8 +69,7 @@ func FindPSPDirectoryTable(firmware Firmware) (*PSPDirectoryTable, uint64, error
 			image = image[idx+len(cookieBytes):]
 			continue
 		}
-
-		return table, firmware.OffsetToPhysAddr(offset), err
+		return table, offset, err
 	}
 
 	return nil, 0, fmt.Errorf("EmbeddedFirmwareStructure is not found")

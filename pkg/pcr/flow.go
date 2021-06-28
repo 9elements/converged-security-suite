@@ -20,6 +20,10 @@ func (f Flow) String() string {
 		return "LegacyTXTEnabledTPM12"
 	case FlowIntelCBnT0T:
 		return "CBnT0T"
+	case FlowLegacyPSPDisabled:
+		return "LegacyPSPDisabled"
+	case FlowLegacyPSPEnabled:
+		return "LegacyPSPEnabled"
 	}
 	panic(fmt.Sprintf("Flow's %d string representation is not supported", f))
 }
@@ -36,6 +40,10 @@ func FlowFromString(s string) (Flow, error) {
 		return FlowIntelLegacyTXTEnabledTPM12, nil
 	case "cbnt0t":
 		return FlowIntelCBnT0T, nil
+	case "legacypspdisabled":
+		return FlowLegacyPSPDisabled, nil
+	case "legacypspenabled":
+		return FlowLegacyPSPEnabled, nil
 	}
 	return FlowAuto, fmt.Errorf("'%s' attestation flow is not supported", s)
 }
@@ -55,6 +63,12 @@ const (
 
 	// FlowIntelLegacyTXTEnabledTPM12 means a pre-CBnT flow with enabled TXT for TPM 1.2
 	FlowIntelLegacyTXTEnabledTPM12
+
+	// FlowLegacyPSPDisabled means an AMD flow with disabled PSP and with initial set of measurements
+	FlowLegacyPSPDisabled
+
+	// FlowLegacyPSPEnabled means an AMD flow with enabled PSP and with initial set of measurements
+	FlowLegacyPSPEnabled
 )
 
 // Flows contains all supported PCR measurements flows
@@ -64,15 +78,16 @@ var Flows = []Flow{
 	FlowIntelLegacyTXTEnabled,
 	FlowIntelLegacyTXTEnabledTPM12,
 	FlowIntelCBnT0T,
+	FlowLegacyPSPDisabled,
+	FlowLegacyPSPEnabled,
 }
 
 // TPMLocality returns TPM initialization locality in this flow.
 func (f Flow) TPMLocality() uint8 {
 	switch f {
-	case FlowIntelCBnT0T, FlowIntelLegacyTXTEnabled:
+	case FlowIntelCBnT0T, FlowIntelLegacyTXTEnabled, FlowLegacyPSPEnabled:
 		return 3
 	}
-
 	return 0
 }
 
@@ -145,6 +160,18 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 			// to be necessary to correctly parse the firmware.
 			MeasurementIDFITPointer, // is a fake measurement
 			MeasurementIDFITHeaders, // is a fake measurement
+		}
+	case FlowLegacyPSPDisabled:
+		return MeasurementIDs{
+			MeasurementIDPCDFirmwareVendorVersionData, // this should be a PSP Firmware version
+			MeasurementIDDXE,
+			MeasurementIDSeparator,
+		}
+	case FlowLegacyPSPEnabled:
+		return MeasurementIDs{
+			MeasurementIDPCDFirmwareVendorVersionData, // this should be a PSP Firmware version
+			MeasurementIDDXE,
+			MeasurementIDSeparator,
 		}
 	}
 	panic(fmt.Sprintf("should not happen: %v", f))

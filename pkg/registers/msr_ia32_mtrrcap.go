@@ -18,33 +18,33 @@ func (reg IA32MTRRCAP) Address() uint64 {
 }
 
 func (reg IA32MTRRCAP) Fields() []Field {
-	fieldsRaw := []fieldDescription{
+	fieldsRaw := []FieldDescription{
 		{
-			name:      "VCNT (Number of variable range registers)",
-			bitOffset: 0,
+			Name:      "VCNT (Number of variable range registers)",
+			BitOffset: 0,
 		},
 		{
-			name:      "FIX (Fixed range registers supported)",
-			bitOffset: 8,
+			Name:      "FIX (Fixed range registers supported)",
+			BitOffset: 8,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 9,
+			Name:      "<reserved>",
+			BitOffset: 9,
 		},
 		{
-			name:      "WC (Write-combining memory type supported)",
-			bitOffset: 10,
+			Name:      "WC (Write-combining memory type supported)",
+			BitOffset: 10,
 		},
 		{
-			name:      "SMRR interface supported",
-			bitOffset: 11,
+			Name:      "SMRR interface supported",
+			BitOffset: 11,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 12,
+			Name:      "<reserved>",
+			BitOffset: 12,
 		},
 	}
-	return calculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
 }
 
 func (reg IA32MTRRCAP) VariableRangeRegistersCount() uint8 {

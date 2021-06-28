@@ -27,57 +27,57 @@ func (reg TXTBootStatus) Address() uint64 {
 }
 
 func (reg TXTBootStatus) Fields() []Field {
-	fieldsRaw := []fieldDescription{
+	fieldsRaw := []FieldDescription{
 		{
-			name:      "<reserved>",
-			bitOffset: 0,
+			Name:      "<reserved>",
+			BitOffset: 0,
 		},
 		{
-			name:      "TXT Startup success",
-			bitOffset: 30,
+			Name:      "TXT Startup success",
+			BitOffset: 30,
 		},
 		{
-			name:      "Boot Status",
-			bitOffset: 31,
+			Name:      "Boot Status",
+			BitOffset: 31,
 		},
 		{
-			name:      "Memory power down executed",
-			bitOffset: 47,
+			Name:      "Memory power down executed",
+			BitOffset: 47,
 		},
 		{
-			name:      "Boot Status details",
-			bitOffset: 48,
+			Name:      "Boot Status details",
+			BitOffset: 48,
 		},
 		{
-			name:      "TXT Policy enable",
-			bitOffset: 53,
+			Name:      "TXT Policy enable",
+			BitOffset: 53,
 		},
 		{
-			name:      "Boot Status details",
-			bitOffset: 54,
+			Name:      "Boot Status details",
+			BitOffset: 54,
 		},
 		{
-			name:      "BIOS trusted",
-			bitOffset: 59,
+			Name:      "BIOS trusted",
+			BitOffset: 59,
 		},
 		{
-			name:      "TXT Policy disable",
-			bitOffset: 60,
+			Name:      "TXT Policy disable",
+			BitOffset: 60,
 		},
 		{
-			name:      "Boot Status details",
-			bitOffset: 61,
+			Name:      "Boot Status details",
+			BitOffset: 61,
 		},
 		{
-			name:      "Indicates ACM authentication error",
-			bitOffset: 62,
+			Name:      "Indicates ACM authentication error",
+			BitOffset: 62,
 		},
 		{
-			name:      "S-ACM success",
-			bitOffset: 63,
+			Name:      "S-ACM success",
+			BitOffset: 63,
 		},
 	}
-	return calculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
 }
 
 func (reg TXTBootStatus) TXTStartupSuccess() bool {

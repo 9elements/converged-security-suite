@@ -18,21 +18,21 @@ func (reg IA32PlatformID) Address() uint64 {
 }
 
 func (reg IA32PlatformID) Fields() []Field {
-	fieldsRaw := []fieldDescription{
+	fieldsRaw := []FieldDescription{
 		{
-			name:      "<reserved>",
-			bitOffset: 0,
+			Name:      "<reserved>",
+			BitOffset: 0,
 		},
 		{
-			name:      "Processor Flag",
-			bitOffset: 50,
+			Name:      "Processor Flag",
+			BitOffset: 50,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 53,
+			Name:      "<reserved>",
+			BitOffset: 53,
 		},
 	}
-	return calculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
 }
 
 func (reg IA32PlatformID) Raw() uint64 {
