@@ -7,7 +7,7 @@ import (
 )
 
 func TestMP0C2PMsg37Register(t *testing.T) {
-	var rawValue uint32 = 0x1100008D
+	var rawValue uint32 = 0x110000AD
 	reg := ParseMP0C2PMsg37Register(rawValue)
 
 	if reg.ID() != MP0C2PMSG37RegisterID {
