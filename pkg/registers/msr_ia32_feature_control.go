@@ -18,37 +18,37 @@ func (reg IA32FeatureControl) Address() uint64 {
 }
 
 func (reg IA32FeatureControl) Fields() []Field {
-	fieldsRaw := []fieldDescription{
+	fieldsRaw := []FieldDescription{
 		{
-			name:      "Lock (0 =unlocked, 1 = locked)",
-			bitOffset: 0,
+			Name:      "Lock (0 =unlocked, 1 = locked)",
+			BitOffset: 0,
 		},
 		{
-			name:      "Enables VMXON in SMX operation",
-			bitOffset: 1,
+			Name:      "Enables VMXON in SMX operation",
+			BitOffset: 1,
 		},
 		{
-			name:      "Enables VMXON outside of SMX operation",
-			bitOffset: 2,
+			Name:      "Enables VMXON outside of SMX operation",
+			BitOffset: 2,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 3,
+			Name:      "<reserved>",
+			BitOffset: 3,
 		},
 		{
-			name:      "SENTER Enables",
-			bitOffset: 8,
+			Name:      "SENTER Enables",
+			BitOffset: 8,
 		},
 		{
-			name:      "SENTER Global Enable",
-			bitOffset: 15,
+			Name:      "SENTER Global Enable",
+			BitOffset: 15,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 16,
+			Name:      "<reserved>",
+			BitOffset: 16,
 		},
 	}
-	return calculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
 }
 
 func (reg IA32FeatureControl) Raw() uint64 {

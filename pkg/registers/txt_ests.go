@@ -27,17 +27,17 @@ func (reg TXTErrorStatus) Address() uint64 {
 }
 
 func (reg TXTErrorStatus) Fields() []Field {
-	fieldsRaw := []fieldDescription{
+	fieldsRaw := []FieldDescription{
 		{
-			name:      "TXT_RESET.STS",
-			bitOffset: 0,
+			Name:      "TXT_RESET.STS",
+			BitOffset: 0,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 1,
+			Name:      "<reserved>",
+			BitOffset: 1,
 		},
 	}
-	return calculateRegisterFields(uint64(reg), reg.BitSize(), fieldsRaw)
+	return CalculateRegisterFields(uint64(reg), reg.BitSize(), fieldsRaw)
 }
 
 func (reg TXTErrorStatus) Reset() bool {

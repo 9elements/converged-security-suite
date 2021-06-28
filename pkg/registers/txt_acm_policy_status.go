@@ -62,102 +62,102 @@ func (reg ACMPolicyStatus) Address() uint64 {
 }
 
 func (reg ACMPolicyStatus) Fields() []Field {
-	fieldsRaw := []fieldDescription{
+	fieldsRaw := []FieldDescription{
 		{
-			name:      "Key Manifest ID",
-			bitOffset: 0,
+			Name:      "Key Manifest ID",
+			BitOffset: 0,
 		},
 		{
-			name:      "BP.TYPE.M – BtG measures IBB into the TPM",
-			bitOffset: 4,
+			Name:      "BP.TYPE.M – BtG measures IBB into the TPM",
+			BitOffset: 4,
 		},
 		{
-			name:      "BP.TYPE.V – BtG verifies IBB",
-			bitOffset: 5,
+			Name:      "BP.TYPE.V – BtG verifies IBB",
+			BitOffset: 5,
 		},
 		{
-			name:      "BP.TYPE.HAP – Indicates HAP platform",
-			bitOffset: 6,
+			Name:      "BP.TYPE.HAP – Indicates HAP platform",
+			BitOffset: 6,
 		},
 		{
-			name:      "BP.TYPE.T – Indicates TXT supported",
-			bitOffset: 7,
+			Name:      "BP.TYPE.T – Indicates TXT supported",
+			BitOffset: 7,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 8,
+			Name:      "<reserved>",
+			BitOffset: 8,
 		},
 		{
-			name:      "BP.RSTR.DCD – Disable CPU debug",
-			bitOffset: 9,
+			Name:      "BP.RSTR.DCD – Disable CPU debug",
+			BitOffset: 9,
 		},
 		{
-			name:      "BP.RSTR.DBI – Disable BSP init",
-			bitOffset: 10,
+			Name:      "BP.RSTR.DBI – Disable BSP init",
+			BitOffset: 10,
 		},
 		{
-			name:      "BP.RSTR.PBE Protect BIOS environment",
-			bitOffset: 11,
+			Name:      "BP.RSTR.PBE Protect BIOS environment",
+			BitOffset: 11,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 12,
+			Name:      "<reserved>",
+			BitOffset: 12,
 		},
 		{
-			name:      "TPM type",
-			bitOffset: 13,
+			Name:      "TPM type",
+			BitOffset: 13,
 		},
 		{
-			name:      "TPM Success",
-			bitOffset: 15,
+			Name:      "TPM Success",
+			BitOffset: 15,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 16,
+			Name:      "<reserved>",
+			BitOffset: 16,
 		},
 		{
-			name:      "Backup action",
-			bitOffset: 19,
+			Name:      "Backup action",
+			BitOffset: 19,
 		},
 		{
-			name:      "TXT profile selection",
-			bitOffset: 20,
+			Name:      "TXT profile selection",
+			BitOffset: 20,
 		},
 		{
-			name:      "Memory scrubbing Policy",
-			bitOffset: 25,
+			Name:      "Memory scrubbing Policy",
+			BitOffset: 25,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 27,
+			Name:      "<reserved>",
+			BitOffset: 27,
 		},
 		{
-			name:      "IBB DMA Protection",
-			bitOffset: 29,
+			Name:      "IBB DMA Protection",
+			BitOffset: 29,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 30,
+			Name:      "<reserved>",
+			BitOffset: 30,
 		},
 		{
-			name:      "S-CRTM Status",
-			bitOffset: 32,
+			Name:      "S-CRTM Status",
+			BitOffset: 32,
 		},
 		{
-			name:      "CPU Co-signing Enabled",
-			bitOffset: 35,
+			Name:      "CPU Co-signing Enabled",
+			BitOffset: 35,
 		},
 		{
-			name:      "TPM Startup locality",
-			bitOffset: 36,
+			Name:      "TPM Startup locality",
+			BitOffset: 36,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 37,
+			Name:      "<reserved>",
+			BitOffset: 37,
 		},
 	}
 
-	return calculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
 }
 
 func (reg ACMPolicyStatus) KMID() uint8 {

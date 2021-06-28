@@ -27,25 +27,25 @@ func (reg TXTDeviceID) Address() uint64 {
 }
 
 func (reg TXTDeviceID) Fields() []Field {
-	fieldsRaw := []fieldDescription{
+	fieldsRaw := []FieldDescription{
 		{
-			name:      "Vendor ID",
-			bitOffset: 0,
+			Name:      "Vendor ID",
+			BitOffset: 0,
 		},
 		{
-			name:      "Device ID",
-			bitOffset: 16,
+			Name:      "Device ID",
+			BitOffset: 16,
 		},
 		{
-			name:      "Revision ID",
-			bitOffset: 32,
+			Name:      "Revision ID",
+			BitOffset: 32,
 		},
 		{
-			name:      "Extended ID",
-			bitOffset: 48,
+			Name:      "Extended ID",
+			BitOffset: 48,
 		},
 	}
-	return calculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
 }
 
 func (reg TXTDeviceID) VendorID() uint16 {
