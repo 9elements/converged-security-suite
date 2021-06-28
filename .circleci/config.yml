@@ -15,14 +15,6 @@ jobs:
       # specify any bash command here prefixed with `run: `
       - run: GO111MODULE=off go get github.com/tjfoc/gmsm/sm2 github.com/dustin/go-humanize github.com/linuxboot/fiano/pkg/uefi && go run ./pkg/intel/metadata/manifest/common/manifestcodegen/cmd/manifestcodegen -check ./pkg/intel/metadata/manifest ./pkg/intel/metadata/manifest/bootpolicy ./pkg/intel/metadata/manifest/key
       - run: if [ "$(gofmt -l .)" != "" ]; then exit 1; fi
-      - run: golint -set_exit_status ./pkg/test
-      - run: golint -set_exit_status ./pkg/tools
-      - run: golint -set_exit_status ./pkg/hwapi
-      - run: golint -set_exit_status ./pkg/provisioning/txt
-      - run: golint -set_exit_status ./pkg/provisioning/cbnt
-      #- run: golint -set_exit_status ./pkg/intel/metadata/manifest/
-      #- run: golint -set_exit_status ./pkg/intel/metadata/manifest/bootpolicy
-      #- run: golint -set_exit_status ./pkg/intel/metadata/manifest/key
       - run: golint -set_exit_status ./cmd/txt-suite
       - run: golint -set_exit_status ./cmd/txt-prov
       - run: golint -set_exit_status ./cmd/cbnt-prov
@@ -31,11 +23,27 @@ jobs:
       - run: CGO_ENABLED=0 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-suite cmd/txt-suite/*.go
       - run: CGO_ENABLED=0 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-prov cmd/txt-prov/*.go
       - run: CGO_ENABLED=0 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o cbnt-prov cmd/cbnt-prov/*.go
+      - run: go test ./pkg/amd/...
+      - run: go test ./pkg/check/
+      - run: sudo apt-get update && sudo apt-get install libtspi-dev && go test ./pkg/diff/
+      - run: go test ./pkg/errors/
       - run: go test ./pkg/hwapi/
-      - run: go test ./pkg/tools/
-      - run: go test ./pkg/test/
+      - run: go test ./pkg/intel/metadata/fit/
+      - run: go test ./pkg/intel/metadata/manifest/
+      - run: go test ./pkg/intel/metadata/manifest/bootpolicy/
+      - run: go test ./pkg/intel/metadata/manifest/key/
+      - run: go test ./pkg/mathtools/
+      - run: go test ./pkg/ostools/
+      - run: go test ./pkg/pcd/
+      - run: go test ./pkg/pcr/
       - run: go test ./pkg/provisioning/txt
       - run: go test ./pkg/provisioning/cbnt
+      - run: go test ./pkg/registers
+      - run: go test ./pkg/test/
+      - run: go test ./pkg/tools/
+      - run: go test ./pkg/tpmdetection/
+      - run: go test ./pkg/tpmeventlog/
+      - run: go test ./pkg/uefi/
       - run: mkdir out
       - run: git config user.email "circleci@circleci.com"
       - run: git config user.name "CI"

@@ -6,6 +6,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
 )
 
+// Firmware is a parsed firmware image
 type Firmware = *uefi.UEFI
 
 // GetMeasurements returns the measurements which should be performed

@@ -5,8 +5,9 @@ package tpmeventlog
 // See also: https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientSpecPlat_TPM_2p0_1p04_pub.pdf#page=103
 type EventType uint32
 
+// The list of available EventLog entry types.
 const (
-	EV_PREBOOT_CERT                  = EventType(0x00000000)
+	EV_PqREBOOT_CERT                 = EventType(0x00000000)
 	EV_POST_CODE                     = EventType(0x00000001)
 	EV_UNUSED                        = EventType(0x00000002)
 	EV_NO_ACTION                     = EventType(0x00000003)

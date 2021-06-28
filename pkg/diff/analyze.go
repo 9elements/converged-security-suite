@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"math"
-	_ "net/http/pprof"
 	"strings"
 
 	"github.com/golang-collections/go-datastructures/augmentedtree"
@@ -57,7 +56,7 @@ type NodeInfo struct {
 var emptyUUID uuid.UUID
 
 func (nodeInfo NodeInfo) String() string {
-	if nodeInfo.Description == "" && bytes.Compare(nodeInfo.UUID[:], emptyUUID[:]) == 0 {
+	if nodeInfo.Description == "" && bytes.Equal(nodeInfo.UUID[:], emptyUUID[:]) {
 		return "unknown"
 	}
 	if nodeInfo.Description != "" {
@@ -76,6 +75,8 @@ type RelatedMeasurement struct {
 // RelatedMeasurementsLaconic is a helper to print measurements in a laconic way
 type RelatedMeasurementsLaconic []RelatedMeasurement
 
+// String implements fmt.Stringer
+//nolint:typecheck
 func (s RelatedMeasurementsLaconic) String() string {
 	var ids []string
 	for _, measurement := range s {
@@ -339,6 +340,7 @@ func (t *intervalTree) FindOverlapping(r pkgbytes.Range) []interface{} {
 }
 
 // AddOffset just adds the offset to all offsets of the report
+//nolint:typecheck
 func (report *AnalysisReport) AddOffset(offset int64) {
 	if report == nil {
 		return

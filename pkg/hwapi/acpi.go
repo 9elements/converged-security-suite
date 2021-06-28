@@ -285,7 +285,7 @@ func (t TxtAPI) scanReservedMem() ([]byte, ACPIRsdp, error) {
 
 	buf := make([]byte, binary.Size(rsdp))
 
-	IterateOverE820Ranges("ACPI Tables", func(start uint64, end uint64) bool {
+	_, err := IterateOverE820Ranges("ACPI Tables", func(start uint64, end uint64) bool {
 		for i := int64(start); i < int64(end)-int64(binary.Size(rsdp)); i += 16 {
 			err := t.ReadPhysBuf(i, buf)
 			if err != nil {
@@ -304,6 +304,9 @@ func (t TxtAPI) scanReservedMem() ([]byte, ACPIRsdp, error) {
 		}
 		return false
 	})
+	if err != nil {
+		return nil, rsdp, fmt.Errorf("unable to iterate over E820 ranges: %w", err)
+	}
 	return nil, rsdp, fmt.Errorf("RSDP not found in low memory")
 }
 
@@ -434,42 +437,38 @@ func (t TxtAPI) getACPITableDevMem(n string) ([]byte, error) {
 	buf := make([]byte, binary.Size(acpiHeader{}))
 
 	acpitables := map[uint64]string{}
-	if rsdtHeaders != nil {
-		for i := range rsdtHeaders {
-			var header acpiHeader
-			if _, ok := acpitables[uint64(rsdtHeaders[i])]; ok {
-				continue
-			}
-
-			err := t.ReadPhysBuf(int64(rsdtHeaders[i]), buf)
-			if err != nil {
-				return nil, err
-			}
-			err = binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, &header)
-			if err != nil {
-				return nil, err
-			}
-			acpitables[uint64(rsdtHeaders[i])] = string(header.Signature[:])
+	for i := range rsdtHeaders {
+		var header acpiHeader
+		if _, ok := acpitables[uint64(rsdtHeaders[i])]; ok {
+			continue
 		}
+
+		err := t.ReadPhysBuf(int64(rsdtHeaders[i]), buf)
+		if err != nil {
+			return nil, err
+		}
+		err = binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, &header)
+		if err != nil {
+			return nil, err
+		}
+		acpitables[uint64(rsdtHeaders[i])] = string(header.Signature[:])
 	}
 
-	if xsdtHeaders != nil {
-		for i := range xsdtHeaders {
-			var header acpiHeader
-			if _, ok := acpitables[xsdtHeaders[i]]; ok {
-				continue
-			}
-
-			err := t.ReadPhysBuf(int64(xsdtHeaders[i]), buf)
-			if err != nil {
-				return nil, err
-			}
-			err = binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, &header)
-			if err != nil {
-				return nil, err
-			}
-			acpitables[xsdtHeaders[i]] = string(header.Signature[:])
+	for i := range xsdtHeaders {
+		var header acpiHeader
+		if _, ok := acpitables[xsdtHeaders[i]]; ok {
+			continue
 		}
+
+		err := t.ReadPhysBuf(int64(xsdtHeaders[i]), buf)
+		if err != nil {
+			return nil, err
+		}
+		err = binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, &header)
+		if err != nil {
+			return nil, err
+		}
+		acpitables[xsdtHeaders[i]] = string(header.Signature[:])
 	}
 
 	for k, v := range acpitables {

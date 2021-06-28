@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"io"
 
-	tools "github.com/9elements/converged-security-suite/v2/pkg/tools"
-	tpm2 "github.com/google/go-tpm/tpm2"
-	tpmutil "github.com/google/go-tpm/tpmutil"
+	"github.com/9elements/converged-security-suite/v2/pkg/tools"
+	"github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/tpmutil"
 )
 
 // WritePSIndexTPM20 writes the LCP Policy2 into the PS index of TPM 2.0
@@ -42,8 +42,10 @@ func WritePSIndexTPM20(rw io.ReadWriter, lcppol *tools.LCPPolicy2, passHash []by
 		Session:    sess,
 		Attributes: tpm2.AttrContinueSession,
 	}
-	var buf bytes.Buffer
-	var pol tools.LCPPolicy2
+	var (
+		buf bytes.Buffer
+		pol tools.LCPPolicy2
+	)
 	pol = *lcppol
 	err = binary.Write(&buf, binary.LittleEndian, pol)
 	if err != nil {
@@ -59,5 +61,5 @@ func WritePSIndexTPM20(rw io.ReadWriter, lcppol *tools.LCPPolicy2, passHash []by
 
 // WritePSIndexTPM12 writes the LCP Policy into the PS index of TPM 1.2
 func WritePSIndexTPM12(rw io.ReadWriter, lcppol *tools.LCPPolicy) error {
-	return fmt.Errorf("Not implemented yet")
+	return fmt.Errorf("not implemented yet")
 }

@@ -11,6 +11,7 @@ import (
 	ffsConsts "github.com/9elements/converged-security-suite/v2/pkg/uefi/ffs/consts"
 )
 
+// MeasurePCDFirmwareVendorVersionData returns PCD firmware vendor version measurement.
 func MeasurePCDFirmwareVendorVersionData(pcdData pcd.ParsedFirmware) (*Measurement, error) {
 	if pcdData == nil {
 		return nil, fmt.Errorf("pcdData is nil")
@@ -29,6 +30,8 @@ func MeasurePCDFirmwareVendorVersionData(pcdData pcd.ParsedFirmware) (*Measureme
 	return NewRangesMeasurement(MeasurementIDPCDFirmwareVendorVersionData, dataRanges), nil
 }
 
+// MeasurePCDFirmwareVendorVersionCode returns a fake measurement which includes
+// the executable containing the PCD firmware vendor version value.
 func MeasurePCDFirmwareVendorVersionCode(pcdData pcd.ParsedFirmware) (*Measurement, error) {
 	if pcdData == nil {
 		return nil, fmt.Errorf("pcdData is nil")
@@ -45,6 +48,7 @@ func MeasurePCDFirmwareVendorVersionCode(pcdData pcd.ParsedFirmware) (*Measureme
 	), nil
 }
 
+// MeasureDXE returns the DXE measurement.
 func MeasureDXE(firmware Firmware) (*Measurement, error) {
 	mErr := &errors.MultiError{}
 
@@ -55,7 +59,7 @@ func MeasureDXE(firmware Firmware) (*Measurement, error) {
 	if len(dxeVolumes) == 0 {
 		dxeVolumes, err = firmware.GetByGUID(ffsConsts.GUIDDXE)
 	}
-	mErr.Add(err)
+	_ = mErr.Add(err)
 
 	if len(dxeVolumes) == 0 {
 		return nil, mErr.ReturnValue()
@@ -66,7 +70,7 @@ func MeasureDXE(firmware Firmware) (*Measurement, error) {
 		if dxeVolume.Offset == math.MaxUint64 {
 			// Was unable to detect the offset; it is expected
 			// if the volume is in a compressed area.
-			mErr.Add(fmt.Errorf("unable to detect the offset of a DXE volume"))
+			_ = mErr.Add(fmt.Errorf("unable to detect the offset of a DXE volume"))
 			continue
 		}
 		dxeRanges = append(dxeRanges, dxeVolume.Range)
@@ -78,6 +82,7 @@ func MeasureDXE(firmware Firmware) (*Measurement, error) {
 	return NewRangesMeasurement(MeasurementIDDXE, dxeRanges), mErr.ReturnValue()
 }
 
+// MeasureFITPointer returns a fake measurement for FIT pointer.
 func MeasureFITPointer(firmware Firmware) *Measurement {
 	fitHeadersPtrStartIdx, fitHeadersPtrEndIdx := fit.GetPointerCoordinates(firmware.Buf())
 	return NewRangeMeasurement(
@@ -87,6 +92,7 @@ func MeasureFITPointer(firmware Firmware) *Measurement {
 	)
 }
 
+// MeasureFITHeaders returns a fake measurement for FIT headers.
 func MeasureFITHeaders(firmware Firmware) (*Measurement, error) {
 	fitHeadersStartIdx, fitHeadersEndIdx, err := fit.GetHeadersTableRange(firmware.Buf())
 	if err != nil {
@@ -100,6 +106,7 @@ func MeasureFITHeaders(firmware Firmware) (*Measurement, error) {
 	), nil
 }
 
+// MeasureSeparator returns the separator measurement.
 func MeasureSeparator() *Measurement {
 	return NewStaticDataMeasurement(MeasurementIDSeparator, Separator)
 }

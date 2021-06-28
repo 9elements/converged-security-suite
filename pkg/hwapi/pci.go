@@ -9,8 +9,7 @@ import (
 
 //PCIReadConfigSpace reads from PCI config space into buf
 func (t TxtAPI) PCIReadConfigSpace(bus int, device int, devFn int, off int, buf interface{}) error {
-	var path string
-	path = fmt.Sprintf("/sys/bus/pci/devices/0000:%02x:%02x.%1x/config", bus, device, devFn)
+	path := fmt.Sprintf("/sys/bus/pci/devices/0000:%02x:%02x.%1x/config", bus, device, devFn)
 
 	f, err := os.OpenFile(path, os.O_RDONLY, 0)
 	if err != nil {
@@ -173,9 +172,12 @@ func (t TxtAPI) ReadHostBridgeTseg() (uint32, uint32, error) {
 		return 0, 0, err
 	}
 	if vendorid != 0x8086 {
-		return 0, 0, fmt.Errorf("Hostbridge is not made by Intel")
+		return 0, 0, fmt.Errorf("hostbridge is not made by Intel")
 	}
 	deviceid, err := t.PCIReadDeviceID(0, 0, 0)
+	if err != nil {
+		return 0, 0, fmt.Errorf("unable to read devince id: %w", err)
+	}
 
 	var found bool
 	for _, id := range HostbridgeIDsSandyCompatible {
@@ -245,9 +247,12 @@ func (t TxtAPI) ReadHostBridgeDPR() (DMAProtectedRange, error) {
 		return ret, err
 	}
 	if vendorid != 0x8086 {
-		return ret, fmt.Errorf("Hostbridge is not made by Intel")
+		return ret, fmt.Errorf("hostbridge is not made by Intel")
 	}
 	deviceid, err := t.PCIReadDeviceID(0, 0, 0)
+	if err != nil {
+		return ret, fmt.Errorf("unable to read device id: %w", err)
+	}
 
 	var found bool
 	for _, id := range HostbridgeIDsSandyCompatible {

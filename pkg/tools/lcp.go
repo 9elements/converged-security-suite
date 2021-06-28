@@ -596,7 +596,9 @@ func parsePolicyElementMLE(buf *bytes.Reader, pol *LCPPolicyMLE) error {
 
 	pol.Hashes = make([][20]byte, pol.NumHashes)
 	for i := 0; i < int(pol.NumHashes); i++ {
-		binary.Read(buf, binary.LittleEndian, &pol.Hashes[i])
+		if err := binary.Read(buf, binary.LittleEndian, &pol.Hashes[i]); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -827,7 +829,9 @@ func parsePolicyList2(buf *bytes.Reader, list *LCPPolicyList2) error {
 
 	list.PolicyElements = make([]LCPPolicyElement, list.PolicyElementSize)
 	for i := 0; i < int(list.PolicyElementSize); i++ {
-		parsePolicyElement(buf, &list.PolicyElements[i])
+		if err := parsePolicyElement(buf, &list.PolicyElements[i]); err != nil {
+			return fmt.Errorf("unable to parse policy element %d: %w", i, err)
+		}
 	}
 
 	return nil
@@ -958,7 +962,7 @@ func (p *LCPHash) PrettyPrint() string {
 		//} else if p.sm3 != nil {
 		//	return fmt.Sprintf("% 02x [SM3]", *p.sm3)
 	} else {
-		return fmt.Sprintf("(Invalid)")
+		return "(Invalid)"
 	}
 }
 
@@ -1042,8 +1046,8 @@ func GenLCPPolicyV2(version uint16, hashAlg crypto.Hash, hash []byte, sinitmin u
 
 	var v uint16
 	h, a := HashAlgMap[hashAlg]
-	if a != true {
-		return nil, fmt.Errorf("Invalid hash algorithm")
+	if !a {
+		return nil, fmt.Errorf("invalid hash algorithm")
 	}
 	lcph, err := genLCPHash(hashAlg, hash)
 	if err != nil {
@@ -1092,25 +1096,25 @@ func deconstructPolicyControl(pc PolicyControl) uint32 {
 
 func deconstructApprovedSigAlgs(apprSigs ApprovedSignatureAlogrithm) LCPPol2Sig {
 	appr := LCPPol2Sig(0)
-	if apprSigs.RSA2048SHA1 == true {
+	if apprSigs.RSA2048SHA1 {
 		appr += RSA2048SHA1
 	}
-	if apprSigs.RSA2048SHA256 == true {
+	if apprSigs.RSA2048SHA256 {
 		appr += RSA2048SHA256
 	}
-	if apprSigs.RSA3072SHA256 == true {
+	if apprSigs.RSA3072SHA256 {
 		appr += RSA3072SHA256
 	}
-	if apprSigs.RSA3072SHA384 == true {
+	if apprSigs.RSA3072SHA384 {
 		appr += RSA3072SHA384
 	}
-	if apprSigs.ECDSAP256SHA256 == true {
+	if apprSigs.ECDSAP256SHA256 {
 		appr += ECDSAP256SHA256
 	}
-	if apprSigs.ECDSAP384SHA384 == true {
+	if apprSigs.ECDSAP384SHA384 {
 		appr += ECDSAP384SHA384
 	}
-	if apprSigs.SM2SM2CurveSM3 == true {
+	if apprSigs.SM2SM2CurveSM3 {
 		appr += SM2SM2CurveSM3
 	}
 	return appr
@@ -1118,16 +1122,16 @@ func deconstructApprovedSigAlgs(apprSigs ApprovedSignatureAlogrithm) LCPPol2Sig 
 
 func deconstructApprovedHashAlgs(apprHashes ApprovedHashAlgorithm) uint16 {
 	var appr uint16
-	if apprHashes.SHA1 == true {
+	if apprHashes.SHA1 {
 		appr = uint16(0x0001)
 	}
-	if apprHashes.SHA256 == true {
+	if apprHashes.SHA256 {
 		appr = appr + uint16(0x0008)
 	}
-	if apprHashes.SHA384 == true {
+	if apprHashes.SHA384 {
 		appr = appr + uint16(0x0040)
 	}
-	if apprHashes.SM3 == true {
+	if apprHashes.SM3 {
 		appr = appr + uint16(0x0020)
 	}
 	return appr
@@ -1167,10 +1171,10 @@ func PrintPolicyControl(pc uint32) string {
 // PrettyPrint prints LCPPolicy2 Structure i a human readable format
 func (p *LCPPolicy2) PrettyPrint() {
 	var s strings.Builder
-	s.WriteString("   Version: 0x" + string(strconv.FormatInt(int64(p.Version), 16)) + "\n")
-	s.WriteString("   HashAlg: " + string(p.HashAlg.String()) + "\n")
-	s.WriteString("   PolicyType: " + fmt.Sprintf("%s", p.PolicyType.String()) + "\n")
-	s.WriteString("   SINITMinVersion: " + string(strconv.Itoa(int(p.SINITMinVersion))) + "\n")
+	s.WriteString("   Version: 0x" + strconv.FormatInt(int64(p.Version), 16) + "\n")
+	s.WriteString("   HashAlg: " + p.HashAlg.String() + "\n")
+	s.WriteString("   PolicyType: " + p.PolicyType.String() + "\n")
+	s.WriteString("   SINITMinVersion: " + strconv.Itoa(int(p.SINITMinVersion)) + "\n")
 	s.WriteString("   DataRevocationCounters: ")
 	for _, item := range p.DataRevocationCounters {
 		if item != 0 {
@@ -1183,7 +1187,7 @@ func (p *LCPPolicy2) PrettyPrint() {
 	s.WriteString("   LcpHashAlgMask: " + PrintLcpHashAlgMask(p.LcpHashAlgMask) + "\n")
 	s.WriteString("   LcpSignAlgMask: " + p.LcpSignAlgMask.String() + "\n")
 	s.WriteString("   PolicyHash: " + fmt.Sprintf("%v", p.PolicyHash) + "\n")
-	fmt.Printf(s.String())
+	fmt.Printf("%s", s.String())
 	fmt.Println()
 }
 

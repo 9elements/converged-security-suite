@@ -59,9 +59,9 @@ func setBPMHeader(cbnto *Options, bpm *bootpolicy.Manifest) (*bootpolicy.BPMH, e
 		return nil, err
 	}
 	header.BPMRevision = cbnto.BootPolicyManifest.BPMRevision
-	header.BPMSVN = manifest.SVN(cbnto.BootPolicyManifest.BPMH.BPMSVN)
-	header.ACMSVNAuth = manifest.SVN(cbnto.BootPolicyManifest.BPMH.ACMSVNAuth)
-	header.NEMDataStack = bootpolicy.Size4K(cbnto.BootPolicyManifest.BPMH.NEMDataStack)
+	header.BPMSVN = cbnto.BootPolicyManifest.BPMH.BPMSVN
+	header.ACMSVNAuth = cbnto.BootPolicyManifest.BPMH.ACMSVNAuth
+	header.NEMDataStack = cbnto.BootPolicyManifest.BPMH.NEMDataStack
 	header.KeySignatureOffset = uint16(bpm.PMSEOffset() + bpm.PMSE.KeySignatureOffset())
 
 	return header, nil
@@ -148,7 +148,7 @@ func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo manifest.Alg
 			}
 		}
 		hash = h.Sum(nil)
-	case manifest.AlgSM3_256:
+	case manifest.AlgSM3:
 		h := sm3.New()
 		segments, err := getIBBSegment(ibbs, image)
 		if err != nil {
@@ -183,9 +183,7 @@ func setIBBSegment(cbnto *Options, image []byte) (*bootpolicy.SE, error) {
 }
 
 func setTXTElement(cbnto *Options) (*bootpolicy.TXT, error) {
-	txte := bootpolicy.NewTXT()
-	txte = cbnto.BootPolicyManifest.TXTE
-	return txte, nil
+	return cbnto.BootPolicyManifest.TXTE, nil
 }
 
 func setPCDElement(cbnto *Options) (*bootpolicy.PCD, error) {
@@ -213,9 +211,7 @@ func setPMSElement(cbnto *Options, bpm *bootpolicy.Manifest) (*bootpolicy.Signat
 
 // SetKM takes Options struct and initializes a new KM with the given configuration.
 func SetKM(cbnto *Options) (*key.Manifest, error) {
-	km := key.NewManifest()
-	km = cbnto.KeyManifest
-	return km, nil
+	return cbnto.KeyManifest, nil
 }
 
 // GenerateBPM generates a Boot Policy Manifest with the given config and firmware image

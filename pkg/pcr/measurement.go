@@ -71,6 +71,7 @@ func (chunk DataChunk) Copy() *DataChunk {
 	return &chunk
 }
 
+// CompileMeasurableData returns the data to be measured.
 func (chunk DataChunk) CompileMeasurableData(image []byte) []byte {
 	if chunk.ForceData != nil {
 		return chunk.ForceData
@@ -78,6 +79,7 @@ func (chunk DataChunk) CompileMeasurableData(image []byte) []byte {
 	return image[chunk.Range.Offset : chunk.Range.Offset+chunk.Range.Length]
 }
 
+// DataChunks is a set of DataChunk-s.
 type DataChunks []DataChunk
 
 // Ranges returns a slice of all Range-s where ForceData is nil.
@@ -105,6 +107,7 @@ func (s DataChunks) Copy() DataChunks {
 	return c
 }
 
+// NewStaticDataChunk returns a DataChunk based on a predefined value.
 func NewStaticDataChunk(id DataChunkID, data []byte) *DataChunk {
 	return &DataChunk{
 		ID:        id,
@@ -112,6 +115,7 @@ func NewStaticDataChunk(id DataChunkID, data []byte) *DataChunk {
 	}
 }
 
+// NewRangeDataChunk returns a DataChunk based on image data.
 func NewRangeDataChunk(id DataChunkID, offset uint64, length uint64) *DataChunk {
 	r := bytes.Range{
 		Offset: offset,
@@ -202,6 +206,7 @@ func (m Measurement) Ranges() bytes.Ranges {
 	return m.Data.Ranges()
 }
 
+// NewStaticDataMeasurement returns a measurement of a pre-defined value.
 func NewStaticDataMeasurement(id MeasurementID, data []byte) *Measurement {
 	return &Measurement{
 		ID: id,
@@ -213,6 +218,8 @@ func NewStaticDataMeasurement(id MeasurementID, data []byte) *Measurement {
 	}
 }
 
+// NewRangesMeasurement returns a measurement of multiple ranges of the
+// firmware image
 func NewRangesMeasurement(id MeasurementID, r bytes.Ranges) *Measurement {
 	chunks := make([]DataChunk, len(r))
 	for idx := range r {
@@ -224,6 +231,8 @@ func NewRangesMeasurement(id MeasurementID, r bytes.Ranges) *Measurement {
 	}
 }
 
+// NewRangeMeasurement returns a measurement of a single range of a firmware
+// image
 func NewRangeMeasurement(id MeasurementID, offset uint64, length uint64) *Measurement {
 	r := bytes.Range{
 		Offset: offset,
@@ -335,6 +344,7 @@ func (s Measurements) FindOverlapping(byteRange bytes.Range) Measurements {
 	return result
 }
 
+// Printfer requires a method with signature of a standard Printf.
 type Printfer interface {
 	Printf(fmt string, args ...interface{})
 }
@@ -363,7 +373,8 @@ func (s Measurements) Calculate(image []byte, initialValue uint8, hashFunc hash.
 		if measurement.NoHash() {
 			hashValue = measurementData
 		} else {
-			hashFunc.Write(measurementData)
+			_, err := hashFunc.Write(measurementData)
+			assertNoError(err)
 			hashValue = hashFunc.Sum(nil)
 			hashFunc.Reset()
 		}
@@ -374,12 +385,21 @@ func (s Measurements) Calculate(image []byte, initialValue uint8, hashFunc hash.
 			logger.Printf("Event '%s': %x (%T)\n", measurement.ID, measurementData, hashFunc)
 		}
 
-		hashFunc.Write(result)
-		hashFunc.Write(hashValue)
+		_, err := hashFunc.Write(result)
+		assertNoError(err)
+		_, err = hashFunc.Write(hashValue)
+		assertNoError(err)
+
 		oldResult := result
 		result = hashFunc.Sum(nil)
 		hashFunc.Reset()
 		logger.Printf("%T(0x %X %X) == 0x%X\n\n", hashFunc, oldResult, hashValue, result)
 	}
 	return result
+}
+
+func assertNoError(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
