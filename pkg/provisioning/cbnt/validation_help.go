@@ -33,11 +33,11 @@ func validateSignature(s *manifest.Signature, unsigneddata []byte, key crypto.Pu
 		if err != nil {
 			return err
 		}
-		if sm2Sig.Verify(key.(*sm2.PublicKey), unsigneddata); err != nil {
-			return fmt.Errorf("SM2 signature is not valid")
+		if err := sm2Sig.Verify(key.(*sm2.PublicKey), unsigneddata); err != nil {
+			return fmt.Errorf("SM2 signature is not valid: %v", err)
 		}
 	default:
-		return fmt.Errorf("Signature has invalid signature scheme: %v", s.SigScheme)
+		return fmt.Errorf("signature has invalid signature scheme: %v", s.SigScheme)
 	}
 	return nil
 }

@@ -328,6 +328,7 @@ var imageBPMTests = []*Test{
 	&bpmtxtesetnumber,
 	&bpmtxtesinitsvn,
 	&bpmtxtecontrolfalgs,
+	&bpmtxtepwrdwnival,
 	&bpmtxtepttcmosoffset0,
 	&bpmtxtepttcmosoffset1,
 	&bpmtxteacpibaseoffset,
@@ -981,7 +982,7 @@ func BPMPCDEHeaderValid() (bool, error) {
 	pcdeID := "__PCDS__"
 	var s strings.Builder
 	if pcde.StructInfo.ID.String() != pcdeID {
-		s.WriteString("BPM PCDS Header ID invalid. Have: " + fmt.Sprintf("%s", pcde.StructInfo.ID.String()) + " Want: " + fmt.Sprintf("%s", pcdeID))
+		s.WriteString("BPM PCDS Header ID invalid. Have: " + pcde.StructInfo.ID.String() + " Want: " + pcdeID)
 	}
 	if pcde.StructInfo.Version != 0x20 {
 		s.WriteString("BPM PCDS Header Version invalid. Have: " + fmt.Sprintf("0x%x", pcde.StructInfo.Version) + " Want: 0x20")
@@ -1049,7 +1050,7 @@ func BPMPMEHeaderValid() (bool, error) {
 	pmeID := "__PMDA__"
 	var s strings.Builder
 	if pme.StructInfo.ID.String() != pmeID {
-		s.WriteString("BPM PME Header ID invalid. Have: " + fmt.Sprintf("%s", pme.StructInfo.ID.String()) + " Want: " + fmt.Sprintf("%s", pmeID))
+		s.WriteString("BPM PME Header ID invalid. Have: " + pme.StructInfo.ID.String() + " Want: " + pmeID)
 	}
 	if pme.StructInfo.Version != 0x20 {
 		s.WriteString("BPM PME Header Version invalid. Have: " + fmt.Sprintf("0x%x", pme.StructInfo.Version) + " Want: 0x20")
@@ -1117,7 +1118,7 @@ func BPMPMSEHeaderValid() (bool, error) {
 	pmseID := "__PMSG__"
 	var s strings.Builder
 	if pmse.StructInfo.ID.String() != pmseID {
-		s.WriteString("BPM PMSE Header ID invalid. Have: " + fmt.Sprintf("%s", pmse.StructInfo.ID.String()) + " Want: " + fmt.Sprintf("%s", pmseID))
+		s.WriteString("BPM PMSE Header ID invalid. Have: " + pmse.StructInfo.ID.String() + " Want: " + pmseID)
 	}
 	if pmse.StructInfo.Version != 0x20 {
 		s.WriteString("BPM PMSE Header Version invalid. Have: " + fmt.Sprintf("0x%x", pmse.StructInfo.Version) + " Want: 0x20")

@@ -22,7 +22,6 @@ type testObj struct {
 }
 
 var (
-	image         []byte
 	bpmpubkeypath string
 	objUnderTest  testObj
 )
@@ -77,14 +76,14 @@ type Test struct {
 
 // Run defines the execution of a Test
 func (t *Test) Run() bool {
-	var res = false
+	res := false
 	res, err := t.function()
 	if err != nil {
 		t.ErrorText = err.Error()
 	}
-	if res == true && err == nil {
+	if res && err == nil {
 		t.Result = resultValid
-	} else if res == true && err != nil {
+	} else if res && err != nil {
 		t.Result = resultWarning
 	}
 	return res
@@ -102,14 +101,19 @@ func setObjUnderTest(imgpath string, kmkeypath string, bpmkeypath string) error 
 		return err
 	}
 	kmkey := manifest.NewKey()
-	kmkey.SetPubKey(k)
+	if err := kmkey.SetPubKey(k); err != nil {
+		return err
+	}
+
 	// Read the BPM public key and put it in manifest.Key structure
 	b, err := ReadPubKey(bpmkeypath)
 	if err != nil {
 		return err
 	}
 	bpmkey := manifest.NewKey()
-	bpmkey.SetPubKey(b)
+	if err := bpmkey.SetPubKey(b); err != nil {
+		return err
+	}
 	// Extract KM & BPM structures
 	bpmEntry, kmEntry, _, err := ParseFITEntries(img)
 	if err != nil {
@@ -143,8 +147,7 @@ func ValidateImage(imgpath, bpmkeypath, kmkeypath string, interactive bool) erro
 	// We need that for one function.
 	//ToDo: Create better solution
 	bpmpubkeypath = bpmkeypath
-	tests := imageBPMTests
-	tests = append(imageKMTests, imageBPMTests...)
+	tests := append(imageKMTests, imageBPMTests...)
 	tests = append(tests, imageCrossTests...)
 
 	for idx, test := range tests {
