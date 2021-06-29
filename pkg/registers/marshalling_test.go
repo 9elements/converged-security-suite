@@ -35,7 +35,11 @@ func TestMarshalUnmarshal(t *testing.T) {
 		t.Skipf("ReadMSRRegisters returned an error: %v", err)
 	}
 
-	regs := append(txtRegisters, msrRegisters...)
+	amdRegisters := registers.Registers{
+		registers.ParseMP0C2PMsg37Register(0),
+	}
+
+	regs := append(txtRegisters, append(amdRegisters, msrRegisters...)...)
 	for _, reg := range regs {
 		rawValue, err := registers.MarshalValue(reg)
 		if err != nil {
