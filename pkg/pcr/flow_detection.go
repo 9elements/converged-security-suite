@@ -114,11 +114,11 @@ func DetectMainAttestationFlow(firmware Firmware, regs registers.Registers, tpmD
 		// AMD
 		if msg37Register, found := registers.FindMP0C2PMsg37(regs); found {
 			if msg37Register.IsPlatformSecureBootEnabled() {
-				return FlowLegacyPSPEnabled, nil
+				return FlowLegacyPSBEnabled, nil
 			}
-			return FlowLegacyPSPDisabled, nil
+			return FlowLegacyPSBDisabled, nil
 		}
-		return FlowLegacyPSPDisabled, nil
+		return FlowLegacyPSBDisabled, nil
 	}
 
 	// Intel
