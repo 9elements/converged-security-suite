@@ -8,13 +8,18 @@ import (
 	"github.com/fearful-symmetry/gomsr"
 )
 
+// MSRReader reads a single MSR register
 type MSRReader interface {
+	// Read reads a single MSR register, the returned value is not length, but
+	// the value itself.
 	Read(msr int64) (uint64, error)
 }
 
-type DefaultMSRReader struct {
-}
+// DefaultMSRReader reads MSR registers from local host.
+type DefaultMSRReader struct{}
 
+// Read reads a single MSR register, the returned value is not length, but
+// the value itself.
 func (r *DefaultMSRReader) Read(msr int64) (uint64, error) {
 	var data uint64
 	for i := 0; i < runtime.NumCPU(); i++ {
@@ -100,7 +105,7 @@ func ReadMSRRegisters(msrReader MSRReader) (Registers, error) {
 	for _, registerInfo := range supportedMSRRegistersIDs {
 		reg, err := registerInfo.fetch(msrReader)
 		if err != nil {
-			mErr.Add(fmt.Errorf("failed to fetch MSR register %s, err: %v", registerInfo.id, err))
+			_ = mErr.Add(fmt.Errorf("failed to fetch MSR register %s, err: %v", registerInfo.id, err))
 			continue
 		}
 		result = append(result, reg)

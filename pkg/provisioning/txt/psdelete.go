@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/go-tpm/tpmutil"
 
-	tpm2 "github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/tpm2"
 )
 
 // DeletePSIndexTPM20 deletes the PS index on TPM 2.0
@@ -25,7 +25,9 @@ func DeletePSIndexTPM20(rw io.ReadWriter, passHash []byte) error {
 	if err != nil {
 		return err
 	}
-	defer tpm2.FlushContext(rw, sessIndex)
+	defer func() {
+		_ = tpm2.FlushContext(rw, sessIndex)
+	}()
 
 	or1 := tpm2.TPMLDigest{Digests: []tpmutil.U16Bytes{passHash, zeroHash}}
 	or2 := tpm2.TPMLDigest{Digests: []tpmutil.U16Bytes{delPol, writePol}}

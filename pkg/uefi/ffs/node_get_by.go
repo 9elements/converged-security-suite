@@ -45,7 +45,7 @@ func (node *Node) NameToRangesMap() map[string]pkgbytes.Ranges {
 				Length: length,
 			})
 		}
-	table.Run(node.Firmware) // TODO: handle the error here somehow
+	_ = table.Run(node.Firmware) // TODO: handle the error here somehow
 	return rangeMap
 }
 
@@ -85,7 +85,7 @@ func (v *nodeVisitor) Visit(f fianoUEFI.Firmware) error {
 
 	guid := Node{Firmware: f}.GUID()
 	var emptyGUID fianoGUID.GUID
-	if guid != nil && bytes.Compare(guid[:], emptyGUID[:]) != 0 {
+	if guid != nil && !bytes.Equal(guid[:], emptyGUID[:]) {
 		name = guid.String()
 	} else {
 		switch f.(type) {

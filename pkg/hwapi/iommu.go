@@ -298,7 +298,7 @@ func lookupIOScalable(addr, rootTblAddr uint64) ([]uint64, error) {
 	// make sure 2-pass translation isnt on
 }
 
-//AddressRangesIsDMAProtected returns true if the address is DMA protected by the IOMMU
+// AddressRangesIsDMAProtected returns true if the address is DMA protected by the IOMMU
 func (t TxtAPI) AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
 	regs, err := t.readVTdRegs()
 	if err != nil {
@@ -319,13 +319,9 @@ func (t TxtAPI) AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
 	}
 
 	for addr := first & 0xffffffffffff0000; addr < end; addr += 4096 {
-		vas, err := t.LookupIOAddress(addr, regs)
+		_, err := t.LookupIOAddress(addr, regs)
 		if err != nil {
 			return false, err
-		}
-
-		if len(vas) < 0 {
-			return false, nil
 		}
 	}
 

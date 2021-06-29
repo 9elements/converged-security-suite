@@ -15,7 +15,7 @@ func ParseLocality(eventData []byte) (uint8, error) {
 	// event.Data example: "StartupLocality\x00\x03"
 	descrWords := bytes.SplitN(eventData, []byte{0}, 2)
 	switch {
-	case bytes.Compare(descrWords[0], []byte("StartupLocality")) == 0:
+	case bytes.Equal(descrWords[0], []byte("StartupLocality")):
 		if len(descrWords) > 0 && len(descrWords[1]) == 1 {
 			return descrWords[1][0], nil
 		}

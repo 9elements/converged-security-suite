@@ -32,7 +32,7 @@ func ParseFirmwareOCP(
 	err := errors.MultiError{}
 
 	generic, errGeneric := parseFirmwareOCPGeneric(firmwareImage)
-	err.Add(errGeneric)
+	_ = err.Add(errGeneric)
 	if generic != nil {
 		return generic, err.ReturnValue()
 	}
@@ -44,10 +44,14 @@ func ParseFirmwareOCP(
 	return nil, err.ReturnValue()
 }
 
+// ParsedFirmwareOCPGeneric is a fallback "parser", which is used if the image
+// corresponds to OCP, but a specific parsed was not found.
 type ParsedFirmwareOCPGeneric struct {
 	ParsedFirmwareGeneric
 }
 
+// GetFirmwareVendorVersion returns a hardcoded firmware vendor version if no
+// vendor version was parsed by other parser.
 func (pcd *ParsedFirmwareOCPGeneric) GetFirmwareVendorVersion() []byte {
 	// Basically we know that in the most cases an OCP firmware has
 	// value "1EFB6B540C1D5540A4AD4EF4BF17B83A", so if we were unable

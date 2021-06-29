@@ -19,6 +19,10 @@ const (
 	msrIA32DebugInterface int64 = 0xC80
 )
 
+var (
+	_ = msrSMBase // anti-warning
+)
+
 // IA32Debug feature msr
 type IA32Debug struct {
 	Enabled  bool

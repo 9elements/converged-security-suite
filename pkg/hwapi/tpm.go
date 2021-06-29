@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	tpm1 "github.com/google/go-tpm/tpm"
-	tpm2 "github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/tpm2"
 )
 
 const (
@@ -40,7 +40,7 @@ func (t TxtAPI) NVLocked(tpmCon *TPM) (bool, error) {
 			return false, err
 		}
 		res = strings.Contains(err.Error(), tpm2LockedResult)
-		if res != true {
+		if !res {
 			return res, err
 		}
 		return res, nil

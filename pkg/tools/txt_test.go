@@ -22,9 +22,11 @@ func TestTxtApi_ParseTXTRegs(t *testing.T) {
 	txtAPI := hwapi.GetPcMock(func(addr uint64) byte { return hwapi.MockPCReadMemory(addr) })
 
 	data, err := FetchTXTRegs(txtAPI)
+	if err != nil {
+		t.Errorf("FetchTXTRegs() failed: %v", err)
+	}
 
 	got, err := ParseTXTRegs(data)
-
 	if err != nil {
 		t.Errorf("ParseTXTRegs() failed: %v", err)
 	}

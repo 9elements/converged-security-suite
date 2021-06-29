@@ -9,8 +9,10 @@ import (
 	"strings"
 )
 
+// Type is the TPM type.
 type Type uint8
 
+// The list of available TPM types.
 const (
 	TypeNoTPM Type = iota
 	TypeTPM12
@@ -90,6 +92,9 @@ func local(devicePath, capabilities string) (Type, error) {
 	for _, lineBytes := range bytes.Split(caps, []byte{'\n'}) {
 		line := string(lineBytes)
 		parts := strings.SplitN(line, ":", 2)
+		if len(parts) != 2 {
+			return 0, fmt.Errorf("unable to split line '%s'", line)
+		}
 		key := strings.TrimSpace(parts[0])
 		val := strings.TrimSpace(parts[1])
 		if key == specPrefix {

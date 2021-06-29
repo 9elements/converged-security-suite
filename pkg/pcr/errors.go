@@ -22,7 +22,7 @@ func (err *ErrUnknownPCRID) Error() string {
 type ErrNoTXTPolicyRecord struct{}
 
 func (err *ErrNoTXTPolicyRecord) Error() string {
-	return fmt.Sprintf("no TXT policy record")
+	return "no TXT policy record"
 }
 
 // ErrCollect means it wasn't able to parse the construct PCR0_DATA structure.
@@ -56,7 +56,7 @@ func (err ErrGetFIT) Unwrap() error {
 type ErrPCDVendorVersion struct{}
 
 func (err ErrPCDVendorVersion) Error() string {
-	return fmt.Sprintf("unable to find the source of firmware vendor version")
+	return "unable to find the source of firmware vendor version"
 }
 
 // ErrNotSupportedIndex means selected PCR index is not supported (yet?)
@@ -85,5 +85,5 @@ type ErrNoSACM struct{}
 
 // Error implements interface `error`.
 func (err ErrNoSACM) Error() string {
-	return fmt.Sprintf("S-ACM not found")
+	return "S-ACM not found"
 }

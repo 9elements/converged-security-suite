@@ -99,6 +99,9 @@ func GenECCKey(curve int, password string, kmPubFile, kmPrivFile, bpmPubFile, bp
 func writePrivKeyToFile(k crypto.PrivateKey, f *os.File, password string) error {
 	var key *[]byte
 	b, err := x509.MarshalPKCS8PrivateKey(k)
+	if err != nil {
+		return fmt.Errorf("unable to marshal the private key: %w", err)
+	}
 	bpemBlock := &pem.Block{
 		Bytes: b,
 	}
@@ -139,7 +142,9 @@ func writePubKeyToFile(k crypto.PublicKey, f *os.File) error {
 func encryptPrivFile(data *[]byte, password string) (*[]byte, error) {
 	// Hash key to select aes-256 -> using SHA256
 	hash := crypto.SHA256.New()
-	hash.Write([]byte(password))
+	if _, err := hash.Write([]byte(password)); err != nil {
+		return nil, fmt.Errorf("unable to hash: %w", err)
+	}
 	hashPW := hash.Sum(nil)
 
 	bc, err := aes.NewCipher(hashPW)
@@ -158,13 +163,15 @@ func encryptPrivFile(data *[]byte, password string) (*[]byte, error) {
 	return &ct, nil
 }
 
-// DecryptPrivKey takes the encrypted Key as byte slice and the passwort to decrypt the priveate key and returns it with it's type.
+// DecryptPrivKey takes the encrypted Key as byte slice and the password to decrypt the private key and returns it with it's type.
 func DecryptPrivKey(data []byte, password string) (crypto.PrivateKey, error) {
 	var plain []byte
 	if password != "" {
 		// Set up the crypto stuff
 		hash := crypto.SHA256.New()
-		hash.Write([]byte(password))
+		if _, err := hash.Write([]byte(password)); err != nil {
+			return nil, fmt.Errorf("unable to hash: %w", err)
+		}
 		hashPW := hash.Sum(nil)
 		aes, err := aes.NewCipher(hashPW)
 		if err != nil {
