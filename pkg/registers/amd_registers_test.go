@@ -1,9 +1,8 @@
-package amd
+package registers
 
 import (
+	"reflect"
 	"testing"
-
-	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 )
 
 func TestMP0C2PMsg37Register(t *testing.T) {
@@ -29,8 +28,21 @@ func TestMP0C2PMsg37Register(t *testing.T) {
 		t.Errorf("Unexepcted value of fields '%d' of the register", len(fields))
 	}
 
-	platformSecureBootFieldFieldValue := registers.FieldValueToNumber(fields[1].Value)
+	platformSecureBootFieldFieldValue := FieldValueToNumber(fields[1].Value)
 	if platformSecureBootFieldFieldValue != 1 {
 		t.Errorf("Unexepcted value of platform secure boot enabled '%d' of the register", platformSecureBootFieldFieldValue)
+	}
+}
+
+func TestRegistersCollection(t *testing.T) {
+	regs := Registers{
+		ParseMP0C2PMsg37Register(1234),
+	}
+	r, found := FindMP0C2PMsg37(regs)
+	if !found {
+		t.Errorf("%s register is not found", MP0C2PMSG37RegisterID)
+	}
+	if !reflect.DeepEqual(r, regs[0]) {
+		t.Errorf("found register: '%v' doesn't match the one in collection: '%v", r, regs[0])
 	}
 }
