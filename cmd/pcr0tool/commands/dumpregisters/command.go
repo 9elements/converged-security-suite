@@ -10,12 +10,6 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 )
 
-func assertNoError(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
 // Command is the implementation of `commands.Command`.
 type Command struct {
 	outputFile *string
@@ -47,10 +41,7 @@ func (cmd Command) Execute(args []string) {
 	if regs == nil && err != nil {
 		panic(err)
 	}
-	for _, reg := range regs {
-		fmt.Printf("\n")
-		printRegister(reg)
-	}
+	PrintRegisters(regs)
 
 	if len(*cmd.outputFile) > 0 {
 		b, err := json.Marshal(regs)
@@ -64,7 +55,16 @@ func (cmd Command) Execute(args []string) {
 	}
 }
 
-func printRegister(reg registers.Register) {
+// PrintRegisters outputs registers in a detailed human-readable format
+func PrintRegisters(regs registers.Registers) {
+	for _, reg := range regs {
+		fmt.Printf("\n")
+		PrintRegister(reg)
+	}
+}
+
+// PrintRegister outputs a single register in a detailed human-readable format
+func PrintRegister(reg registers.Register) {
 	fmt.Printf("Register: %s, address: 0x%X\n", reg.ID(), reg.Address())
 	switch r := reg.(type) {
 	case registers.RawRegister:
