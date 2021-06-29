@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
-	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
-
+	amd_manifest "github.com/9elements/converged-security-suite/v2/pkg/amd/manifest"
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
+	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
+	amd_registers "github.com/9elements/converged-security-suite/v2/pkg/registers/amd"
+	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
 )
 
 // DetectTPM returns which TPM type is used on a machine, given it has
@@ -110,6 +111,19 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (tpmdetection.Type, 
 // DetectMainAttestationFlow returns the PCR0 measurements flow assuming
 // no validation errors occurred.
 func DetectMainAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevice tpmdetection.Type) (Flow, error) {
+	if _, _, err := amd_manifest.FindEmbeddedFirmwareStructure(firmware); err == nil {
+		// AMD
+		if msg37Register, found := amd_registers.FindMP0C2PMsg37(regs); found {
+			if msg37Register.IsPlatformSecureBootEnabled() {
+				return FlowLegacyPSPEnabled, nil
+			}
+			return FlowLegacyPSPDisabled, nil
+		}
+		return FlowLegacyPSPDisabled, nil
+	}
+
+	// Intel
+
 	fitEntries, err := fit.GetEntries(firmware.Buf())
 	if err != nil {
 		return FlowAuto, fmt.Errorf("unable to parse FIT entries: %w", err)

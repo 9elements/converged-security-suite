@@ -18,25 +18,25 @@ func (reg IA32SMRRPhysMask) Address() uint64 {
 }
 
 func (reg IA32SMRRPhysMask) Fields() []Field {
-	fieldsRaw := []fieldDescription{
+	fieldsRaw := []FieldDescription{
 		{
-			name:      "<reserved>",
-			bitOffset: 0,
+			Name:      "<reserved>",
+			BitOffset: 0,
 		},
 		{
-			name:      "V (Valid)",
-			bitOffset: 11,
+			Name:      "V (Valid)",
+			BitOffset: 11,
 		},
 		{
-			name:      "PhysMask",
-			bitOffset: 12,
+			Name:      "PhysMask",
+			BitOffset: 12,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 32,
+			Name:      "<reserved>",
+			BitOffset: 32,
 		},
 	}
-	return calculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
 }
 
 func (reg IA32SMRRPhysMask) Raw() uint64 {

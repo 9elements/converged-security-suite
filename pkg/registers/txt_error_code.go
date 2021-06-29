@@ -35,41 +35,41 @@ func (reg TXTErrorCode) Address() uint64 {
 }
 
 func (reg TXTErrorCode) Fields() []Field {
-	fieldsRaw := []fieldDescription{
+	fieldsRaw := []FieldDescription{
 		{
-			name:      "Module Type",
-			bitOffset: 0,
+			Name:      "Module Type",
+			BitOffset: 0,
 		},
 		{
-			name:      "Class Code",
-			bitOffset: 4,
+			Name:      "Class Code",
+			BitOffset: 4,
 		},
 		{
-			name:      "Major Error Code",
-			bitOffset: 10,
+			Name:      "Major Error Code",
+			BitOffset: 10,
 		},
 		{
-			name:      "Software Source",
-			bitOffset: 15,
+			Name:      "Software Source",
+			BitOffset: 15,
 		},
 		{
-			name:      "Type1/Minor Error Code",
-			bitOffset: 16,
+			Name:      "Type1/Minor Error Code",
+			BitOffset: 16,
 		},
 		{
-			name:      "Type1/<reserved> Provides implementation and source specific details on the failure condition",
-			bitOffset: 28,
+			Name:      "Type1/<reserved> Provides implementation and source specific details on the failure condition",
+			BitOffset: 28,
 		},
 		{
-			name:      "Processor (0) /Software (1)",
-			bitOffset: 30,
+			Name:      "Processor (0) /Software (1)",
+			BitOffset: 30,
 		},
 		{
-			name:      "Valid",
-			bitOffset: 31,
+			Name:      "Valid",
+			BitOffset: 31,
 		},
 	}
-	return calculateRegisterFields(uint64(reg.Raw()), reg.BitSize(), fieldsRaw)
+	return CalculateRegisterFields(uint64(reg.Raw()), reg.BitSize(), fieldsRaw)
 }
 
 func (reg TXTErrorCode) ModuleType() uint8 {
