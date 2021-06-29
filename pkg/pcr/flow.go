@@ -44,7 +44,7 @@ func FlowFromString(s string) (Flow, error) {
 		return FlowIntelCBnT0T, nil
 	case "legacypsbdisabled":
 		return FlowLegacyPSBDisabled, nil
-	case "legacypsnenabled":
+	case "legacypsbenabled":
 		return FlowLegacyPSBEnabled, nil
 	}
 	return FlowAuto, fmt.Errorf("'%s' attestation flow is not supported", s)
