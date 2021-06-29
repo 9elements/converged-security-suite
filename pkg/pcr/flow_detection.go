@@ -12,6 +12,8 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 )
 
+// DetectTPM returns which TPM type is used on a machine, given it has
+// defined BIOS firmware and registers.
 func DetectTPM(firmware Firmware, regs registers.Registers) (tpmdetection.Type, error) {
 	// We have two approaches:
 	// - based on registers provides a reliable results, but these values may not exist

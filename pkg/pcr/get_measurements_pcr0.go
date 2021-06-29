@@ -72,7 +72,7 @@ func (c *pcr0MeasurementsCollector) FITEntries() []fit.Entry {
 
 	fitEntries, err := c.firmware.GetFIT()
 	if err != nil {
-		c.errors.Add(ErrGetFIT{Err: err})
+		_ = c.errors.Add(ErrGetFIT{Err: err})
 	}
 	c.fitEntriesResult = &fitEntries
 	return fitEntries
@@ -85,7 +85,7 @@ func (c *pcr0MeasurementsCollector) PCDData() pcd.ParsedFirmware {
 
 	pcdData, err := pcd.ParseFirmware(c.firmware)
 	if err != nil {
-		c.errors.Add(err)
+		_ = c.errors.Add(err)
 	}
 	c.pcdDataResult = &pcdData
 	return pcdData
@@ -99,9 +99,9 @@ func (c *pcr0MeasurementsCollector) CollectPRC0Measurements(
 		m, err := measurementID.MeasureFunc()(config, c)
 		if err != nil {
 			if measurementID.IsFake() || m != nil {
-				c.warnings.Add(ErrCollect{MeasurementID: measurementID, Err: err})
+				_ = c.warnings.Add(ErrCollect{MeasurementID: measurementID, Err: err})
 			} else {
-				c.errors.Add(ErrCollect{MeasurementID: measurementID, Err: err})
+				_ = c.errors.Add(ErrCollect{MeasurementID: measurementID, Err: err})
 			}
 		}
 		if m == nil {

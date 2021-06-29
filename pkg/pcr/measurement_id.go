@@ -30,10 +30,11 @@ func (id *MeasurementID) UnmarshalJSON(b []byte) error {
 	return fmt.Errorf("invalid MeasurementID: '%s'", s)
 }
 
+// List of available MeasurementID-s
 const (
 	MeasurementIDUndefined = MeasurementID(iota)
 	MeasurementIDInit
-	MeasurementIDPCR0_DATA
+	MeasurementIDPCR0DATA
 	MeasurementIDACM
 	MeasurementIDACMDate
 	MeasurementIDBIOSStartupModule
@@ -89,7 +90,7 @@ func (id MeasurementID) String() string {
 		return "init"
 	case MeasurementIDACM:
 		return "ACM"
-	case MeasurementIDPCR0_DATA:
+	case MeasurementIDPCR0DATA:
 		return "PCR0_DATA"
 	case MeasurementIDACMDate:
 		return "ACM_date"
@@ -117,11 +118,14 @@ func (id MeasurementID) String() string {
 	return fmt.Sprintf("unknown_measurement_ID_%d", int(id))
 }
 
+// PCRIDs returns in which PCRs the measurement is supposed to be used.
+//
+// Currently we support only PCR0, so everything returns 0 or nil.
 func (id MeasurementID) PCRIDs() []ID {
 	switch id {
 	case MeasurementIDInit:
 		return []ID{0}
-	case MeasurementIDPCR0_DATA:
+	case MeasurementIDPCR0DATA:
 		return []ID{0}
 	case MeasurementIDACM:
 		return []ID{0}
@@ -158,7 +162,7 @@ func (id MeasurementID) EventLogEventType() *tpmeventlog.EventType {
 	switch id {
 	case MeasurementIDInit:
 		return eventTypePtr(tpmeventlog.EV_NO_ACTION)
-	case MeasurementIDPCR0_DATA:
+	case MeasurementIDPCR0DATA:
 		return eventTypePtr(tpmeventlog.EV_S_CRTM_CONTENTS)
 	case MeasurementIDACMDate:
 		return eventTypePtr(tpmeventlog.EV_S_CRTM_CONTENTS)
@@ -227,7 +231,7 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			return MeasureInit(), nil
 		}
-	case MeasurementIDPCR0_DATA:
+	case MeasurementIDPCR0DATA:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			return MeasurePCR0Data(config, provider.FITEntries())
 		}
@@ -313,6 +317,7 @@ func (id *DataChunkID) UnmarshalJSON(b []byte) error {
 	return fmt.Errorf("invalid DataChunkID: '%s'", s)
 }
 
+// The list of available DataChunkID-s
 const (
 	DataChunkIDUndefined = DataChunkID(iota)
 	DataChunkIDBIOSStartup0

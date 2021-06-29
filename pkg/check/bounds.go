@@ -7,13 +7,13 @@ import (
 func bounds(length uint, startIdx, endIdx int) error {
 	result := &errors.MultiError{}
 	if startIdx < 0 {
-		result.Add(&errors.ErrStartLessThanZero{StartIdx: startIdx})
+		_ = result.Add(&errors.ErrStartLessThanZero{StartIdx: startIdx})
 	}
 	if endIdx < startIdx {
-		result.Add(&errors.ErrEndLessThanStart{StartIdx: startIdx, EndIdx: endIdx})
+		_ = result.Add(&errors.ErrEndLessThanStart{StartIdx: startIdx, EndIdx: endIdx})
 	}
 	if endIdx >= 0 && uint(endIdx) > length {
-		result.Add(&errors.ErrEndGreaterThanLength{Length: length, EndIdx: endIdx})
+		_ = result.Add(&errors.ErrEndGreaterThanLength{Length: length, EndIdx: endIdx})
 	}
 
 	return result.ReturnValue()

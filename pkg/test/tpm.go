@@ -4,16 +4,16 @@ import (
 	"bytes"
 	"crypto"
 	"encoding/binary"
-
 	"fmt"
 	"strings"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	tpm1 "github.com/google/go-tpm/tpm"
-	tpm2 "github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/tpm2"
 )
 
+//nolint
 const (
 	// Intel Trusted Execution Technology Software Development Guide - Measured Launched Environment Developer’s Guide
 	// August 2016 - Revision 013 - Document: 315168-013
@@ -62,7 +62,6 @@ const (
 )
 
 var (
-	tpmCon                *hwapi.TPM
 	tpm20AUXIndexHashData = []byte{0xEF, 0x9A, 0x26, 0xFC, 0x22, 0xD1, 0xAE, 0x8C, 0xEC, 0xFF, 0x59, 0xE9, 0x48, 0x1A, 0xC1, 0xEC, 0x53, 0x3D, 0xBE, 0x22, 0x8B, 0xEC, 0x6D, 0x17, 0x93, 0x0F, 0x4C, 0xB2, 0xCC, 0x5B, 0x97, 0x24}
 
 	testtpmconnection = Test{
@@ -271,13 +270,13 @@ func PSIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (boo
 		if d1.Permission.Attributes != tpm12PSIndexAttr {
 			return false, fmt.Errorf("Permissions of PS Index are invalid - have: %v - want: %v", d1.Permission.Attributes, tpm12PSIndexAttr), nil
 		}
-		if d1.ReadSTClear != false {
+		if d1.ReadSTClear {
 			return false, fmt.Errorf("ReadSTClear is set - that is an error"), nil
 		}
-		if d1.WriteSTClear != false {
+		if d1.WriteSTClear {
 			return false, fmt.Errorf("WristeSTClear is set - that is an error"), nil
 		}
-		if d1.WriteDefine != true {
+		if !d1.WriteDefine {
 			return true, fmt.Errorf("WriteDefine is not set - This is no error for provisioning"), nil
 		}
 		return true, nil, nil
@@ -376,13 +375,13 @@ func AUXIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bo
 		if d1.Size != tpm12AUXIndexSize {
 			return false, fmt.Errorf("Size incorrect: Have: %v - Want: 64", d1.Size), nil
 		}
-		if d1.ReadSTClear != false {
+		if d1.ReadSTClear {
 			return false, fmt.Errorf("ReadSTClear is set - that is an error"), nil
 		}
-		if d1.WriteSTClear != false {
+		if d1.WriteSTClear {
 			return false, fmt.Errorf("WristeSTClear is set - that is an error"), nil
 		}
-		if d1.WriteDefine != false {
+		if d1.WriteDefine {
 			return true, fmt.Errorf("WriteDefine is set - This index is broken beyond repair"), nil
 		}
 
@@ -709,6 +708,9 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration)
 		size := uint16(crypto.Hash(d.NameAlg).Size()) + tpm20POIndexBaseSize
 
 		data, err := txtAPI.NVReadValue(tpmCon, tpm20POIndex, "", uint32(size), tpm20POIndex)
+		if err != nil {
+			return false, fmt.Errorf("unable to read NV value: %w", err), nil
+		}
 		pol1, pol2, err = tools.ParsePolicy(data)
 		if err != nil {
 			return false, nil, err
@@ -844,6 +846,9 @@ func readPSLCPPolicy(txtAPI hwapi.APIInterfaces) (*tools.LCPPolicy, *tools.LCPPo
 		size := uint16(crypto.Hash(d.NameAlg).Size()) + tpm20PSIndexBaseSize
 
 		data, err := txtAPI.NVReadValue(tpmCon, tpm20PSIndex, "", uint32(size), tpm20PSIndex)
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to read NV value: %w", err)
+		}
 		pol1, pol2, err = tools.ParsePolicy(data)
 		if err != nil {
 			return nil, nil, err
@@ -885,7 +890,6 @@ func TXTModeValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool
 		if pol2 != nil && pol2.PolicyType == tools.LCPPolicyTypeAny {
 			return true, nil, nil
 		}
-		break
 	case tools.SignedPolicy:
 		if pol1 != nil && pol1.PolicyType == tools.LCPPolicyTypeList {
 			return true, nil, nil
@@ -893,7 +897,6 @@ func TXTModeValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool
 		if pol2 != nil && pol2.PolicyType == tools.LCPPolicyTypeList {
 			return true, nil, nil
 		}
-		break
 	}
 	return false, nil, fmt.Errorf("Couldn't validate TXT mode of operation")
 }

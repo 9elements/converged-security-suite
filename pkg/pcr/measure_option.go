@@ -14,8 +14,7 @@ type MeasureOption interface {
 	Apply(*MeasurementConfig) error
 }
 
-// SetTXTEnabled allows to override if the Trusted Execution Technology (TXT)
-// is considered enabled while PCR measurements.
+// SetFlow overrides the measurements flow.
 type SetFlow Flow
 
 // Apply implements `MeasureOption`
@@ -46,15 +45,19 @@ func (opt SetFindMissingFakeMeasurements) Apply(config *MeasurementConfig) error
 	return nil
 }
 
+// SetRegisters sets the status registers
 type SetRegisters registers.Registers
 
+// Apply implements `MeasureOption`
 func (opt SetRegisters) Apply(config *MeasurementConfig) error {
 	config.Registers = registers.Registers(opt)
 	return nil
 }
 
+// SetTPMDevice sets the TPM type.
 type SetTPMDevice tpmdetection.Type
 
+// Apply implements `MeasureOption`
 func (opt SetTPMDevice) Apply(config *MeasurementConfig) error {
 	config.TPMDevice = tpmdetection.Type(opt)
 	return nil

@@ -1,12 +1,9 @@
 package pcd
 
 import (
-	"bytes"
-
 	"github.com/linuxboot/fiano/pkg/guid"
 
 	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
-	"github.com/9elements/converged-security-suite/v2/pkg/pcd/consts"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
 )
 
@@ -38,6 +35,7 @@ type ParsedFirmware interface {
 	GetFirmwareVendorVersionFFSGUID() guid.GUID
 }
 
+// ParsedFirmwareGeneric is a generic parsed PCD
 type ParsedFirmwareGeneric struct {
 	FirmwareImage FirmwareImage
 
@@ -46,22 +44,29 @@ type ParsedFirmwareGeneric struct {
 	FirmwareVendorVersionFFSGUID    guid.GUID
 }
 
+// GetFirmwareVendorVersion returns firmware vendor version
 func (pcd *ParsedFirmwareGeneric) GetFirmwareVendorVersion() []byte {
 	return pcd.FirmwareVendorVersionRanges.Compile(pcd.FirmwareImage.ImageBytes())
 }
 
+// GetFirmwareVendorVersionRanges returns where the firmware vendor version is stored.
 func (pcd *ParsedFirmwareGeneric) GetFirmwareVendorVersionRanges() pkgbytes.Ranges {
 	return pcd.FirmwareVendorVersionRanges
 }
 
+// GetFirmwareVendorVersionCodeRanges return the address of the whole executable,
+// containing the firmware vendor version (if it is stored in the executable file).
 func (pcd *ParsedFirmwareGeneric) GetFirmwareVendorVersionCodeRanges() pkgbytes.Ranges {
 	return pcd.FirmwareVendorVersionCodeRanges
 }
 
+// GetFirmwareVendorVersionFFSGUID returns the GUID of the component which
+// stores the firmware vendor version
 func (pcd *ParsedFirmwareGeneric) GetFirmwareVendorVersionFFSGUID() guid.GUID {
 	return pcd.FirmwareVendorVersionFFSGUID
 }
 
+// FirmwareImage is an UEFI firmware image.
 type FirmwareImage = *uefi.UEFI
 
 // ParseFirmware extracts PCD values from an UEFI firmware.
@@ -101,18 +106,4 @@ var firmwareParsers []firmwareParser
 // an additional vendor (see parse_firmware_*.go files).
 func addFirmwareParser(parserFunc firmwareParser) {
 	firmwareParsers = append(firmwareParsers, parserFunc)
-}
-
-// See: https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Portable_Executable_32_bit_Structure_in_SVG_fixed.svg/1280px-Portable_Executable_32_bit_Structure_in_SVG_fixed.svg.png
-func findPEFileStart(data []byte) (result int) {
-	end := len(data) - 0x125
-	for result = 0; result < end; result++ {
-		if bytes.Compare(data[result:result+2], consts.MZSignature) != 0 {
-			continue
-		}
-
-		return
-	}
-
-	return -1
 }

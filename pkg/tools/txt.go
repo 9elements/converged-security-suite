@@ -3,6 +3,7 @@ package tools
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
@@ -159,7 +160,10 @@ func ParseTXTRegs(data []byte) (TXTRegisterSpace, error) {
 
 	// TXT.ESTS (0x8)
 	buf := bytes.NewReader(data)
-	buf.Seek(int64(txtEsts), io.SeekStart)
+	_, err = buf.Seek(int64(txtEsts), io.SeekStart)
+	if err != nil {
+		return regSpace, fmt.Errorf("unable to seek: %w", err)
+	}
 	err = binary.Read(buf, binary.LittleEndian, &regSpace.TxtReset)
 
 	if err != nil {
@@ -167,21 +171,30 @@ func ParseTXTRegs(data []byte) (TXTRegisterSpace, error) {
 	}
 
 	// TXT.BootSTATUS (0xa0)
-	buf.Seek(int64(txtBootStatus), io.SeekStart)
+	_, err = buf.Seek(int64(txtBootStatus), io.SeekStart)
+	if err != nil {
+		return regSpace, fmt.Errorf("unable to seek: %w", err)
+	}
 	err = binary.Read(buf, binary.LittleEndian, &regSpace.BootStatus)
 	if err != nil {
 		return regSpace, err
 	}
 
 	// TXT.VER.FSBIF
-	buf.Seek(int64(txtVerFSBIF), io.SeekStart)
+	_, err = buf.Seek(int64(txtVerFSBIF), io.SeekStart)
+	if err != nil {
+		return regSpace, fmt.Errorf("unable to seek: %w", err)
+	}
 	err = binary.Read(buf, binary.LittleEndian, &regSpace.FsbIf)
 	if err != nil {
 		return regSpace, err
 	}
 
 	// TXT.DIDVID
-	buf.Seek(int64(txtDIDVID), io.SeekStart)
+	_, err = buf.Seek(int64(txtDIDVID), io.SeekStart)
+	if err != nil {
+		return regSpace, fmt.Errorf("unable to seek: %w", err)
+	}
 	err = binary.Read(buf, binary.LittleEndian, &regSpace.Vid)
 	if err != nil {
 		return regSpace, err
@@ -200,42 +213,60 @@ func ParseTXTRegs(data []byte) (TXTRegisterSpace, error) {
 	}
 
 	// TXT.VER.QPIIF
-	buf.Seek(int64(txtVerQPIFF), io.SeekStart)
+	_, err = buf.Seek(int64(txtVerQPIFF), io.SeekStart)
+	if err != nil {
+		return regSpace, fmt.Errorf("unable to seek: %w", err)
+	}
 	err = binary.Read(buf, binary.LittleEndian, &regSpace.QpiIf)
 	if err != nil {
 		return regSpace, err
 	}
 
 	// TXT.SINIT.BASE
-	buf.Seek(int64(txtsInitBase), io.SeekStart)
+	_, err = buf.Seek(int64(txtsInitBase), io.SeekStart)
+	if err != nil {
+		return regSpace, fmt.Errorf("unable to seek: %w", err)
+	}
 	err = binary.Read(buf, binary.LittleEndian, &regSpace.SinitBase)
 	if err != nil {
 		return regSpace, err
 	}
 
 	// TXT.SINIT.SIZE
-	buf.Seek(int64(txtsInitSize), io.SeekStart)
+	_, err = buf.Seek(int64(txtsInitSize), io.SeekStart)
+	if err != nil {
+		return regSpace, fmt.Errorf("unable to seek: %w", err)
+	}
 	err = binary.Read(buf, binary.LittleEndian, &regSpace.SinitSize)
 	if err != nil {
 		return regSpace, err
 	}
 
 	// TXT.MLE.JOIN
-	buf.Seek(int64(txtMLEJoin), io.SeekStart)
+	_, err = buf.Seek(int64(txtMLEJoin), io.SeekStart)
+	if err != nil {
+		return regSpace, fmt.Errorf("unable to seek: %w", err)
+	}
 	err = binary.Read(buf, binary.LittleEndian, &regSpace.MleJoin)
 	if err != nil {
 		return regSpace, err
 	}
 
 	// TXT.HEAP.BASE
-	buf.Seek(int64(txtHeapBase), io.SeekStart)
+	_, err = buf.Seek(int64(txtHeapBase), io.SeekStart)
+	if err != nil {
+		return regSpace, fmt.Errorf("unable to seek: %w", err)
+	}
 	err = binary.Read(buf, binary.LittleEndian, &regSpace.HeapBase)
 	if err != nil {
 		return regSpace, err
 	}
 
 	// TXT.HEAP.SIZE
-	buf.Seek(int64(txtHeapSize), io.SeekStart)
+	_, err = buf.Seek(int64(txtHeapSize), io.SeekStart)
+	if err != nil {
+		return regSpace, fmt.Errorf("unable to seek: %w", err)
+	}
 	err = binary.Read(buf, binary.LittleEndian, &regSpace.HeapSize)
 	if err != nil {
 		return regSpace, err
@@ -243,7 +274,10 @@ func ParseTXTRegs(data []byte) (TXTRegisterSpace, error) {
 
 	// TXT.PUBLIC.KEY
 	for i := 0; i < 4; i++ {
-		buf.Seek(int64(txtPublicKey+int64(i)*8), io.SeekStart)
+		_, err = buf.Seek(txtPublicKey+int64(i)*8, io.SeekStart)
+		if err != nil {
+			return regSpace, fmt.Errorf("unable to seek: %w", err)
+		}
 		err = binary.Read(buf, binary.LittleEndian, &regSpace.PublicKey[i])
 		if err != nil {
 			return regSpace, err
@@ -251,7 +285,10 @@ func ParseTXTRegs(data []byte) (TXTRegisterSpace, error) {
 	}
 
 	// TXT.E2STS
-	buf.Seek(int64(txtE2STS), io.SeekStart)
+	_, err = buf.Seek(int64(txtE2STS), io.SeekStart)
+	if err != nil {
+		return regSpace, fmt.Errorf("unable to seek: %w", err)
+	}
 	err = binary.Read(buf, binary.LittleEndian, &regSpace.E2Sts)
 	if err != nil {
 		return regSpace, err

@@ -2,11 +2,15 @@ package diff
 
 import (
 	"bytes"
-	_ "net/http/pprof"
 
 	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
 )
 
+// Diff compares firmwareGoodData and firmwareBadData in areas specified by
+// rangesOrig and returns the ranges where the data differs.
+//
+// ignoreByteSet is a set of bytes, each of which is just skipped while looking
+// for differences.
 func Diff(rangesOrig pkgbytes.Ranges, firmwareGoodData, firmwareBadData, ignoreByteSet []byte) pkgbytes.Ranges {
 	var diffEntries pkgbytes.Ranges
 

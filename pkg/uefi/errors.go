@@ -8,6 +8,7 @@ func (err ErrUnableToUnwrapHPSignedFile) Error() string {
 	return `unable to unwrap "HP signed file"`
 }
 
+// ErrZeroImage means the image has no other data than zeros.
 type ErrZeroImage struct{}
 
 func (err ErrZeroImage) Error() string {

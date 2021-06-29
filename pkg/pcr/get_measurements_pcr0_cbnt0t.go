@@ -21,6 +21,7 @@ type pcr0Data struct {
 	ibbDigest       pkgbytes.Range
 }
 
+// Measurement returns pcr0Data as a Measurement.
 func (d pcr0Data) Measurement() *Measurement {
 	var dataChunks []DataChunk
 	acmPolicyStatusChunk := DataChunk{
@@ -37,11 +38,12 @@ func (d pcr0Data) Measurement() *Measurement {
 	dataChunks = append(dataChunks, *NewRangeDataChunk(DataChunkIDIBBDigest, d.ibbDigest.Offset, d.ibbDigest.Length))
 
 	return &Measurement{
-		ID:   MeasurementIDPCR0_DATA,
+		ID:   MeasurementIDPCR0DATA,
 		Data: dataChunks,
 	}
 }
 
+// MeasurePCR0Data returns a PCR0_DATA measurement.
 func MeasurePCR0Data(config MeasurementConfig, fitEntries []fit.Entry) (*Measurement, error) {
 	var data pcr0Data
 

@@ -8,6 +8,7 @@ import (
 	"fmt"
 )
 
+//nolint
 var (
 	txtRegisterValues    *tools.TXTRegisterSpace
 	testcheckforintelcpu = Test{
@@ -230,7 +231,7 @@ func Ia32FeatureCtrl(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (b
 		return false, nil, err
 	}
 
-	if locked != true {
+	if !locked {
 		return false, fmt.Errorf("IA32 Feature Control not locked"), nil
 	}
 	return true, nil, nil
@@ -252,7 +253,7 @@ func TXTNotDisabled(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bo
 	if err != nil {
 		return false, nil, err
 	}
-	if ret != true {
+	if !ret {
 		return false, fmt.Errorf("TXT disabled"), nil
 	}
 	return true, nil, nil

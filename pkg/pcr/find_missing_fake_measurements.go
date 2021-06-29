@@ -157,15 +157,8 @@ func (job *findMissingFakeMeasurementsJob) runWorkers() {
 }
 
 func (job *findMissingFakeMeasurementsJob) resultWorkerLoop() {
-	for {
-		select {
-		case r, ok := <-job.resultChan:
-			if !ok {
-				return
-			}
-
-			job.result = append(job.result, r)
-		}
+	for r := range job.resultChan {
+		job.result = append(job.result, r)
 	}
 }
 
@@ -186,14 +179,8 @@ func (job *findMissingFakeMeasurementsJob) taskWorkerLoop() {
 	measuredRanges.SortAndMerge()
 	pcr0Value := job.measurementsOrig.Calculate(job.firmware.Buf(), 0, pcrHashFunc, nil)
 
-	for {
-		select {
-		case task, ok := <-job.taskChan:
-			if !ok {
-				return
-			}
-			job.processTask(imageBytes, measuredRanges, pcr0Value, pcrHashFunc, damagedImagePreallocatedBuffer, task)
-		}
+	for task := range job.taskChan {
+		job.processTask(imageBytes, measuredRanges, pcr0Value, pcrHashFunc, damagedImagePreallocatedBuffer, task)
 	}
 }
 
@@ -306,7 +293,7 @@ func (job *findMissingFakeMeasurementsJob) processTask(
 	hasProblem := firmwareDamaged == nil || measurementsDamaged == nil
 	if !hasProblem {
 		pcr0ValueDamaged := measurementsDamaged.Calculate(firmwareDamaged.Buf(), 0, pcrHashFunc, nil)
-		hasProblem = bytes.Compare(pcr0Value, pcr0ValueDamaged) != 0
+		hasProblem = !bytes.Equal(pcr0Value, pcr0ValueDamaged)
 	}
 
 	if hasProblem {

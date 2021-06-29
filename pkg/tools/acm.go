@@ -237,7 +237,10 @@ func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error, error) {
 
 	acm := ACM{acmheader, scratch, acminfo}
 
-	buf.Seek(int64(acm.Info.ChipsetIDList), io.SeekStart)
+	_, err = buf.Seek(int64(acm.Info.ChipsetIDList), io.SeekStart)
+	if err != nil {
+		return nil, nil, nil, nil, nil, fmt.Errorf("unable to seek: %w", err)
+	}
 	err = binary.Read(buf, binary.LittleEndian, &chipsets.Count)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
@@ -249,7 +252,10 @@ func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error, error) {
 		return nil, nil, nil, nil, nil, err
 	}
 
-	buf.Seek(int64(acm.Info.ProcessorIDList), io.SeekStart)
+	_, err = buf.Seek(int64(acm.Info.ProcessorIDList), io.SeekStart)
+	if err != nil {
+		return nil, nil, nil, nil, nil, fmt.Errorf("unable to seek: %w", err)
+	}
 	err = binary.Read(buf, binary.LittleEndian, &processors.Count)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
@@ -262,7 +268,10 @@ func ParseACM(data []byte) (*ACM, *Chipsets, *Processors, *TPMs, error, error) {
 	}
 
 	if acm.Info.ACMVersion >= 5 {
-		buf.Seek(int64(acm.Info.TPMInfoList), io.SeekStart)
+		_, err = buf.Seek(int64(acm.Info.TPMInfoList), io.SeekStart)
+		if err != nil {
+			return nil, nil, nil, nil, nil, fmt.Errorf("unable to seek: %w", err)
+		}
 		err = binary.Read(buf, binary.LittleEndian, &tpms.Capabilities)
 		if err != nil {
 			return nil, nil, nil, nil, nil, err
@@ -290,8 +299,11 @@ func LookupACMSize(header []byte) (int64, error) {
 	var acmSize uint32
 
 	buf := bytes.NewReader(header[:32])
-	buf.Seek(ACMSizeOffset, io.SeekStart)
-	err := binary.Read(buf, binary.LittleEndian, &acmSize)
+	_, err := buf.Seek(ACMSizeOffset, io.SeekStart)
+	if err != nil {
+		return 0, fmt.Errorf("unable to seek: %w", err)
+	}
+	err = binary.Read(buf, binary.LittleEndian, &acmSize)
 	if err != nil {
 		return 0, err
 	}
@@ -369,16 +381,12 @@ func (a *ACM) PrettyPrint() {
 	switch a.Info.ChipsetACMType {
 	case ACMChipsetTypeBios:
 		fmt.Println("      Chipset ACM: BIOS")
-		break
 	case ACMChipsetTypeBiosRevoc:
 		fmt.Println("      Chipset ACM: BIOS Revocation")
-		break
 	case ACMChipsetTypeSinit:
 		fmt.Println("      Chipset ACM: SINIT")
-		break
 	case ACMChipsetTypeSinitRevoc:
 		fmt.Println("      Chipset ACM: SINIT Revocation")
-		break
 	default:
 		fmt.Println("      Chipset ACM: Unknown")
 	}
