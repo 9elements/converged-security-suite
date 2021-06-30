@@ -5,7 +5,7 @@ import "encoding/binary"
 // Field is a single field inside of register. It is usually only few bits
 // of a register.
 type Field struct {
-	// Name defines field's name/description
+	// Name defines field's Name/description
 	Name string
 
 	// BitOffset defines field's starting position in the register
@@ -18,13 +18,16 @@ type Field struct {
 	Value []byte
 }
 
-type fieldDescription struct {
-	name      string
-	bitOffset uint8
+// FieldDescription is a handy helper for describing information about the registers fields
+type FieldDescription struct {
+	// Name is the name of the field
+	Name string
+	// BitOffset is the offset in bits of the field
+	BitOffset uint8
 }
 
-// calculateRegisterFields is a handy helper that calculate final fields representation
-func calculateRegisterFields(registerValue uint64, registerSize uint8, fields []fieldDescription) []Field {
+// CalculateRegisterFields is a handy helper that calculate final fields representation
+func CalculateRegisterFields(registerValue uint64, registerSize uint8, fields []FieldDescription) []Field {
 	if len(fields) == 0 {
 		return nil
 	}
@@ -35,19 +38,19 @@ func calculateRegisterFields(registerValue uint64, registerSize uint8, fields []
 	var lastBitOffset uint8
 	for i := 1; i < len(fields)+1; i++ {
 		field := Field{
-			Name:      fields[i-1].name,
-			BitOffset: fields[i-1].bitOffset,
+			Name:      fields[i-1].Name,
+			BitOffset: fields[i-1].BitOffset,
 		}
 
-		if lastBitOffset > fields[i-1].bitOffset {
-			panic("input fields should be sorted by bitOffset")
+		if lastBitOffset > fields[i-1].BitOffset {
+			panic("input fields should be sorted by BitOffset")
 		}
-		lastBitOffset = fields[i-1].bitOffset
+		lastBitOffset = fields[i-1].BitOffset
 
 		if i == len(fields) {
 			field.BitSize = registerSize - field.BitOffset
 		} else {
-			field.BitSize = fields[i].bitOffset - field.BitOffset
+			field.BitSize = fields[i].BitOffset - field.BitOffset
 		}
 		v := (registerValue >> fieldsTotalSize) & ((1 << field.BitSize) - 1)
 		field.Value = NumberToFieldValue(v)

@@ -24,37 +24,37 @@ func (reg ACMStatus) Address() uint64 {
 }
 
 func (reg ACMStatus) Fields() []Field {
-	fieldsRaw := []fieldDescription{
+	fieldsRaw := []FieldDescription{
 		{
-			name:      "Module Type",
-			bitOffset: 0,
+			Name:      "Module Type",
+			BitOffset: 0,
 		},
 		{
-			name:      "Class Code",
-			bitOffset: 4,
+			Name:      "Class Code",
+			BitOffset: 4,
 		},
 		{
-			name:      "Major Error Code",
-			bitOffset: 10,
+			Name:      "Major Error Code",
+			BitOffset: 10,
 		},
 		{
-			name:      "ACM_Started",
-			bitOffset: 15,
+			Name:      "ACM_Started",
+			BitOffset: 15,
 		},
 		{
-			name:      "Minor Error Code",
-			bitOffset: 16,
+			Name:      "Minor Error Code",
+			BitOffset: 16,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 28,
+			Name:      "<reserved>",
+			BitOffset: 28,
 		},
 		{
-			name:      "Valid",
-			bitOffset: 31,
+			Name:      "Valid",
+			BitOffset: 31,
 		},
 	}
-	return calculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
 }
 
 func (reg ACMStatus) Raw() uint64 {

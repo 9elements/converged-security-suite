@@ -36,29 +36,29 @@ func (reg TXTDMAProtectedRange) Address() uint64 {
 }
 
 func (reg TXTDMAProtectedRange) Fields() []Field {
-	fieldsRaw := []fieldDescription{
+	fieldsRaw := []FieldDescription{
 		{
-			name:      "Lock",
-			bitOffset: 0,
+			Name:      "Lock",
+			BitOffset: 0,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 1,
+			Name:      "<reserved>",
+			BitOffset: 1,
 		},
 		{
-			name:      "Size of memory, in MB, that will be protected from DMA access",
-			bitOffset: 4,
+			Name:      "Size of memory, in MB, that will be protected from DMA access",
+			BitOffset: 4,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 12,
+			Name:      "<reserved>",
+			BitOffset: 12,
 		},
 		{
-			name:      "Top address + 1 of DPR. This is the base of TSEG",
-			bitOffset: 20,
+			Name:      "Top address + 1 of DPR. This is the base of TSEG",
+			BitOffset: 20,
 		},
 	}
-	return calculateRegisterFields(uint64(reg), reg.BitSize(), fieldsRaw)
+	return CalculateRegisterFields(uint64(reg), reg.BitSize(), fieldsRaw)
 }
 
 func (reg TXTDMAProtectedRange) DMAProtectedRange() DMAProtectedRange {

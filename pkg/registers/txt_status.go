@@ -28,45 +28,45 @@ func (reg TXTStatus) Address() uint64 {
 }
 
 func (reg TXTStatus) Fields() []Field {
-	fieldsRaw := []fieldDescription{
+	fieldsRaw := []FieldDescription{
 		{
-			name:      "SENTER.DONE.STS",
-			bitOffset: 0,
+			Name:      "SENTER.DONE.STS",
+			BitOffset: 0,
 		},
 		{
-			name:      "SEXIT.DONE.STS",
-			bitOffset: 1,
+			Name:      "SEXIT.DONE.STS",
+			BitOffset: 1,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 2,
+			Name:      "<reserved>",
+			BitOffset: 2,
 		},
 		{
-			name:      "MEM-CONFIGLOCK.STS",
-			bitOffset: 6,
+			Name:      "MEM-CONFIGLOCK.STS",
+			BitOffset: 6,
 		},
 		{
-			name:      "PRIVATEOPEN.STS",
-			bitOffset: 7,
+			Name:      "PRIVATEOPEN.STS",
+			BitOffset: 7,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 8,
+			Name:      "<reserved>",
+			BitOffset: 8,
 		},
 		{
-			name:      "TXT.LOCALITY1.OPEN.STS",
-			bitOffset: 15,
+			Name:      "TXT.LOCALITY1.OPEN.STS",
+			BitOffset: 15,
 		},
 		{
-			name:      "TXT.LOCALITY2.OPEN.STS",
-			bitOffset: 16,
+			Name:      "TXT.LOCALITY2.OPEN.STS",
+			BitOffset: 16,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 17,
+			Name:      "<reserved>",
+			BitOffset: 17,
 		},
 	}
-	return calculateRegisterFields(uint64(reg), reg.BitSize(), fieldsRaw)
+	return CalculateRegisterFields(uint64(reg), reg.BitSize(), fieldsRaw)
 }
 
 // SENTER.DONE.STS (0)

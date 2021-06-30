@@ -18,17 +18,17 @@ func (reg BootGuardPBEC) Address() uint64 {
 }
 
 func (reg BootGuardPBEC) Fields() []Field {
-	fieldsRaw := []fieldDescription{
+	fieldsRaw := []FieldDescription{
 		{
-			name:      "StopPBET",
-			bitOffset: 0,
+			Name:      "StopPBET",
+			BitOffset: 0,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 1,
+			Name:      "<reserved>",
+			BitOffset: 1,
 		},
 	}
-	return calculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
 }
 
 func (reg BootGuardPBEC) Raw() uint64 {

@@ -18,25 +18,25 @@ func (reg IA32SMRRPhysBase) Address() uint64 {
 }
 
 func (reg IA32SMRRPhysBase) Fields() []Field {
-	fieldsRaw := []fieldDescription{
+	fieldsRaw := []FieldDescription{
 		{
-			name:      "Type",
-			bitOffset: 0,
+			Name:      "Type",
+			BitOffset: 0,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 8,
+			Name:      "<reserved>",
+			BitOffset: 8,
 		},
 		{
-			name:      "PhysBase",
-			bitOffset: 12,
+			Name:      "PhysBase",
+			BitOffset: 12,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 32,
+			Name:      "<reserved>",
+			BitOffset: 32,
 		},
 	}
-	return calculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
 }
 
 func (reg IA32SMRRPhysBase) Raw() uint64 {

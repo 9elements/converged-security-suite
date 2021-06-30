@@ -18,61 +18,61 @@ func (reg BTGSACMInfo) Address() uint64 {
 }
 
 func (reg BTGSACMInfo) Fields() []Field {
-	fieldsRaw := []fieldDescription{
+	fieldsRaw := []FieldDescription{
 		{
-			name:      "NEMEnabled",
-			bitOffset: 0,
+			Name:      "NEMEnabled",
+			BitOffset: 0,
 		},
 		{
-			name:      "TPMType",
-			bitOffset: 1,
+			Name:      "TPMType",
+			BitOffset: 1,
 		},
 		{
-			name:      "TPMSuccess",
-			bitOffset: 3,
+			Name:      "TPMSuccess",
+			BitOffset: 3,
 		},
 		{
-			name:      "Force Anchor Boot",
-			bitOffset: 4,
+			Name:      "Force Anchor Boot",
+			BitOffset: 4,
 		},
 		{
-			name:      "Measured",
-			bitOffset: 5,
+			Name:      "Measured",
+			BitOffset: 5,
 		},
 		{
-			name:      "Verified",
-			bitOffset: 6,
+			Name:      "Verified",
+			BitOffset: 6,
 		},
 		{
-			name:      "ModuleRevoked",
-			bitOffset: 7,
+			Name:      "ModuleRevoked",
+			BitOffset: 7,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 8,
+			Name:      "<reserved>",
+			BitOffset: 8,
 		},
 		{
-			name:      "BootGuardCapability",
-			bitOffset: 32,
+			Name:      "BootGuardCapability",
+			BitOffset: 32,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 33,
+			Name:      "<reserved>",
+			BitOffset: 33,
 		},
 		{
-			name:      "ServerTXTCapability",
-			bitOffset: 34,
+			Name:      "ServerTXTCapability",
+			BitOffset: 34,
 		},
 		{
-			name:      "No Reset Secrets Protection",
-			bitOffset: 35,
+			Name:      "No Reset Secrets Protection",
+			BitOffset: 35,
 		},
 		{
-			name:      "<reserved>",
-			bitOffset: 36,
+			Name:      "<reserved>",
+			BitOffset: 36,
 		},
 	}
-	return calculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
 }
 
 func (reg BTGSACMInfo) Raw() uint64 {
