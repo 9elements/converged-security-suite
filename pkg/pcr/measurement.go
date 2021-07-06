@@ -127,6 +127,15 @@ func NewRangeDataChunk(id DataChunkID, offset uint64, length uint64) *DataChunk 
 	}
 }
 
+// MeasureEvent describes a measurement event that can calculate the hash given the data
+type MeasureEvent interface {
+	// NOTE: this would normally be named ID() but it conflicts with Measurement.ID that
+	// will implement this interface later on
+	GetID() MeasurementID
+	CompileMeasurableData(image []byte) []byte
+	Calculate(image []byte, hasher hash.Hash) ([]byte, error)
+}
+
 // Measurement is the key structure of all packages `pcr0/...`.
 //
 // It defines one PCR measurement. Usually it means to extend the
@@ -141,6 +150,11 @@ type Measurement struct {
 
 func eventTypePtr(t tpmeventlog.EventType) *tpmeventlog.EventType {
 	return &t
+}
+
+// GetID return the measurement ID
+func (m Measurement) GetID() MeasurementID {
+	return m.ID
 }
 
 // IsFake forces to skip this measurement in real PCR value calculation
@@ -206,6 +220,26 @@ func (m Measurement) Ranges() bytes.Ranges {
 	return m.Data.Ranges()
 }
 
+// Calculate returns the hash from the gathered blocks from image
+func (m *Measurement) Calculate(image []byte, hashFunc hash.Hash) ([]byte, error) {
+	if m.IsFake() {
+		return nil, nil
+	}
+
+	data := m.CompileMeasurableData(image)
+	if m.NoHash() {
+		return data, nil
+	}
+
+	_, err := hashFunc.Write(data)
+	if err != nil {
+		return nil, err
+	}
+
+	defer hashFunc.Reset()
+	return hashFunc.Sum(nil), nil
+}
+
 // NewStaticDataMeasurement returns a measurement of a pre-defined value.
 func NewStaticDataMeasurement(id MeasurementID, data []byte) *Measurement {
 	return &Measurement{
@@ -246,6 +280,31 @@ func NewRangeMeasurement(id MeasurementID, offset uint64, length uint64) *Measur
 			},
 		},
 	}
+}
+
+// CachedMeasurement is a Measurement with hash value computed at creation time
+type CachedMeasurement struct {
+	Measurement
+	data []byte
+	hash []byte
+}
+
+func (m Measurement) Cache(image []byte, hasher hash.Hash) (*CachedMeasurement, error) {
+	data := m.CompileMeasurableData(image)
+	hash, err := m.Calculate(image, hasher)
+	if err != nil {
+		return nil, err
+	}
+
+	return &CachedMeasurement{m, data, hash}, nil
+}
+
+func (m CachedMeasurement) CompileMeasurableData(image []byte) []byte {
+	return m.data
+}
+
+func (m CachedMeasurement) Calculate(image []byte, hasher hash.Hash) ([]byte, error) {
+	return m.hash, nil
 }
 
 // Measurements is multiple Measurements.
@@ -349,57 +408,60 @@ type Printfer interface {
 	Printf(fmt string, args ...interface{})
 }
 
-// Calculate performs the calculation of the PCR value using image `uefi`.
-//
-// Argument "imageOffset" should be non-zero only if the beginning of the "image"
-// has a non-zero offset relatively to the beginning of the "image" used to
-// prepare these Measurements.
+// Calculate [deprecated since 1jul2021] performs the calculation of the PCR value using image `uefi`.
 func (s Measurements) Calculate(image []byte, initialValue uint8, hashFunc hash.Hash, logger Printfer) []byte {
+	mes := make([]MeasureEvent, len(s))
+	for i := range s {
+		mes[i] = s[i]
+	}
+
+	hash, err := CalculatePCR(image, initialValue, mes, hashFunc, logger)
+	if err != nil {
+		panic(err)
+	}
+	return hash
+}
+
+// CalculatePCR performs the calculation of the PCR value using image `uefi`.
+func CalculatePCR(image []byte, initialValue uint8, measureEvents []MeasureEvent, hasher hash.Hash, logger Printfer) ([]byte, error) {
 	if logger == nil {
 		logger = log.New(ioutil.Discard, ``, 0)
 	}
 
-	result := make([]byte, hashFunc.Size())
+	result := make([]byte, hasher.Size())
 	result[len(result)-1] = initialValue
 	logger.Printf("Set 0x -> 0x%X\n\n", result)
 
-	for _, measurement := range s {
-		if measurement == nil || measurement.IsFake() {
+	for _, m := range measureEvents {
+		hash, err := m.Calculate(image, hasher)
+		if err != nil {
+			return nil, err
+		}
+		if hash == nil {
 			continue
 		}
-		measurementData := measurement.CompileMeasurableData(image)
 
-		var hashValue []byte
-		if measurement.NoHash() {
-			hashValue = measurementData
+		data := m.CompileMeasurableData(image)
+		if uint(len(data)) > LoggingDataLimit {
+			logger.Printf("Event '%s': %x... (len: %d) (%T)\n", m.GetID(), data[:LoggingDataLimit], len(data), hasher)
 		} else {
-			_, err := hashFunc.Write(measurementData)
-			assertNoError(err)
-			hashValue = hashFunc.Sum(nil)
-			hashFunc.Reset()
+			logger.Printf("Event '%s': %x (%T)\n", m.GetID(), data, hasher)
 		}
 
-		if uint(len(measurementData)) > LoggingDataLimit {
-			logger.Printf("Event '%s': %x... (len: %d) (%T)\n", measurement.ID, measurementData[:LoggingDataLimit], len(measurementData), hashFunc)
-		} else {
-			logger.Printf("Event '%s': %x (%T)\n", measurement.ID, measurementData, hashFunc)
+		_, err = hasher.Write(result)
+		if err != nil {
+			return nil, err
 		}
 
-		_, err := hashFunc.Write(result)
-		assertNoError(err)
-		_, err = hashFunc.Write(hashValue)
-		assertNoError(err)
+		_, err = hasher.Write(hash)
+		if err != nil {
+			return nil, err
+		}
 
 		oldResult := result
-		result = hashFunc.Sum(nil)
-		hashFunc.Reset()
-		logger.Printf("%T(0x %X %X) == 0x%X\n\n", hashFunc, oldResult, hashValue, result)
+		result = hasher.Sum(nil)
+		hasher.Reset()
+		logger.Printf("%T(0x %X %X) == 0x%X\n\n", hasher, oldResult, hash, result)
 	}
-	return result
-}
-
-func assertNoError(err error) {
-	if err != nil {
-		panic(err)
-	}
+	return result, nil
 }
