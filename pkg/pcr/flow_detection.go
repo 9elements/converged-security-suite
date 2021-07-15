@@ -9,7 +9,6 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
-	amd_registers "github.com/9elements/converged-security-suite/v2/pkg/registers/amd"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
 )
 
@@ -113,13 +112,13 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (tpmdetection.Type, 
 func DetectMainAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevice tpmdetection.Type) (Flow, error) {
 	if _, _, err := amd_manifest.FindEmbeddedFirmwareStructure(firmware); err == nil {
 		// AMD
-		if msg37Register, found := amd_registers.FindMP0C2PMsg37(regs); found {
+		if msg37Register, found := registers.FindMP0C2PMsg37(regs); found {
 			if msg37Register.IsPlatformSecureBootEnabled() {
-				return FlowLegacyPSPEnabled, nil
+				return FlowLegacyPSBEnabled, nil
 			}
-			return FlowLegacyPSPDisabled, nil
+			return FlowLegacyPSBDisabled, nil
 		}
-		return FlowLegacyPSPDisabled, nil
+		return FlowLegacyPSBDisabled, nil
 	}
 
 	// Intel
