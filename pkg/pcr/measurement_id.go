@@ -2,6 +2,7 @@ package pcr
 
 import (
 	"fmt"
+	amd_manifest "github.com/9elements/converged-security-suite/v2/pkg/amd/manifest"
 	"strings"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
@@ -219,6 +220,7 @@ type DataProvider interface {
 	Firmware() Firmware
 	FITEntries() []fit.Entry
 	PCDData() pcd.ParsedFirmware
+	PSPFirmware() *amd_manifest.PSPFirmware
 }
 
 // MeasureFunc performs a measurement.
