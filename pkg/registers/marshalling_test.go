@@ -37,6 +37,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 
 	amdRegisters := registers.Registers{
 		registers.ParseMP0C2PMsg37Register(0),
+		registers.ParseMP0C2PMsg38Register(0),
 	}
 
 	regs := append(txtRegisters, append(amdRegisters, msrRegisters...)...)

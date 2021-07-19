@@ -128,6 +128,10 @@ func getRegister32Parser(regID RegisterID) func(ui32 uint32) Register {
 		return func(ui32 uint32) Register {
 			return ParseMP0C2PMsg37Register(ui32)
 		}
+	case MP0C2PMSG38RegisterID:
+		return func(ui32 uint32) Register {
+			return ParseMP0C2PMsg38Register(ui32)
+		}
 	}
 	return nil
 }
