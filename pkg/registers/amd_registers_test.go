@@ -37,12 +37,35 @@ func TestMP0C2PMsg37Register(t *testing.T) {
 func TestRegistersCollection(t *testing.T) {
 	regs := Registers{
 		ParseMP0C2PMsg37Register(1234),
+		ParseMP0C2PMsg38Register(5678),
 	}
-	r, found := FindMP0C2PMsg37(regs)
-	if !found {
-		t.Errorf("%s register is not found", MP0C2PMSG37RegisterID)
+
+	testCases := []struct {
+		registerIndex int
+		findFunction  func(regs Registers) (interface{}, bool)
+	}{
+		{
+			registerIndex: 0,
+			findFunction: func(regs Registers) (interface{}, bool) {
+				return FindMP0C2PMsg37(regs)
+			},
+		},
+		{
+			registerIndex: 1,
+			findFunction: func(regs Registers) (interface{}, bool) {
+				return FindMP0C2PMsg38(regs)
+			},
+		},
 	}
-	if !reflect.DeepEqual(r, regs[0]) {
-		t.Errorf("found register: '%v' doesn't match the one in collection: '%v", r, regs[0])
+
+	for _, testCase := range testCases {
+		r, found := testCase.findFunction(regs)
+		if !found {
+			t.Errorf("%s register is not found", regs[testCase.registerIndex].ID())
+			continue
+		}
+		if !reflect.DeepEqual(r, regs[testCase.registerIndex]) {
+			t.Errorf("found register: '%v' doesn't match the one in collection: '%v", r, regs[testCase.registerIndex])
+		}
 	}
 }
