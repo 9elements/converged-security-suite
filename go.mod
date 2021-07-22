@@ -20,12 +20,12 @@ require (
 	github.com/linuxboot/fiano v6.0.0-rc.0.20210427094458-991eadf32b6a+incompatible
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/pretty v1.0.2
 	github.com/tjfoc/gmsm v1.4.0
 	github.com/ulikunitz/xz v0.5.8
 	github.com/xaionaro-go/gosrc v0.0.0-20201124181305-3fdf8476a735
-	github.com/xaionaro-go/unsafetools v0.0.0-20200202162159-021b112c4d30
+	github.com/xaionaro-go/unsafetools v0.0.0-20210722164218-75ba48cf7b3c
 	golang.org/x/crypto v0.0.0-20201117144127-c1f2f97bffc9
 	golang.org/x/sys v0.0.0-20210218155724-8ebf48af031b // indirect
 )
