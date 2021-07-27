@@ -2,6 +2,7 @@ package pcr
 
 import (
 	"fmt"
+	amd_manifest "github.com/9elements/converged-security-suite/v2/pkg/amd/manifest"
 	"strings"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
@@ -47,6 +48,10 @@ const (
 	MeasurementIDFITHeaders
 	MeasurementIDDeepAnalysis
 	MeasurementIDACMDateInPlace
+	MeasurementIDBIOSDirectoryLevel1Header
+	MeasurementIDBIOSDirectoryLevel1
+	MeasurementIDBIOSDirectoryLevel2Header
+	MeasurementIDBIOSDirectoryLevel2
 	EndOfMeasurementID
 )
 
@@ -114,6 +119,14 @@ func (id MeasurementID) String() string {
 		return "FIT_headers"
 	case MeasurementIDDeepAnalysis:
 		return "deep_analysis"
+	case MeasurementIDBIOSDirectoryLevel1Header:
+		return "Header of BIOS directory table level 1"
+	case MeasurementIDBIOSDirectoryLevel1:
+		return "BIOS directory table level 1"
+	case MeasurementIDBIOSDirectoryLevel2Header:
+		return "Header of BIOS directory table level 2"
+	case MeasurementIDBIOSDirectoryLevel2:
+		return "BIOS directory table level 2"
 	}
 	return fmt.Sprintf("unknown_measurement_ID_%d", int(id))
 }
@@ -151,8 +164,15 @@ func (id MeasurementID) PCRIDs() []ID {
 		return []ID{0}
 	case MeasurementIDDeepAnalysis:
 		return []ID{0}
+	case MeasurementIDBIOSDirectoryLevel1Header:
+		return []ID{0}
+	case MeasurementIDBIOSDirectoryLevel1:
+		return []ID{0}
+	case MeasurementIDBIOSDirectoryLevel2Header:
+		return []ID{0}
+	case MeasurementIDBIOSDirectoryLevel2:
+		return []ID{0}
 	}
-
 	return nil
 }
 
@@ -178,6 +198,14 @@ func (id MeasurementID) EventLogEventType() *tpmeventlog.EventType {
 		return eventTypePtr(tpmeventlog.EV_POST_CODE)
 	case MeasurementIDSeparator:
 		return eventTypePtr(tpmeventlog.EV_SEPARATOR)
+	case MeasurementIDBIOSDirectoryLevel1Header:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDBIOSDirectoryLevel1:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDBIOSDirectoryLevel2Header:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDBIOSDirectoryLevel2:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
 	}
 	return nil
 }
@@ -219,6 +247,7 @@ type DataProvider interface {
 	Firmware() Firmware
 	FITEntries() []fit.Entry
 	PCDData() pcd.ParsedFirmware
+	PSPFirmware() *amd_manifest.PSPFirmware
 }
 
 // MeasureFunc performs a measurement.
@@ -279,7 +308,40 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			return MeasureFITHeaders(provider.Firmware())
 		}
+	case MeasurementIDBIOSDirectoryLevel1Header:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if pspFirmware == nil {
+				return nil, fmt.Errorf("PSP firmware is not found")
+			}
+			return MeasureBIOSDirectoryHeader(pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel1Range)
+		}
+	case MeasurementIDBIOSDirectoryLevel2Header:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if pspFirmware == nil {
+				return nil, fmt.Errorf("PSP firmware is not found")
+			}
+			return MeasureBIOSDirectoryHeader(pspFirmware.BIOSDirectoryLevel2, pspFirmware.BIOSDirectoryLevel2Range)
+		}
+	case MeasurementIDBIOSDirectoryLevel1:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if pspFirmware == nil {
+				return nil, fmt.Errorf("PSP firmware is not found")
+			}
+			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel1, pspFirmware.PSPDirectoryLevel1Range)
+		}
+	case MeasurementIDBIOSDirectoryLevel2:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if pspFirmware == nil {
+				return nil, fmt.Errorf("PSP firmware is not found")
+			}
+			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel2, pspFirmware.PSPDirectoryLevel2Range)
+		}
 	}
+
 	return nil
 }
 
