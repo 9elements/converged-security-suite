@@ -50,7 +50,7 @@ func (r MP0C2PMsg37) IsPlatformSecureBootEnabled() bool {
 
 var _ RawRegister32 = ParseMP0C2PMsg37Register(0)
 
-// ParseMP0C2PMsg37Register returns MP0C2PMsg37Register from a raw 32bit value
+// ParseMP0C2PMsg37Register returns MP0C2PMsg37 register from a raw 32bit value
 func ParseMP0C2PMsg37Register(raw uint32) MP0C2PMsg37 {
 	return MP0C2PMsg37(raw)
 }
