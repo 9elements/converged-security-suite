@@ -67,21 +67,23 @@ func (e *execTestsCmd) Run(ctx *context) error {
 		config.TXTMode = tools.AutoPromotion
 	}
 
+	hwAPI := hwapi.GetAPI()
+
 	switch e.Set {
 	case "all":
 		fmt.Println("For more information about the documents and chapters, run: txt-suite -m")
-		ret = run("All", getTests(), config, e.Interactive)
+		ret = run("All", getTests(), config, hwAPI, e.Interactive)
 	case "uefi":
-		ret = run("UEFI", test.TestsUEFI, config, e.Interactive)
+		ret = run("UEFI", test.TestsUEFI, config, hwAPI, e.Interactive)
 	case "txtready":
 		fmt.Println("For more information about the documents and chapters, run: txt-suite -m")
-		ret = run("TXT Ready", test.TestsTXTReady, config, e.Interactive)
+		ret = run("TXT Ready", test.TestsTXTReady, config, hwAPI, e.Interactive)
 	case "tboot":
-		ret = run("Tboot", test.TestsTBoot, config, e.Interactive)
+		ret = run("Tboot", test.TestsTBoot, config, hwAPI, e.Interactive)
 	case "cbnt":
 		return fmt.Errorf("CBnT support not implemented yet")
 	case "legacy":
-		ret = run("Legacy TXT", test.TestsLegacy, config, e.Interactive)
+		ret = run("Legacy TXT", test.TestsLegacy, config, hwAPI, e.Interactive)
 	default:
 		return fmt.Errorf("No valid test set given")
 	}
@@ -147,11 +149,9 @@ func getTests() []*test.Test {
 	return tests
 }
 
-func run(testGroup string, tests []*test.Test, config tools.Configuration, interactive bool) bool {
+func run(testGroup string, tests []*test.Test, config tools.Configuration, hwAPI hwapi.APIInterfaces, interactive bool) bool {
 	var result = false
 	f := bufio.NewWriter(os.Stdout)
-
-	hwAPI := hwapi.GetAPI()
 
 	fmt.Printf("\n%s tests\n", a.Bold(a.Gray(20-1, testGroup).BgGray(4-1)))
 	var i int
