@@ -96,7 +96,7 @@ type VTdRegisters struct {
 	Reserved12                              uint64 // Reserved for future expansion of Virtual Command Response Register.
 }
 
-func (t TxtAPI) readVTdRegs() (VTdRegisters, error) {
+func readVTdRegs(t APIInterfaces) (VTdRegisters, error) {
 	var regs VTdRegisters
 
 	dir, err := os.Open("/sys/class/iommu/")
@@ -145,7 +145,7 @@ func (t TxtAPI) LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, error
 	ttm := (regs.RootTableAddress >> 10) & 3
 
 	if ttm == 0 {
-		return t.lookupIOLegacy(addr, rootTblAddr)
+		return lookupIOLegacy(addr, rootTblAddr, t)
 	} else if ttm == 1 {
 		return lookupIOScalable(addr, rootTblAddr)
 	} else {
@@ -153,7 +153,7 @@ func (t TxtAPI) LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, error
 	}
 }
 
-func (t TxtAPI) lookupIOLegacy(addr, rootTblAddr uint64) ([]uint64, error) {
+func lookupIOLegacy(addr, rootTblAddr uint64, t APIInterfaces) ([]uint64, error) {
 	ret := []uint64{}
 
 	for bus := int64(0); bus < 256; bus++ {
@@ -300,7 +300,7 @@ func lookupIOScalable(addr, rootTblAddr uint64) ([]uint64, error) {
 
 // AddressRangesIsDMAProtected returns true if the address is DMA protected by the IOMMU
 func (t TxtAPI) AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
-	regs, err := t.readVTdRegs()
+	regs, err := readVTdRegs(t)
 	if err != nil {
 		return false, err
 	}
