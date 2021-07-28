@@ -64,7 +64,7 @@ type acpiXsdt struct {
 	//Entry           []uint64 count depend on Length field
 }
 
-func (t TxtAPI) getACPITableSysFS(n string) ([]byte, error) {
+func getACPITableSysFS(n string) ([]byte, error) {
 	buf, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", acpiSysfsPath, n))
 	if err != nil {
 		return nil, fmt.Errorf("Cannot access sysfs path %s: %s", acpiSysfsPath, err)
@@ -77,7 +77,7 @@ var (
 	backupRSDTList []uint32
 )
 
-func (t TxtAPI) getACPITableDevMemRSDT(address uint32) ([]uint32, []byte, error) {
+func getACPITableDevMemRSDT(address uint32, t APIInterfaces) ([]uint32, []byte, error) {
 	var rsdt acpiRsdt
 	var hdrs []uint32
 
@@ -131,7 +131,7 @@ var (
 	backupXSDTList []uint64
 )
 
-func (t TxtAPI) getACPITableDevMemXSDT(address uint64) ([]uint64, []byte, error) {
+func getACPITableDevMemXSDT(address uint64, t APIInterfaces) ([]uint64, []byte, error) {
 	var xsdt acpiXsdt
 	var hdrs []uint64
 
@@ -185,7 +185,7 @@ var (
 	backupRawRSDP []byte
 )
 
-func (t TxtAPI) parseSystab() ([]byte, ACPIRsdp, error) {
+func parseSystab(t APIInterfaces) ([]byte, ACPIRsdp, error) {
 	var rsdp ACPIRsdp
 
 	buf := make([]byte, binary.Size(rsdp))
@@ -228,7 +228,7 @@ func (t TxtAPI) parseSystab() ([]byte, ACPIRsdp, error) {
 	return nil, rsdp, fmt.Errorf("RSDP not found in systab")
 }
 
-func (t TxtAPI) scanLowMem() ([]byte, ACPIRsdp, error) {
+func scanLowMem(t APIInterfaces) ([]byte, ACPIRsdp, error) {
 
 	var rsdp ACPIRsdp
 
@@ -253,7 +253,7 @@ func (t TxtAPI) scanLowMem() ([]byte, ACPIRsdp, error) {
 	return nil, rsdp, fmt.Errorf("RSDP not found in low memory")
 }
 
-func (t TxtAPI) scanEBDA() ([]byte, ACPIRsdp, error) {
+func scanEBDA(t APIInterfaces) ([]byte, ACPIRsdp, error) {
 
 	var rsdp ACPIRsdp
 
@@ -279,7 +279,7 @@ func (t TxtAPI) scanEBDA() ([]byte, ACPIRsdp, error) {
 	return nil, rsdp, fmt.Errorf("RSDP not found in low memory")
 }
 
-func (t TxtAPI) scanReservedMem() ([]byte, ACPIRsdp, error) {
+func scanReservedMem(t APIInterfaces) ([]byte, ACPIRsdp, error) {
 
 	var rsdp ACPIRsdp
 
@@ -352,7 +352,7 @@ func verifyRSDP(buf []byte, rsdp ACPIRsdp) error {
 	return nil
 }
 
-func (t TxtAPI) getACPITableDevMemRSDP() ([]byte, ACPIRsdp, error) {
+func getACPITableDevMemRSDP(t APIInterfaces) ([]byte, ACPIRsdp, error) {
 
 	var rsdp ACPIRsdp
 
@@ -361,7 +361,7 @@ func (t TxtAPI) getACPITableDevMemRSDP() ([]byte, ACPIRsdp, error) {
 	}
 
 	// Try to get the RSDP address from systab
-	data, rsdp, err := t.parseSystab()
+	data, rsdp, err := parseSystab(t)
 	if err == nil {
 		err = verifyRSDP(data, rsdp)
 		if err == nil {
@@ -371,7 +371,7 @@ func (t TxtAPI) getACPITableDevMemRSDP() ([]byte, ACPIRsdp, error) {
 		}
 	}
 
-	data, rsdp, err = t.scanLowMem()
+	data, rsdp, err = scanLowMem(t)
 	if err == nil {
 		err = verifyRSDP(data, rsdp)
 		if err == nil {
@@ -381,7 +381,7 @@ func (t TxtAPI) getACPITableDevMemRSDP() ([]byte, ACPIRsdp, error) {
 		}
 	}
 
-	data, rsdp, err = t.scanEBDA()
+	data, rsdp, err = scanEBDA(t)
 	if err == nil {
 		err = verifyRSDP(data, rsdp)
 		if err == nil {
@@ -391,7 +391,7 @@ func (t TxtAPI) getACPITableDevMemRSDP() ([]byte, ACPIRsdp, error) {
 		}
 	}
 
-	data, rsdp, err = t.scanReservedMem()
+	data, rsdp, err = scanReservedMem(t)
 
 	if err == nil {
 		err = verifyRSDP(data, rsdp)
@@ -405,9 +405,9 @@ func (t TxtAPI) getACPITableDevMemRSDP() ([]byte, ACPIRsdp, error) {
 	return nil, rsdp, fmt.Errorf("RSDP not found")
 }
 
-func (t TxtAPI) getACPITableDevMem(n string) ([]byte, error) {
+func getACPITableDevMem(n string, t APIInterfaces) ([]byte, error) {
 
-	rsdpBuf, rsdp, err := t.getACPITableDevMemRSDP()
+	rsdpBuf, rsdp, err := getACPITableDevMemRSDP(t)
 	if err != nil {
 		return nil, err
 	}
@@ -420,12 +420,12 @@ func (t TxtAPI) getACPITableDevMem(n string) ([]byte, error) {
 		return rsdpBuf, nil
 	}
 
-	rsdtHeaders, rsdtBuf, err1 := t.getACPITableDevMemRSDT(rsdp.RSDTPtr)
+	rsdtHeaders, rsdtBuf, err1 := getACPITableDevMemRSDT(rsdp.RSDTPtr, t)
 	if err1 == nil && n == "RSDT" {
 		return rsdtBuf, nil
 	}
 
-	xsdtHeaders, xsdtBuf, err2 := t.getACPITableDevMemXSDT(rsdp.XSDTPtr)
+	xsdtHeaders, xsdtBuf, err2 := getACPITableDevMemXSDT(rsdp.XSDTPtr, t)
 	if err2 == nil && n == "XSDT" {
 		return xsdtBuf, nil
 	}
@@ -502,9 +502,9 @@ func (t TxtAPI) GetACPITable(n string) ([]byte, error) {
 	}
 
 	// Try SYSFS first, but it doesn't has RSDP
-	tbl, err := t.getACPITableSysFS(n)
+	tbl, err := getACPITableSysFS(n)
 	if err != nil {
-		tbl, err = t.getACPITableDevMem(n)
+		tbl, err = getACPITableDevMem(n, t)
 	}
 	return tbl, err
 }
