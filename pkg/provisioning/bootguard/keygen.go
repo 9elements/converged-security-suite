@@ -55,6 +55,9 @@ func GenRSAKey(len int, password string, kmPubFile, kmPrivFile, bpmPubFile, bpmP
 func writePrivKeyToFile(k crypto.PrivateKey, f *os.File, password string) error {
 	var key *[]byte
 	b, err := x509.MarshalPKCS8PrivateKey(k)
+	if err != nil {
+		return err
+	}
 	bpemBlock := &pem.Block{
 		Bytes: b,
 	}
