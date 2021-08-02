@@ -30,14 +30,20 @@ type IA32Debug struct {
 	PCHStrap bool
 }
 
+func readMSRFromCpu(msr int64, cpu int) (uint64, error) {
+	msrCtx, err := gomsr.MSR(cpu)
+	if err != nil {
+		return 0, fmt.Errorf("MSR: Selected core %d doesn't exist (%w)", cpu, err)
+	}
+	defer msrCtx.Close()
+
+	return msrCtx.Read(msr)
+}
+
 func readMSR(msr int64) (uint64, error) {
 	var data uint64
 	for i := 0; i < runtime.NumCPU(); i++ {
-		msrCtx, err := gomsr.MSR(i)
-		if err != nil {
-			return 0, fmt.Errorf("MSR: Selected core %d doesn't exist", i)
-		}
-		msrData, err := msrCtx.Read(msr)
+		msrData, err := readMSRFromCpu(msr, i)
 		if err != nil {
 			return 0, err
 		}
