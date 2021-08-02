@@ -16,7 +16,7 @@ type BPMH struct {
 	// PrettyString: ACM SVN Auth
 	ACMSVNAuth common.SVN `json:"bpmhACMSVN"`
 
-	Reserved0 [1]byte `require:"0" json:"bpmhReserved0,omitemtpy"`
+	Reserved0 [1]byte `require:"0" json:"bpmhReserved0,omitempty"`
 
 	NEMDataStack Size4K `json:"bpmhNEMStackSize"`
 }
