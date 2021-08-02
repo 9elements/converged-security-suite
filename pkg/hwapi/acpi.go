@@ -67,7 +67,7 @@ type acpiXsdt struct {
 func getACPITableSysFS(n string) ([]byte, error) {
 	buf, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", acpiSysfsPath, n))
 	if err != nil {
-		return nil, fmt.Errorf("Cannot access sysfs path %s: %s", acpiSysfsPath, err)
+		return nil, fmt.Errorf("cannot access sysfs path %s: %s", acpiSysfsPath, err)
 	}
 	return buf, nil
 }
@@ -187,41 +187,42 @@ var (
 
 func parseSystab(t APIInterfaces) ([]byte, ACPIRsdp, error) {
 	var rsdp ACPIRsdp
-
 	buf := make([]byte, binary.Size(rsdp))
 
 	// Try to get the RSDP address from systab
 	file, err := os.Open(acpiSysfsSystabPath)
-	if err == nil {
-		defer file.Close()
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			if !strings.Contains(scanner.Text(), "=") {
+	if err != nil {
+		return nil, rsdp, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		if !strings.Contains(scanner.Text(), "=") {
+			continue
+		}
+
+		kv := strings.SplitAfter(scanner.Text(), "=")
+
+		if kv[0] == "ACPI20=" || kv[0] == "ACPI=" {
+			address, err := strconv.ParseUint(kv[1], 0, 64)
+			if err != nil || address == 0 {
 				continue
 			}
+			log.Printf("address =%x", address)
 
-			kv := strings.SplitAfter(scanner.Text(), "=")
-
-			if kv[0] == "ACPI20=" || kv[0] == "ACPI=" {
-				address, err := strconv.ParseUint(kv[1], 0, 64)
-				if err != nil || address == 0 {
-					continue
-				}
-				log.Printf("address =%x", address)
-
-				err = t.ReadPhysBuf(int64(address), buf)
-				if err != nil {
-					log.Printf("%v", err)
-					continue
-				}
-				err = binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, &rsdp)
-				if err != nil {
-					return nil, rsdp, err
-				}
-				log.Printf("signature %s", string(rsdp.Signature[:]))
-				if string(rsdp.Signature[:]) == "RSD PTR " {
-					return buf, rsdp, nil
-				}
+			err = t.ReadPhysBuf(int64(address), buf)
+			if err != nil {
+				log.Printf("%v", err)
+				continue
+			}
+			err = binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, &rsdp)
+			if err != nil {
+				return nil, rsdp, err
+			}
+			log.Printf("signature %s", string(rsdp.Signature[:]))
+			if string(rsdp.Signature[:]) == "RSD PTR " {
+				return buf, rsdp, nil
 			}
 		}
 	}
@@ -229,7 +230,6 @@ func parseSystab(t APIInterfaces) ([]byte, ACPIRsdp, error) {
 }
 
 func scanLowMem(t APIInterfaces) ([]byte, ACPIRsdp, error) {
-
 	var rsdp ACPIRsdp
 
 	buf := make([]byte, binary.Size(rsdp))
@@ -237,7 +237,7 @@ func scanLowMem(t APIInterfaces) ([]byte, ACPIRsdp, error) {
 	for i := int64(biosRomBase); i < biosRomBase+biosRomSize-int64(binary.Size(rsdp)); i += 16 {
 		err := t.ReadPhysBuf(i, buf)
 		if err != nil {
-			return nil, rsdp, fmt.Errorf("Failed to read physical memory at %x: %v", i, err)
+			return nil, rsdp, fmt.Errorf("failed to read physical memory at %x: %v", i, err)
 		}
 		err = binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, &rsdp)
 		if err != nil {
@@ -253,36 +253,29 @@ func scanLowMem(t APIInterfaces) ([]byte, ACPIRsdp, error) {
 	return nil, rsdp, fmt.Errorf("RSDP not found in low memory")
 }
 
-func scanEBDA(t APIInterfaces) ([]byte, ACPIRsdp, error) {
-
+func scanEBDA(t APIInterfaces) (ACPIRsdp, error) {
 	var rsdp ACPIRsdp
-
 	buf := make([]byte, binary.Size(rsdp))
 
 	for i := int64(ebdaTop - biosRomSize); i < ebdaTop-int64(binary.Size(rsdp)); i += 16 {
 		err := t.ReadPhysBuf(i, buf)
 		if err != nil {
-			log.Printf("%v", err)
-
-			return nil, rsdp, fmt.Errorf("Failed to read physical memory at %x: %v", i, err)
+			return rsdp, fmt.Errorf("failed to read physical memory at %x: %v", i, err)
 		}
 		err = binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, &rsdp)
 		if err != nil {
-			return nil, rsdp, err
+			return rsdp, err
 		}
 
-		if string(rsdp.Signature[:]) == "RSD PTR " {
-			break
+		if string(rsdp.Signature[:]) != "RSD PTR " {
+			return rsdp, nil
 		}
 	}
-
-	return nil, rsdp, fmt.Errorf("RSDP not found in low memory")
+	return rsdp, fmt.Errorf("RSD PTR  not found")
 }
 
-func scanReservedMem(t APIInterfaces) ([]byte, ACPIRsdp, error) {
-
+func scanReservedMem(t APIInterfaces) (ACPIRsdp, error) {
 	var rsdp ACPIRsdp
-
 	buf := make([]byte, binary.Size(rsdp))
 
 	_, err := IterateOverE820Ranges("ACPI Tables", func(start uint64, end uint64) bool {
@@ -305,13 +298,12 @@ func scanReservedMem(t APIInterfaces) ([]byte, ACPIRsdp, error) {
 		return false
 	})
 	if err != nil {
-		return nil, rsdp, fmt.Errorf("unable to iterate over E820 ranges: %w", err)
+		return rsdp, fmt.Errorf("unable to iterate over E820 ranges: %w", err)
 	}
-	return nil, rsdp, fmt.Errorf("RSDP not found in low memory")
+	return rsdp, nil
 }
 
 func verifyRSDP(buf []byte, rsdp ACPIRsdp) error {
-
 	var old ACPIRsdpRev1
 
 	if rsdp.Revision == 0 {
@@ -353,7 +345,6 @@ func verifyRSDP(buf []byte, rsdp ACPIRsdp) error {
 }
 
 func getACPITableDevMemRSDP(t APIInterfaces) ([]byte, ACPIRsdp, error) {
-
 	var rsdp ACPIRsdp
 
 	if string(backupRSDP.Signature[:]) == "RSD PTR " {
@@ -363,8 +354,8 @@ func getACPITableDevMemRSDP(t APIInterfaces) ([]byte, ACPIRsdp, error) {
 	// Try to get the RSDP address from systab
 	data, rsdp, err := parseSystab(t)
 	if err == nil {
-		err = verifyRSDP(data, rsdp)
-		if err == nil {
+		errRSDP := verifyRSDP(data, rsdp)
+		if errRSDP == nil {
 			backupRSDP = rsdp
 			backupRawRSDP = data
 			return data, rsdp, nil
@@ -373,29 +364,29 @@ func getACPITableDevMemRSDP(t APIInterfaces) ([]byte, ACPIRsdp, error) {
 
 	data, rsdp, err = scanLowMem(t)
 	if err == nil {
-		err = verifyRSDP(data, rsdp)
-		if err == nil {
+		errRSDP := verifyRSDP(data, rsdp)
+		if errRSDP == nil {
 			backupRSDP = rsdp
 			backupRawRSDP = data
 			return data, rsdp, nil
 		}
 	}
 
-	data, rsdp, err = scanEBDA(t)
+	rsdp, err = scanEBDA(t)
 	if err == nil {
-		err = verifyRSDP(data, rsdp)
-		if err == nil {
+		errRSDP := verifyRSDP(data, rsdp)
+		if errRSDP == nil {
 			backupRSDP = rsdp
 			backupRawRSDP = data
 			return data, rsdp, nil
 		}
 	}
 
-	data, rsdp, err = scanReservedMem(t)
+	rsdp, err = scanReservedMem(t)
 
 	if err == nil {
-		err = verifyRSDP(data, rsdp)
-		if err == nil {
+		errRSDP := verifyRSDP(data, rsdp)
+		if errRSDP == nil {
 			backupRSDP = rsdp
 			backupRawRSDP = data
 			return data, rsdp, nil
@@ -498,7 +489,7 @@ func getACPITableDevMem(n string, t APIInterfaces) ([]byte, error) {
 //GetACPITable returns the requested ACPI table, for DSDT use argument "DSDT"
 func (t TxtAPI) GetACPITable(n string) ([]byte, error) {
 	if n == "" || len(n) > 6 {
-		return nil, fmt.Errorf("Invalid ACPI name")
+		return nil, fmt.Errorf("invalid ACPI name")
 	}
 
 	// Try SYSFS first, but it doesn't has RSDP
