@@ -1,9 +1,10 @@
 package pcr
 
 import (
-	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"reflect"
 	"testing"
+
+	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 )
 
 func TestMeasureMP0C2PMsgRegisters(t *testing.T) {
