@@ -152,7 +152,7 @@ package main
 import (
 	"log"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
+	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/v2/pkg/test"
 )
 
@@ -180,7 +180,7 @@ package main
 import (
 	"log"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
+	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/v2/pkg/test"
 )
 

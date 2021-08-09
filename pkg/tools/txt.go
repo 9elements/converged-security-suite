@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
+	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 )
 
 const (
@@ -127,7 +127,7 @@ type TXTBiosMLEFlags struct {
 }
 
 //FetchTXTRegs returns a raw copy of the TXT config space
-func FetchTXTRegs(txtAPI hwapi.APIInterfaces) ([]byte, error) {
+func FetchTXTRegs(txtAPI hwapi.LowLevelHardwareInterfaces) ([]byte, error) {
 	data := make([]byte, 0x1000)
 	if err := txtAPI.ReadPhysBuf(TxtPublicSpace, data); err != nil {
 		return nil, err
