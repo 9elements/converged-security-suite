@@ -1,10 +1,11 @@
 package registers_test
 
 import (
-	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
-	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"reflect"
 	"testing"
+
+	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
+	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 )
 
 type dummyMSReaderMock struct{}
