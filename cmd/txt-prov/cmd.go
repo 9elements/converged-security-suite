@@ -223,11 +223,7 @@ func (p *platProvCmd) Run(ctx *context) error {
 		if err != nil {
 			return fmt.Errorf("couldn't parse LCP config file: %v", err)
 		}
-		passHash, err := readPassphraseHashTPM20()
-		if err != nil {
-			return err
-		}
-		if err = provisionTPM20(tpm.RWC, passHash, lcp); err != nil {
+		if err = provisionTPM20(tpm.RWC, lcp); err != nil {
 			return fmt.Errorf("couldn't provision PS & AUX index: %v", err)
 		}
 		if len(p.Out) > 0 {
@@ -257,7 +253,7 @@ func (s *showCmd) Run(ctx *context) error {
 	return nil
 }
 
-func provisionTPM20(rw io.ReadWriter, passHash []byte, lcpPolilcy *tools.LCPPolicy2) error {
+func provisionTPM20(rw io.ReadWriter, lcpPolilcy *tools.LCPPolicy2) error {
 	passHash, err := readPassphraseHashTPM20()
 	if err != nil {
 		return err
