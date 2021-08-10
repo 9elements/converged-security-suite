@@ -349,7 +349,7 @@ func (g *generateKMCmd) Run(ctx *context) error {
 			}
 			tmpKM.Hash = kh
 		} else {
-			return fmt.Errorf("Add --bpmpubkey=</path/to/bpm-pub-key.pem> as argument")
+			return fmt.Errorf("--bpmpubkey=</path/to/bpm-pub-key.pem> missing as argument")
 		}
 		cbnto.KeyManifest = tmpKM
 		options = &cbnto
@@ -384,7 +384,7 @@ func (g *generateKMCmd) Run(ctx *context) error {
 		}
 	}
 
-	if g.Cut == true {
+	if g.Cut {
 		//Cut signature from binary
 		bKM = bKM[:int(options.KeyManifest.KeyManifestSignatureOffset)]
 	}
@@ -554,7 +554,7 @@ func (s *signBPMCmd) Run(ctx *context) error {
 	case *ecdsa.PrivateKey:
 		kAs.Key.SetPubKey(key.Public())
 	default:
-		return fmt.Errorf("Invalid key type")
+		return fmt.Errorf("invalid key type")
 	}
 	bpm.PMSE = *kAs
 	bpmRaw, err = cbnt.WriteBPM(&bpm)
@@ -745,6 +745,9 @@ func (s *stitchingCmd) Run(ctx *context) error {
 			return err
 		}
 		meRegionOffset, meRegionSize, err := tools.GetRegion(image, uefi.RegionTypeME)
+		if err != nil {
+			return err
+		}
 		if len(me) > int(meRegionSize) {
 			return fmt.Errorf("ME size exceeds region size! (%d > %d)", len(me), meRegionSize)
 		}
@@ -804,7 +807,7 @@ func (k *keygenCmd) Run(ctx *context) error {
 			return err
 		}
 	default:
-		return fmt.Errorf("Chosen algorithm invlid. Options are: RSA2048, RSA3072, ECC224, ECC256")
+		return fmt.Errorf("chosen algorithm invalid. Options are: RSA2048, RSA3072, ECC224, ECC256")
 	}
 
 	return nil

@@ -24,12 +24,12 @@ func IterateOverE820Ranges(t string, callback func(start uint64, end uint64) boo
 
 	dir, err := os.Open("/sys/firmware/memmap")
 	if err != nil {
-		return false, fmt.Errorf("Cannot access e820 table: %s", err)
+		return false, fmt.Errorf("cannot access e820 table: %s", err)
 	}
 
 	subdirs, err := dir.Readdir(0)
 	if err != nil {
-		return false, fmt.Errorf("Cannot access e820 table: %s", err)
+		return false, fmt.Errorf("cannot access e820 table: %s", err)
 	}
 
 	for _, subdir := range subdirs {
@@ -68,17 +68,17 @@ func IterateOverE820Ranges(t string, callback func(start uint64, end uint64) boo
 // false if not.
 func (t TxtAPI) IsReservedInE820(start uint64, end uint64) (bool, error) {
 	if start > end {
-		return false, fmt.Errorf("Invalid range")
+		return false, fmt.Errorf("invalid range")
 	}
 
 	dir, err := os.Open("/sys/firmware/memmap")
 	if err != nil {
-		return false, fmt.Errorf("Cannot access e820 table: %s", err)
+		return false, fmt.Errorf("cannot access e820 table: %s", err)
 	}
 
 	subdirs, err := dir.Readdir(0)
 	if err != nil {
-		return false, fmt.Errorf("Cannot access e820 table: %s", err)
+		return false, fmt.Errorf("csannot access e820 table: %s", err)
 	}
 
 	for _, subdir := range subdirs {

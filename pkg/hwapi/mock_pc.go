@@ -47,74 +47,74 @@ func (n pcmock) CPULogCount() uint32 {
 }
 
 func (n pcmock) IsReservedInE820(start uint64, end uint64) (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, error) {
-	return []uint64{}, fmt.Errorf("Not implemented")
+	return []uint64{}, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) HasSMRR() (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) GetSMRRInfo() (SMRR, error) {
-	return SMRR{}, fmt.Errorf("Not implemented")
+	return SMRR{}, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) IA32FeatureControlIsLocked() (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) IA32PlatformID() (uint64, error) {
-	return 0, fmt.Errorf("Not implemented")
+	return 0, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) AllowsVMXInSMX() (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) TXTLeavesAreEnabled() (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
 }
 func (n pcmock) IA32DebugInterfaceEnabledOrLocked() (*IA32Debug, error) {
-	return nil, fmt.Errorf("Not implemented")
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) GetMSRRegisters() (registers.Registers, error) {
-	return nil, fmt.Errorf("Not implemented")
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) PCIReadConfigSpace(bus int, device int, devFn int, off int, buf interface{}) error {
-	return fmt.Errorf("Not implemented")
+	return fmt.Errorf("not implemented")
 }
 
 func (n pcmock) PCIReadConfig16(bus int, device int, devFn int, off int) (uint16, error) {
-	return 0, fmt.Errorf("Not implemented")
+	return 0, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) PCIReadConfig32(bus int, device int, devFn int, off int) (uint32, error) {
-	return 0, fmt.Errorf("Not implemented")
+	return 0, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) PCIReadVendorID(bus int, device int, devFn int) (uint16, error) {
-	return 0, fmt.Errorf("Not implemented")
+	return 0, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) PCIReadDeviceID(bus int, device int, devFn int) (uint16, error) {
-	return 0, fmt.Errorf("Not implemented")
+	return 0, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) ReadHostBridgeTseg() (uint32, uint32, error) {
-	return 0, 0, fmt.Errorf("Not implemented")
+	return 0, 0, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) ReadHostBridgeDPR() (DMAProtectedRange, error) {
-	return DMAProtectedRange{}, fmt.Errorf("Not implemented")
+	return DMAProtectedRange{}, fmt.Errorf("not implemented")
 }
 
 //MockPCReadMemory emulates a x86_64 platform memory map
@@ -253,7 +253,7 @@ func (n pcmock) WritePhys(addr int64, data UintN) error {
 }
 
 func (n pcmock) NewTPM() (*TPM, error) {
-	return nil, fmt.Errorf("Not implemented")
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) NVLocked(tpmCon *TPM) (bool, error) {
@@ -261,17 +261,17 @@ func (n pcmock) NVLocked(tpmCon *TPM) (bool, error) {
 }
 
 func (n pcmock) ReadNVPublic(tpmCon *TPM, index uint32) ([]byte, error) {
-	return []byte{}, fmt.Errorf("Not implemented")
+	return []byte{}, fmt.Errorf("not implemented")
 }
 func (n pcmock) NVReadValue(tpmCon *TPM, index uint32, password string, size, offhandle uint32) ([]byte, error) {
-	return []byte{}, fmt.Errorf("Not implemented")
+	return []byte{}, fmt.Errorf("not implemented")
 }
 func (n pcmock) ReadPCR(tpmCon *TPM, pcr uint32) ([]byte, error) {
-	return []byte{}, fmt.Errorf("Not implemented")
+	return []byte{}, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) GetACPITable(arg string) ([]byte, error) {
-	return []byte{}, fmt.Errorf("Not implemented")
+	return []byte{}, fmt.Errorf("not implemented")
 }
 
 //GetPcMock returns APIInterfaces for mocking the hwapi used in unittests

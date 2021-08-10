@@ -40,14 +40,14 @@ func ParseConfig(filepath string) (*Configuration, error) {
 	} else if jConfig.TPM == "2.0" {
 		config.TPM = hwapi.TPMVersion20
 	} else {
-		return nil, fmt.Errorf("Couldn't parse TPM option: %s", jConfig.TPM)
+		return nil, fmt.Errorf("couldn't parse TPM option: %s", jConfig.TPM)
 	}
 	if jConfig.TXTMode == "auto" {
 		config.TXTMode = AutoPromotion
 	} else if jConfig.TXTMode == "signed" {
 		config.TXTMode = SignedPolicy
 	} else {
-		return nil, fmt.Errorf("Couldn't parse TXT mode option: %s", jConfig.TXTMode)
+		return nil, fmt.Errorf("couldn't parse TXT mode option: %s", jConfig.TXTMode)
 	}
 	if jConfig.LCP2Hash == "SHA1" {
 		config.LCPHash = tpm2.AlgSHA1
@@ -61,7 +61,7 @@ func ParseConfig(filepath string) (*Configuration, error) {
 	} else if jConfig.LCP2Hash == "NULL" {
 		config.LCPHash = tpm2.AlgNull
 	} else {
-		return nil, fmt.Errorf("Couldn't parse LCP hash option: %s", jConfig.LCP2Hash)
+		return nil, fmt.Errorf("couldn't parse LCP hash option: %s", jConfig.LCP2Hash)
 	}
 	return &config, nil
 }

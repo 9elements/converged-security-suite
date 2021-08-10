@@ -43,90 +43,90 @@ func (n nullmock) CPULogCount() uint32 {
 }
 
 func (n nullmock) IsReservedInE820(start uint64, end uint64) (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, error) {
-	return []uint64{}, fmt.Errorf("Not implemented")
+	return []uint64{}, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) HasSMRR() (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) GetSMRRInfo() (SMRR, error) {
-	return SMRR{}, fmt.Errorf("Not implemented")
+	return SMRR{}, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) IA32FeatureControlIsLocked() (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) IA32PlatformID() (uint64, error) {
-	return 0, fmt.Errorf("Not implemented")
+	return 0, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) AllowsVMXInSMX() (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) TXTLeavesAreEnabled() (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
 }
 func (n nullmock) IA32DebugInterfaceEnabledOrLocked() (*IA32Debug, error) {
-	return nil, fmt.Errorf("Not implemented")
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) GetMSRRegisters() (registers.Registers, error) {
-	return nil, fmt.Errorf("Not implemented")
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) PCIReadConfigSpace(bus int, device int, devFn int, off int, buf interface{}) error {
-	return fmt.Errorf("Not implemented")
+	return fmt.Errorf("not implemented")
 }
 
 func (n nullmock) PCIReadConfig16(bus int, device int, devFn int, off int) (uint16, error) {
-	return 0, fmt.Errorf("Not implemented")
+	return 0, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) PCIReadConfig32(bus int, device int, devFn int, off int) (uint32, error) {
-	return 0, fmt.Errorf("Not implemented")
+	return 0, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) PCIReadVendorID(bus int, device int, devFn int) (uint16, error) {
-	return 0, fmt.Errorf("Not implemented")
+	return 0, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) PCIReadDeviceID(bus int, device int, devFn int) (uint16, error) {
-	return 0, fmt.Errorf("Not implemented")
+	return 0, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) ReadHostBridgeTseg() (uint32, uint32, error) {
-	return 0, 0, fmt.Errorf("Not implemented")
+	return 0, 0, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) ReadHostBridgeDPR() (DMAProtectedRange, error) {
-	return DMAProtectedRange{}, fmt.Errorf("Not implemented")
+	return DMAProtectedRange{}, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) ReadPhys(addr int64, data UintN) error {
-	return fmt.Errorf("Not implemented")
+	return fmt.Errorf("not implemented")
 }
 
 func (n nullmock) ReadPhysBuf(addr int64, buf []byte) error {
-	return fmt.Errorf("Not implemented")
+	return fmt.Errorf("not implemented")
 }
 
 func (n nullmock) WritePhys(addr int64, data UintN) error {
-	return fmt.Errorf("Not implemented")
+	return fmt.Errorf("not implemented")
 }
 
 func (n nullmock) NewTPM() (*TPM, error) {
-	return nil, fmt.Errorf("Not implemented")
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) NVLocked(tpmCon *TPM) (bool, error) {
@@ -134,17 +134,17 @@ func (n nullmock) NVLocked(tpmCon *TPM) (bool, error) {
 }
 
 func (n nullmock) ReadNVPublic(tpmCon *TPM, index uint32) ([]byte, error) {
-	return []byte{}, fmt.Errorf("Not implemented")
+	return []byte{}, fmt.Errorf("not implemented")
 }
 func (n nullmock) NVReadValue(tpmCon *TPM, index uint32, password string, size, offhandle uint32) ([]byte, error) {
-	return []byte{}, fmt.Errorf("Not implemented")
+	return []byte{}, fmt.Errorf("not implemented")
 }
 func (n nullmock) ReadPCR(tpmCon *TPM, pcr uint32) ([]byte, error) {
-	return []byte{}, fmt.Errorf("Not implemented")
+	return []byte{}, fmt.Errorf("not implemented")
 }
 
 func (n nullmock) GetACPITable(arg string) ([]byte, error) {
-	return []byte{}, fmt.Errorf("Not implemented")
+	return []byte{}, fmt.Errorf("not implemented")
 }
 
 //GetNullMock returns an APIInterfaces stub

@@ -24,5 +24,5 @@ func DefineAUXIndexTPM20(rw io.ReadWriter) error {
 
 // DefineAUXIndexTPM12 defines the AUX index on TPM 1.2
 func DefineAUXIndexTPM12(rw io.ReadWriter) error {
-	return fmt.Errorf("Not implemented yet")
+	return fmt.Errorf("not implemented yet")
 }

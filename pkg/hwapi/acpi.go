@@ -67,7 +67,7 @@ type acpiXsdt struct {
 func getACPITableSysFS(n string) ([]byte, error) {
 	buf, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", acpiSysfsPath, n))
 	if err != nil {
-		return nil, fmt.Errorf("Cannot access sysfs path %s: %s", acpiSysfsPath, err)
+		return nil, fmt.Errorf("cannot access sysfs path %s: %s", acpiSysfsPath, err)
 	}
 	return buf, nil
 }
@@ -237,7 +237,7 @@ func scanLowMem(t APIInterfaces) ([]byte, ACPIRsdp, error) {
 	for i := int64(biosRomBase); i < biosRomBase+biosRomSize-int64(binary.Size(rsdp)); i += 16 {
 		err := t.ReadPhysBuf(i, buf)
 		if err != nil {
-			return nil, rsdp, fmt.Errorf("Failed to read physical memory at %x: %v", i, err)
+			return nil, rsdp, fmt.Errorf("failed to read physical memory at %x: %v", i, err)
 		}
 		err = binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, &rsdp)
 		if err != nil {
@@ -264,7 +264,7 @@ func scanEBDA(t APIInterfaces) ([]byte, ACPIRsdp, error) {
 		if err != nil {
 			log.Printf("%v", err)
 
-			return nil, rsdp, fmt.Errorf("Failed to read physical memory at %x: %v", i, err)
+			return nil, rsdp, fmt.Errorf("failed to read physical memory at %x: %v", i, err)
 		}
 		err = binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, &rsdp)
 		if err != nil {
@@ -498,7 +498,7 @@ func getACPITableDevMem(n string, t APIInterfaces) ([]byte, error) {
 //GetACPITable returns the requested ACPI table, for DSDT use argument "DSDT"
 func (t TxtAPI) GetACPITable(n string) ([]byte, error) {
 	if n == "" || len(n) > 6 {
-		return nil, fmt.Errorf("Invalid ACPI name")
+		return nil, fmt.Errorf("invalid ACPI name")
 	}
 
 	// Try SYSFS first, but it doesn't has RSDP

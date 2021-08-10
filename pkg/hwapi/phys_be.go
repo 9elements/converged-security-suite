@@ -30,7 +30,7 @@ func pathRead(path string, addr int64, data UintN) error {
 
 func selectDevMem() (string, error) {
 	if len(memPaths) == 0 {
-		return "", fmt.Errorf("Internal error: no /dev/mem device specified")
+		return "", fmt.Errorf("internal error: no /dev/mem device specified")
 	}
 
 	for _, p := range memPaths {
@@ -39,7 +39,7 @@ func selectDevMem() (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("No suitable /dev/mem device found. Tried %#v", memPaths)
+	return "", fmt.Errorf("no suitable /dev/mem device found. Tried %#v", memPaths)
 }
 
 // ReadPhys reads data from physical memory at address addr. On x86 platforms,

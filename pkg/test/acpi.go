@@ -11,7 +11,7 @@ import (
 )
 
 func notImplemented(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
-	return false, nil, fmt.Errorf("Not implemented")
+	return false, nil, fmt.Errorf("not implemented")
 }
 
 //nolint
@@ -469,7 +469,7 @@ func CheckRSDTorXSDTValid(txtAPI hwapi.APIInterfaces, config *tools.Configuratio
 	_, err1 := txtAPI.GetACPITable("RSDT") // HWAPI will validate the table
 	_, err2 := txtAPI.GetACPITable("XSDT") // HWAPI will validate the table
 	if err1 != nil && err2 != nil {
-		return false, fmt.Errorf("No valid RSDT and XSDT present"), nil
+		return false, fmt.Errorf("no valid RSDT and XSDT present"), nil
 	}
 
 	return true, nil, nil
@@ -604,7 +604,7 @@ func CheckMADTValidAndDecode(txtAPI hwapi.APIInterfaces, config *tools.Configura
 	}
 
 	if decoded.Flags > 1 {
-		return m, false, fmt.Errorf("Unknown flags in ACPI table MADT"), nil
+		return m, false, fmt.Errorf("unknown flags in ACPI table MADT"), nil
 	}
 
 	type5entrycount := 0
@@ -616,10 +616,10 @@ func CheckMADTValidAndDecode(txtAPI hwapi.APIInterfaces, config *tools.Configura
 			return m, false, nil, err
 		}
 		if header.Type > 10 || header.Type == 8 {
-			return m, false, fmt.Errorf("Invalid MADT entry type %d", header.Type), nil
+			return m, false, fmt.Errorf("invalid MADT entry type %d", header.Type), nil
 		}
 		if int(header.Length) > tbl.Len()+2 {
-			return m, false, fmt.Errorf("Invalid MADT entry size of %d", header.Length), nil
+			return m, false, fmt.Errorf("invalid MADT entry size of %d", header.Length), nil
 		}
 
 		if header.Type == 0 {
@@ -629,7 +629,7 @@ func CheckMADTValidAndDecode(txtAPI hwapi.APIInterfaces, config *tools.Configura
 				return m, false, nil, err
 			}
 			if e.Flags > 3 {
-				return m, false, fmt.Errorf("Invalid flag %x entry in Processor Local APIC entry", e.Flags), nil
+				return m, false, fmt.Errorf("invalid flag %x entry in Processor Local APIC entry", e.Flags), nil
 			}
 			m.DecodedEntries = append(m.DecodedEntries, e)
 		} else if header.Type == 1 {
@@ -639,7 +639,7 @@ func CheckMADTValidAndDecode(txtAPI hwapi.APIInterfaces, config *tools.Configura
 				return m, false, nil, err
 			}
 			if e.Reserved != 0 {
-				return m, false, fmt.Errorf("Reserved bits not clear in I/O APIC entry"), nil
+				return m, false, fmt.Errorf("reserved bits not clear in I/O APIC entry"), nil
 			}
 			m.DecodedEntries = append(m.DecodedEntries, e)
 		} else if header.Type == 2 {
@@ -670,7 +670,7 @@ func CheckMADTValidAndDecode(txtAPI hwapi.APIInterfaces, config *tools.Configura
 				return m, false, nil, err
 			}
 			if e.Reserved != 0 {
-				return m, false, fmt.Errorf("Reserved bits not clear in APIC Address Overwrite entry"), nil
+				return m, false, fmt.Errorf("reserved bits not clear in APIC Address Overwrite entry"), nil
 			}
 			type5entrycount++
 			m.DecodedEntries = append(m.DecodedEntries, e)
@@ -681,7 +681,7 @@ func CheckMADTValidAndDecode(txtAPI hwapi.APIInterfaces, config *tools.Configura
 				return m, false, nil, err
 			}
 			if e.Reserved != 0 {
-				return m, false, fmt.Errorf("Reserved bits not clear in SAPIC entry"), nil
+				return m, false, fmt.Errorf("reserved bits not clear in SAPIC entry"), nil
 			}
 			m.DecodedEntries = append(m.DecodedEntries, e)
 		} else if header.Type == 7 {
@@ -691,13 +691,13 @@ func CheckMADTValidAndDecode(txtAPI hwapi.APIInterfaces, config *tools.Configura
 				return m, false, nil, err
 			}
 			if e.Reserved[0] != 0 {
-				return m, false, fmt.Errorf("Reserved bits not clear in Local SAPIC entry"), nil
+				return m, false, fmt.Errorf("reserved bits not clear in Local SAPIC entry"), nil
 			}
 			if e.Reserved[1] != 0 {
-				return m, false, fmt.Errorf("Reserved bits not clear in Local SAPIC entry"), nil
+				return m, false, fmt.Errorf("reserved bits not clear in Local SAPIC entry"), nil
 			}
 			if e.Reserved[2] != 0 {
-				return m, false, fmt.Errorf("Reserved bits not clear in Local SAPIC entry"), nil
+				return m, false, fmt.Errorf("reserved bits not clear in Local SAPIC entry"), nil
 			}
 			for {
 				var b byte
@@ -718,7 +718,7 @@ func CheckMADTValidAndDecode(txtAPI hwapi.APIInterfaces, config *tools.Configura
 				return m, false, nil, err
 			}
 			if e.Reserved != 0 {
-				return m, false, fmt.Errorf("Reserved bits not clear in local x2 APIC entry"), nil
+				return m, false, fmt.Errorf("reserved bits not clear in local x2 APIC entry"), nil
 			}
 			m.DecodedEntries = append(m.DecodedEntries, e)
 		} else if header.Type == 10 {
@@ -728,19 +728,19 @@ func CheckMADTValidAndDecode(txtAPI hwapi.APIInterfaces, config *tools.Configura
 				return m, false, nil, err
 			}
 			if e.Reserved[0] != 0 {
-				return m, false, fmt.Errorf("Reserved bits not clear in local x2 APIC NMI entry"), nil
+				return m, false, fmt.Errorf("reserved bits not clear in local x2 APIC NMI entry"), nil
 			}
 			if e.Reserved[1] != 0 {
-				return m, false, fmt.Errorf("Reserved bits not clear in local x2 APIC NMI entry"), nil
+				return m, false, fmt.Errorf("reserved bits not clear in local x2 APIC NMI entry"), nil
 			}
 			if e.Reserved[2] != 0 {
-				return m, false, fmt.Errorf("Reserved bits not clear in local x2 APIC NMI entry"), nil
+				return m, false, fmt.Errorf("reserved bits not clear in local x2 APIC NMI entry"), nil
 			}
 			m.DecodedEntries = append(m.DecodedEntries, e)
 		}
 	}
 	if type5entrycount > 1 {
-		return m, false, fmt.Errorf("More than one APIC Address Overwrite entry found"), nil
+		return m, false, fmt.Errorf("more than one APIC Address Overwrite entry found"), nil
 	}
 
 	return m, true, nil, nil

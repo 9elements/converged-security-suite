@@ -158,7 +158,7 @@ func CheckForIntelCPU(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (
 	if txtAPI.VersionString() == "GenuineIntel" {
 		return true, nil, nil
 	}
-	return false, fmt.Errorf("No Intel CPU detected"), nil
+	return false, fmt.Errorf("no Intel CPU detected"), nil
 }
 
 // WeybridgeOrLater Check we're running on Weybridge
@@ -166,7 +166,7 @@ func WeybridgeOrLater(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (
 	if cpuid.DisplayFamily == 6 {
 		return true, nil, nil
 	}
-	return false, fmt.Errorf("Platform is not Weybridge or later"), nil
+	return false, fmt.Errorf("platform is not Weybridge or later"), nil
 }
 
 // CPUSupportsTXT Check if the CPU supports TXT
@@ -239,7 +239,7 @@ func Ia32FeatureCtrl(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (b
 
 // SMXIsEnabled not implemented
 func SMXIsEnabled(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
-	return false, nil, fmt.Errorf("Unimplemented: no comment")
+	return false, nil, fmt.Errorf("unimplemented: no comment")
 }
 
 // Check CR4 wherther SMXE is set
@@ -270,7 +270,7 @@ func IBBMeasured(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool,
 		return true, nil, nil
 	}
 
-	return false, fmt.Errorf("Bootstatus register incorrect"), nil
+	return false, fmt.Errorf("bootstatus register incorrect"), nil
 }
 
 // IBBIsTrusted Check that the IBB was deemed trusted

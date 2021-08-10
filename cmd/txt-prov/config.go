@@ -45,11 +45,11 @@ func loadConfig(filename string) (*tools.LCPPolicy2, error) {
 		return nil, err
 	}
 	if uint16(ver) < uint16(0x300) || uint16(ver) > uint16(0x306) {
-		return nil, fmt.Errorf("Invalid LCP Version. Want: 0x300 - 0x306 - Have: %v", config.Version)
+		return nil, fmt.Errorf("invalid LCP Version. Want: 0x300 - 0x306 - Have: %v", config.Version)
 	}
 	hashAlg, ok := tools.HashAlgMap[txt.HashMapping[config.HashAlg]]
-	if ok == false {
-		return nil, fmt.Errorf("Cant determin hash algorithm")
+	if !ok {
+		return nil, fmt.Errorf("cant determin hash algorithm")
 	}
 	var pT int
 	if config.PolicyType == "Any" {
@@ -57,7 +57,7 @@ func loadConfig(filename string) (*tools.LCPPolicy2, error) {
 	} else if config.PolicyType == "List" {
 		pT = 0
 	} else {
-		return nil, fmt.Errorf("Invalid PolicyType. Want: List (Signed Policy) or Any (Auto promotion) - Have: %v", config.PolicyType)
+		return nil, fmt.Errorf("invalid PolicyType. Want: List (Signed Policy) or Any (Auto promotion) - Have: %v", config.PolicyType)
 	}
 	var smv, msmv uint64
 	if len(config.SINITMinVersion) > 0 {
