@@ -101,12 +101,12 @@ func readVTdRegs(t APIInterfaces) (VTdRegisters, error) {
 
 	dir, err := os.Open("/sys/class/iommu/")
 	if err != nil {
-		return regs, fmt.Errorf("No IOMMU found: %s", err)
+		return regs, fmt.Errorf("no IOMMU found: %s", err)
 	}
 
 	subdirs, err := dir.Readdir(0)
 	if err != nil {
-		return regs, fmt.Errorf("No IOMMU found: %s", err)
+		return regs, fmt.Errorf("no IOMMU found: %s", err)
 	}
 
 	for _, subdir := range subdirs {
@@ -136,7 +136,7 @@ func readVTdRegs(t APIInterfaces) (VTdRegisters, error) {
 		return regs, nil
 	}
 
-	return regs, fmt.Errorf("No IOMMU found: /sys/class/iommu/*/intel-iommu/address does not exists or is malformed")
+	return regs, fmt.Errorf("no IOMMU found: /sys/class/iommu/*/intel-iommu/address does not exists or is malformed")
 }
 
 //LookupIOAddress returns the address of the root Tbl
@@ -288,7 +288,7 @@ func lookupIOLegacy(addr, rootTblAddr uint64, t APIInterfaces) ([]uint64, error)
 }
 
 func lookupIOScalable(addr, rootTblAddr uint64) ([]uint64, error) {
-	return []uint64{}, fmt.Errorf("Scalable IOMMU not implemented")
+	return []uint64{}, fmt.Errorf("scalable IOMMU not implemented")
 	// read root table entry
 
 	// read ctx entry

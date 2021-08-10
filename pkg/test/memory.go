@@ -265,7 +265,7 @@ func TXTHeapSpaceValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) 
 
 	//This checks for legacy heap size - Document 558294
 	if regs.HeapSize < legacyMinHeapSize {
-		return false, fmt.Errorf("Heap must be at least %v", legacyMinHeapSize), nil
+		return false, fmt.Errorf("heap must be at least %v", legacyMinHeapSize), nil
 
 	}
 
@@ -280,7 +280,7 @@ func TXTHeapSpaceValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) 
 	}
 
 	if regs.SinitSize < minSinitSize {
-		return false, fmt.Errorf("Sinit must be at least %v", minSinitSize), nil
+		return false, fmt.Errorf("SINIT must be at least %v", minSinitSize), nil
 	}
 
 	if uint64(regs.MleJoin) >= FourGiB {
@@ -289,10 +289,10 @@ func TXTHeapSpaceValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) 
 
 	/* Document Number: 558294  5.5.6.2 SINIT Memory Region */
 	if regs.SinitBase >= regs.HeapBase {
-		return false, fmt.Errorf("Sinit region must be below Heap region"), nil
+		return false, fmt.Errorf("SINIT region must be below Heap region"), nil
 	}
 	if regs.SinitBase > 0 && regs.SinitBase+regs.SinitSize != regs.HeapBase {
-		return false, fmt.Errorf("Sinit region must end at start of Heap region"), nil
+		return false, fmt.Errorf("SINIT region must end at start of Heap region"), nil
 	}
 
 	return true, nil, nil
@@ -440,11 +440,11 @@ func HostbridgeIsSupported(txtAPI hwapi.APIInterfaces, config *tools.Configurati
 func HostbridgeDPRCorrect(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
 	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
-		return false, fmt.Errorf("Cannot read DPR registers: %s", err), nil
+		return false, fmt.Errorf("cannot read DPR registers: %s", err), nil
 	}
 	regs, err := tools.ParseTXTRegs(buf)
 	if err != nil {
-		return false, fmt.Errorf("Cannot parse DPR registers: %s", err), nil
+		return false, fmt.Errorf("cannot parse DPR registers: %s", err), nil
 	}
 
 	hostbridgeDpr, err := txtAPI.ReadHostBridgeDPR()
@@ -474,7 +474,7 @@ func HostbridgeDPRisLocked(txtAPI hwapi.APIInterfaces, config *tools.Configurati
 	}
 
 	if !hostbridgeDpr.Lock {
-		return false, fmt.Errorf("Hostbridge DPR isn't locked"), nil
+		return false, fmt.Errorf("hostbridge DPR isn't locked"), nil
 	}
 	return true, nil, nil
 }
@@ -736,7 +736,7 @@ func ActiveIOMMU(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool,
 	smrrPhysEnd := (smrr.PhysBase | ^smrr.PhysMask) & 0xfffff
 	ret, err := txtAPI.AddressRangesIsDMAProtected(smrr.PhysBase, smrrPhysEnd)
 	if err != nil {
-		return false, fmt.Errorf("Failed to check SMRR DMA protection: %s", err), nil
+		return false, fmt.Errorf("failed to check SMRR DMA protection: %s", err), nil
 	}
 	if !ret {
 		return false, fmt.Errorf("IOMMU does not protect SMRR (%x-%x) from DMA", smrr.PhysBase, smrrPhysEnd), nil
@@ -755,7 +755,7 @@ func ServerModeTXT(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (boo
 	if txtAPI.HasSMX() && txtAPI.HasVMX() && val {
 		return true, nil, nil
 	}
-	return false, fmt.Errorf("Servermode not active"), nil
+	return false, fmt.Errorf("servermode not active"), nil
 }
 
 //ReleaseFusedFSBI checks if the FSBI is release fused

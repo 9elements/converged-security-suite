@@ -203,7 +203,7 @@ func (t TxtAPI) ReadHostBridgeTseg() (uint32, uint32, error) {
 	}
 
 	if !found {
-		return 0, 0, fmt.Errorf("Hostbridge is unsupported")
+		return 0, 0, fmt.Errorf("hostbridge is unsupported")
 	}
 
 	var tsegbase uint32
@@ -275,7 +275,7 @@ func (t TxtAPI) ReadHostBridgeDPR() (DMAProtectedRange, error) {
 	}
 
 	if !found {
-		return ret, fmt.Errorf("Hostbridge is unsupported")
+		return ret, fmt.Errorf("hostbridge is unsupported")
 	}
 
 	var u32 uint32

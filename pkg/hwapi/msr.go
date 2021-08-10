@@ -61,7 +61,7 @@ func readMSR(msr int64) (uint64, error) {
 func (t TxtAPI) HasSMRR() (bool, error) {
 	mtrrcap, err := readMSR(msrMTRRCap)
 	if err != nil {
-		return false, fmt.Errorf("Cannot access MSR IA32_MTRRCAP: %s", err)
+		return false, fmt.Errorf("cannot access MSR IA32_MTRRCAP: %s", err)
 	}
 
 	return (mtrrcap>>11)&1 != 0, nil
@@ -80,12 +80,12 @@ func (t TxtAPI) GetSMRRInfo() (SMRR, error) {
 
 	smrrPhysbase, err := readMSR(msrSMRRPhysBase)
 	if err != nil {
-		return ret, fmt.Errorf("Cannot access MSR IA32_SMRR_PHYSBASE: %s", err)
+		return ret, fmt.Errorf("cannot access MSR IA32_SMRR_PHYSBASE: %s", err)
 	}
 
 	smrrPhysmask, err := readMSR(msrSMRRPhysMask)
 	if err != nil {
-		return ret, fmt.Errorf("Cannot access MSR IA32_SMRR_PHYSMASK: %s", err)
+		return ret, fmt.Errorf("cannot access MSR IA32_SMRR_PHYSMASK: %s", err)
 	}
 
 	ret.Active = (smrrPhysmask>>11)&1 != 0
@@ -99,7 +99,7 @@ func (t TxtAPI) GetSMRRInfo() (SMRR, error) {
 func (t TxtAPI) IA32FeatureControlIsLocked() (bool, error) {
 	featCtrl, err := readMSR(msrFeatureControl)
 	if err != nil {
-		return false, fmt.Errorf("Cannot access MSR IA32_FEATURE_CONTROL: %s", err)
+		return false, fmt.Errorf("cannot access MSR IA32_FEATURE_CONTROL: %s", err)
 	}
 
 	return featCtrl&1 != 0, nil
@@ -109,7 +109,7 @@ func (t TxtAPI) IA32FeatureControlIsLocked() (bool, error) {
 func (t TxtAPI) IA32PlatformID() (uint64, error) {
 	pltID, err := readMSR(msrPlatformID)
 	if err != nil {
-		return 0, fmt.Errorf("Cannot access MSR IA32_PLATFORM_ID: %s", err)
+		return 0, fmt.Errorf("cannot access MSR IA32_PLATFORM_ID: %s", err)
 	}
 
 	return pltID, nil
@@ -119,7 +119,7 @@ func (t TxtAPI) IA32PlatformID() (uint64, error) {
 func (t TxtAPI) AllowsVMXInSMX() (bool, error) {
 	featCtrl, err := readMSR(msrFeatureControl)
 	if err != nil {
-		return false, fmt.Errorf("Cannot access MSR IA32_FEATURE_CONTROL: %s", err)
+		return false, fmt.Errorf("cannot access MSR IA32_FEATURE_CONTROL: %s", err)
 	}
 
 	var mask uint64 = (1 << 1) & (1 << 5) & (1 << 6)
@@ -130,7 +130,7 @@ func (t TxtAPI) AllowsVMXInSMX() (bool, error) {
 func (t TxtAPI) TXTLeavesAreEnabled() (bool, error) {
 	featCtrl, err := readMSR(msrFeatureControl)
 	if err != nil {
-		return false, fmt.Errorf("Cannot access MSR IA32_FEATURE_CONTROL: %s", err)
+		return false, fmt.Errorf("cannot access MSR IA32_FEATURE_CONTROL: %s", err)
 	}
 
 	txtBits := (featCtrl >> 8) & 0x1ff
@@ -142,7 +142,7 @@ func (t TxtAPI) IA32DebugInterfaceEnabledOrLocked() (*IA32Debug, error) {
 	var debugMSR IA32Debug
 	debugInterfaceCtrl, err := readMSR(msrIA32DebugInterface)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot access MSR IA32_DEBUG_INTERFACE: %s", err)
+		return nil, fmt.Errorf("cannot access MSR IA32_DEBUG_INTERFACE: %s", err)
 	}
 
 	debugMSR.Enabled = (debugInterfaceCtrl>>0)&1 != 0

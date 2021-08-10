@@ -297,7 +297,7 @@ func (t *Test) Run(TxtAPI hwapi.APIInterfaces, config *tools.Configuration) bool
 //RunTestsSilent Runs the specified tests and returns false on the first error encountered
 func RunTestsSilent(TxtAPI hwapi.APIInterfaces, config *tools.Configuration, Tests []*Test) (bool, string, error) {
 
-	intErr := fmt.Errorf("Internal error running test")
+	intErr := fmt.Errorf("internal error running test")
 
 	for i := range Tests {
 		if !Tests[i].Run(TxtAPI, config) && Tests[i].Required {

@@ -29,5 +29,5 @@ func DefinePSIndexTPM20(rw io.ReadWriter, passHash []byte) error {
 
 // DefinePSIndexTPM12 creates the PS index for TPM 1.2
 func DefinePSIndexTPM12(rw io.ReadWriter) error {
-	return fmt.Errorf("Not implemented yet")
+	return fmt.Errorf("not implemented yet")
 }

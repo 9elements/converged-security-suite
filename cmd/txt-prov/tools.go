@@ -32,8 +32,7 @@ func readPassphraseHashTPM20() ([]byte, error) {
 
 func writePSPolicy2file(policy *tools.LCPPolicy2, filename string) error {
 	var buf bytes.Buffer
-	var pol tools.LCPPolicy2
-	pol = *policy
+	pol := *policy
 	err := binary.Write(&buf, binary.LittleEndian, pol)
 	if err != nil {
 		return err

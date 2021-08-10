@@ -83,10 +83,10 @@ func (e *execTestsCmd) Run(ctx *context) error {
 	case "legacy":
 		ret = run("Legacy TXT", test.TestsLegacy, config, e.Interactive)
 	default:
-		return fmt.Errorf("No valid test set given")
+		return fmt.Errorf("no valid test set given")
 	}
 	if !ret {
-		return fmt.Errorf("Tests ran with errors")
+		return fmt.Errorf("tests ran with errors")
 	}
 	return nil
 }
