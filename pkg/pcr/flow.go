@@ -127,6 +127,9 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 			MeasurementIDInit, // is a fake measurement
 			MeasurementIDACM,  // is a fake measurement
 			MeasurementIDPCR0DATA,
+			MeasurementIDKeyManifest,        // is a fake measurement
+			MeasurementIDBootPolicyManifest, // is a fake measurement
+			MeasurementIDIBBFake,            // is a fake measurement
 			MeasurementIDPCDFirmwareVendorVersionData,
 			MeasurementIDPCDFirmwareVendorVersionCode, // is a fake measurement
 			MeasurementIDDXE,
