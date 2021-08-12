@@ -2,8 +2,9 @@ package pcr
 
 import (
 	"fmt"
-	amd_manifest "github.com/9elements/converged-security-suite/v2/pkg/amd/manifest"
 	"strings"
+
+	amd_manifest "github.com/9elements/converged-security-suite/v2/pkg/amd/manifest"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcd"
@@ -38,6 +39,9 @@ const (
 	MeasurementIDPCR0DATA
 	MeasurementIDACM
 	MeasurementIDACMDate
+	MeasurementIDKeyManifest
+	MeasurementIDBootPolicyManifest
+	MeasurementIDIBBFake
 	MeasurementIDBIOSStartupModule
 	MeasurementIDSCRTMSeparator
 	MeasurementIDPCDFirmwareVendorVersionData
@@ -63,6 +67,12 @@ func (id MeasurementID) IsFake() bool {
 	case MeasurementIDInit:
 		return true
 	case MeasurementIDACM:
+		return true
+	case MeasurementIDKeyManifest:
+		return true
+	case MeasurementIDBootPolicyManifest:
+		return true
+	case MeasurementIDIBBFake:
 		return true
 	case MeasurementIDPCDFirmwareVendorVersionCode:
 		return true
@@ -97,10 +107,16 @@ func (id MeasurementID) String() string {
 		return "ACM"
 	case MeasurementIDPCR0DATA:
 		return "PCR0_DATA"
+	case MeasurementIDKeyManifest:
+		return "key_manifest"
+	case MeasurementIDBootPolicyManifest:
+		return "boot_policy_manifest"
 	case MeasurementIDACMDate:
 		return "ACM_date"
 	case MeasurementIDACMDateInPlace:
 		return "ACM_date_in_place"
+	case MeasurementIDIBBFake:
+		return "IBB"
 	case MeasurementIDBIOSStartupModule:
 		return "BIOS_startup_module"
 	case MeasurementIDSCRTMSeparator:
@@ -145,6 +161,12 @@ func (id MeasurementID) PCRIDs() []ID {
 	case MeasurementIDACMDate:
 		return []ID{0}
 	case MeasurementIDACMDateInPlace:
+		return []ID{0}
+	case MeasurementIDKeyManifest:
+		return []ID{0}
+	case MeasurementIDBootPolicyManifest:
+		return []ID{0}
+	case MeasurementIDIBBFake:
 		return []ID{0}
 	case MeasurementIDBIOSStartupModule:
 		return []ID{0}
@@ -264,6 +286,14 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			return MeasurePCR0Data(config, provider.FITEntries())
 		}
+	case MeasurementIDKeyManifest:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			return MeasureKeyManifest(provider.FITEntries())
+		}
+	case MeasurementIDBootPolicyManifest:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			return MeasureBootPolicy(provider.FITEntries())
+		}
 	case MeasurementIDACM:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			return MeasureACM(provider.FITEntries())
@@ -275,6 +305,10 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 	case MeasurementIDACMDateInPlace:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			return MeasureACMDateInPlace(config.PCR0DataIbbDigestHashAlgorithm, provider.FITEntries())
+		}
+	case MeasurementIDIBBFake:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			return MeasureIBB(provider.FITEntries(), uint64(len(provider.Firmware().Buf())))
 		}
 	case MeasurementIDBIOSStartupModule:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
