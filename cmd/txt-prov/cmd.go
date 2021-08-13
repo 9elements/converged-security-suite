@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
+	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/provisioning/txt"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"

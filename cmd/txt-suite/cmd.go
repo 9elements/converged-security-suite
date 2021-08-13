@@ -12,7 +12,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/google/go-tpm/tpm2"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
+	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 
 	a "github.com/logrusorgru/aurora"
 )
