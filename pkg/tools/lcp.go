@@ -519,7 +519,7 @@ func ParsePolicy(policy []byte) (*LCPPolicy, *LCPPolicy2, error) {
 		return nil, pol, err
 	}
 
-	return nil, nil, fmt.Errorf("Can't parse LCP Policy")
+	return nil, nil, fmt.Errorf("can't parse LCP Policy")
 }
 
 func parsePolicyElement(buf *bytes.Reader, element *LCPPolicyElement) error {
@@ -569,7 +569,7 @@ func parsePolicyElement(buf *bytes.Reader, element *LCPPolicyElement) error {
 		}
 		element.Custom = &pol
 	default:
-		return fmt.Errorf("Unknown policy element type: %d, See: Intel TXT Software Development Guide, Document: 315168-010, P. 116", element.Type)
+		return fmt.Errorf("unknown policy element type: %d, See: Intel TXT Software Development Guide, Document: 315168-010, P. 116", element.Type)
 	}
 
 	return nil
@@ -872,7 +872,7 @@ func parseLCPHash(buf *bytes.Reader, hash *LCPHash, alg uint8) error {
 	case LCPPolHAlgSHA1:
 		return parseLCPHash2(buf, hash, tpm2.AlgSHA1)
 	default:
-		return fmt.Errorf("Unsupported hash algorithm: %x", alg)
+		return fmt.Errorf("unsupported hash algorithm: %x", alg)
 	}
 }
 

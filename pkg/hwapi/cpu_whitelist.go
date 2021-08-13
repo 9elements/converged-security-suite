@@ -2,6 +2,8 @@ package hwapi
 
 import (
 	"strings"
+
+	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 )
 
 type brandNameMetaWl struct {
@@ -792,8 +794,8 @@ var (
 )
 
 //CPUWhitelistTXTSupport returns true if the CPU is whitelisted
-func (t TxtAPI) CPUWhitelistTXTSupport() bool {
-	cpuName := t.ProcessorBrandName()
+func CPUWhitelistTXTSupport(h hwapi.LowLevelHardwareInterfaces) bool {
+	cpuName := h.ProcessorBrandName()
 
 	for i := range TXTSupportedCPUs {
 		if TXTSupportedCPUs[i].xeon && !strings.Contains(cpuName, "Xeon") {

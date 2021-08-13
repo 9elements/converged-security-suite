@@ -170,7 +170,7 @@ func ParseACMHeader(data []byte) (*ACMHeader, error) {
 	err := binary.Read(buf, binary.LittleEndian, &acm)
 
 	if err != nil {
-		return nil, fmt.Errorf("Can't read ACM Header")
+		return nil, fmt.Errorf("can't read ACM Header")
 	}
 
 	return &acm, nil

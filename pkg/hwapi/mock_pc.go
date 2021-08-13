@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
+	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
+	"github.com/digitalocean/go-smbios/smbios"
 )
 
 type pcmock struct {
@@ -47,74 +49,105 @@ func (n pcmock) CPULogCount() uint32 {
 }
 
 func (n pcmock) IsReservedInE820(start uint64, end uint64) (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
+}
+func (n pcmock) UsableMemoryAbove4G() (size uint64, err error) {
+	return 0, fmt.Errorf("not implemented")
 }
 
-func (n pcmock) LookupIOAddress(addr uint64, regs VTdRegisters) ([]uint64, error) {
-	return []uint64{}, fmt.Errorf("Not implemented")
+func (n pcmock) UsableMemoryBelow4G() (size uint64, err error) {
+	return 0, fmt.Errorf("not implemented")
+}
+
+func (n pcmock) LookupIOAddress(addr uint64, regs hwapi.VTdRegisters) ([]uint64, error) {
+	return []uint64{}, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
+}
+
+func (n pcmock) ReadMSR(msr int64) (uint64, error) {
+	return 0, fmt.Errorf("not implemented")
+}
+
+func (n pcmock) ReadMSRAllCores(msr int64) (uint64, error) {
+	return 0, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) HasSMRR() (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
 }
 
-func (n pcmock) GetSMRRInfo() (SMRR, error) {
-	return SMRR{}, fmt.Errorf("Not implemented")
+func (n pcmock) GetSMRRInfo() (hwapi.SMRR, error) {
+	return hwapi.SMRR{}, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) IA32FeatureControlIsLocked() (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) IA32PlatformID() (uint64, error) {
-	return 0, fmt.Errorf("Not implemented")
+	return 0, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) AllowsVMXInSMX() (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) TXTLeavesAreEnabled() (bool, error) {
-	return false, fmt.Errorf("Not implemented")
+	return false, fmt.Errorf("not implemented")
 }
-func (n pcmock) IA32DebugInterfaceEnabledOrLocked() (*IA32Debug, error) {
-	return nil, fmt.Errorf("Not implemented")
+func (n pcmock) IA32DebugInterfaceEnabledOrLocked() (*hwapi.IA32Debug, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) GetMSRRegisters() (registers.Registers, error) {
-	return nil, fmt.Errorf("Not implemented")
+	return nil, fmt.Errorf("not implemented")
 }
 
-func (n pcmock) PCIReadConfigSpace(bus int, device int, devFn int, off int, buf interface{}) error {
-	return fmt.Errorf("Not implemented")
+func (n pcmock) PCIEnumerateVisibleDevices(cb func(d hwapi.PCIDevice) (abort bool)) (err error) {
+	return fmt.Errorf("not implemented")
 }
 
-func (n pcmock) PCIReadConfig16(bus int, device int, devFn int, off int) (uint16, error) {
-	return 0, fmt.Errorf("Not implemented")
+func (n pcmock) PCIReadConfig8(d hwapi.PCIDevice, off int) (uint8, error) {
+	return 0, fmt.Errorf("not implemented")
 }
 
-func (n pcmock) PCIReadConfig32(bus int, device int, devFn int, off int) (uint32, error) {
-	return 0, fmt.Errorf("Not implemented")
+func (n pcmock) PCIReadConfig16(d hwapi.PCIDevice, off int) (uint16, error) {
+	return 0, fmt.Errorf("not implemented")
 }
 
-func (n pcmock) PCIReadVendorID(bus int, device int, devFn int) (uint16, error) {
-	return 0, fmt.Errorf("Not implemented")
+func (n pcmock) PCIReadConfig32(d hwapi.PCIDevice, off int) (uint32, error) {
+	return 0, fmt.Errorf("not implemented")
 }
 
-func (n pcmock) PCIReadDeviceID(bus int, device int, devFn int) (uint16, error) {
-	return 0, fmt.Errorf("Not implemented")
+func (n pcmock) PCIWriteConfig8(d hwapi.PCIDevice, off int, val uint8) error {
+	return fmt.Errorf("not implemented")
+}
+
+func (n pcmock) PCIWriteConfig16(d hwapi.PCIDevice, off int, val uint16) error {
+	return fmt.Errorf("not implemented")
+}
+
+func (n pcmock) PCIWriteConfig32(d hwapi.PCIDevice, off int, val uint32) error {
+	return fmt.Errorf("not implemented")
+}
+
+func (n pcmock) PCIReadVendorID(d hwapi.PCIDevice) (uint16, error) {
+	return 0, fmt.Errorf("not implemented")
+}
+
+func (n pcmock) PCIReadDeviceID(d hwapi.PCIDevice) (uint16, error) {
+	return 0, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) ReadHostBridgeTseg() (uint32, uint32, error) {
-	return 0, 0, fmt.Errorf("Not implemented")
+	return 0, 0, fmt.Errorf("not implemented")
 }
 
-func (n pcmock) ReadHostBridgeDPR() (DMAProtectedRange, error) {
-	return DMAProtectedRange{}, fmt.Errorf("Not implemented")
+func (n pcmock) ReadHostBridgeDPR() (hwapi.DMAProtectedRange, error) {
+	return hwapi.DMAProtectedRange{}, fmt.Errorf("not implemented")
 }
 
 //MockPCReadMemory emulates a x86_64 platform memory map
@@ -220,7 +253,7 @@ func MockPCReadMemory(addr uint64) byte {
 
 }
 
-func (n pcmock) ReadPhys(addr int64, data UintN) error {
+func (n pcmock) ReadPhys(addr int64, data hwapi.UintN) error {
 	buf := make([]byte, int(data.Size()))
 	for i := int64(0); i < data.Size(); i++ {
 		buf[i] = n.ReadMemoryFunc(uint64(addr + i))
@@ -248,34 +281,54 @@ func (n pcmock) ReadPhysBuf(addr int64, buf []byte) error {
 	return nil
 }
 
-func (n pcmock) WritePhys(addr int64, data UintN) error {
+func (n pcmock) WritePhys(addr int64, data hwapi.UintN) error {
 	return nil
 }
 
-func (n pcmock) NewTPM() (*TPM, error) {
-	return nil, fmt.Errorf("Not implemented")
+func (n pcmock) NewTPM() (*hwapi.TPM, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
-func (n pcmock) NVLocked(tpmCon *TPM) (bool, error) {
+func (n pcmock) NVLocked(tpmCon *hwapi.TPM) (bool, error) {
 	return false, nil
 }
 
-func (n pcmock) ReadNVPublic(tpmCon *TPM, index uint32) ([]byte, error) {
-	return []byte{}, fmt.Errorf("Not implemented")
+func (n pcmock) ReadNVPublic(tpmCon *hwapi.TPM, index uint32) ([]byte, error) {
+	return []byte{}, fmt.Errorf("not implemented")
 }
-func (n pcmock) NVReadValue(tpmCon *TPM, index uint32, password string, size, offhandle uint32) ([]byte, error) {
-	return []byte{}, fmt.Errorf("Not implemented")
+func (n pcmock) NVReadValue(tpmCon *hwapi.TPM, index uint32, password string, size, offhandle uint32) ([]byte, error) {
+	return []byte{}, fmt.Errorf("not implemented")
 }
-func (n pcmock) ReadPCR(tpmCon *TPM, pcr uint32) ([]byte, error) {
-	return []byte{}, fmt.Errorf("Not implemented")
+func (n pcmock) ReadPCR(tpmCon *hwapi.TPM, pcr uint32) ([]byte, error) {
+	return []byte{}, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) GetACPITable(arg string) ([]byte, error) {
-	return []byte{}, fmt.Errorf("Not implemented")
+	return []byte{}, fmt.Errorf("not implemented")
+}
+
+func (n pcmock) GetACPITableSysFS(arg string) ([]byte, error) {
+	return []byte{}, fmt.Errorf("not implemented")
+}
+
+func (n pcmock) GetACPITableDevMem(s string) ([]byte, error) {
+	return []byte{}, fmt.Errorf("not implemented")
+}
+
+func (n pcmock) IterateOverSMBIOSTables(m uint8, callback func(s *smbios.Structure) bool) (ret bool, err error) {
+	return false, fmt.Errorf("not implemented")
+}
+
+func (n pcmock) IterateOverSMBIOSTablesType0(callback func(t0 *hwapi.SMBIOSType0) bool) (ret bool, err error) {
+	return false, fmt.Errorf("not implemented")
+}
+
+func (n pcmock) IterateOverSMBIOSTablesType17(callback func(t17 *hwapi.SMBIOSType17) bool) (ret bool, err error) {
+	return false, fmt.Errorf("not implemented")
 }
 
 //GetPcMock returns APIInterfaces for mocking the hwapi used in unittests
-func GetPcMock(ReadMemoryFunc func(uint64) byte) APIInterfaces {
+func GetPcMock(ReadMemoryFunc func(uint64) byte) hwapi.LowLevelHardwareInterfaces {
 	return pcmock{
 		ReadMemoryFunc,
 	}

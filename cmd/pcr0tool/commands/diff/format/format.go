@@ -75,7 +75,7 @@ func AsText(
 		}
 	}
 
-	result.WriteString(fmt.Sprintf("\nTotal:\n"))
+	result.WriteString("\nTotal:\n")
 	result.WriteString(fmt.Sprintf("\tchanged bytes: %d (in %d ranges)\n", report.BytesChanged, len(report.Entries)))
 	result.WriteString(fmt.Sprintf("\thamming distance: %d\n", report.HammingDistance))
 	result.WriteString(fmt.Sprintf("\thamming distance for non-(0x00|0xff) bytes: %d\n", report.HammingDistanceNon00orFF))
@@ -88,7 +88,7 @@ func AsText(
 		return
 	}
 
-	result.WriteString(fmt.Sprintf("\nSome non-(0x00|0xff)-related diffs:\n"))
+	result.WriteString("\nSome non-(0x00|0xff)-related diffs:\n")
 
 	for _, entry := range report.Entries {
 		if entry.DiffRange.Length >= rangeSizeThreshold {
@@ -140,12 +140,12 @@ func dumpDiffEntryInHex(
 			innerOffset := int64(offset) - int64(diffRange.Offset)
 			if innerOffset < 0 || uint64(innerOffset) >= diffRange.Length ||
 				goodData[offset] == badData[offset] {
-				result.WriteString(fmt.Sprintf("   "))
+				result.WriteString("   ")
 				continue
 			}
 			result.WriteString(fmt.Sprintf("|%02X", badData[offset]))
 		}
-		result.WriteString(fmt.Sprintf("\n"))
+		result.WriteString("\n")
 	}
 
 	return
