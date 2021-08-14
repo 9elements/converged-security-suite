@@ -1,10 +1,12 @@
 package pcr
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	amd_manifest "github.com/9elements/converged-security-suite/v2/pkg/amd/manifest"
 	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
+	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 )
 
 // MeasureBIOSDirectoryHeader constructs measurements of BIOS Directory table header
@@ -51,4 +53,24 @@ func MeasureBIOSDirectoryTable(table *amd_manifest.BIOSDirectoryTable, biosDirec
 		id,
 		biosDirectoryTableRange.Offset+headerSize,
 		biosDirectoryTableRange.Length-headerSize), nil
+}
+
+// MeasureMP0C2PMsgRegisters constructs measurement of AMD's MPO_CP@_MSG registers
+func MeasureMP0C2PMsgRegisters(regs registers.Registers) (*Measurement, error) {
+	msg37, found := registers.FindMP0C2PMsg37(regs)
+	if !found {
+		return nil, fmt.Errorf("'%s' is not found", registers.MP0C2PMSG37RegisterID)
+	}
+	msg38, found := registers.FindMP0C2PMsg38(regs)
+	if !found {
+		return nil, fmt.Errorf("'%s' is not found", registers.MP0C2PMSG38RegisterID)
+	}
+	result := bytes.NewBuffer(nil)
+	if err := binary.Write(result, binary.LittleEndian, msg37.Raw()); err != nil {
+		return nil, err
+	}
+	if err := binary.Write(result, binary.LittleEndian, msg38.Raw()); err != nil {
+		return nil, err
+	}
+	return NewStaticDataMeasurement(MeasurementIDMP0C2PMsgRegisters, result.Bytes()), nil
 }
