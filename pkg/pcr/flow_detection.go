@@ -111,14 +111,9 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (tpmdetection.Type, 
 // no validation errors occurred.
 func DetectMainAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevice tpmdetection.Type) (Flow, error) {
 	if _, _, err := amd_manifest.FindEmbeddedFirmwareStructure(firmware); err == nil {
-		// AMD
-		if msg37Register, found := registers.FindMP0C2PMsg37(regs); found {
-			if msg37Register.IsPlatformSecureBootEnabled() {
-				return FlowLegacyPSBEnabled, nil
-			}
-			return FlowLegacyPSBDisabled, nil
-		}
-		return FlowLegacyPSBDisabled, nil
+		// TODO: whether TPM is initialised in locality 0 or 3 depends on the APCB binary tokens
+		// Return the most common default
+		return FlowLegacyAMDLocality3, nil
 	}
 
 	// Intel
