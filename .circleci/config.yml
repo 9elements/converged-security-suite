@@ -25,7 +25,7 @@ jobs:
       - run: CGO_ENABLED=0 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o cbnt-prov cmd/cbnt-prov/*.go
       - run: go test ./pkg/amd/...
       - run: go test ./pkg/check/
-      - run: sudo apt-get update && sudo apt-get install libtspi-dev && go test ./pkg/diff/
+      - run: sudo apt-get -y update && sudo apt-get -y install libtspi-dev && go test ./pkg/diff/
       - run: go test ./pkg/errors/
       - run: go test ./pkg/hwapi/
       - run: go test ./pkg/intel/metadata/fit/
