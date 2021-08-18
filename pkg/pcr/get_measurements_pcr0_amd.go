@@ -49,7 +49,7 @@ func MeasureBIOSDirectoryTable(table *amd_manifest.BIOSDirectoryTable, biosDirec
 	if headerSize > biosDirectoryTableRange.Length {
 		return nil, fmt.Errorf("bios table is too short: '%d'", biosDirectoryTableRange.Length)
 	}
-	//panic(fmt.Sprintf("%v", biosDirectoryTableRange))
+
 	return NewRangeMeasurement(
 		id,
 		biosDirectoryTableRange.Offset+headerSize,
@@ -105,7 +105,7 @@ func MeasureBIOSRTMVolume(biosDirectoryLevel1, biosDirectoryLevel2 *amd_manifest
 
 		for _, entry := range biosDirectory.Entries {
 			if entry.Type == amd_manifest.BIOSRTMVolumeEntry {
-				return NewRangeMeasurement(MeasurementIDPSPVersion, entry.SourceAddress, uint64(entry.Size)), nil
+				return NewRangeMeasurement(MeasurementIDBIOSRTMVolume, entry.SourceAddress, uint64(entry.Size)), nil
 			}
 		}
 	}
