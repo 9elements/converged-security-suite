@@ -56,6 +56,7 @@ const (
 	MeasurementIDBIOSDirectoryLevel1
 	MeasurementIDBIOSDirectoryLevel2Header
 	MeasurementIDBIOSDirectoryLevel2
+	MeasurementIDMP0C2PMsgRegisters
 	EndOfMeasurementID
 )
 
@@ -143,6 +144,8 @@ func (id MeasurementID) String() string {
 		return "Header of BIOS directory table level 2"
 	case MeasurementIDBIOSDirectoryLevel2:
 		return "BIOS directory table level 2"
+	case MeasurementIDMP0C2PMsgRegisters:
+		return "AMD MP0_CP2MSG registers"
 	}
 	return fmt.Sprintf("unknown_measurement_ID_%d", int(id))
 }
@@ -194,6 +197,8 @@ func (id MeasurementID) PCRIDs() []ID {
 		return []ID{0}
 	case MeasurementIDBIOSDirectoryLevel2:
 		return []ID{0}
+	case MeasurementIDMP0C2PMsgRegisters:
+		return []ID{0}
 	}
 	return nil
 }
@@ -227,6 +232,8 @@ func (id MeasurementID) EventLogEventType() *tpmeventlog.EventType {
 	case MeasurementIDBIOSDirectoryLevel2Header:
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
 	case MeasurementIDBIOSDirectoryLevel2:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDMP0C2PMsgRegisters:
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
 	}
 	return nil
@@ -373,6 +380,11 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 				return nil, fmt.Errorf("PSP firmware is not found")
 			}
 			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel2, pspFirmware.PSPDirectoryLevel2Range)
+		}
+
+	case MeasurementIDMP0C2PMsgRegisters:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			return MeasureMP0C2PMsgRegisters(config.Registers)
 		}
 	}
 
