@@ -2,8 +2,9 @@ package pcr
 
 import (
 	"fmt"
-	amd_manifest "github.com/9elements/converged-security-suite/v2/pkg/amd/manifest"
 	"strings"
+
+	amd_manifest "github.com/9elements/converged-security-suite/v2/pkg/amd/manifest"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcd"
@@ -38,6 +39,9 @@ const (
 	MeasurementIDPCR0DATA
 	MeasurementIDACM
 	MeasurementIDACMDate
+	MeasurementIDKeyManifest
+	MeasurementIDBootPolicyManifest
+	MeasurementIDIBBFake
 	MeasurementIDBIOSStartupModule
 	MeasurementIDSCRTMSeparator
 	MeasurementIDPCDFirmwareVendorVersionData
@@ -53,6 +57,9 @@ const (
 	MeasurementIDBIOSDirectoryLevel2Header
 	MeasurementIDBIOSDirectoryLevel2
 	MeasurementIDMP0C2PMsgRegisters
+	MeasurementIDEmbeddedFirmwareStructure
+	MeasurementIDPSPVersion
+	MeasurementIDBIOSRTMVolume
 	EndOfMeasurementID
 )
 
@@ -64,6 +71,12 @@ func (id MeasurementID) IsFake() bool {
 	case MeasurementIDInit:
 		return true
 	case MeasurementIDACM:
+		return true
+	case MeasurementIDKeyManifest:
+		return true
+	case MeasurementIDBootPolicyManifest:
+		return true
+	case MeasurementIDIBBFake:
 		return true
 	case MeasurementIDPCDFirmwareVendorVersionCode:
 		return true
@@ -98,10 +111,16 @@ func (id MeasurementID) String() string {
 		return "ACM"
 	case MeasurementIDPCR0DATA:
 		return "PCR0_DATA"
+	case MeasurementIDKeyManifest:
+		return "key_manifest"
+	case MeasurementIDBootPolicyManifest:
+		return "boot_policy_manifest"
 	case MeasurementIDACMDate:
 		return "ACM_date"
 	case MeasurementIDACMDateInPlace:
 		return "ACM_date_in_place"
+	case MeasurementIDIBBFake:
+		return "IBB"
 	case MeasurementIDBIOSStartupModule:
 		return "BIOS_startup_module"
 	case MeasurementIDSCRTMSeparator:
@@ -130,6 +149,12 @@ func (id MeasurementID) String() string {
 		return "BIOS directory table level 2"
 	case MeasurementIDMP0C2PMsgRegisters:
 		return "AMD MP0_CP2MSG registers"
+	case MeasurementIDEmbeddedFirmwareStructure:
+		return "Embedded Firmware Structure"
+	case MeasurementIDPSPVersion:
+		return "PSP firmware version"
+	case MeasurementIDBIOSRTMVolume:
+		return "BIOS RTM Volume"
 	}
 	return fmt.Sprintf("unknown_measurement_ID_%d", int(id))
 }
@@ -148,6 +173,12 @@ func (id MeasurementID) PCRIDs() []ID {
 	case MeasurementIDACMDate:
 		return []ID{0}
 	case MeasurementIDACMDateInPlace:
+		return []ID{0}
+	case MeasurementIDKeyManifest:
+		return []ID{0}
+	case MeasurementIDBootPolicyManifest:
+		return []ID{0}
+	case MeasurementIDIBBFake:
 		return []ID{0}
 	case MeasurementIDBIOSStartupModule:
 		return []ID{0}
@@ -176,6 +207,12 @@ func (id MeasurementID) PCRIDs() []ID {
 	case MeasurementIDBIOSDirectoryLevel2:
 		return []ID{0}
 	case MeasurementIDMP0C2PMsgRegisters:
+		return []ID{0}
+	case MeasurementIDEmbeddedFirmwareStructure:
+		return []ID{0}
+	case MeasurementIDPSPVersion:
+		return []ID{0}
+	case MeasurementIDBIOSRTMVolume:
 		return []ID{0}
 	}
 	return nil
@@ -212,6 +249,12 @@ func (id MeasurementID) EventLogEventType() *tpmeventlog.EventType {
 	case MeasurementIDBIOSDirectoryLevel2:
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
 	case MeasurementIDMP0C2PMsgRegisters:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDEmbeddedFirmwareStructure:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDPSPVersion:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDBIOSRTMVolume:
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
 	}
 	return nil
@@ -271,6 +314,14 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			return MeasurePCR0Data(config, provider.FITEntries())
 		}
+	case MeasurementIDKeyManifest:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			return MeasureKeyManifest(provider.FITEntries())
+		}
+	case MeasurementIDBootPolicyManifest:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			return MeasureBootPolicy(provider.FITEntries())
+		}
 	case MeasurementIDACM:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			return MeasureACM(provider.FITEntries())
@@ -282,6 +333,10 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 	case MeasurementIDACMDateInPlace:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			return MeasureACMDateInPlace(config.PCR0DataIbbDigestHashAlgorithm, provider.FITEntries())
+		}
+	case MeasurementIDIBBFake:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			return MeasureIBB(provider.FITEntries(), uint64(len(provider.Firmware().Buf())))
 		}
 	case MeasurementIDBIOSStartupModule:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
@@ -337,7 +392,7 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 			if pspFirmware == nil {
 				return nil, fmt.Errorf("PSP firmware is not found")
 			}
-			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel1, pspFirmware.PSPDirectoryLevel1Range)
+			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel1Range)
 		}
 	case MeasurementIDBIOSDirectoryLevel2:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
@@ -345,12 +400,43 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 			if pspFirmware == nil {
 				return nil, fmt.Errorf("PSP firmware is not found")
 			}
-			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel2, pspFirmware.PSPDirectoryLevel2Range)
+			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel2, pspFirmware.BIOSDirectoryLevel2Range)
 		}
 
 	case MeasurementIDMP0C2PMsgRegisters:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			return MeasureMP0C2PMsgRegisters(config.Registers)
+		}
+
+	case MeasurementIDEmbeddedFirmwareStructure:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if pspFirmware == nil {
+				return nil, fmt.Errorf("PSP firmware is not found")
+			}
+			return NewRangeMeasurement(
+				MeasurementIDEmbeddedFirmwareStructure,
+				pspFirmware.EmbeddedFirmwareRange.Offset,
+				pspFirmware.EmbeddedFirmwareRange.Length), nil
+		}
+
+	case MeasurementIDPSPVersion:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if pspFirmware == nil {
+				return nil, fmt.Errorf("PSP firmware is not found")
+			}
+			firmware := provider.Firmware()
+			return MeasurePSPVersion(firmware.ImageBytes(), pspFirmware.PSPDirectoryLevel1, pspFirmware.PSPDirectoryLevel2)
+		}
+
+	case MeasurementIDBIOSRTMVolume:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if pspFirmware == nil {
+				return nil, fmt.Errorf("PSP firmware is not found")
+			}
+			return MeasureBIOSRTMVolume(pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel2)
 		}
 	}
 

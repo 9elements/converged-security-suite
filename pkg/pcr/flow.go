@@ -21,10 +21,14 @@ func (f Flow) String() string {
 		return "LegacyTXTEnabledTPM12"
 	case FlowIntelCBnT0T:
 		return "CBnT0T"
-	case FlowLegacyPSBDisabled:
-		return "LegacyPSBDisabled"
-	case FlowLegacyPSBEnabled:
-		return "LegacyPSBEnabled"
+	case FlowLegacyAMDLocality0:
+		return "LegacyAMDLocality0"
+	case FlowLegacyAMDLocality3:
+		return "LegacyAMDLocality3"
+	case FlowAMDLocality0:
+		return "AMDLocality0"
+	case FlowAMDLocality3:
+		return "AMDLocality3"
 	}
 	panic(fmt.Sprintf("Flow's %d string representation is not supported", f))
 }
@@ -42,10 +46,14 @@ func FlowFromString(s string) (Flow, error) {
 		return FlowIntelLegacyTXTEnabledTPM12, nil
 	case "cbnt0t":
 		return FlowIntelCBnT0T, nil
-	case "legacypsbdisabled":
-		return FlowLegacyPSBDisabled, nil
-	case "legacypsbenabled":
-		return FlowLegacyPSBEnabled, nil
+	case "legacyamdlocality0":
+		return FlowLegacyAMDLocality0, nil
+	case "legacyamdlocality3":
+		return FlowLegacyAMDLocality3, nil
+	case "amdlocality0":
+		return FlowAMDLocality0, nil
+	case "amdlocality3":
+		return FlowAMDLocality3, nil
 	}
 	return FlowAuto, fmt.Errorf("'%s' attestation flow is not supported", s)
 }
@@ -66,11 +74,17 @@ const (
 	// FlowIntelLegacyTXTEnabledTPM12 means a pre-CBnT flow with enabled TXT for TPM 1.2
 	FlowIntelLegacyTXTEnabledTPM12
 
-	// FlowLegacyPSBDisabled means an AMD flow with disabled PSB and with initial set of measurements
-	FlowLegacyPSBDisabled
+	// FlowLegacyAMDLocality0 means an AMD flow with TPM locality 0 initialisation of TPM and with legacy set of measurements
+	FlowLegacyAMDLocality0
 
-	// FlowLegacyPSBEnabled means an AMD flow with enabled PSB and with initial set of measurements
-	FlowLegacyPSBEnabled
+	// FlowLegacyAMDLocality3 means an AMD flow with TPM locality 3 initialisation of TPM and with legacy set of measurements
+	FlowLegacyAMDLocality3
+
+	// FlowAMDLocality0 means an AMD flow with TPM locality 0 initialisation of TPM
+	FlowAMDLocality0
+
+	// FlowAMDLocality3 means an AMD flow with TPM locality 0 initialisation of TPM
+	FlowAMDLocality3
 )
 
 // Flows contains all supported PCR measurements flows
@@ -80,14 +94,16 @@ var Flows = []Flow{
 	FlowIntelLegacyTXTEnabled,
 	FlowIntelLegacyTXTEnabledTPM12,
 	FlowIntelCBnT0T,
-	FlowLegacyPSBDisabled,
-	FlowLegacyPSBEnabled,
+	FlowLegacyAMDLocality0,
+	FlowLegacyAMDLocality3,
+	FlowAMDLocality0,
+	FlowAMDLocality3,
 }
 
 // TPMLocality returns TPM initialization locality in this flow.
 func (f Flow) TPMLocality() uint8 {
 	switch f {
-	case FlowIntelCBnT0T, FlowIntelLegacyTXTEnabled, FlowLegacyPSBEnabled:
+	case FlowIntelCBnT0T, FlowIntelLegacyTXTEnabled, FlowLegacyAMDLocality3, FlowAMDLocality3:
 		return 3
 	}
 	return 0
@@ -111,6 +127,9 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 			MeasurementIDInit, // is a fake measurement
 			MeasurementIDACM,  // is a fake measurement
 			MeasurementIDPCR0DATA,
+			MeasurementIDKeyManifest,        // is a fake measurement
+			MeasurementIDBootPolicyManifest, // is a fake measurement
+			MeasurementIDIBBFake,            // is a fake measurement
 			MeasurementIDPCDFirmwareVendorVersionData,
 			MeasurementIDPCDFirmwareVendorVersionCode, // is a fake measurement
 			MeasurementIDDXE,
@@ -163,16 +182,40 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 			MeasurementIDFITPointer, // is a fake measurement
 			MeasurementIDFITHeaders, // is a fake measurement
 		}
-	case FlowLegacyPSBDisabled:
+	case FlowLegacyAMDLocality0:
 		return MeasurementIDs{
-			MeasurementIDPCDFirmwareVendorVersionData, // this should be a PSP Firmware version
+			MeasurementIDPCDFirmwareVendorVersionData,
 			MeasurementIDDXE,
 			MeasurementIDSeparator,
 		}
-	case FlowLegacyPSBEnabled:
+	case FlowLegacyAMDLocality3:
 		return MeasurementIDs{
-			MeasurementIDPCDFirmwareVendorVersionData, // this should be a PSP Firmware version
+			MeasurementIDPCDFirmwareVendorVersionData,
 			MeasurementIDDXE,
+			MeasurementIDSeparator,
+		}
+	case FlowAMDLocality0:
+		return MeasurementIDs{
+			MeasurementIDPSPVersion,
+			MeasurementIDBIOSRTMVolume,
+			MeasurementIDMP0C2PMsgRegisters,
+			MeasurementIDEmbeddedFirmwareStructure,
+			MeasurementIDBIOSDirectoryLevel1Header,
+			MeasurementIDBIOSDirectoryLevel1,
+			MeasurementIDBIOSDirectoryLevel2Header,
+			MeasurementIDBIOSDirectoryLevel2,
+			MeasurementIDSeparator,
+		}
+	case FlowAMDLocality3:
+		return MeasurementIDs{
+			MeasurementIDPSPVersion,
+			MeasurementIDBIOSRTMVolume,
+			MeasurementIDMP0C2PMsgRegisters,
+			MeasurementIDEmbeddedFirmwareStructure,
+			MeasurementIDBIOSDirectoryLevel1Header,
+			MeasurementIDBIOSDirectoryLevel1,
+			MeasurementIDBIOSDirectoryLevel2Header,
+			MeasurementIDBIOSDirectoryLevel2,
 			MeasurementIDSeparator,
 		}
 	}
