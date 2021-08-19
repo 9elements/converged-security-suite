@@ -2,6 +2,7 @@ package manifest
 
 import (
 	"bytes"
+	"encoding/binary"
 	"testing"
 )
 
@@ -18,17 +19,21 @@ var pspDirectoryTableDataChunk = []byte{
 	0x00, 0x24, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00,
 }
 
+func TestPSPDirectoryTableHeaderSize(t *testing.T) {
+	const expectedPSPDirectoryTableHeaderSize = 0x10
+	actualSize := binary.Size(PSPDirectoryTableHeader{})
+	if actualSize != expectedPSPDirectoryTableHeaderSize {
+		t.Errorf("BIOSDirectoryTableHeader is incorrect: %d, expected %d", actualSize, expectedPSPDirectoryTableHeaderSize)
+	}
+}
+
 func TestFindPSPDirectoryTable(t *testing.T) {
 	firmwareChunk := []byte{
 		0x12, 0x00, 0x15, 0x00, 0x15, // some prefix
 	}
 
 	t.Run("no_psp_table_cookie", func(t *testing.T) {
-		firmware := &dummyFirmware{
-			data: firmwareChunk,
-		}
-
-		table, _, err := FindPSPDirectoryTable(firmware)
+		table, _, err := FindPSPDirectoryTable(firmwareChunk)
 		if err == nil {
 			t.Errorf("Expected an error when finding psp directory table in a broken firmware")
 		}
@@ -38,32 +43,32 @@ func TestFindPSPDirectoryTable(t *testing.T) {
 	})
 
 	t.Run("psp_table_cookie_found", func(t *testing.T) {
-		firmware := &dummyFirmware{
-			data: append(firmwareChunk, pspDirectoryTableDataChunk...),
-		}
-		table, addr, err := FindPSPDirectoryTable(firmware)
+		table, r, err := FindPSPDirectoryTable(append(firmwareChunk, pspDirectoryTableDataChunk...))
 		if err != nil {
-			t.Errorf("Unexecpted error when finding PSP Directory table")
-			t.Skip()
+			t.Fatalf("Unexecpted error when finding PSP Directory table")
 		}
-		if addr != uint64(len(firmwareChunk)) {
-			t.Errorf("PSP Directory Table address is incorrect: %d, expected: %d", addr, uint64(len(firmwareChunk)))
+		if r.Offset != uint64(len(firmwareChunk)) {
+			t.Fatalf("PSP Directory Table address is incorrect: %d, expected: %d", r.Offset, uint64(len(firmwareChunk)))
+		}
+		if r.Length != uint64(len(pspDirectoryTableDataChunk)) {
+			t.Errorf("PSP Directory Table size is incorrect: %d, expected: %d", r.Length, uint64(len(pspDirectoryTableDataChunk)))
 		}
 		if table == nil {
-			t.Errorf("Returned PSP Directory table is nil")
+			t.Fatal("Returned PSP Directory table is nil")
 		}
 	})
 }
 
 func TestPspDirectoryTableParsing(t *testing.T) {
-	table, err := ParsePSPDirectoryTable(bytes.NewBuffer(pspDirectoryTableDataChunk))
+	table, length, err := ParsePSPDirectoryTable(bytes.NewBuffer(append(pspDirectoryTableDataChunk, 0xff)))
 	if err != nil {
-		t.Errorf("Failed to parse PSP Directory table, err: %v", err)
-		t.Skip()
+		t.Fatalf("Failed to parse PSP Directory table, err: %v", err)
+	}
+	if length != uint64(len(pspDirectoryTableDataChunk)) {
+		t.Errorf("PSP Directory table read bytes is incorrect: %d, expected: %d", length, len(biosDirectoryTableDataChunk))
 	}
 	if table == nil {
-		t.Errorf("result PSP Directory table is nil")
-		t.Skip()
+		t.Fatal("result PSP Directory table is nil")
 	}
 
 	if table.PSPCookie != PSPDirectoryTableCookie {
@@ -73,8 +78,7 @@ func TestPspDirectoryTableParsing(t *testing.T) {
 		t.Errorf("TotalEntries is incorrect: %d, expected: %d", table.TotalEntries, 1)
 	}
 	if len(table.Entries) != 1 {
-		t.Errorf("Result number of entries is incorrect: %d, expected: %d", len(table.Entries), 1)
-		t.Skip()
+		t.Fatalf("Result number of entries is incorrect: %d, expected: %d", len(table.Entries), 1)
 	}
 
 	if table.Entries[0].Type != AMDPublicKeyEntry {

@@ -12,7 +12,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/google/go-tpm/tpm2"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
+	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 
 	a "github.com/logrusorgru/aurora"
 )
@@ -83,10 +83,10 @@ func (e *execTestsCmd) Run(ctx *context) error {
 	case "legacy":
 		ret = run("Legacy TXT", test.TestsLegacy, config, e.Interactive)
 	default:
-		return fmt.Errorf("No valid test set given")
+		return fmt.Errorf("no valid test set given")
 	}
 	if !ret {
-		return fmt.Errorf("Tests ran with errors")
+		return fmt.Errorf("tests ran with errors")
 	}
 	return nil
 }

@@ -19,7 +19,7 @@ func getCorebootRegion(image []byte) (uint32, uint32, error) {
 	}
 	i := f.IndexOfArea("COREBOOT")
 	if i < 0 {
-		return 0, 0, errors.New("Coreboot region not found")
+		return 0, 0, errors.New("COREBOOT region not found")
 	}
 	return f.Areas[i].Offset, f.Areas[i].Size, nil
 }
@@ -55,5 +55,5 @@ func GetRegion(image []byte, regionType uefi.FlashRegionType) (uint32, uint32, e
 		size := flash.IFD.Region.FlashRegions[regionType].EndOffset() - offset
 		return offset, size, nil
 	}
-	return 0, 0, fmt.Errorf("Couldn't find region %d", regionType)
+	return 0, 0, fmt.Errorf("couldn't find region %d", regionType)
 }

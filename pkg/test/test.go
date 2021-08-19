@@ -3,8 +3,8 @@ package test
 import (
 	"fmt"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
+	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 )
 
 const (
@@ -108,7 +108,7 @@ type Test struct {
 	//-> mostly api errors, but not directly testrelated problem.
 	//The return call in test functions shall return only one of the errors,
 	//while the other is nil.
-	function      func(hwapi.APIInterfaces, *tools.Configuration) (bool, error, error)
+	function      func(hwapi.LowLevelHardwareInterfaces, *tools.Configuration) (bool, error, error)
 	Result        Result
 	dependencies  []*Test
 	ErrorText     string
@@ -245,7 +245,7 @@ var TestsTBoot = []*Test{
 }
 
 // Run implements the genereal test function and exposes it.
-func (t *Test) Run(TxtAPI hwapi.APIInterfaces, config *tools.Configuration) bool {
+func (t *Test) Run(TxtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) bool {
 	var DepsPassed = true
 	// Make sure all dependencies have run and passed
 	for idx := range t.dependencies {
@@ -295,9 +295,9 @@ func (t *Test) Run(TxtAPI hwapi.APIInterfaces, config *tools.Configuration) bool
 }
 
 //RunTestsSilent Runs the specified tests and returns false on the first error encountered
-func RunTestsSilent(TxtAPI hwapi.APIInterfaces, config *tools.Configuration, Tests []*Test) (bool, string, error) {
+func RunTestsSilent(TxtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration, Tests []*Test) (bool, string, error) {
 
-	intErr := fmt.Errorf("Internal error running test")
+	intErr := fmt.Errorf("internal error running test")
 
 	for i := range Tests {
 		if !Tests[i].Run(TxtAPI, config) && Tests[i].Required {

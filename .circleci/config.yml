@@ -6,7 +6,7 @@ jobs:
   build:
     docker:
       # specify the version
-      - image: circleci/golang:1.13
+      - image: circleci/golang:latest
 
     working_directory: /go/src/github.com/9elements/converged-security-suite
     steps:
@@ -99,6 +99,48 @@ jobs:
           path: artifact.deb
           destination: golang-css-suite.deb
 
+  build_arm:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.13
+
+    working_directory: /go/src/github.com/9elements/converged-security-suite
+    steps:
+      - checkout
+      - run: go mod download
+      - run: go mod verify
+      - run: CGO_ENABLED=0 GOARCH=arm go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-suite cmd/txt-suite/*.go
+      - run: CGO_ENABLED=0 GOARCH=arm go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-prov cmd/txt-prov/*.go
+      - run: CGO_ENABLED=0 GOARCH=arm go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o cbnt-prov cmd/cbnt-prov/*.go
+
+  build_arm64:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.13
+
+    working_directory: /go/src/github.com/9elements/converged-security-suite
+    steps:
+      - checkout
+      - run: go mod download
+      - run: go mod verify
+      - run: CGO_ENABLED=0 GOARCH=arm64 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-suite cmd/txt-suite/*.go
+      - run: CGO_ENABLED=0 GOARCH=arm64 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-prov cmd/txt-prov/*.go
+      - run: CGO_ENABLED=0 GOARCH=arm64 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o cbnt-prov cmd/cbnt-prov/*.go
+
+  build_ppc64le:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.13
+
+    working_directory: /go/src/github.com/9elements/converged-security-suite
+    steps:
+      - checkout
+      - run: go mod download
+      - run: go mod verify
+      - run: CGO_ENABLED=0 GOARCH=ppc64le go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-suite cmd/txt-suite/*.go
+      - run: CGO_ENABLED=0 GOARCH=ppc64le go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-prov cmd/txt-prov/*.go
+      - run: CGO_ENABLED=0 GOARCH=ppc64le go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o cbnt-prov cmd/cbnt-prov/*.go
+
 
   publish-github-release:
     docker:
@@ -118,6 +160,24 @@ workflows:
   main:
     jobs:
       - build:
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              only: /.*/
+      - build_arm:
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              only: /.*/
+      - build_arm64:
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              only: /.*/
+      - build_ppc64le:
           filters:
             branches:
               only: /.*/

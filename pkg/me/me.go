@@ -142,7 +142,7 @@ func ParseIntelFirmwareFile(imagePath string) (*IntelME, error) {
 }
 
 // ParseIntelFirmwareBytes parses the Intel firmware image from bytes
-func ParseIntelFirmwareBytes(imageBytes []byte) (me *IntelME, err error) {
+func ParseIntelFirmwareBytes(imageBytes []byte) (*IntelME, error) {
 
 	legacy := false
 	fptoffset := -1
@@ -162,41 +162,36 @@ func ParseIntelFirmwareBytes(imageBytes []byte) (me *IntelME, err error) {
 		}
 	}
 	if fptoffset == -1 {
-		err = fmt.Errorf("FlashPartitionTable not found")
-		return
+		return nil, fmt.Errorf("FlashPartitionTable not found")
 
 	}
-	me = &IntelME{image: imageBytes, legacy: legacy, fptoffset: uint32(fptoffset)}
+	me := &IntelME{image: imageBytes, legacy: legacy, fptoffset: uint32(fptoffset)}
 
 	reader := bytes.NewReader(imageBytes[fptoffset:])
 
 	offset := 0
 	entries := 0
 	if legacy {
-		if err = binary.Read(reader, binary.LittleEndian, &me.legacyhdr); err != nil {
-			return
+		if err := binary.Read(reader, binary.LittleEndian, &me.legacyhdr); err != nil {
+			return nil, err
 		}
 		if me.legacyhdr.HeaderVersion != 0x20 {
-			err = fmt.Errorf("Unsupported header version. Got 0x%x\n", me.legacyhdr.HeaderVersion)
-			return
+			return nil, fmt.Errorf("unsupported header version. Got 0x%x", me.legacyhdr.HeaderVersion)
 		}
 		if int(me.legacyhdr.HeaderLength) > len(imageBytes)-fptoffset {
-			err = fmt.Errorf("Invalid header length. Got 0x%x\n", me.legacyhdr.HeaderLength)
-			return
+			return nil, fmt.Errorf("invalid header length. Got 0x%x", me.legacyhdr.HeaderLength)
 		}
 		offset = int(me.legacyhdr.HeaderLength)
 		entries = int(me.legacyhdr.NumFptEntries)
 	} else {
-		if err = binary.Read(reader, binary.LittleEndian, &me.hdr); err != nil {
-			return
+		if err := binary.Read(reader, binary.LittleEndian, &me.hdr); err != nil {
+			return nil, err
 		}
 		if me.hdr.HeaderVersion != 0x20 {
-			err = fmt.Errorf("Unsupported header version. Got 0x%x\n", me.hdr.HeaderVersion)
-			return
+			return nil, fmt.Errorf("unsupported header version. Got 0x%x", me.hdr.HeaderVersion)
 		}
 		if int(me.hdr.HeaderLength) > len(imageBytes)-fptoffset {
-			err = fmt.Errorf("Invalid header length. Got 0x%x\n", me.hdr.HeaderLength)
-			return
+			return nil, fmt.Errorf("invalid header length. Got 0x%x", me.hdr.HeaderLength)
 		}
 		offset = int(me.hdr.HeaderLength)
 		entries = int(me.hdr.NumFptEntries)
@@ -206,8 +201,8 @@ func ParseIntelFirmwareBytes(imageBytes []byte) (me *IntelME, err error) {
 
 	for i := 0; i < entries; i++ {
 		var e FlashPartitionTableEntry
-		if err = binary.Read(reader, binary.LittleEndian, &e); err != nil {
-			return
+		if err := binary.Read(reader, binary.LittleEndian, &e); err != nil {
+			return nil, err
 		}
 		me.partitions = append(me.partitions, e)
 
@@ -242,7 +237,7 @@ func (m *IntelME) WritePartition(id string, data []byte) (err error) {
 		name := m.partitions[i].Name
 		if string(bytes.Trim([]byte{name[0], name[1], name[2], name[3]}, "\x00")) == id {
 			if uint32(len(data)) != m.partitions[i].Length {
-				err = fmt.Errorf("Invalid length")
+				err = fmt.Errorf("invalid length")
 				return
 			}
 			m.image = append(append(m.image[:m.partitions[i].Offset+m.fptoffset], data...),

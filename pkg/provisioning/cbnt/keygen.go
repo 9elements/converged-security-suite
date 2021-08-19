@@ -65,7 +65,7 @@ func GenECCKey(curve int, password string, kmPubFile, kmPrivFile, bpmPubFile, bp
 	case 256:
 		ellCurve = elliptic.P256()
 	default:
-		return fmt.Errorf("Selected ECC algorithm not supported")
+		return fmt.Errorf("selected ECC algorithm not supported")
 	}
 	key, err := ecdsa.GenerateKey(ellCurve, rand.Reader)
 	if err != nil {
@@ -218,7 +218,7 @@ func ReadPubKey(path string) (crypto.PublicKey, error) {
 			if strings.Contains(block.Type, "RSA") {
 				key, err := x509.ParsePKCS1PublicKey(block.Bytes)
 				if err != nil {
-					return nil, fmt.Errorf("Parsing error in x509.ParsePKCS1PublicKey: %v", err)
+					return nil, fmt.Errorf("parsing error in x509.ParsePKCS1PublicKey: %v", err)
 				}
 				return key, nil
 			}

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
+	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 	tpm1 "github.com/google/go-tpm/tpm"
 	"github.com/google/go-tpm/tpm2"
 )
@@ -26,7 +26,7 @@ const (
 	tpm12AUXIndexSize = uint32(64)
 	tpm12AUXIndexAttr = uint32(0) // No attributes are set for TPM12 AUX Index
 
-	tpm12OldAUXIndex = 0x50000002
+	tpm12OldAUXIndex = 0x50000002 // nolint
 
 	tpm12POIndex     = 0x40000001
 	tpm12POIndexSize = uint32(54)
@@ -196,7 +196,7 @@ var (
 )
 
 // TPMConnect Connects to a TPM device (virtual or real)
-func TPMConnect(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+func TPMConnect(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
 	tpmCon, err := txtAPI.NewTPM()
 	if err == nil && tpmCon != nil {
 		defer tpmCon.Close()
@@ -206,23 +206,23 @@ func TPMConnect(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, 
 }
 
 // TPMIsPresent validates if one of the two previous tests succeeded
-func TPMIsPresent(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+func TPMIsPresent(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
 	tpmCon, err := txtAPI.NewTPM()
 	if err != nil {
-		return false, fmt.Errorf("No TPM connection"), nil
+		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer tpmCon.Close()
 	if tpmCon.Version == config.TPM {
 		return true, nil, nil
 	}
-	return false, fmt.Errorf("No TPM present"), nil
+	return false, fmt.Errorf("no TPM present"), nil
 }
 
 // TPMNVRAMIsLocked Checks if NVRAM indexes are write protected
-func TPMNVRAMIsLocked(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+func TPMNVRAMIsLocked(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
 	tpmCon, err := txtAPI.NewTPM()
 	if err != nil {
-		return false, fmt.Errorf("No TPM connection"), nil
+		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer tpmCon.Close()
 	res, err := txtAPI.NVLocked(tpmCon)
@@ -230,7 +230,7 @@ func TPMNVRAMIsLocked(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (
 }
 
 // PSIndexConfig tests if PS Index has correct configuration
-func PSIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+func PSIndexConfig(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
 	var d1 tpm1.NVDataPublic
 	var d2 tpm2.NVPublic
 	var err error
@@ -239,7 +239,7 @@ func PSIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (boo
 	var p2 [3]byte
 	tpmCon, err := txtAPI.NewTPM()
 	if err != nil {
-		return false, fmt.Errorf("No TPM connection"), nil
+		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer tpmCon.Close()
 	switch tpmCon.Version {
@@ -265,10 +265,10 @@ func PSIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (boo
 		// August 2016 - Revision 013 - Document: 315168-013
 		// Appendix J on page. 152, Table J-1. TPM Family 1.2 NV Storage Matrix
 		if d1.Size != tpm12PSIndexSize {
-			return false, fmt.Errorf("Size incorrect: Have: %v - Want: 54 - Data: %v", d1.Size, d1), nil
+			return false, fmt.Errorf("size incorrect: Have: %v - Want: 54 - Data: %v", d1.Size, d1), nil
 		}
 		if d1.Permission.Attributes != tpm12PSIndexAttr {
-			return false, fmt.Errorf("Permissions of PS Index are invalid - have: %v - want: %v", d1.Permission.Attributes, tpm12PSIndexAttr), nil
+			return false, fmt.Errorf("permissions of PS Index are invalid - have: %v - want: %v", d1.Permission.Attributes, tpm12PSIndexAttr), nil
 		}
 		if d1.ReadSTClear {
 			return false, fmt.Errorf("ReadSTClear is set - that is an error"), nil
@@ -331,12 +331,12 @@ func PSIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (boo
 		}
 		return true, nil, nil
 	}
-	return false, fmt.Errorf("Not connected to TPM"), nil
+	return false, fmt.Errorf("not connected to TPM"), nil
 
 }
 
 // AUXIndexConfig tests if the AUX Index has the correct configuration
-func AUXIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+func AUXIndexConfig(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
 	var d1 tpm1.NVDataPublic
 	var d2 tpm2.NVPublic
 	var err error
@@ -345,7 +345,7 @@ func AUXIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bo
 	var p2 [3]byte
 	tpmCon, err := txtAPI.NewTPM()
 	if err != nil {
-		return false, fmt.Errorf("No TPM connection"), nil
+		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer tpmCon.Close()
 	switch tpmCon.Version {
@@ -370,10 +370,10 @@ func AUXIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bo
 				d1.PCRInfoRead.PCRsAtRelease.Mask, d1.PCRInfoWrite.PCRsAtRelease.Mask), nil
 		}
 		if d1.Permission.Attributes != 0 {
-			return false, fmt.Errorf("Permissions of AUX Index are invalid - have: %v - want: %v", d1.Permission.Attributes, tpm12AUXIndexAttr), nil
+			return false, fmt.Errorf("permissions of AUX Index are invalid - have: %v - want: %v", d1.Permission.Attributes, tpm12AUXIndexAttr), nil
 		}
 		if d1.Size != tpm12AUXIndexSize {
-			return false, fmt.Errorf("Size incorrect: Have: %v - Want: 64", d1.Size), nil
+			return false, fmt.Errorf("size incorrect: Have: %v - Want: 64", d1.Size), nil
 		}
 		if d1.ReadSTClear {
 			return false, fmt.Errorf("ReadSTClear is set - that is an error"), nil
@@ -442,15 +442,15 @@ func AUXIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bo
 }
 
 // AUXTPM2IndexCheckHash checks the PolicyHash of AUX index
-func AUXTPM2IndexCheckHash(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+func AUXTPM2IndexCheckHash(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
 	tpmCon, err := txtAPI.NewTPM()
 	if err != nil {
-		return false, fmt.Errorf("No TPM connection"), nil
+		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer tpmCon.Close()
 	switch tpmCon.Version {
 	case hwapi.TPMVersion12:
-		return false, fmt.Errorf("Only valid for TPM 2.0"), nil
+		return false, fmt.Errorf("only valid for TPM 2.0"), nil
 	case hwapi.TPMVersion20:
 		var d tpm2.NVPublic
 		raw, err := txtAPI.ReadNVPublic(tpmCon, tpm20AUXIndex)
@@ -495,18 +495,18 @@ func AUXTPM2IndexCheckHash(txtAPI hwapi.APIInterfaces, config *tools.Configurati
 		}
 		return false, fmt.Errorf("AUX index has a incorrect PolicyHash. Have: %v - Want: %v", hashData, tpm20AUXIndexHashData), nil
 	}
-	return false, fmt.Errorf("Unknown TPM device version"), nil
+	return false, fmt.Errorf("unknown TPM device version"), nil
 }
 
 // POIndexConfig checks the PO index configuration
-func POIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+func POIndexConfig(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
 	var d1 tpm1.NVDataPublic
 	var d2 tpm2.NVPublic
 	var err error
 	var raw []byte
 	tpmCon, err := txtAPI.NewTPM()
 	if err != nil {
-		return false, fmt.Errorf("No TPM connection"), nil
+		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer tpmCon.Close()
 	switch tpmCon.Version {
@@ -528,7 +528,7 @@ func POIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (boo
 		// August 2016 - Revision 013 - Document: 315168-013
 		// Appendix J on page. 152, Table J-1. TPM Family 1.2 NV Storage Matrix
 		if d1.Permission.Attributes != 0 {
-			return false, fmt.Errorf("Permissions of AUX Index are invalid - have: %v - want: %v", d1.Permission.Attributes, tpm12POIndexAttr), nil
+			return false, fmt.Errorf("permissions of AUX Index are invalid - have: %v - want: %v", d1.Permission.Attributes, tpm12POIndexAttr), nil
 		}
 		if d1.Size != tpm12POIndexSize {
 			return false, fmt.Errorf("TPM1 PO Index size incorrect. Have: %v - Want: %v", d1.Size, tpm12POIndexSize), nil
@@ -583,11 +583,11 @@ func POIndexConfig(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (boo
 			return false, fmt.Errorf("TPM2 PO Index incorrect. Have: %v - Want: %v", d2.DataSize, size), nil
 		}
 	}
-	return false, fmt.Errorf("Unknown TPM device version"), nil
+	return false, fmt.Errorf("unknown TPM device version"), nil
 }
 
 // PSIndexHasValidLCP checks if PS Index has a valid LCP
-func PSIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+func PSIndexHasValidLCP(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
 	emptyHash := make([]byte, 20)
 	pol1, pol2, err := readPSLCPPolicy(txtAPI)
 	if err != nil {
@@ -604,7 +604,7 @@ func PSIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration)
 			return false, fmt.Errorf("PolicyType is invalid. Have: %d - Want: %d or %d", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
 		}
 		if pol1.SINITMinVersion == 0 {
-			return false, fmt.Errorf("SINITMinVersion is invalid. Must be greater than 0"), nil
+			return false, fmt.Errorf("siNITMinVersion is invalid. Must be greater than 0"), nil
 		}
 		if pol1.PolicyType == tools.LCPPolicyTypeList && pol1.PolicyControl == 0 {
 			return false, fmt.Errorf("PolicyControl is invalid"), nil
@@ -639,13 +639,13 @@ func PSIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration)
 }
 
 // POIndexHasValidLCP checks if PO Index holds a valid LCP
-func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+func POIndexHasValidLCP(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
 	var pol1 *tools.LCPPolicy
 	var pol2 *tools.LCPPolicy2
 	emptyHash := make([]byte, 20)
 	tpmCon, err := txtAPI.NewTPM()
 	if err != nil {
-		return false, fmt.Errorf("No TPM connection"), nil
+		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer tpmCon.Close()
 	switch tpmCon.Version {
@@ -727,7 +727,7 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration)
 			return false, fmt.Errorf("PolicyType is invalid. Have: %d - Want: %d or %d", pol1.PolicyType, tools.LCPPolicyTypeAny, tools.LCPPolicyTypeList), nil
 		}
 		if pol1.SINITMinVersion == 0 {
-			return false, fmt.Errorf("SINITMinVersion is invalid. Must be greater than 0"), nil
+			return false, fmt.Errorf("siNITMinVersion is invalid. Must be greater than 0"), nil
 		}
 		if pol1.PolicyType == tools.LCPPolicyTypeList && pol1.PolicyControl == 0 {
 			return false, fmt.Errorf("PolicyControl is invalid"), nil
@@ -762,10 +762,10 @@ func POIndexHasValidLCP(txtAPI hwapi.APIInterfaces, config *tools.Configuration)
 }
 
 // PCR0IsSet Reads PCR-00 and checks whether if it's not the EmptyDigest
-func PCR0IsSet(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+func PCR0IsSet(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
 	tpmCon, err := txtAPI.NewTPM()
 	if err != nil {
-		return false, fmt.Errorf("No TPM connection"), nil
+		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer tpmCon.Close()
 	pcr, err := txtAPI.ReadPCR(tpmCon, 0)
@@ -782,12 +782,12 @@ func checkTPM2NVAttr(mask, want, optional tpm2.NVAttr) bool {
 	return (1 >> mask & (want | optional)) == 0
 }
 
-func readPSLCPPolicy(txtAPI hwapi.APIInterfaces) (*tools.LCPPolicy, *tools.LCPPolicy2, error) {
+func readPSLCPPolicy(txtAPI hwapi.LowLevelHardwareInterfaces) (*tools.LCPPolicy, *tools.LCPPolicy2, error) {
 	var pol1 *tools.LCPPolicy
 	var pol2 *tools.LCPPolicy2
 	tpmCon, err := txtAPI.NewTPM()
 	if err != nil {
-		return nil, nil, fmt.Errorf("No TPM connection")
+		return nil, nil, fmt.Errorf("no TPM connection")
 	}
 	defer tpmCon.Close()
 	switch tpmCon.Version {
@@ -858,7 +858,7 @@ func readPSLCPPolicy(txtAPI hwapi.APIInterfaces) (*tools.LCPPolicy, *tools.LCPPo
 }
 
 // NPWModeIsNotSetInPS checks if NPW is activated or not
-func NPWModeIsNotSetInPS(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+func NPWModeIsNotSetInPS(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
 	pol1, pol2, err := readPSLCPPolicy(txtAPI)
 	if err != nil {
 		return false, err, nil
@@ -877,7 +877,7 @@ func NPWModeIsNotSetInPS(txtAPI hwapi.APIInterfaces, config *tools.Configuration
 }
 
 // TXTModeValid checks if TXT is in valid mode
-func TXTModeValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool, error, error) {
+func TXTModeValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
 	pol1, pol2, err := readPSLCPPolicy(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -898,5 +898,5 @@ func TXTModeValid(txtAPI hwapi.APIInterfaces, config *tools.Configuration) (bool
 			return true, nil, nil
 		}
 	}
-	return false, nil, fmt.Errorf("Couldn't validate TXT mode of operation")
+	return false, nil, fmt.Errorf("couldn't validate TXT mode of operation")
 }

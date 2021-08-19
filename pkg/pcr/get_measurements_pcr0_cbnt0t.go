@@ -164,3 +164,67 @@ func getBootPolicyManifest(fitEntries []fit.Entry) (*bootpolicy.Manifest, *fit.E
 	}
 	return nil, nil, fmt.Errorf("boot policy manifest FIT entry is not found")
 }
+
+// MeasureKeyManifest returns a measurement containing CBnT key manifest.
+func MeasureKeyManifest(fitEntries []fit.Entry) (*Measurement, error) {
+	_, kmFITEntry, err := getKeyManifest(fitEntries)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get key manifest (KM): %w", err)
+	}
+
+	if kmFITEntry.DataOffset == nil {
+		return nil, fmt.Errorf("unable to key manifest (KM) offset")
+	}
+
+	return &Measurement{
+		ID: MeasurementIDKeyManifest,
+		Data: DataChunks{{
+			Range: pkgbytes.Range{
+				Offset: *kmFITEntry.DataOffset,
+				Length: uint64(len(kmFITEntry.DataBytes)),
+			},
+		}},
+	}, nil
+}
+
+// MeasureBootPolicy returns a measurement containing CBnT key manifest.
+func MeasureBootPolicy(fitEntries []fit.Entry) (*Measurement, error) {
+	_, bpmFITEntry, err := getBootPolicyManifest(fitEntries)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get boot policy manifest (BPM): %w", err)
+	}
+
+	if bpmFITEntry.DataOffset == nil {
+		return nil, fmt.Errorf("unable to boot policy manifest (BPM) offset")
+	}
+
+	return &Measurement{
+		ID: MeasurementIDBootPolicyManifest,
+		Data: DataChunks{{
+			Range: pkgbytes.Range{
+				Offset: *bpmFITEntry.DataOffset,
+				Length: uint64(len(bpmFITEntry.DataBytes)),
+			},
+		}},
+	}, nil
+}
+
+// MeasureIBB returns a measurement containing IBB according to BPM.
+func MeasureIBB(fitEntries []fit.Entry, firmwareSize uint64) (*Measurement, error) {
+	bpManifest, _, err := getBootPolicyManifest(fitEntries)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get boot policy manifest (BPM): %w", err)
+	}
+
+	result := Measurement{
+		ID: MeasurementIDIBBFake,
+	}
+	ibbRanges := bpManifest.IBBDataRanges(firmwareSize)
+	for _, _range := range ibbRanges {
+		result.Data = append(result.Data, DataChunk{
+			Range: _range,
+		})
+	}
+
+	return &result, nil
+}
