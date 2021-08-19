@@ -49,13 +49,14 @@ func MeasureBIOSDirectoryTable(table *amd_manifest.BIOSDirectoryTable, biosDirec
 	if headerSize > biosDirectoryTableRange.Length {
 		return nil, fmt.Errorf("bios table is too short: '%d'", biosDirectoryTableRange.Length)
 	}
+
 	return NewRangeMeasurement(
 		id,
 		biosDirectoryTableRange.Offset+headerSize,
 		biosDirectoryTableRange.Length-headerSize), nil
 }
 
-// MeasureMP0C2PMsgRegisters constructs measurement of AMD's MPO_CP@_MSG registers
+// MeasureMP0C2PMsgRegisters constructs measurement of AMD's MPO_CP2_MSG registers
 func MeasureMP0C2PMsgRegisters(regs registers.Registers) (*Measurement, error) {
 	msg37, found := registers.FindMP0C2PMsg37(regs)
 	if !found {
@@ -73,4 +74,40 @@ func MeasureMP0C2PMsgRegisters(regs registers.Registers) (*Measurement, error) {
 		return nil, err
 	}
 	return NewStaticDataMeasurement(MeasurementIDMP0C2PMsgRegisters, result.Bytes()), nil
+}
+
+// MeasurePSPVersion constructs measurement of PSP version
+func MeasurePSPVersion(image []byte, pspDirectoryLevel1, pspDirectoryLevel2 *amd_manifest.PSPDirectoryTable) (*Measurement, error) {
+	for _, pspDirectory := range []*amd_manifest.PSPDirectoryTable{pspDirectoryLevel1, pspDirectoryLevel2} {
+		if pspDirectory == nil {
+			continue
+		}
+
+		for _, entry := range pspDirectory.Entries {
+			if entry.Type == amd_manifest.PSPBootloaderFirmwareEntry {
+				h, err := amd_manifest.ParsePSPHeader(bytes.NewBuffer(image[entry.LocationOrValue : entry.LocationOrValue+uint64(entry.Size)]))
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse PSP bootloader header: %w", err)
+				}
+				return NewRangeMeasurement(MeasurementIDPSPVersion, entry.LocationOrValue+h.VersionOffset(), h.VersionLength()), nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("failed to find PSP Bootloader entry")
+}
+
+// MeasureBIOSRTMVolume constructs measurement of BIOS RTM Volume
+func MeasureBIOSRTMVolume(biosDirectoryLevel1, biosDirectoryLevel2 *amd_manifest.BIOSDirectoryTable) (*Measurement, error) {
+	for _, biosDirectory := range []*amd_manifest.BIOSDirectoryTable{biosDirectoryLevel1, biosDirectoryLevel2} {
+		if biosDirectory == nil {
+			continue
+		}
+
+		for _, entry := range biosDirectory.Entries {
+			if entry.Type == amd_manifest.BIOSRTMVolumeEntry {
+				return NewRangeMeasurement(MeasurementIDBIOSRTMVolume, entry.SourceAddress, uint64(entry.Size)), nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("failed to find BIOS RTM Volume entry")
 }

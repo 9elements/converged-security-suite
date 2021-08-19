@@ -57,6 +57,9 @@ const (
 	MeasurementIDBIOSDirectoryLevel2Header
 	MeasurementIDBIOSDirectoryLevel2
 	MeasurementIDMP0C2PMsgRegisters
+	MeasurementIDEmbeddedFirmwareStructure
+	MeasurementIDPSPVersion
+	MeasurementIDBIOSRTMVolume
 	EndOfMeasurementID
 )
 
@@ -146,6 +149,12 @@ func (id MeasurementID) String() string {
 		return "BIOS directory table level 2"
 	case MeasurementIDMP0C2PMsgRegisters:
 		return "AMD MP0_CP2MSG registers"
+	case MeasurementIDEmbeddedFirmwareStructure:
+		return "Embedded Firmware Structure"
+	case MeasurementIDPSPVersion:
+		return "PSP firmware version"
+	case MeasurementIDBIOSRTMVolume:
+		return "BIOS RTM Volume"
 	}
 	return fmt.Sprintf("unknown_measurement_ID_%d", int(id))
 }
@@ -199,6 +208,12 @@ func (id MeasurementID) PCRIDs() []ID {
 		return []ID{0}
 	case MeasurementIDMP0C2PMsgRegisters:
 		return []ID{0}
+	case MeasurementIDEmbeddedFirmwareStructure:
+		return []ID{0}
+	case MeasurementIDPSPVersion:
+		return []ID{0}
+	case MeasurementIDBIOSRTMVolume:
+		return []ID{0}
 	}
 	return nil
 }
@@ -234,6 +249,12 @@ func (id MeasurementID) EventLogEventType() *tpmeventlog.EventType {
 	case MeasurementIDBIOSDirectoryLevel2:
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
 	case MeasurementIDMP0C2PMsgRegisters:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDEmbeddedFirmwareStructure:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDPSPVersion:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDBIOSRTMVolume:
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
 	}
 	return nil
@@ -371,7 +392,7 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 			if pspFirmware == nil {
 				return nil, fmt.Errorf("PSP firmware is not found")
 			}
-			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel1, pspFirmware.PSPDirectoryLevel1Range)
+			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel1Range)
 		}
 	case MeasurementIDBIOSDirectoryLevel2:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
@@ -379,12 +400,43 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 			if pspFirmware == nil {
 				return nil, fmt.Errorf("PSP firmware is not found")
 			}
-			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel2, pspFirmware.PSPDirectoryLevel2Range)
+			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel2, pspFirmware.BIOSDirectoryLevel2Range)
 		}
 
 	case MeasurementIDMP0C2PMsgRegisters:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			return MeasureMP0C2PMsgRegisters(config.Registers)
+		}
+
+	case MeasurementIDEmbeddedFirmwareStructure:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if pspFirmware == nil {
+				return nil, fmt.Errorf("PSP firmware is not found")
+			}
+			return NewRangeMeasurement(
+				MeasurementIDEmbeddedFirmwareStructure,
+				pspFirmware.EmbeddedFirmwareRange.Offset,
+				pspFirmware.EmbeddedFirmwareRange.Length), nil
+		}
+
+	case MeasurementIDPSPVersion:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if pspFirmware == nil {
+				return nil, fmt.Errorf("PSP firmware is not found")
+			}
+			firmware := provider.Firmware()
+			return MeasurePSPVersion(firmware.ImageBytes(), pspFirmware.PSPDirectoryLevel1, pspFirmware.PSPDirectoryLevel2)
+		}
+
+	case MeasurementIDBIOSRTMVolume:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if pspFirmware == nil {
+				return nil, fmt.Errorf("PSP firmware is not found")
+			}
+			return MeasureBIOSRTMVolume(pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel2)
 		}
 	}
 
