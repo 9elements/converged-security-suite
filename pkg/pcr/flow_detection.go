@@ -107,10 +107,29 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (tpmdetection.Type, 
 	return 0, fmt.Errorf("unable to detect TPM type")
 }
 
+// IsCBnTFirmware checks if firmware supports CBnT
+func IsCBnTFirmware(firmware Firmware) bool {
+	fitEntries, err := fit.GetEntries(firmware.Buf())
+	if err != nil {
+		return false
+	}
+	result, err := isCBnT(fitEntries)
+	if err != nil {
+		return false
+	}
+	return result
+}
+
+// IsAMDPSPFirmware checks if firmware belongs to AMD Platform security
+func IsAMDPSPFirmware(firmware Firmware) bool {
+	_, _, err := amd_manifest.FindEmbeddedFirmwareStructure(firmware)
+	return err == nil
+}
+
 // DetectMainAttestationFlow returns the PCR0 measurements flow assuming
 // no validation errors occurred.
 func DetectMainAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevice tpmdetection.Type) (Flow, error) {
-	if _, _, err := amd_manifest.FindEmbeddedFirmwareStructure(firmware); err == nil {
+	if IsAMDPSPFirmware(firmware) {
 		// TODO: whether TPM is initialised in locality 0 or 3 depends on the APCB binary tokens
 		// Return the most common default
 		return FlowLegacyAMDLocality3, nil
