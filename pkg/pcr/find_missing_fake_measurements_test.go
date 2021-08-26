@@ -1,3 +1,4 @@
+//go:build longtest
 // +build longtest
 
 package pcr
