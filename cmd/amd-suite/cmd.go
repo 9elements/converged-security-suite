@@ -1,7 +1,11 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/9elements/converged-security-suite/v2/pkg/amd/psb"
+
+	"github.com/9elements/converged-security-suite/pkg/uefi"
 )
 
 // Context for kong command line parser
@@ -19,6 +23,10 @@ var cli struct {
 }
 
 func (s *showKeyDBCmd) Run(ctx *context) error {
-	psb.ShowKeyDB()
+	firmware, err := uefi.ParseUEFIFirmwareFile(s.FwPath)
+	if err != nil {
+		return fmt.Errorf("could not parse firmware image: %w", err)
+	}
+	psb.GetKeyDB(firmware)
 	return nil
 }
