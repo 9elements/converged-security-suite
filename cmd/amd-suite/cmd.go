@@ -27,6 +27,6 @@ func (s *showKeyDBCmd) Run(ctx *context) error {
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
-	psb.GetKeyDB(firmware)
-	return nil
+
+	return psb.GetKeyDB(firmware)
 }
