@@ -2,6 +2,7 @@ package pcr
 
 import (
 	"fmt"
+
 	amd_manifest "github.com/9elements/converged-security-suite/v2/pkg/amd/manifest"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
@@ -52,7 +53,7 @@ type pcr0MeasurementsCollector struct {
 	firmware         Firmware
 	fitEntriesResult *[]fit.Entry
 	pcdDataResult    *pcd.ParsedFirmware
-	pspFirmware      *amd_manifest.PSPFirmware
+	amdFirmware      *amd_manifest.AMDFirmware
 	errors           errors.MultiError
 	warnings         errors.MultiError
 }
@@ -94,15 +95,16 @@ func (c *pcr0MeasurementsCollector) PCDData() pcd.ParsedFirmware {
 }
 
 func (c *pcr0MeasurementsCollector) PSPFirmware() *amd_manifest.PSPFirmware {
-	if c.pspFirmware != nil {
-		return c.pspFirmware
+	if c.amdFirmware != nil {
+		return c.amdFirmware.PSPFirmware()
 	}
 	var err error
-	c.pspFirmware, err = amd_manifest.ParsePSPFirmware(c.firmware)
+	amdFirmware, err := amd_manifest.NewAMDFirmware(c.firmware)
 	if err != nil {
 		_ = c.errors.Add(err)
 	}
-	return c.pspFirmware
+	c.amdFirmware = amdFirmware
+	return c.amdFirmware.PSPFirmware()
 }
 
 // CollectPRC0Measurements just returns all the measurements
