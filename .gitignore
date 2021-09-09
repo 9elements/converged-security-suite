@@ -1,6 +1,7 @@
 /txt-suite
 /txt-prov
 /cbnt-prov
+/vendor
 cmd/txt-prov/txt-prov
 cmd/txt-suite/test_log.json
 cmd/txt-suite/txt-suite
