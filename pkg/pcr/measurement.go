@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash"
-	"io/ioutil"
-	"log"
 	"reflect"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bytes"
@@ -424,13 +422,11 @@ func (s Measurements) Calculate(image []byte, initialValue uint8, hashFunc hash.
 
 // CalculatePCR performs the calculation of the PCR value using image `uefi`.
 func CalculatePCR(image []byte, initialValue uint8, measureEvents []MeasureEvent, hasher hash.Hash, logger Printfer) ([]byte, error) {
-	if logger == nil {
-		logger = log.New(ioutil.Discard, ``, 0)
-	}
-
 	result := make([]byte, hasher.Size())
 	result[len(result)-1] = initialValue
-	logger.Printf("Set 0x -> 0x%X\n\n", result)
+	if logger != nil {
+		logger.Printf("Set 0x -> 0x%X\n\n", result)
+	}
 
 	for _, m := range measureEvents {
 		hash, err := m.Calculate(image, hasher)
@@ -441,11 +437,13 @@ func CalculatePCR(image []byte, initialValue uint8, measureEvents []MeasureEvent
 			continue
 		}
 
-		data := m.CompileMeasurableData(image)
-		if uint(len(data)) > LoggingDataLimit {
-			logger.Printf("Event '%s': %x... (len: %d) (%T)\n", m.GetID(), data[:LoggingDataLimit], len(data), hasher)
-		} else {
-			logger.Printf("Event '%s': %x (%T)\n", m.GetID(), data, hasher)
+		if logger != nil {
+			data := m.CompileMeasurableData(image)
+			if uint(len(data)) > LoggingDataLimit {
+				logger.Printf("Event '%s': %x... (len: %d) (%T)\n", m.GetID(), data[:LoggingDataLimit], len(data), hasher)
+			} else {
+				logger.Printf("Event '%s': %x (%T)\n", m.GetID(), data, hasher)
+			}
 		}
 
 		_, err = hasher.Write(result)
@@ -461,7 +459,9 @@ func CalculatePCR(image []byte, initialValue uint8, measureEvents []MeasureEvent
 		oldResult := result
 		result = hasher.Sum(nil)
 		hasher.Reset()
-		logger.Printf("%T(0x %X %X) == 0x%X\n\n", hasher, oldResult, hash, result)
+		if logger != nil {
+			logger.Printf("%T(0x %X %X) == 0x%X\n\n", hasher, oldResult, hash, result)
+		}
 	}
 	return result, nil
 }

@@ -6,7 +6,7 @@ require (
 	github.com/9elements/go-linux-lowlevel-hw v0.0.0-20210805085354-8254fd16fa49
 	github.com/alecthomas/kong v0.2.11
 	github.com/creasty/defaults v1.5.1
-	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e // indirect
+	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e
 	github.com/dustin/go-humanize v1.0.0
 	github.com/edsrzf/mmap-go v1.0.0
 	github.com/fatih/camelcase v1.0.0
