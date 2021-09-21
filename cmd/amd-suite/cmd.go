@@ -13,7 +13,7 @@ type context struct {
 	debug bool
 }
 
-type showKeyDBCmd struct {
+type showKeysCmd struct {
 	FwPath string `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
 }
 
@@ -24,22 +24,22 @@ type validatePSPEntriesCmd struct {
 
 var cli struct {
 	Debug              bool                  `help:"Enable debug mode"`
-	ShowKeyDB          showKeyDBCmd          `cmd help:"Shows content of Key Database"`
+	ShowKeys           showKeysCmd           `cmd help:"Shows all key known to the system, together with their origin"`
 	ValidatePSPEntries validatePSPEntriesCmd `cmd help:"Validates signatures of PSP entries"`
 }
 
-func (s *showKeyDBCmd) Run(ctx *context) error {
+func (s *showKeysCmd) Run(ctx *context) error {
 	firmware, err := uefi.ParseUEFIFirmwareFile(s.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
 
-	keyDB, err := psb.GetKeyDB(firmware)
+	keySet, err := psb.GetKeys(firmware)
 	if err != nil {
-		return fmt.Errorf("could not extract key database: %w", err)
+		return fmt.Errorf("could not extract keys from the firmware image: %w", err)
 	}
 
-	fmt.Println(keyDB.String())
+	fmt.Println(keySet.String())
 	return nil
 }
 
