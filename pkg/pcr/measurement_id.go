@@ -301,142 +301,167 @@ type DataProvider interface {
 }
 
 // MeasureFunc performs a measurement.
-type MeasureFunc func(MeasurementConfig, DataProvider) (*Measurement, error)
+type MeasureFunc func(MeasurementConfig, DataProvider) (Measurements, error)
 
 // MeasureFunc returns the function to be used for the measurement.
 func (id MeasurementID) MeasureFunc() MeasureFunc {
+	wrapMeasurement := func(m *Measurement) Measurements {
+		if m == nil {
+			return nil
+		}
+		return Measurements{m}
+	}
 	switch id {
 	case MeasurementIDInit:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureInit(), nil
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			return wrapMeasurement(MeasureInit()), nil
 		}
 	case MeasurementIDPCR0DATA:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasurePCR0Data(config, provider.FITEntries())
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			m, err := MeasurePCR0Data(config, provider.FITEntries())
+			return wrapMeasurement(m), err
 		}
 	case MeasurementIDKeyManifest:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureKeyManifest(provider.FITEntries())
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			m, err := MeasureKeyManifest(provider.FITEntries())
+			return wrapMeasurement(m), err
 		}
 	case MeasurementIDBootPolicyManifest:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureBootPolicy(provider.FITEntries())
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			m, err := MeasureBootPolicy(provider.FITEntries())
+			return wrapMeasurement(m), err
 		}
 	case MeasurementIDACM:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureACM(provider.FITEntries())
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			m, err := MeasureACM(provider.FITEntries())
+			return wrapMeasurement(m), err
 		}
 	case MeasurementIDACMDate:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureACMDate(provider.FITEntries())
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			m, err := MeasureACMDate(provider.FITEntries())
+			return wrapMeasurement(m), err
 		}
 	case MeasurementIDACMDateInPlace:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureACMDateInPlace(config.PCR0DataIbbDigestHashAlgorithm, provider.FITEntries())
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			m, err := MeasureACMDateInPlace(config.PCR0DataIbbDigestHashAlgorithm, provider.FITEntries())
+			return wrapMeasurement(m), err
 		}
 	case MeasurementIDIBBFake:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureIBB(provider.FITEntries(), uint64(len(provider.Firmware().Buf())))
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			m, err := MeasureIBB(provider.FITEntries(), uint64(len(provider.Firmware().Buf())))
+			return wrapMeasurement(m), err
 		}
 	case MeasurementIDBIOSStartupModule:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureBIOSStartupModule(provider.FITEntries())
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			m, err := MeasureBIOSStartupModule(provider.FITEntries())
+			return wrapMeasurement(m), err
 		}
 	case MeasurementIDSCRTMSeparator:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureSCRTMSeparator(), nil
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			return wrapMeasurement(MeasureSCRTMSeparator()), nil
 		}
 	case MeasurementIDPCDFirmwareVendorVersionData:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasurePCDFirmwareVendorVersionData(provider.PCDData())
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			m, err := MeasurePCDFirmwareVendorVersionData(provider.PCDData())
+			return wrapMeasurement(m), err
 		}
 	case MeasurementIDPCDFirmwareVendorVersionCode:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasurePCDFirmwareVendorVersionCode(provider.PCDData())
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			m, err := MeasurePCDFirmwareVendorVersionCode(provider.PCDData())
+			return wrapMeasurement(m), err
 		}
 	case MeasurementIDDXE:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureDXE(provider.Firmware())
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			m, err := MeasureDXE(provider.Firmware())
+			return wrapMeasurement(m), err
 		}
 	case MeasurementIDSeparator:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureSeparator(), nil
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			return wrapMeasurement(MeasureSeparator()), nil
 		}
 	case MeasurementIDFITPointer:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureFITPointer(provider.Firmware()), nil
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			return wrapMeasurement(MeasureFITPointer(provider.Firmware())), nil
 		}
 	case MeasurementIDFITHeaders:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureFITHeaders(provider.Firmware())
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			m, err := MeasureFITHeaders(provider.Firmware())
+			return wrapMeasurement(m), err
 		}
 	case MeasurementIDBIOSDirectoryLevel1Header:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
 			pspFirmware := provider.PSPFirmware()
 			if pspFirmware == nil {
 				return nil, fmt.Errorf("PSP firmware is not found")
 			}
-			return MeasureBIOSDirectoryHeader(pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel1Range)
+			m, err := MeasureBIOSDirectoryHeader(pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel1Range)
+			return wrapMeasurement(m), err
 		}
 	case MeasurementIDBIOSDirectoryLevel2Header:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
 			pspFirmware := provider.PSPFirmware()
 			if pspFirmware == nil {
 				return nil, fmt.Errorf("PSP firmware is not found")
 			}
-			return MeasureBIOSDirectoryHeader(pspFirmware.BIOSDirectoryLevel2, pspFirmware.BIOSDirectoryLevel2Range)
+			m, err := MeasureBIOSDirectoryHeader(pspFirmware.BIOSDirectoryLevel2, pspFirmware.BIOSDirectoryLevel2Range)
+			return wrapMeasurement(m), err
 		}
 	case MeasurementIDBIOSDirectoryLevel1:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
 			pspFirmware := provider.PSPFirmware()
 			if pspFirmware == nil {
 				return nil, fmt.Errorf("PSP firmware is not found")
 			}
-			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel1Range)
+			m, err := MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel1Range)
+			return wrapMeasurement(m), err
 		}
 	case MeasurementIDBIOSDirectoryLevel2:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
 			pspFirmware := provider.PSPFirmware()
 			if pspFirmware == nil {
 				return nil, fmt.Errorf("PSP firmware is not found")
 			}
-			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel2, pspFirmware.BIOSDirectoryLevel2Range)
+			m, err := MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel2, pspFirmware.BIOSDirectoryLevel2Range)
+			return wrapMeasurement(m), err
 		}
 
 	case MeasurementIDMP0C2PMsgRegisters:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureMP0C2PMsgRegisters(config.Registers)
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			m, err := MeasureMP0C2PMsgRegisters(config.Registers)
+			return wrapMeasurement(m), err
 		}
 
 	case MeasurementIDEmbeddedFirmwareStructure:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
 			pspFirmware := provider.PSPFirmware()
 			if pspFirmware == nil {
 				return nil, fmt.Errorf("PSP firmware is not found")
 			}
-			return NewRangeMeasurement(
+			return wrapMeasurement(NewRangeMeasurement(
 				MeasurementIDEmbeddedFirmwareStructure,
 				pspFirmware.EmbeddedFirmwareRange.Offset,
-				pspFirmware.EmbeddedFirmwareRange.Length), nil
+				pspFirmware.EmbeddedFirmwareRange.Length)), nil
 		}
 
 	case MeasurementIDPSPVersion:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
 			pspFirmware := provider.PSPFirmware()
 			if pspFirmware == nil {
 				return nil, fmt.Errorf("PSP firmware is not found")
 			}
 			firmware := provider.Firmware()
-			return MeasurePSPVersion(firmware.ImageBytes(), pspFirmware.PSPDirectoryLevel1, pspFirmware.PSPDirectoryLevel2)
+			m, err := MeasurePSPVersion(firmware.ImageBytes(), pspFirmware.PSPDirectoryLevel1, pspFirmware.PSPDirectoryLevel2)
+			return wrapMeasurement(m), err
 		}
 
 	case MeasurementIDBIOSRTMVolume:
-		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
 			pspFirmware := provider.PSPFirmware()
 			if pspFirmware == nil {
 				return nil, fmt.Errorf("PSP firmware is not found")
 			}
-			return MeasureBIOSRTMVolume(pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel2)
+			m, err := MeasureBIOSRTMVolume(pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel2)
+			return wrapMeasurement(m), err
 		}
 	}
 
