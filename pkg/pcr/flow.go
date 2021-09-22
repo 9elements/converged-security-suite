@@ -3,6 +3,9 @@ package pcr
 import (
 	"fmt"
 	"strings"
+
+	"github.com/9elements/converged-security-suite/v2/pkg/platformid"
+	"github.com/klauspost/cpuid/v2"
 )
 
 // Flow defines which measurements are used to get the final PCR values.
@@ -238,4 +241,27 @@ func (f Flow) ValidateFlow() ValidateFlow {
 	}
 
 	return nil
+}
+
+// PlatformVendorID returns vendor ID of the platform (which combines CPU and
+// RTM).
+func (f Flow) PlatformVendorID() platformid.VendorID {
+	switch f {
+	case FlowIntelCBnT0T,
+		FlowIntelLegacyTXTEnabled,
+		FlowIntelLegacyTXTEnabledTPM12,
+		FlowIntelLegacyTXTDisabled:
+		return platformid.VendorIDIntel
+	case FlowAMDLocality3,
+		FlowAMDLocality0,
+		FlowLegacyAMDLocality3,
+		FlowLegacyAMDLocality0:
+		return platformid.VendorIDAMD
+	}
+	return platformid.VendorIDUndefined
+}
+
+// CPUVendorID returns vendor ID of the CPU.
+func (f Flow) CPUVendorID() cpuid.Vendor {
+	return f.PlatformVendorID().CPUVendorID()
 }
