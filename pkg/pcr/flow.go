@@ -204,6 +204,8 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 			MeasurementIDBIOSDirectoryLevel1,
 			MeasurementIDBIOSDirectoryLevel2Header,
 			MeasurementIDBIOSDirectoryLevel2,
+			MeasurementIDPCDFirmwareVendorVersionData,
+			MeasurementIDDXE,
 			MeasurementIDSeparator,
 		}
 	case FlowAMDLocality3:
@@ -216,6 +218,8 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 			MeasurementIDBIOSDirectoryLevel1,
 			MeasurementIDBIOSDirectoryLevel2Header,
 			MeasurementIDBIOSDirectoryLevel2,
+			MeasurementIDPCDFirmwareVendorVersionData,
+			MeasurementIDDXE,
 			MeasurementIDSeparator,
 		}
 	}
