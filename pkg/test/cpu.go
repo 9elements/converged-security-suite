@@ -4,7 +4,6 @@ import (
 	hwInternal "github.com/9elements/converged-security-suite/v2/pkg/hwapi"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
-	"github.com/intel-go/cpuid"
 
 	"fmt"
 )
@@ -164,7 +163,8 @@ func CheckForIntelCPU(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Con
 
 // WeybridgeOrLater Check we're running on Weybridge
 func WeybridgeOrLater(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	if cpuid.DisplayFamily == 6 {
+	family := (txtAPI.CPUSignature() >> 8) & 0xf
+	if family == 6 {
 		return true, nil, nil
 	}
 	return false, fmt.Errorf("platform is not Weybridge or later"), nil
@@ -317,7 +317,8 @@ func NoBIOSACMErrors(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Conf
 // IA32DebugInterfaceLockedDisabled checks if IA32 debug interface is locked
 func IA32DebugInterfaceLockedDisabled(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
 	// Check for IA32_DEBUG_INTERFACE support
-	if !cpuid.HasFeature(1 << 11) {
+	_, _, ecx, _ := txtAPI.CPUSignatureFull()
+	if ecx&(1<<11) != 0 {
 		// Nothing to check. Return success.
 		return true, nil, nil
 	}

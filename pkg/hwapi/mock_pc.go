@@ -44,6 +44,9 @@ func (n pcmock) ProcessorBrandName() string {
 func (n pcmock) CPUSignature() uint32 {
 	return 0
 }
+func (n pcmock) CPUSignatureFull() (uint32, uint32, uint32, uint32) {
+	return 0, 0, 0, 0
+}
 func (n pcmock) CPULogCount() uint32 {
 	return 0
 }
