@@ -77,37 +77,93 @@ func MeasureMP0C2PMsgRegisters(regs registers.Registers) (*Measurement, error) {
 }
 
 // MeasurePSPVersion constructs measurement of PSP version
-func MeasurePSPVersion(image []byte, pspDirectoryLevel1, pspDirectoryLevel2 *amd_manifest.PSPDirectoryTable) (*Measurement, error) {
-	for _, pspDirectory := range []*amd_manifest.PSPDirectoryTable{pspDirectoryLevel1, pspDirectoryLevel2} {
-		if pspDirectory == nil {
-			continue
-		}
+func MeasurePSPVersion(image []byte, pspFirmware *amd_manifest.PSPFirmware) (Measurements, error) {
+	if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+		return nil, err
+	}
+	if pspFirmware.PSPDirectoryLevel2 == nil {
+		return nil, fmt.Errorf("PSP directory level 2 is not found")
+	}
 
-		for _, entry := range pspDirectory.Entries {
-			if entry.Type == amd_manifest.PSPBootloaderFirmwareEntry {
-				h, err := amd_manifest.ParsePSPHeader(bytes.NewBuffer(image[entry.LocationOrValue : entry.LocationOrValue+uint64(entry.Size)]))
-				if err != nil {
-					return nil, fmt.Errorf("failed to parse PSP bootloader header: %w", err)
-				}
-				return NewRangeMeasurement(MeasurementIDPSPVersion, entry.LocationOrValue+h.VersionOffset(), h.VersionLength()), nil
+	for _, entry := range pspFirmware.PSPDirectoryLevel2.Entries {
+		if entry.Type == amd_manifest.PSPBootloaderFirmwareEntry {
+			h, err := amd_manifest.ParsePSPHeader(bytes.NewBuffer(image[entry.LocationOrValue : entry.LocationOrValue+uint64(entry.Size)]))
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse PSP bootloader header: '%w'", err)
 			}
+			return Measurements{NewRangeMeasurement(MeasurementIDPSPVersion, entry.LocationOrValue+h.VersionOffset(), h.VersionLength())}, nil
 		}
 	}
 	return nil, fmt.Errorf("failed to find PSP Bootloader entry")
 }
 
 // MeasureBIOSRTMVolume constructs measurement of BIOS RTM Volume
-func MeasureBIOSRTMVolume(biosDirectoryLevel1, biosDirectoryLevel2 *amd_manifest.BIOSDirectoryTable) (*Measurement, error) {
-	for _, biosDirectory := range []*amd_manifest.BIOSDirectoryTable{biosDirectoryLevel1, biosDirectoryLevel2} {
-		if biosDirectory == nil {
-			continue
-		}
+func MeasureBIOSRTMVolume(pspFirmware *amd_manifest.PSPFirmware) (Measurements, error) {
+	return collectBIOSDirectoryMeasurements(
+		pspFirmware,
+		amd_manifest.BIOSRTMVolumeEntry,
+		MeasurementIDBIOSRTMVolume,
+		true,
+	)
+}
 
-		for _, entry := range biosDirectory.Entries {
-			if entry.Type == amd_manifest.BIOSRTMVolumeEntry {
-				return NewRangeMeasurement(MeasurementIDBIOSRTMVolume, entry.SourceAddress, uint64(entry.Size)), nil
-			}
+// MeasurePMUFirmwareInstructions constructs measurements of all PMU firmware instruction entries found in BIOS Directory
+func MeasurePMUFirmwareInstructions(pspFirmware *amd_manifest.PSPFirmware) (Measurements, error) {
+	return collectBIOSDirectoryMeasurements(pspFirmware,
+		amd_manifest.PMUFirmwareInstructionsEntry, MeasurementIDPMUFirmwareInstructions, false)
+}
+
+// MeasurePMUFirmwareData constructs measurements of all PMU firmware data entries found in BIOS Directory
+func MeasurePMUFirmwareData(pspFirmware *amd_manifest.PSPFirmware) (Measurements, error) {
+	return collectBIOSDirectoryMeasurements(pspFirmware,
+		amd_manifest.PMUFirmwareDataEntry, MeasurementIDPMUFirmwareData, false)
+}
+
+// MeasureMicrocodePatch constructs measurements of all microcode patch entries found in BIOS Directory
+func MeasureMicrocodePatch(pspFirmware *amd_manifest.PSPFirmware) (Measurements, error) {
+	return collectBIOSDirectoryMeasurements(pspFirmware,
+		amd_manifest.MicrocodePatchEntry, MeasurementIDMicrocodePatch, false)
+}
+
+// MeasureVideoImageInterpreterBinary constructs measurements of all video image interpreter binaries entries found in BIOS Directory
+func MeasureVideoImageInterpreterBinary(pspFirmware *amd_manifest.PSPFirmware) (Measurements, error) {
+	return collectBIOSDirectoryMeasurements(pspFirmware,
+		amd_manifest.VideoInterpreterBinaryEntry, MeasurementIDVideoImageInterpreter, false)
+}
+
+func checkPSPFirmwareFound(pspFirmware *amd_manifest.PSPFirmware) error {
+	if pspFirmware == nil {
+		return fmt.Errorf("PSP firmware is not found")
+	}
+	return nil
+}
+
+func collectBIOSDirectoryMeasurements(
+	pspFirmware *amd_manifest.PSPFirmware,
+	entryType amd_manifest.BIOSDirectoryTableEntryType,
+	measurementID MeasurementID,
+	checkSingle bool,
+) (Measurements, error) {
+	if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+		return nil, fmt.Errorf("PSP firmware is not found")
+	}
+	if pspFirmware.BIOSDirectoryLevel2 == nil {
+		return nil, fmt.Errorf("bios directory level 2 is not found")
+	}
+
+	var result Measurements
+	for _, entry := range pspFirmware.BIOSDirectoryLevel2.Entries {
+		if entry.Type == entryType {
+			result = append(result, NewRangeMeasurement(measurementID, entry.SourceAddress, uint64(entry.Size)))
 		}
 	}
-	return nil, fmt.Errorf("failed to find BIOS RTM Volume entry")
+	if checkSingle {
+		if len(result) == 0 {
+			return nil, fmt.Errorf("failed to find '%s'", entryType.String())
+		}
+		if len(result) > 1 {
+			return nil, fmt.Errorf("multiple entries of '%s' are found", entryType.String())
+		}
+	}
+	return result, nil
 }

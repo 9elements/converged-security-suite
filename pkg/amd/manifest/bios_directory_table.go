@@ -21,13 +21,42 @@ const BIOSDirectoryTableLevel2Cookie = 0x324C4224 // $BL2
 type BIOSDirectoryTableEntryType uint8
 
 const (
-	// APCBBinaryEntry denotes APCB binary entry in BIOS Directory table
+	// APCBBinaryEntry represents APCB binary entry in BIOS Directory table
 	APCBBinaryEntry BIOSDirectoryTableEntryType = 0x60
-	// BIOSRTMVolumeEntry denotes BIOS RTM Volume entry in BIOS Directory table
+	// BIOSRTMVolumeEntry represents BIOS RTM Volume entry in BIOS Directory table
 	BIOSRTMVolumeEntry BIOSDirectoryTableEntryType = 0x62
+	// PMUFirmwareInstructionsEntry represents the instruction portion of PMU firmware
+	PMUFirmwareInstructionsEntry BIOSDirectoryTableEntryType = 0x64
+	// PMUFirmwareDataEntry represents the data portion of PMU firmware
+	PMUFirmwareDataEntry BIOSDirectoryTableEntryType = 0x65
+	// MicrocodePatchEntry represents the microcode patch file location
+	MicrocodePatchEntry BIOSDirectoryTableEntryType = 0x66
+	// VideoInterpreterBinaryEntry interpreter binary that displays the video image
+	VideoInterpreterBinaryEntry BIOSDirectoryTableEntryType = 0x69
 	// BIOSDirectoryTableLevel2Entry denotes an entry that points to BIOS Directory table level 2
 	BIOSDirectoryTableLevel2Entry BIOSDirectoryTableEntryType = 0x70
 )
+
+// String returns a human-readable representation of BIOSDirectoryTableEntryType
+func (entry BIOSDirectoryTableEntryType) String() string {
+	switch entry {
+	case APCBBinaryEntry:
+		return "APCB binary"
+	case BIOSRTMVolumeEntry:
+		return "BIOS RTM Volume"
+	case PMUFirmwareInstructionsEntry:
+		return "PMU firmware instructions"
+	case PMUFirmwareDataEntry:
+		return "PMU firmware data"
+	case MicrocodePatchEntry:
+		return "Microcode patch"
+	case VideoInterpreterBinaryEntry:
+		return "Interpreter binary that displays the video image"
+	case BIOSDirectoryTableLevel2Entry:
+		return "BIOS Directory Table level 2"
+	}
+	return fmt.Sprintf("%d", entry)
+}
 
 // BIOSDirectoryTableEntry represents a single entry in BIOS Directory Table
 // Table 12 from (1)

@@ -184,12 +184,16 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 		}
 	case FlowLegacyAMDLocality0:
 		return MeasurementIDs{
+			MeasurementIDPSPVersion,
+			MeasurementIDBIOSRTMVolume,
 			MeasurementIDPCDFirmwareVendorVersionData,
 			MeasurementIDDXE,
 			MeasurementIDSeparator,
 		}
 	case FlowLegacyAMDLocality3:
 		return MeasurementIDs{
+			MeasurementIDPSPVersion,
+			MeasurementIDBIOSRTMVolume,
 			MeasurementIDPCDFirmwareVendorVersionData,
 			MeasurementIDDXE,
 			MeasurementIDSeparator,
@@ -204,6 +208,12 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 			MeasurementIDBIOSDirectoryLevel1,
 			MeasurementIDBIOSDirectoryLevel2Header,
 			MeasurementIDBIOSDirectoryLevel2,
+			MeasurementIDPMUFirmwareInstructions,
+			MeasurementIDPMUFirmwareData,
+			MeasurementIDMicrocodePatch,
+			MeasurementIDVideoImageInterpreter,
+			MeasurementIDPCDFirmwareVendorVersionData,
+			MeasurementIDDXE,
 			MeasurementIDSeparator,
 		}
 	case FlowAMDLocality3:
@@ -216,6 +226,12 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 			MeasurementIDBIOSDirectoryLevel1,
 			MeasurementIDBIOSDirectoryLevel2Header,
 			MeasurementIDBIOSDirectoryLevel2,
+			MeasurementIDPMUFirmwareInstructions,
+			MeasurementIDPMUFirmwareData,
+			MeasurementIDMicrocodePatch,
+			MeasurementIDVideoImageInterpreter,
+			MeasurementIDPCDFirmwareVendorVersionData,
+			MeasurementIDDXE,
 			MeasurementIDSeparator,
 		}
 	}

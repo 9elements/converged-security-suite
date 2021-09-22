@@ -60,6 +60,10 @@ const (
 	MeasurementIDEmbeddedFirmwareStructure
 	MeasurementIDPSPVersion
 	MeasurementIDBIOSRTMVolume
+	MeasurementIDPMUFirmwareInstructions
+	MeasurementIDPMUFirmwareData
+	MeasurementIDMicrocodePatch
+	MeasurementIDVideoImageInterpreter
 	EndOfMeasurementID
 )
 
@@ -87,7 +91,6 @@ func (id MeasurementID) IsFake() bool {
 	case MeasurementIDDeepAnalysis:
 		return true
 	}
-
 	return false
 }
 
@@ -155,6 +158,14 @@ func (id MeasurementID) String() string {
 		return "PSP firmware version"
 	case MeasurementIDBIOSRTMVolume:
 		return "BIOS RTM Volume"
+	case MeasurementIDPMUFirmwareInstructions:
+		return "PMU Firmware instructions"
+	case MeasurementIDPMUFirmwareData:
+		return "PMU Firmware data"
+	case MeasurementIDMicrocodePatch:
+		return "Microcode patch file"
+	case MeasurementIDVideoImageInterpreter:
+		return "Interpreter binary that displays the video image"
 	}
 	return fmt.Sprintf("unknown_measurement_ID_%d", int(id))
 }
@@ -214,6 +225,14 @@ func (id MeasurementID) PCRIDs() []ID {
 		return []ID{0}
 	case MeasurementIDBIOSRTMVolume:
 		return []ID{0}
+	case MeasurementIDPMUFirmwareInstructions:
+		return []ID{0}
+	case MeasurementIDPMUFirmwareData:
+		return []ID{0}
+	case MeasurementIDMicrocodePatch:
+		return []ID{0}
+	case MeasurementIDVideoImageInterpreter:
+		return []ID{0}
 	}
 	return nil
 }
@@ -255,6 +274,12 @@ func (id MeasurementID) EventLogEventType() *tpmeventlog.EventType {
 	case MeasurementIDPSPVersion:
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
 	case MeasurementIDBIOSRTMVolume:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDPMUFirmwareInstructions:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDPMUFirmwareData:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDVideoImageInterpreter:
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
 	}
 	return nil
@@ -434,8 +459,8 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 	case MeasurementIDEmbeddedFirmwareStructure:
 		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
 			pspFirmware := provider.PSPFirmware()
-			if pspFirmware == nil {
-				return nil, fmt.Errorf("PSP firmware is not found")
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
 			}
 			return wrapMeasurement(NewRangeMeasurement(
 				MeasurementIDEmbeddedFirmwareStructure,
@@ -445,26 +470,35 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 
 	case MeasurementIDPSPVersion:
 		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
-			pspFirmware := provider.PSPFirmware()
-			if pspFirmware == nil {
-				return nil, fmt.Errorf("PSP firmware is not found")
-			}
 			firmware := provider.Firmware()
-			m, err := MeasurePSPVersion(firmware.ImageBytes(), pspFirmware.PSPDirectoryLevel1, pspFirmware.PSPDirectoryLevel2)
-			return wrapMeasurement(m), err
+			return MeasurePSPVersion(firmware.ImageBytes(), provider.PSPFirmware())
 		}
 
 	case MeasurementIDBIOSRTMVolume:
 		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
-			pspFirmware := provider.PSPFirmware()
-			if pspFirmware == nil {
-				return nil, fmt.Errorf("PSP firmware is not found")
-			}
-			m, err := MeasureBIOSRTMVolume(pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel2)
-			return wrapMeasurement(m), err
+			return MeasureBIOSRTMVolume(provider.PSPFirmware())
+		}
+
+	case MeasurementIDPMUFirmwareInstructions:
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			return MeasurePMUFirmwareInstructions(provider.PSPFirmware())
+		}
+
+	case MeasurementIDPMUFirmwareData:
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			return MeasurePMUFirmwareData(provider.PSPFirmware())
+		}
+
+	case MeasurementIDMicrocodePatch:
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			return MeasureMicrocodePatch(provider.PSPFirmware())
+		}
+
+	case MeasurementIDVideoImageInterpreter:
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			return MeasureVideoImageInterpreterBinary(provider.PSPFirmware())
 		}
 	}
-
 	return nil
 }
 
