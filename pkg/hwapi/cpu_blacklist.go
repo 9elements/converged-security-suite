@@ -1027,24 +1027,30 @@ var (
 func CPUBlacklistTXTSupport(h hwapi.LowLevelHardwareInterfaces) bool {
 
 	cpuName := h.ProcessorBrandName()
+	isPentium := strings.Contains(cpuName, "Pentium")
+	isXeon := strings.Contains(cpuName, "Xeon")
+	isCore := strings.Contains(cpuName, "Core")
+	isAtom := strings.Contains(cpuName, "Atom")
+	isCeleron := strings.Contains(cpuName, "Celeron")
+	isItanium := strings.Contains(cpuName, "Itanium")
 
 	for i := range TXTUnSupportedCPUs {
-		if TXTUnSupportedCPUs[i].xeon && !strings.Contains(cpuName, "Xeon") {
+		if TXTUnSupportedCPUs[i].xeon && !isXeon {
 			continue
 		}
-		if TXTUnSupportedCPUs[i].pentium && !strings.Contains(cpuName, "Pentium") {
+		if TXTUnSupportedCPUs[i].pentium && !isPentium {
 			continue
 		}
-		if TXTUnSupportedCPUs[i].core && !strings.Contains(cpuName, "Core") {
+		if TXTUnSupportedCPUs[i].core && !isCore {
 			continue
 		}
-		if TXTUnSupportedCPUs[i].atom && !strings.Contains(cpuName, "Atom") {
+		if TXTUnSupportedCPUs[i].atom && !isAtom {
 			continue
 		}
-		if TXTUnSupportedCPUs[i].celeron && !strings.Contains(cpuName, "Celeron") {
+		if TXTUnSupportedCPUs[i].celeron && !isCeleron {
 			continue
 		}
-		if TXTUnSupportedCPUs[i].itanium && !strings.Contains(cpuName, "Itanium") {
+		if TXTUnSupportedCPUs[i].itanium && !isItanium {
 			continue
 		}
 
