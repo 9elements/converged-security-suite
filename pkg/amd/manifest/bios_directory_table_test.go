@@ -97,7 +97,7 @@ func TestBiosDirectoryTableParsing(t *testing.T) {
 		t.Errorf("Table entry [0] read only is incorrect, expected false")
 	}
 	if entry.Compressed {
-		t.Errorf("Table entry [0] compress is incorrect, expected true")
+		t.Errorf("Table entry [0] compress is incorrect, expected false")
 	}
 	if entry.Instance != 1 {
 		t.Errorf("Table entry [0] instance is incorrect, expected 1, got: %d", entry.Instance)
