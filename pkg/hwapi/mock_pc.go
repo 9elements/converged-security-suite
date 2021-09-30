@@ -70,11 +70,7 @@ func (n pcmock) AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
 	return false, fmt.Errorf("not implemented")
 }
 
-func (n pcmock) ReadMSR(msr int64) (uint64, error) {
-	return 0, fmt.Errorf("not implemented")
-}
-
-func (n pcmock) ReadMSRAllCores(msr int64) (uint64, error) {
+func (n pcmock) ReadMSR(msr int64, core int) (uint64, error) {
 	return 0, fmt.Errorf("not implemented")
 }
 
@@ -113,36 +109,12 @@ func (n pcmock) PCIEnumerateVisibleDevices(cb func(d hwapi.PCIDevice) (abort boo
 	return fmt.Errorf("not implemented")
 }
 
-func (n pcmock) PCIReadConfig8(d hwapi.PCIDevice, off int) (uint8, error) {
-	return 0, fmt.Errorf("not implemented")
-}
-
-func (n pcmock) PCIReadConfig16(d hwapi.PCIDevice, off int) (uint16, error) {
-	return 0, fmt.Errorf("not implemented")
-}
-
-func (n pcmock) PCIReadConfig32(d hwapi.PCIDevice, off int) (uint32, error) {
-	return 0, fmt.Errorf("not implemented")
-}
-
-func (n pcmock) PCIWriteConfig8(d hwapi.PCIDevice, off int, val uint8) error {
+func (n pcmock) PCIReadConfigSpace(d hwapi.PCIDevice, off int, out interface{}) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (n pcmock) PCIWriteConfig16(d hwapi.PCIDevice, off int, val uint16) error {
+func (n pcmock) PCIWriteConfigSpace(d hwapi.PCIDevice, off int, in interface{}) error {
 	return fmt.Errorf("not implemented")
-}
-
-func (n pcmock) PCIWriteConfig32(d hwapi.PCIDevice, off int, val uint32) error {
-	return fmt.Errorf("not implemented")
-}
-
-func (n pcmock) PCIReadVendorID(d hwapi.PCIDevice) (uint16, error) {
-	return 0, fmt.Errorf("not implemented")
-}
-
-func (n pcmock) PCIReadDeviceID(d hwapi.PCIDevice) (uint16, error) {
-	return 0, fmt.Errorf("not implemented")
 }
 
 func (n pcmock) ReadHostBridgeTseg() (uint32, uint32, error) {

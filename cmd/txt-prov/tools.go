@@ -12,7 +12,7 @@ import (
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 	"github.com/google/go-tpm/tpm"
 	"github.com/google/go-tpm/tpm2"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 var (
@@ -21,7 +21,7 @@ var (
 
 func readPassphraseHashTPM20() ([]byte, error) {
 	fmt.Printf("Now, please type in the password (mandatory): ")
-	password, err := terminal.ReadPassword(0)
+	password, err := term.ReadPassword(0)
 	if err != nil {
 		return []byte{}, err
 	}
