@@ -33,14 +33,8 @@ cloud.google.com/go/storage v1.6.0/go.mod h1:N7U0C8pVQ/+NIKOBQyamJIeKQKkZ+mxpohl
 cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RXyy7KQOVs=
 contrib.go.opencensus.io/exporter/stackdriver v0.13.4/go.mod h1:aXENhDJ1Y4lIg4EUaVTwzvYETVNZk10Pu26tevFKLUc=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
-github.com/9elements/go-linux-lowlevel-hw v0.0.0-20210805085354-8254fd16fa49 h1:1nDbBbFokzzFVUN8twdpT8H1EwCsc1TBeReoxntpVGs=
-github.com/9elements/go-linux-lowlevel-hw v0.0.0-20210805085354-8254fd16fa49/go.mod h1:ZREzbpj1NPYJg249RkQT/9KjoNbb6LySs3nFz+yYmt0=
-github.com/9elements/go-linux-lowlevel-hw v0.0.0-20210916143548-3a0bb408831d h1:wB4JcwjoM8e/jD+uPoqt4kuzanejsg0o5vlCj9Rcij0=
-github.com/9elements/go-linux-lowlevel-hw v0.0.0-20210916143548-3a0bb408831d/go.mod h1:ZREzbpj1NPYJg249RkQT/9KjoNbb6LySs3nFz+yYmt0=
-github.com/9elements/go-linux-lowlevel-hw v0.0.0-20210922133114-b853fc336a3e h1:YO6Txg8xQHZgqlfK0S0ckX6KGiwcw057pXfBmFIDT5o=
-github.com/9elements/go-linux-lowlevel-hw v0.0.0-20210922133114-b853fc336a3e/go.mod h1:ZREzbpj1NPYJg249RkQT/9KjoNbb6LySs3nFz+yYmt0=
-github.com/9elements/go-linux-lowlevel-hw v0.0.0-20210922135846-40d2937646a8 h1:+ex9nJUaoePs7/krJ1HGMnwtWeShnZ5W3jve6INNdx0=
-github.com/9elements/go-linux-lowlevel-hw v0.0.0-20210922135846-40d2937646a8/go.mod h1:ZREzbpj1NPYJg249RkQT/9KjoNbb6LySs3nFz+yYmt0=
+github.com/9elements/go-linux-lowlevel-hw v0.0.0-20210930090106-9e9112a7f3b5 h1:S4EnVj6hOs2oLGPN7Ft9nB9zn188qST+X27mJxkmwos=
+github.com/9elements/go-linux-lowlevel-hw v0.0.0-20210930090106-9e9112a7f3b5/go.mod h1:ZREzbpj1NPYJg249RkQT/9KjoNbb6LySs3nFz+yYmt0=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/Masterminds/goutils v1.1.0/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=

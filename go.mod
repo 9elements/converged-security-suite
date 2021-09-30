@@ -3,7 +3,7 @@ module github.com/9elements/converged-security-suite/v2
 go 1.13
 
 require (
-	github.com/9elements/go-linux-lowlevel-hw v0.0.0-20210922135846-40d2937646a8
+	github.com/9elements/go-linux-lowlevel-hw v0.0.0-20210930090106-9e9112a7f3b5
 	github.com/alecthomas/kong v0.2.11
 	github.com/creasty/defaults v1.5.1
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e
@@ -27,6 +27,6 @@ require (
 	github.com/ulikunitz/xz v0.5.8
 	github.com/xaionaro-go/gosrc v0.0.0-20201124181305-3fdf8476a735
 	github.com/xaionaro-go/unsafetools v0.0.0-20200202162159-021b112c4d30
-	golang.org/x/crypto v0.0.0-20201117144127-c1f2f97bffc9
 	golang.org/x/sys v0.0.0-20210218155724-8ebf48af031b // indirect
+	golang.org/x/term v0.0.0-20201117132131-f5c789dd3221
 )
