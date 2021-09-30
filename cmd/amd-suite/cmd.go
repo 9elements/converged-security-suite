@@ -22,10 +22,15 @@ type validatePSPEntriesCmd struct {
 	PSPEntries []string `arg required name:"validate-psp-entries" help:"Validates the signature of PSP entries given as argument." type:"list"`
 }
 
+type validateRTMCmd struct {
+	FwPath string `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
+}
+
 var cli struct {
 	Debug              bool                  `help:"Enable debug mode"`
 	ShowKeys           showKeysCmd           `cmd help:"Shows all key known to the system, together with their origin"`
 	ValidatePSPEntries validatePSPEntriesCmd `cmd help:"Validates signatures of PSP entries"`
+	ValidateRTM        validateRTMCmd        `cmd help: Validated the signature of the extended RTM volume, which includes RTM and BIOS Directory Table`
 }
 
 func (s *showKeysCmd) Run(ctx *context) error {
@@ -59,4 +64,19 @@ func (v *validatePSPEntriesCmd) Run(ctx *context) error {
 	}
 	return nil
 
+}
+
+func (v *validateRTMCmd) Run(ctx *context) error {
+
+	firmware, err := uefi.ParseUEFIFirmwareFile(v.FwPath)
+	if err != nil {
+		return fmt.Errorf("could not parse firmware image: %w", err)
+	}
+
+	signatureValidation, err := psb.ValidateRTM(firmware)
+	if err != nil {
+		return err
+	}
+	fmt.Println(signatureValidation.String())
+	return nil
 }
