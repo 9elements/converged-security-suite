@@ -26,11 +26,26 @@ type validateRTMCmd struct {
 	FwPath string `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
 }
 
+type dumpPSPEntryCmd struct {
+	FwPath    string `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
+	PSPEntry  string `arg required name:"dump_psp-entry" help:"dump PSP entry to system file." type:"string"`
+	EntryFile string `arg required name:"entry_path" help:"Path to entry file." type:"path"`
+}
+
+type patchPSPEntryCmd struct {
+	FwPath               string `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
+	PSPEntry             string `arg required name:"patch-psp-entry" help:"dump PSP entry to system file." type:"string"`
+	EntryFile            string `arg required name:"modified_entry_path" help:"Path to modified entry file." type:"path"`
+	ModifiedFirmwareFile string `arg required name:"modified_fwpath" help:"Path to UEFI firmware modified image." type:"path"`
+}
+
 var cli struct {
 	Debug              bool                  `help:"Enable debug mode"`
 	ShowKeys           showKeysCmd           `cmd help:"Shows all key known to the system, together with their origin"`
 	ValidatePSPEntries validatePSPEntriesCmd `cmd help:"Validates signatures of PSP entries"`
 	ValidateRTM        validateRTMCmd        `cmd help: Validated the signature of the extended RTM volume, which includes RTM and BIOS Directory Table`
+	DumpPSPEntry       dumpPSPEntryCmd       `cmd help:"Dump an entry to a file on the filesystem"`
+	PatchPSPEntry      patchPSPEntryCmd      `cmd help:"take a path on the filesystem pointing to a dump of a PSP entry and re-apply it to the firmware"`
 }
 
 func (s *showKeysCmd) Run(ctx *context) error {
@@ -78,5 +93,33 @@ func (v *validateRTMCmd) Run(ctx *context) error {
 		return err
 	}
 	fmt.Println(signatureValidation.String())
+	return nil
+}
+
+func (v *dumpPSPEntryCmd) Run(ctx *context) error {
+	firmware, err := uefi.ParseUEFIFirmwareFile(v.FwPath)
+	if err != nil {
+		return fmt.Errorf("could not parse firmware image: %w", err)
+	}
+
+	n, err := psb.DumpPSPEntry(firmware, v.PSPEntry, v.EntryFile)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Entry size / Number of written bytes ", n)
+	return nil
+}
+
+func (v *patchPSPEntryCmd) Run(ctx *context) error {
+	firmware, err := uefi.ParseUEFIFirmwareFile(v.FwPath)
+	if err != nil {
+		return fmt.Errorf("could not parse firmware image: %w", err)
+	}
+
+	n, err := psb.PatchPSPEntry(firmware, v.PSPEntry, v.EntryFile, v.ModifiedFirmwareFile)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Firmware size / Number of written bytes ", n)
 	return nil
 }
