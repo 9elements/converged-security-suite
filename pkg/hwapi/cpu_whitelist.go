@@ -796,15 +796,18 @@ var (
 //CPUWhitelistTXTSupport returns true if the CPU is whitelisted
 func CPUWhitelistTXTSupport(h hwapi.LowLevelHardwareInterfaces) bool {
 	cpuName := h.ProcessorBrandName()
+	isPentium := strings.Contains(cpuName, "Pentium")
+	isXeon := strings.Contains(cpuName, "Xeon")
+	isCore := strings.Contains(cpuName, "Core")
 
 	for i := range TXTSupportedCPUs {
-		if TXTSupportedCPUs[i].xeon && !strings.Contains(cpuName, "Xeon") {
+		if TXTSupportedCPUs[i].xeon && !isXeon {
 			continue
 		}
-		if TXTSupportedCPUs[i].pentium && !strings.Contains(cpuName, "Pentium") {
+		if TXTSupportedCPUs[i].pentium && !isPentium {
 			continue
 		}
-		if TXTSupportedCPUs[i].core && !strings.Contains(cpuName, "Core") {
+		if TXTSupportedCPUs[i].core && !isCore {
 			continue
 		}
 		if strings.Contains(cpuName, TXTSupportedCPUs[i].name) {
