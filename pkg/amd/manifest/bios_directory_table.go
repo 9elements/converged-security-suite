@@ -127,7 +127,7 @@ func FindBIOSDirectoryTable(image []byte) (*BIOSDirectoryTable, bytes2.Range, er
 		}
 		return table, bytes2.Range{Offset: offset + uint64(idx), Length: bytesRead}, err
 	}
-	return nil, bytes2.Range{}, fmt.Errorf("EmbeddedFirmwareStructure is not found")
+	return nil, bytes2.Range{}, fmt.Errorf("No BIOSDirectoryTable found")
 }
 
 // ParseBIOSDirectoryTable converts input bytes into BIOSDirectoryTable

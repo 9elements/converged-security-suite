@@ -54,7 +54,7 @@ func FindEmbeddedFirmwareStructure(firmware Firmware) (*EmbeddedFirmwareStructur
 			return result, bytes2.Range{Offset: offset, Length: length}, err
 		}
 	}
-	return nil, bytes2.Range{}, fmt.Errorf("EmbeddedFirmwareStructure is not found")
+	return nil, bytes2.Range{}, fmt.Errorf("No EmbeddedFirmwareStructure found")
 }
 
 // ParseEmbeddedFirmwareStructure converts input bytes into EmbeddedFirmwareStructure

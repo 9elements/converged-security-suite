@@ -106,7 +106,7 @@ func FindPSPDirectoryTable(image []byte) (*PSPDirectoryTable, bytes2.Range, erro
 		return table, bytes2.Range{Offset: offset + uint64(idx), Length: length}, err
 	}
 
-	return nil, bytes2.Range{}, fmt.Errorf("EmbeddedFirmwareStructure is not found")
+	return nil, bytes2.Range{}, fmt.Errorf("No PSPDirectoryTable found")
 }
 
 // ParsePSPDirectoryTable converts input bytes into PSPDirectoryTable
