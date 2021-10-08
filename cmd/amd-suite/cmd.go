@@ -14,27 +14,32 @@ type context struct {
 }
 
 type showKeysCmd struct {
-	FwPath string `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
+	FwPath   string `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
+	PSPLevel uint   `arg required name:"psp-level" help:"PSP Directory Level to use"`
 }
 
 type validatePSPEntriesCmd struct {
 	FwPath     string   `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
+	PSPLevel   uint     `arg required name:"psp-level" help:"PSP Directory Level to use"`
 	PSPEntries []string `arg required name:"validate-psp-entries" help:"Validates the signature of PSP entries given as argument." type:"list"`
 }
 
 type validateRTMCmd struct {
-	FwPath string `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
+	FwPath    string `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
+	BIOSLevel uint   `arg required name:"bios-level" help:"BIOS Directory Level to use"`
 }
 
 type dumpPSPEntryCmd struct {
 	FwPath    string `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
 	PSPEntry  string `arg required name:"dump_psp-entry" help:"dump PSP entry to system file." type:"string"`
+	PSPLevel  uint   `arg required name:"psp-level" help:"PSP Directory Level to use"`
 	EntryFile string `arg required name:"entry_path" help:"Path to entry file." type:"path"`
 }
 
 type patchPSPEntryCmd struct {
 	FwPath               string `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
 	PSPEntry             string `arg required name:"patch-psp-entry" help:"dump PSP entry to system file." type:"string"`
+	PSPLevel             uint   `arg required name:"psp-level" help:"PSP Directory Level to use"`
 	EntryFile            string `arg required name:"modified_entry_path" help:"Path to modified entry file." type:"path"`
 	ModifiedFirmwareFile string `arg required name:"modified_fwpath" help:"Path to UEFI firmware modified image." type:"path"`
 }
@@ -54,7 +59,7 @@ func (s *showKeysCmd) Run(ctx *context) error {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
 
-	keySet, err := psb.GetKeys(firmware)
+	keySet, err := psb.GetKeys(firmware, s.PSPLevel)
 	if err != nil {
 		return fmt.Errorf("could not extract keys from the firmware image: %w", err)
 	}
@@ -69,7 +74,7 @@ func (v *validatePSPEntriesCmd) Run(ctx *context) error {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
 
-	signatureValidations, err := psb.ValidatePSPEntries(firmware, v.PSPEntries)
+	signatureValidations, err := psb.ValidatePSPEntries(firmware, v.PSPLevel, v.PSPEntries)
 	if err != nil {
 		return err
 	}
@@ -88,7 +93,7 @@ func (v *validateRTMCmd) Run(ctx *context) error {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
 
-	signatureValidation, err := psb.ValidateRTM(firmware)
+	signatureValidation, err := psb.ValidateRTM(firmware, v.BIOSLevel)
 	if err != nil {
 		return err
 	}
@@ -102,7 +107,7 @@ func (v *dumpPSPEntryCmd) Run(ctx *context) error {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
 
-	n, err := psb.DumpPSPEntry(firmware, v.PSPEntry, v.EntryFile)
+	n, err := psb.DumpPSPEntry(firmware, v.PSPLevel, v.PSPEntry, v.EntryFile)
 	if err != nil {
 		return err
 	}
@@ -116,7 +121,7 @@ func (v *patchPSPEntryCmd) Run(ctx *context) error {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
 
-	n, err := psb.PatchPSPEntry(firmware, v.PSPEntry, v.EntryFile, v.ModifiedFirmwareFile)
+	n, err := psb.PatchPSPEntry(firmware, v.PSPLevel, v.PSPEntry, v.EntryFile, v.ModifiedFirmwareFile)
 	if err != nil {
 		return err
 	}
