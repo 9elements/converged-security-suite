@@ -6,6 +6,8 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/amd/psb"
 
 	"github.com/9elements/converged-security-suite/pkg/uefi"
+
+	amd_manifest "github.com/9elements/converged-security-suite/pkg/amd/manifest"
 )
 
 // Context for kong command line parser
@@ -53,13 +55,26 @@ var cli struct {
 	PatchPSPEntry      patchPSPEntryCmd      `cmd help:"take a path on the filesystem pointing to a dump of a PSP entry and re-apply it to the firmware"`
 }
 
+func parseAmdFw(path string) (*amd_manifest.AMDFirmware, error) {
+	firmware, err := uefi.ParseUEFIFirmwareFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse firmware image: %w", err)
+	}
+	amdFw, err := amd_manifest.NewAMDFirmware(firmware)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse AMD Firmware: %w", err)
+	}
+
+	return amdFw, nil
+}
+
 func (s *showKeysCmd) Run(ctx *context) error {
-	firmware, err := uefi.ParseUEFIFirmwareFile(s.FwPath)
+	amdFw, err := parseAmdFw(s.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
 
-	keySet, err := psb.GetKeys(firmware, s.PSPLevel)
+	keySet, err := psb.GetKeys(amdFw, s.PSPLevel)
 	if err != nil {
 		return fmt.Errorf("could not extract keys from the firmware image: %w", err)
 	}
@@ -69,12 +84,13 @@ func (s *showKeysCmd) Run(ctx *context) error {
 }
 
 func (v *validatePSPEntriesCmd) Run(ctx *context) error {
-	firmware, err := uefi.ParseUEFIFirmwareFile(v.FwPath)
+
+	amdFw, err := parseAmdFw(v.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
 
-	signatureValidations, err := psb.ValidatePSPEntries(firmware, v.PSPLevel, v.PSPEntries)
+	signatureValidations, err := psb.ValidatePSPEntries(amdFw, v.PSPLevel, v.PSPEntries)
 	if err != nil {
 		return err
 	}
@@ -88,12 +104,12 @@ func (v *validatePSPEntriesCmd) Run(ctx *context) error {
 
 func (v *validateRTMCmd) Run(ctx *context) error {
 
-	firmware, err := uefi.ParseUEFIFirmwareFile(v.FwPath)
+	amdFw, err := parseAmdFw(v.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
 
-	signatureValidation, err := psb.ValidateRTM(firmware, v.BIOSLevel)
+	signatureValidation, err := psb.ValidateRTM(amdFw, v.BIOSLevel)
 	if err != nil {
 		return err
 	}
@@ -102,12 +118,13 @@ func (v *validateRTMCmd) Run(ctx *context) error {
 }
 
 func (v *dumpPSPEntryCmd) Run(ctx *context) error {
-	firmware, err := uefi.ParseUEFIFirmwareFile(v.FwPath)
+
+	amdFw, err := parseAmdFw(v.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
 
-	n, err := psb.DumpPSPEntry(firmware, v.PSPLevel, v.PSPEntry, v.EntryFile)
+	n, err := psb.DumpPSPEntry(amdFw, v.PSPLevel, v.PSPEntry, v.EntryFile)
 	if err != nil {
 		return err
 	}
@@ -116,12 +133,12 @@ func (v *dumpPSPEntryCmd) Run(ctx *context) error {
 }
 
 func (v *patchPSPEntryCmd) Run(ctx *context) error {
-	firmware, err := uefi.ParseUEFIFirmwareFile(v.FwPath)
+	amdFw, err := parseAmdFw(v.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
 
-	n, err := psb.PatchPSPEntry(firmware, v.PSPLevel, v.PSPEntry, v.EntryFile, v.ModifiedFirmwareFile)
+	n, err := psb.PatchPSPEntry(amdFw, v.PSPLevel, v.PSPEntry, v.EntryFile, v.ModifiedFirmwareFile)
 	if err != nil {
 		return err
 	}
