@@ -16,34 +16,34 @@ type context struct {
 }
 
 type showKeysCmd struct {
-	FwPath   string `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
-	PSPLevel uint   `arg required name:"psp-level" help:"PSP Directory Level to use"`
+	FwPath   string `required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
+	PSPLevel uint   `required name:"psp-level" help:"PSP Directory Level to use"`
 }
 
 type validatePSPEntriesCmd struct {
-	FwPath     string   `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
-	PSPLevel   uint     `arg required name:"psp-level" help:"PSP Directory Level to use"`
+	FwPath     string   `required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
+	PSPLevel   uint     `required name:"psp-level" help:"PSP Directory Level to use"`
 	PSPEntries []string `arg required name:"validate-psp-entries" help:"Validates the signature of PSP entries given as argument." type:"list"`
 }
 
 type validateRTMCmd struct {
-	FwPath    string `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
-	BIOSLevel uint   `arg required name:"bios-level" help:"BIOS Directory Level to use"`
+	FwPath    string `required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
+	BIOSLevel uint   `required name:"bios-level" help:"BIOS Directory Level to use"`
 }
 
 type dumpPSPEntryCmd struct {
-	FwPath    string `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
-	PSPEntry  string `arg required name:"dump_psp-entry" help:"dump PSP entry to system file." type:"string"`
-	PSPLevel  uint   `arg required name:"psp-level" help:"PSP Directory Level to use"`
-	EntryFile string `arg required name:"entry_path" help:"Path to entry file." type:"path"`
+	FwPath    string `required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
+	PSPEntry  string `required name:"dump_psp-entry" help:"dump PSP entry to system file." type:"string"`
+	PSPLevel  uint   `required name:"psp-level" help:"PSP Directory Level to use"`
+	EntryFile string `required name:"entry_path" help:"Path to entry file." type:"path"`
 }
 
 type patchPSPEntryCmd struct {
-	FwPath               string `arg required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
-	PSPEntry             string `arg required name:"patch-psp-entry" help:"dump PSP entry to system file." type:"string"`
-	PSPLevel             uint   `arg required name:"psp-level" help:"PSP Directory Level to use"`
-	EntryFile            string `arg required name:"modified_entry_path" help:"Path to modified entry file." type:"path"`
-	ModifiedFirmwareFile string `arg required name:"modified_fwpath" help:"Path to UEFI firmware modified image." type:"path"`
+	FwPath               string `required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
+	PSPEntry             string `required name:"patch-psp-entry" help:"dump PSP entry to system file." type:"string"`
+	PSPLevel             uint   `required name:"psp-level" help:"PSP Directory Level to use"`
+	EntryFile            string `required name:"modified_entry_path" help:"Path to modified entry file." type:"path"`
+	ModifiedFirmwareFile string `required name:"modified_fwpath" help:"Path to UEFI firmware modified image." type:"path"`
 }
 
 var cli struct {
