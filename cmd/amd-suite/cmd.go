@@ -23,7 +23,7 @@ type showKeysCmd struct {
 type validatePSPEntriesCmd struct {
 	FwPath     string   `required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
 	PSPLevel   uint     `required name:"psp-level" help:"PSP Directory Level to use"`
-	PSPEntries []string `arg required name:"validate-psp-entries" help:"Validates the signature of PSP entries given as argument." type:"list"`
+	PSPEntries []string `arg required name:"psp-entries-hex-codes" help:"Hex codes of PSP entries to validate" type:"list"`
 }
 
 type validateRTMCmd struct {
@@ -33,17 +33,17 @@ type validateRTMCmd struct {
 
 type dumpPSPEntryCmd struct {
 	FwPath    string `required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
-	PSPEntry  string `required name:"dump_psp-entry" help:"dump PSP entry to system file." type:"string"`
 	PSPLevel  uint   `required name:"psp-level" help:"PSP Directory Level to use"`
-	EntryFile string `required name:"entry_path" help:"Path to entry file." type:"path"`
+	EntryFile string `required name:"entry-path" help:"Path to entry file." type:"path"`
+	PSPEntry  string `arg name:"psp-entry-hex-code" help:"Hex code of PSP entry to dump" type:"string"`
 }
 
 type patchPSPEntryCmd struct {
 	FwPath               string `required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
-	PSPEntry             string `required name:"patch-psp-entry" help:"dump PSP entry to system file." type:"string"`
 	PSPLevel             uint   `required name:"psp-level" help:"PSP Directory Level to use"`
-	EntryFile            string `required name:"modified_entry_path" help:"Path to modified entry file." type:"path"`
-	ModifiedFirmwareFile string `required name:"modified_fwpath" help:"Path to UEFI firmware modified image." type:"path"`
+	EntryFile            string `required name:"modified-entry-path" help:"Path to modified entry file." type:"path"`
+	ModifiedFirmwareFile string `required name:"modified-fwpath" help:"Path to UEFI firmware modified image." type:"path"`
+	PSPEntry             string `arg required name:"psp-entry-hex-code" help:"Hex code of PSP entry to patch" type:"string"`
 }
 
 var cli struct {
