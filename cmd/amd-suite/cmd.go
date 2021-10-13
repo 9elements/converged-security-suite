@@ -15,6 +15,10 @@ type context struct {
 	debug bool
 }
 
+type outputFirmwareCmd struct {
+	FwPath string `required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
+}
+
 type showKeysCmd struct {
 	FwPath   string `required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
 	PSPLevel uint   `required name:"psp-level" help:"PSP Directory Level to use"`
@@ -53,6 +57,7 @@ var cli struct {
 	ValidateRTM        validateRTMCmd        `cmd help: Validated the signature of the extended RTM volume, which includes RTM and BIOS Directory Table`
 	DumpPSPEntry       dumpPSPEntryCmd       `cmd help:"Dump an entry to a file on the filesystem"`
 	PatchPSPEntry      patchPSPEntryCmd      `cmd help:"take a path on the filesystem pointing to a dump of a PSP entry and re-apply it to the firmware"`
+	OutputFirmware     outputFirmwareCmd     `cmd help:"Outputs information about the firmware and PSP/BIOS structure"`
 }
 
 func parseAmdFw(path string) (*amd_manifest.AMDFirmware, error) {
@@ -66,6 +71,25 @@ func parseAmdFw(path string) (*amd_manifest.AMDFirmware, error) {
 	}
 
 	return amdFw, nil
+}
+
+func (s *outputFirmwareCmd) Run(ctx *context) error {
+	amdFw, err := parseAmdFw(s.FwPath)
+	if err != nil {
+		return fmt.Errorf("could not parse firmware image: %w", err)
+	}
+
+	err = psb.OutputPSPEntries(amdFw)
+	if err != nil {
+		return fmt.Errorf("could not output PSP firmware info: %w", err)
+	}
+
+	err = psb.OutputBIOSEntries(amdFw)
+	if err != nil {
+		return fmt.Errorf("could not output BIOS firmware info: %w", err)
+	}
+
+	return nil
 }
 
 func (s *showKeysCmd) Run(ctx *context) error {
