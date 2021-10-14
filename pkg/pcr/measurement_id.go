@@ -373,32 +373,32 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 	case MeasurementIDBIOSDirectoryLevel1Header:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			pspFirmware := provider.PSPFirmware()
-			if pspFirmware == nil {
-				return nil, fmt.Errorf("PSP firmware is not found")
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
 			}
 			return MeasureBIOSDirectoryHeader(pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel1Range)
 		}
 	case MeasurementIDBIOSDirectoryLevel2Header:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			pspFirmware := provider.PSPFirmware()
-			if pspFirmware == nil {
-				return nil, fmt.Errorf("PSP firmware is not found")
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
 			}
 			return MeasureBIOSDirectoryHeader(pspFirmware.BIOSDirectoryLevel2, pspFirmware.BIOSDirectoryLevel2Range)
 		}
 	case MeasurementIDBIOSDirectoryLevel1:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			pspFirmware := provider.PSPFirmware()
-			if pspFirmware == nil {
-				return nil, fmt.Errorf("PSP firmware is not found")
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
 			}
 			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel1Range)
 		}
 	case MeasurementIDBIOSDirectoryLevel2:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			pspFirmware := provider.PSPFirmware()
-			if pspFirmware == nil {
-				return nil, fmt.Errorf("PSP firmware is not found")
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
 			}
 			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel2, pspFirmware.BIOSDirectoryLevel2Range)
 		}
@@ -411,8 +411,8 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 	case MeasurementIDEmbeddedFirmwareStructure:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			pspFirmware := provider.PSPFirmware()
-			if pspFirmware == nil {
-				return nil, fmt.Errorf("PSP firmware is not found")
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
 			}
 			return NewRangeMeasurement(
 				MeasurementIDEmbeddedFirmwareStructure,
@@ -423,8 +423,8 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 	case MeasurementIDPSPVersion:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			pspFirmware := provider.PSPFirmware()
-			if pspFirmware == nil {
-				return nil, fmt.Errorf("PSP firmware is not found")
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
 			}
 			firmware := provider.Firmware()
 			return MeasurePSPVersion(firmware.ImageBytes(), pspFirmware.PSPDirectoryLevel1, pspFirmware.PSPDirectoryLevel2)
@@ -433,8 +433,8 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 	case MeasurementIDBIOSRTMVolume:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
 			pspFirmware := provider.PSPFirmware()
-			if pspFirmware == nil {
-				return nil, fmt.Errorf("PSP firmware is not found")
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
 			}
 			return MeasureBIOSRTMVolume(pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel2)
 		}

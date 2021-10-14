@@ -78,7 +78,7 @@ func MeasureMP0C2PMsgRegisters(regs registers.Registers) (*Measurement, error) {
 
 // MeasurePSPVersion constructs measurement of PSP version
 func MeasurePSPVersion(image []byte, pspDirectoryLevel1, pspDirectoryLevel2 *amd_manifest.PSPDirectoryTable) (*Measurement, error) {
-	for _, pspDirectory := range []*amd_manifest.PSPDirectoryTable{pspDirectoryLevel1, pspDirectoryLevel2} {
+	for _, pspDirectory := range []*amd_manifest.PSPDirectoryTable{pspDirectoryLevel2, pspDirectoryLevel1} {
 		if pspDirectory == nil {
 			continue
 		}
@@ -98,7 +98,7 @@ func MeasurePSPVersion(image []byte, pspDirectoryLevel1, pspDirectoryLevel2 *amd
 
 // MeasureBIOSRTMVolume constructs measurement of BIOS RTM Volume
 func MeasureBIOSRTMVolume(biosDirectoryLevel1, biosDirectoryLevel2 *amd_manifest.BIOSDirectoryTable) (*Measurement, error) {
-	for _, biosDirectory := range []*amd_manifest.BIOSDirectoryTable{biosDirectoryLevel1, biosDirectoryLevel2} {
+	for _, biosDirectory := range []*amd_manifest.BIOSDirectoryTable{biosDirectoryLevel2, biosDirectoryLevel1} {
 		if biosDirectory == nil {
 			continue
 		}
@@ -110,4 +110,11 @@ func MeasureBIOSRTMVolume(biosDirectoryLevel1, biosDirectoryLevel2 *amd_manifest
 		}
 	}
 	return nil, fmt.Errorf("failed to find BIOS RTM Volume entry")
+}
+
+func checkPSPFirmwareFound(pspFirmware *amd_manifest.PSPFirmware) error {
+	if pspFirmware == nil {
+		return fmt.Errorf("PSP firmware is not found")
+	}
+	return nil
 }
