@@ -165,11 +165,6 @@ func (m Measurement) NoHash() bool {
 	return m.ID.NoHash()
 }
 
-// MeasureFunc returns the function to be used for the measurement.
-func (m Measurement) MeasureFunc() interface{} {
-	return m.ID.MeasureFunc()
-}
-
 // EventLogEventType returns value of "Type" field of the EventLog entry
 // associated with the measurement.
 func (m Measurement) EventLogEventType() *tpmeventlog.EventType {
