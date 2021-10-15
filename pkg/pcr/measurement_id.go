@@ -91,6 +91,11 @@ func (id MeasurementID) IsFake() bool {
 	return false
 }
 
+// IsMultiple means that this MeasurementID describes multiple measurements
+func (id MeasurementID) IsMultiple() bool {
+	return false
+}
+
 // NoHash forces to skip hashing of this measurement's data during PCR calculation
 func (id MeasurementID) NoHash() bool {
 	switch id {
@@ -301,10 +306,20 @@ type DataProvider interface {
 }
 
 // MeasureFunc performs a measurement.
-type MeasureFunc func(MeasurementConfig, DataProvider) (*Measurement, error)
+type MeasureFunc func(MeasurementConfig, DataProvider) (Measurements, error)
+
+type singleMeasureFunc func(MeasurementConfig, DataProvider) (*Measurement, error)
 
 // MeasureFunc returns the function to be used for the measurement.
 func (id MeasurementID) MeasureFunc() MeasureFunc {
+	measureFunc := id.singleMeasureFunc()
+	return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+		m, err := measureFunc(config, provider)
+		return Measurements{m}, err
+	}
+}
+
+func (id MeasurementID) singleMeasureFunc() singleMeasureFunc {
 	switch id {
 	case MeasurementIDInit:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {

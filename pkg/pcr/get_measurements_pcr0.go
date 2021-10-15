@@ -112,19 +112,21 @@ func (c *pcr0MeasurementsCollector) CollectPRC0Measurements(
 	config MeasurementConfig,
 ) (result Measurements, warnings error, err error) {
 	for _, measurementID := range config.Flow.MeasurementIDs() {
-		m, err := measurementID.MeasureFunc()(config, c)
+		measurements, err := measurementID.MeasureFunc()(config, c)
 		if err != nil {
-			if measurementID.IsFake() || m != nil {
+			if measurementID.IsFake() || len(measurements) > 0 {
 				_ = c.warnings.Add(ErrCollect{MeasurementID: measurementID, Err: err})
 			} else {
 				_ = c.errors.Add(ErrCollect{MeasurementID: measurementID, Err: err})
 			}
 		}
-		if m == nil {
-			continue
-		}
 
-		result = append(result, m)
+		for _, m := range measurements {
+			if m == nil {
+				continue
+			}
+			result = append(result, m)
+		}
 	}
 
 	return result, c.warnings.ReturnValue(), c.errors.ReturnValue()
