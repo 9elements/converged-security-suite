@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/amd/psb"
 
@@ -35,19 +36,21 @@ type validateRTMCmd struct {
 	BIOSLevel uint   `required name:"bios-level" help:"BIOS Directory Level to use"`
 }
 
-type dumpPSPEntryCmd struct {
+type dumpEntryCmd struct {
 	FwPath    string `required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
-	PSPLevel  uint   `required name:"psp-level" help:"PSP Directory Level to use"`
+	Level     uint   `required name:"level" help:"Directory Level to use"`
 	EntryFile string `required name:"entry-path" help:"Path to entry file." type:"path"`
-	PSPEntry  string `arg name:"psp-entry-hex-code" help:"Hex code of PSP entry to dump" type:"string"`
+	Type      string `required name:"type" help:"Type of entry to be dumped, either from PSP or BIOS directory (psp|bios)" type:"string"`
+	Entry     string `arg name:"entry-hex-code" help:"Hex code of the entry to dump" type:"string"`
 }
 
-type patchPSPEntryCmd struct {
+type patchEntryCmd struct {
 	FwPath               string `required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
-	PSPLevel             uint   `required name:"psp-level" help:"PSP Directory Level to use"`
+	Level                uint   `required name:"level" help:"Directory Level to use"`
 	EntryFile            string `required name:"modified-entry-path" help:"Path to modified entry file." type:"path"`
 	ModifiedFirmwareFile string `required name:"modified-fwpath" help:"Path to UEFI firmware modified image." type:"path"`
-	PSPEntry             string `arg required name:"psp-entry-hex-code" help:"Hex code of PSP entry to patch" type:"string"`
+	Type                 string `required name:"type" help:"Type of entry to be dumped, either from PSP or BIOS directory (psp|bios)" type:"string"`
+	Entry                string `arg required name:"entry-hex-code" help:"Hex code of entry to patch" type:"string"`
 }
 
 var cli struct {
@@ -55,9 +58,9 @@ var cli struct {
 	ShowKeys           showKeysCmd           `cmd help:"Shows all key known to the system, together with their origin"`
 	ValidatePSPEntries validatePSPEntriesCmd `cmd help:"Validates signatures of PSP entries"`
 	ValidateRTM        validateRTMCmd        `cmd help: Validated the signature of the extended RTM volume, which includes RTM and BIOS Directory Table`
-	DumpPSPEntry       dumpPSPEntryCmd       `cmd help:"Dump an entry to a file on the filesystem"`
-	PatchPSPEntry      patchPSPEntryCmd      `cmd help:"take a path on the filesystem pointing to a dump of a PSP entry and re-apply it to the firmware"`
 	OutputFirmware     outputFirmwareCmd     `cmd help:"Outputs information about the firmware and PSP/BIOS structure"`
+	DumpEntry          dumpEntryCmd          `cmd help:"Dump an entry, either BIOS or PSP, to a file on the filesystem"`
+	PatchEntry         patchEntryCmd         `cmd help:"take a path on the filesystem pointing to a dump of a BIOS or PSP entry and re-apply it to the firmware"`
 }
 
 func parseAmdFw(path string) (*amd_manifest.AMDFirmware, error) {
@@ -141,14 +144,19 @@ func (v *validateRTMCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (v *dumpPSPEntryCmd) Run(ctx *context) error {
+func (v *dumpEntryCmd) Run(ctx *context) error {
 
 	amdFw, err := parseAmdFw(v.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
 
-	n, err := psb.DumpPSPEntry(amdFw, v.PSPLevel, v.PSPEntry, v.EntryFile)
+	id, err := strconv.ParseInt(v.Entry, 16, 64)
+	if err != nil {
+		return fmt.Errorf("could not parse hexadecimal entry (%s) : %w", v.Entry, err)
+	}
+
+	n, err := psb.DumpEntry(amdFw, v.Level, v.Type, uint64(id), v.EntryFile)
 	if err != nil {
 		return err
 	}
@@ -156,13 +164,18 @@ func (v *dumpPSPEntryCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (v *patchPSPEntryCmd) Run(ctx *context) error {
+func (v *patchEntryCmd) Run(ctx *context) error {
 	amdFw, err := parseAmdFw(v.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
 
-	n, err := psb.PatchPSPEntry(amdFw, v.PSPLevel, v.PSPEntry, v.EntryFile, v.ModifiedFirmwareFile)
+	id, err := strconv.ParseInt(v.Entry, 16, 64)
+	if err != nil {
+		return fmt.Errorf("could not parse hexadecimal entry (%s) : %w", v.Entry, err)
+	}
+
+	n, err := psb.PatchEntry(amdFw, v.Level, v.Type, uint64(id), v.EntryFile, v.ModifiedFirmwareFile)
 	if err != nil {
 		return err
 	}
