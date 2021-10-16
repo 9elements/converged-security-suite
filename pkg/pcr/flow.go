@@ -184,12 +184,16 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 		}
 	case FlowLegacyAMDLocality0:
 		return MeasurementIDs{
+			MeasurementIDPSPVersion,
+			MeasurementIDBIOSRTMVolume,
 			MeasurementIDPCDFirmwareVendorVersionData,
 			MeasurementIDDXE,
 			MeasurementIDSeparator,
 		}
 	case FlowLegacyAMDLocality3:
 		return MeasurementIDs{
+			MeasurementIDPSPVersion,
+			MeasurementIDBIOSRTMVolume,
 			MeasurementIDPCDFirmwareVendorVersionData,
 			MeasurementIDDXE,
 			MeasurementIDSeparator,
