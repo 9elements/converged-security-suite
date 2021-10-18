@@ -56,6 +56,10 @@ const (
 	MeasurementIDBIOSDirectoryLevel1
 	MeasurementIDBIOSDirectoryLevel2Header
 	MeasurementIDBIOSDirectoryLevel2
+	MeasurementIDPSPDirectoryLevel1Header
+	MeasurementIDPSPDirectoryLevel1
+	MeasurementIDPSPDirectoryLevel2Header
+	MeasurementIDPSPDirectoryLevel2
 	MeasurementIDMP0C2PMsgRegisters
 	MeasurementIDEmbeddedFirmwareStructure
 	MeasurementIDPSPVersion
@@ -152,6 +156,14 @@ func (id MeasurementID) String() string {
 		return "Header of BIOS directory table level 2"
 	case MeasurementIDBIOSDirectoryLevel2:
 		return "BIOS directory table level 2"
+	case MeasurementIDPSPDirectoryLevel1Header:
+		return "Header of PSP directory table level 1"
+	case MeasurementIDPSPDirectoryLevel1:
+		return "PSP directory table level 1"
+	case MeasurementIDPSPDirectoryLevel2Header:
+		return "Header of PSP directory table level 2"
+	case MeasurementIDPSPDirectoryLevel2:
+		return "PSP directory table level 2"
 	case MeasurementIDMP0C2PMsgRegisters:
 		return "AMD MP0_CP2MSG registers"
 	case MeasurementIDEmbeddedFirmwareStructure:
@@ -211,6 +223,14 @@ func (id MeasurementID) PCRIDs() []ID {
 		return []ID{0}
 	case MeasurementIDBIOSDirectoryLevel2:
 		return []ID{0}
+	case MeasurementIDPSPDirectoryLevel1:
+		return []ID{0}
+	case MeasurementIDPSPDirectoryLevel1Header:
+		return []ID{0}
+	case MeasurementIDPSPDirectoryLevel2:
+		return []ID{0}
+	case MeasurementIDPSPDirectoryLevel2Header:
+		return []ID{0}
 	case MeasurementIDMP0C2PMsgRegisters:
 		return []ID{0}
 	case MeasurementIDEmbeddedFirmwareStructure:
@@ -252,6 +272,14 @@ func (id MeasurementID) EventLogEventType() *tpmeventlog.EventType {
 	case MeasurementIDBIOSDirectoryLevel2Header:
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
 	case MeasurementIDBIOSDirectoryLevel2:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDPSPDirectoryLevel1Header:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDPSPDirectoryLevel1:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDPSPDirectoryLevel2Header:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDPSPDirectoryLevel2:
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
 	case MeasurementIDMP0C2PMsgRegisters:
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
@@ -416,6 +444,39 @@ func (id MeasurementID) singleMeasureFunc() singleMeasureFunc {
 				return nil, err
 			}
 			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel2, pspFirmware.BIOSDirectoryLevel2Range)
+		}
+
+	case MeasurementIDPSPDirectoryLevel1Header:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasurePSPDirectoryHeader(pspFirmware.PSPDirectoryLevel1, pspFirmware.PSPDirectoryLevel1Range)
+		}
+	case MeasurementIDPSPDirectoryLevel2Header:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasurePSPDirectoryHeader(pspFirmware.PSPDirectoryLevel2, pspFirmware.PSPDirectoryLevel2Range)
+		}
+	case MeasurementIDPSPDirectoryLevel1:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasurePSPDirectoryTable(pspFirmware.PSPDirectoryLevel1, pspFirmware.PSPDirectoryLevel1Range)
+		}
+	case MeasurementIDPSPDirectoryLevel2:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasurePSPDirectoryTable(pspFirmware.PSPDirectoryLevel2, pspFirmware.PSPDirectoryLevel2Range)
 		}
 
 	case MeasurementIDMP0C2PMsgRegisters:

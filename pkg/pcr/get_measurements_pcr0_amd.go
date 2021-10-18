@@ -30,6 +30,27 @@ func MeasureBIOSDirectoryHeader(table *amd_manifest.BIOSDirectoryTable, biosDire
 	return NewRangeMeasurement(id, biosDirectoryTableRange.Offset, headerSize), nil
 }
 
+// MeasurePSPDirectoryHeader constructs measurements of PSP Directory table header
+func MeasurePSPDirectoryHeader(table *amd_manifest.PSPDirectoryTable, pspDirectoryTableRange pkgbytes.Range) (*Measurement, error) {
+	if table == nil {
+		return nil, nil
+	}
+	var id MeasurementID
+	switch table.PSPCookie {
+	case amd_manifest.PSPDirectoryTableCookie:
+		id = MeasurementIDPSPDirectoryLevel1Header
+	case amd_manifest.PSPDirectoryTableLevel2Cookie:
+		id = MeasurementIDPSPDirectoryLevel2Header
+	default:
+		return nil, fmt.Errorf("unknown psp table cookie: '%X'", table.PSPCookie)
+	}
+	headerSize := uint64(binary.Size(table.PSPDirectoryTableHeader))
+	if headerSize > pspDirectoryTableRange.Length {
+		return nil, fmt.Errorf("psp table is too short: '%d'", pspDirectoryTableRange.Length)
+	}
+	return NewRangeMeasurement(id, pspDirectoryTableRange.Offset, headerSize), nil
+}
+
 // MeasureBIOSDirectoryTable constructs measurements of BIOS Directory table
 func MeasureBIOSDirectoryTable(table *amd_manifest.BIOSDirectoryTable, biosDirectoryTableRange pkgbytes.Range) (*Measurement, error) {
 	if table == nil {
@@ -54,6 +75,32 @@ func MeasureBIOSDirectoryTable(table *amd_manifest.BIOSDirectoryTable, biosDirec
 		id,
 		biosDirectoryTableRange.Offset+headerSize,
 		biosDirectoryTableRange.Length-headerSize), nil
+}
+
+// MeasurePSPDirectoryTable constructs measurements of PSP Directory table
+func MeasurePSPDirectoryTable(table *amd_manifest.PSPDirectoryTable, pspDirectoryTableRange pkgbytes.Range) (*Measurement, error) {
+	if table == nil {
+		return nil, nil
+	}
+
+	var id MeasurementID
+	switch table.PSPCookie {
+	case amd_manifest.PSPDirectoryTableCookie:
+		id = MeasurementIDPSPDirectoryLevel1
+	case amd_manifest.PSPDirectoryTableLevel2Cookie:
+		id = MeasurementIDPSPDirectoryLevel2
+	default:
+		return nil, fmt.Errorf("unknown psp table cookie: '%X'", table.PSPCookie)
+	}
+	headerSize := uint64(binary.Size(table.PSPDirectoryTableHeader))
+	if headerSize > pspDirectoryTableRange.Length {
+		return nil, fmt.Errorf("psp table is too short: '%d'", pspDirectoryTableRange.Length)
+	}
+
+	return NewRangeMeasurement(
+		id,
+		pspDirectoryTableRange.Offset+headerSize,
+		pspDirectoryTableRange.Length-headerSize), nil
 }
 
 // MeasureMP0C2PMsgRegisters constructs measurement of AMD's MPO_CP2_MSG registers
