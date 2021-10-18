@@ -60,6 +60,8 @@ const (
 	MeasurementIDPSPDirectoryLevel1
 	MeasurementIDPSPDirectoryLevel2Header
 	MeasurementIDPSPDirectoryLevel2
+	MeasurementIDPSPDirectoryLevel1Entries
+	MeasurementIDPSPDirectoryLevel2Entries
 	MeasurementIDMP0C2PMsgRegisters
 	MeasurementIDEmbeddedFirmwareStructure
 	MeasurementIDPSPVersion
@@ -164,6 +166,10 @@ func (id MeasurementID) String() string {
 		return "Header of PSP directory table level 2"
 	case MeasurementIDPSPDirectoryLevel2:
 		return "PSP directory table level 2"
+	case MeasurementIDPSPDirectoryLevel1Entries:
+		return "Entries of PSP directory table level 1"
+	case MeasurementIDPSPDirectoryLevel2Entries:
+		return "entries of PSP directory tabel level 2"
 	case MeasurementIDMP0C2PMsgRegisters:
 		return "AMD MP0_CP2MSG registers"
 	case MeasurementIDEmbeddedFirmwareStructure:
@@ -231,6 +237,10 @@ func (id MeasurementID) PCRIDs() []ID {
 		return []ID{0}
 	case MeasurementIDPSPDirectoryLevel2Header:
 		return []ID{0}
+	case MeasurementIDPSPDirectoryLevel1Entries:
+		return []ID{0}
+	case MeasurementIDPSPDirectoryLevel2Entries:
+		return []ID{0}
 	case MeasurementIDMP0C2PMsgRegisters:
 		return []ID{0}
 	case MeasurementIDEmbeddedFirmwareStructure:
@@ -280,6 +290,10 @@ func (id MeasurementID) EventLogEventType() *tpmeventlog.EventType {
 	case MeasurementIDPSPDirectoryLevel2Header:
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
 	case MeasurementIDPSPDirectoryLevel2:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDPSPDirectoryLevel1Entries:
+		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+	case MeasurementIDPSPDirectoryLevel2Entries:
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
 	case MeasurementIDMP0C2PMsgRegisters:
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
@@ -477,6 +491,24 @@ func (id MeasurementID) singleMeasureFunc() singleMeasureFunc {
 				return nil, err
 			}
 			return MeasurePSPDirectoryTable(pspFirmware.PSPDirectoryLevel2, pspFirmware.PSPDirectoryLevel2Range)
+		}
+
+	case MeasurementIDPSPDirectoryLevel1Entries:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasurePSPDirectoryTableEntries(pspFirmware.PSPDirectoryLevel1)
+		}
+
+	case MeasurementIDPSPDirectoryLevel2Entries:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasurePSPDirectoryTableEntries(pspFirmware.PSPDirectoryLevel2)
 		}
 
 	case MeasurementIDMP0C2PMsgRegisters:

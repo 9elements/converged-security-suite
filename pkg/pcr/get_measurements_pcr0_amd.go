@@ -103,6 +103,28 @@ func MeasurePSPDirectoryTable(table *amd_manifest.PSPDirectoryTable, pspDirector
 		pspDirectoryTableRange.Length-headerSize), nil
 }
 
+// MeasurePSPDirectoryTableEntries constructs measurements of AMD's PSP directory table entries
+func MeasurePSPDirectoryTableEntries(table *amd_manifest.PSPDirectoryTable) (*Measurement, error) {
+	var id MeasurementID
+
+	switch table.PSPCookie {
+	case amd_manifest.PSPDirectoryTableCookie:
+		id = MeasurementIDPSPDirectoryLevel1Entries
+	case amd_manifest.PSPDirectoryTableLevel2Cookie:
+		id = MeasurementIDPSPDirectoryLevel2Entries
+	default:
+		return nil, fmt.Errorf("unknown psp table cookie: '%X'", table.PSPCookie)
+	}
+
+	result := bytes.NewBuffer(nil)
+	for _, entry := range table.Entries {
+		if err := binary.Write(result, binary.LittleEndian, entry); err != nil {
+			return nil, err
+		}
+	}
+	return NewStaticDataMeasurement(id, result.Bytes()), nil
+}
+
 // MeasureMP0C2PMsgRegisters constructs measurement of AMD's MPO_CP2_MSG registers
 func MeasureMP0C2PMsgRegisters(regs registers.Registers) (*Measurement, error) {
 	msg37, found := registers.FindMP0C2PMsg37(regs)
