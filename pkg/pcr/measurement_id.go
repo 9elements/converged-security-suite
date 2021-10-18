@@ -191,7 +191,7 @@ func (id MeasurementID) String() string {
 	case MeasurementIDPSPDirectoryLevel1Entries:
 		return "Entries of PSP directory table level 1"
 	case MeasurementIDPSPDirectoryLevel2Entries:
-		return "entries of PSP directory table level 2"
+		return "Entries of PSP directory table level 2"
 	case MeasurementIDMP0C2PMsgRegisters:
 		return "AMD MP0_CP2MSG registers"
 	case MeasurementIDEmbeddedFirmwareStructure:
