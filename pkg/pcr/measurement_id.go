@@ -293,18 +293,6 @@ func (id MeasurementID) EventLogEventType() *tpmeventlog.EventType {
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
 	case MeasurementIDBIOSDirectoryLevel2:
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
-	case MeasurementIDPSPDirectoryLevel1Header:
-		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
-	case MeasurementIDPSPDirectoryLevel1:
-		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
-	case MeasurementIDPSPDirectoryLevel2Header:
-		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
-	case MeasurementIDPSPDirectoryLevel2:
-		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
-	case MeasurementIDPSPDirectoryLevel1Entries:
-		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
-	case MeasurementIDPSPDirectoryLevel2Entries:
-		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
 	case MeasurementIDMP0C2PMsgRegisters:
 		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
 	case MeasurementIDEmbeddedFirmwareStructure:
