@@ -12,7 +12,7 @@ import (
 // MeasureBIOSDirectoryHeader constructs measurements of BIOS Directory table header
 func MeasureBIOSDirectoryHeader(table *amd_manifest.BIOSDirectoryTable, biosDirectoryTableRange pkgbytes.Range) (*Measurement, error) {
 	if table == nil {
-		return nil, nil
+		return nil, fmt.Errorf("empty BIOS Directory Table")
 	}
 	var id MeasurementID
 	switch table.BIOSCookie {
@@ -33,7 +33,7 @@ func MeasureBIOSDirectoryHeader(table *amd_manifest.BIOSDirectoryTable, biosDire
 // MeasurePSPDirectoryHeader constructs measurements of PSP Directory table header
 func MeasurePSPDirectoryHeader(table *amd_manifest.PSPDirectoryTable, pspDirectoryTableRange pkgbytes.Range) (*Measurement, error) {
 	if table == nil {
-		return nil, nil
+		return nil, fmt.Errorf("empty PSP Directory Table")
 	}
 	var id MeasurementID
 	switch table.PSPCookie {
@@ -54,7 +54,7 @@ func MeasurePSPDirectoryHeader(table *amd_manifest.PSPDirectoryTable, pspDirecto
 // MeasureBIOSDirectoryTable constructs measurements of BIOS Directory table
 func MeasureBIOSDirectoryTable(table *amd_manifest.BIOSDirectoryTable, biosDirectoryTableRange pkgbytes.Range) (*Measurement, error) {
 	if table == nil {
-		return nil, nil
+		return nil, fmt.Errorf("empty BIOS Directory Table")
 	}
 
 	var id MeasurementID
@@ -80,7 +80,7 @@ func MeasureBIOSDirectoryTable(table *amd_manifest.BIOSDirectoryTable, biosDirec
 // MeasurePSPDirectoryTable constructs measurements of PSP Directory table
 func MeasurePSPDirectoryTable(table *amd_manifest.PSPDirectoryTable, pspDirectoryTableRange pkgbytes.Range) (*Measurement, error) {
 	if table == nil {
-		return nil, nil
+		return nil, fmt.Errorf("empty PSP Directory Table")
 	}
 
 	var id MeasurementID
@@ -103,8 +103,42 @@ func MeasurePSPDirectoryTable(table *amd_manifest.PSPDirectoryTable, pspDirector
 		pspDirectoryTableRange.Length-headerSize), nil
 }
 
+// MeasureBIOSDirectoryTableEntries constructs measurements of AMD's BIOS directory table entries
+func MeasureBIOSDirectoryTableEntries(table *amd_manifest.BIOSDirectoryTable) (*Measurement, error) {
+	if table == nil {
+		return nil, fmt.Errorf("empty BIOS Directory Table")
+	}
+
+	var id MeasurementID
+
+	switch table.BIOSCookie {
+	case amd_manifest.BIOSDirectoryTableCookie:
+		id = MeasurementIDBIOSDirectoryLevel1Entries
+	case amd_manifest.BIOSDirectoryTableLevel2Cookie:
+		id = MeasurementIDBIOSDirectoryLevel2Entries
+	default:
+		return nil, fmt.Errorf("unknown bios table cookie: '%X'", table.BIOSCookie)
+	}
+
+	ranges := []pkgbytes.Range{}
+
+	for _, entry := range table.Entries {
+		switch entry.Type {
+		case amd_manifest.APCBBinaryEntry: // this can vary
+		case amd_manifest.APOBBinaryEntry: // this can vary
+		default:
+			ranges = append(ranges, pkgbytes.Range{Offset: entry.SourceAddress, Length: uint64(entry.Size)})
+		}
+	}
+	return NewRangesMeasurement(id, ranges), nil
+}
+
 // MeasurePSPDirectoryTableEntries constructs measurements of AMD's PSP directory table entries
 func MeasurePSPDirectoryTableEntries(table *amd_manifest.PSPDirectoryTable) (*Measurement, error) {
+	if table == nil {
+		return nil, fmt.Errorf("empty PSP Directory Table")
+	}
+
 	var id MeasurementID
 
 	switch table.PSPCookie {
@@ -116,13 +150,17 @@ func MeasurePSPDirectoryTableEntries(table *amd_manifest.PSPDirectoryTable) (*Me
 		return nil, fmt.Errorf("unknown psp table cookie: '%X'", table.PSPCookie)
 	}
 
-	result := bytes.NewBuffer(nil)
+	ranges := []pkgbytes.Range{}
+
 	for _, entry := range table.Entries {
-		if err := binary.Write(result, binary.LittleEndian, entry); err != nil {
-			return nil, err
+		switch entry.Type {
+		case 0x0B: // Skip PSP Soft Fuse Entry
+		default:
+			ranges = append(ranges, pkgbytes.Range{Offset: entry.LocationOrValue, Length: uint64(entry.Size)})
 		}
 	}
-	return NewStaticDataMeasurement(id, result.Bytes()), nil
+
+	return NewRangesMeasurement(id, ranges), nil
 }
 
 // MeasureMP0C2PMsgRegisters constructs measurement of AMD's MPO_CP2_MSG registers
