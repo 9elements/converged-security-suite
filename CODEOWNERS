@@ -1,14 +1,14 @@
 * @ChriMarMe @zaolin @walterchris @flanfly @PatrickRudolph @ArthurHeymans
-cmd/pcr0tool/ @xaionaro @marcoguerri @rihter007
-pkg/intel/metadata/ @xaionaro @ChriMarMe
-pkg/registers @rihter007 @xaionaro
-pkg/bytes @xaionaro @rihter007
-pkg/pcr @rihter007 @xaionaro
-pkg/pcd @xaionaro
-pkg/amd @rihter007 @xaionaro
-pkg/diff @xaionaro @rihter007
-pkg/errors @xaionaro @rihter007
-pkg/check @xaionaro
-pkg/tpmdetection @rihter007 @xaionaro
-pkg/tpmeventlog @xaionaro @rihter007
-pkg/uefi @xaionaro @rihter007
+cmd/pcr0tool/ @xaionaro @marcoguerri @rihter007 @trynity
+pkg/intel/metadata/ @xaionaro @ChriMarMe @trynity @marcoguerri
+pkg/registers @rihter007 @xaionaro @trynity @marcoguerri
+pkg/bytes @xaionaro @rihter007 @trynity @marcoguerri
+pkg/pcr @rihter007 @xaionaro @trynity @marcoguerri
+pkg/pcd @xaionaro @trynity @marcoguerri
+pkg/amd @rihter007 @xaionaro @trynity @marcoguerri
+pkg/diff @xaionaro @rihter007 @trynity @marcoguerri
+pkg/errors @xaionaro @rihter007 @trynity @marcoguerri
+pkg/check @xaionaro @trynity @marcoguerri
+pkg/tpmdetection @rihter007 @xaionaro @trynity @marcoguerri
+pkg/tpmeventlog @xaionaro @rihter007 @trynity @marcoguerri
+pkg/uefi @xaionaro @rihter007 @trynity @marcoguerri
