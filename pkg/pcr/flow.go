@@ -218,18 +218,18 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 			MeasurementIDBIOSRTMVolume,
 			MeasurementIDMP0C2PMsgRegisters,
 			MeasurementIDEmbeddedFirmwareStructure,
-			MeasurementIDBIOSDirectoryLevel1,
-			MeasurementIDBIOSDirectoryLevel1Entries, // fake measurement
 			MeasurementIDBIOSDirectoryLevel1Header,
-			MeasurementIDBIOSDirectoryLevel2,
-			MeasurementIDBIOSDirectoryLevel2Entries, // fake measurement
+			MeasurementIDBIOSDirectoryLevel1,
 			MeasurementIDBIOSDirectoryLevel2Header,
-			MeasurementIDPSPDirectoryLevel1,        // fake measurement
-			MeasurementIDPSPDirectoryLevel1Entries, // fake measurement
-			MeasurementIDPSPDirectoryLevel1Header,  // fake measurement
-			MeasurementIDPSPDirectoryLevel2,        // fake measurement
-			MeasurementIDPSPDirectoryLevel2Entries, // fake measurement
-			MeasurementIDPSPDirectoryLevel2Header,  // fake measurement
+			MeasurementIDBIOSDirectoryLevel2,
+			MeasurementIDBIOSDirectoryLevel1Entries, // fake measurement
+			MeasurementIDBIOSDirectoryLevel2Entries, // fake measurement
+			MeasurementIDPSPDirectoryLevel1,         // fake measurement
+			MeasurementIDPSPDirectoryLevel1Entries,  // fake measurement
+			MeasurementIDPSPDirectoryLevel1Header,   // fake measurement
+			MeasurementIDPSPDirectoryLevel2,         // fake measurement
+			MeasurementIDPSPDirectoryLevel2Entries,  // fake measurement
+			MeasurementIDPSPDirectoryLevel2Header,   // fake measurement
 			MeasurementIDPCDFirmwareVendorVersionData,
 			MeasurementIDDXE,
 			MeasurementIDSeparator,
