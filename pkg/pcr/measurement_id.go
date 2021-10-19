@@ -52,10 +52,18 @@ const (
 	MeasurementIDFITHeaders
 	MeasurementIDDeepAnalysis
 	MeasurementIDACMDateInPlace
-	MeasurementIDBIOSDirectoryLevel1Header
 	MeasurementIDBIOSDirectoryLevel1
-	MeasurementIDBIOSDirectoryLevel2Header
+	MeasurementIDBIOSDirectoryLevel1Entries
+	MeasurementIDBIOSDirectoryLevel1Header
 	MeasurementIDBIOSDirectoryLevel2
+	MeasurementIDBIOSDirectoryLevel2Entries
+	MeasurementIDBIOSDirectoryLevel2Header
+	MeasurementIDPSPDirectoryLevel1
+	MeasurementIDPSPDirectoryLevel1Entries
+	MeasurementIDPSPDirectoryLevel1Header
+	MeasurementIDPSPDirectoryLevel2
+	MeasurementIDPSPDirectoryLevel2Entries
+	MeasurementIDPSPDirectoryLevel2Header
 	MeasurementIDMP0C2PMsgRegisters
 	MeasurementIDEmbeddedFirmwareStructure
 	MeasurementIDPSPVersion
@@ -85,6 +93,22 @@ func (id MeasurementID) IsFake() bool {
 	case MeasurementIDFITHeaders:
 		return true
 	case MeasurementIDDeepAnalysis:
+		return true
+	case MeasurementIDBIOSDirectoryLevel1Entries:
+		return true
+	case MeasurementIDBIOSDirectoryLevel2Entries:
+		return true
+	case MeasurementIDPSPDirectoryLevel1:
+		return true
+	case MeasurementIDPSPDirectoryLevel1Header:
+		return true
+	case MeasurementIDPSPDirectoryLevel2:
+		return true
+	case MeasurementIDPSPDirectoryLevel2Header:
+		return true
+	case MeasurementIDPSPDirectoryLevel1Entries:
+		return true
+	case MeasurementIDPSPDirectoryLevel2Entries:
 		return true
 	}
 
@@ -152,6 +176,22 @@ func (id MeasurementID) String() string {
 		return "Header of BIOS directory table level 2"
 	case MeasurementIDBIOSDirectoryLevel2:
 		return "BIOS directory table level 2"
+	case MeasurementIDBIOSDirectoryLevel1Entries:
+		return "Entries of BIOS directory table level 1"
+	case MeasurementIDBIOSDirectoryLevel2Entries:
+		return "Entries of BIOS directory table level 2"
+	case MeasurementIDPSPDirectoryLevel1Header:
+		return "Header of PSP directory table level 1"
+	case MeasurementIDPSPDirectoryLevel1:
+		return "PSP directory table level 1"
+	case MeasurementIDPSPDirectoryLevel2Header:
+		return "Header of PSP directory table level 2"
+	case MeasurementIDPSPDirectoryLevel2:
+		return "PSP directory table level 2"
+	case MeasurementIDPSPDirectoryLevel1Entries:
+		return "Entries of PSP directory table level 1"
+	case MeasurementIDPSPDirectoryLevel2Entries:
+		return "Entries of PSP directory table level 2"
 	case MeasurementIDMP0C2PMsgRegisters:
 		return "AMD MP0_CP2MSG registers"
 	case MeasurementIDEmbeddedFirmwareStructure:
@@ -416,6 +456,75 @@ func (id MeasurementID) singleMeasureFunc() singleMeasureFunc {
 				return nil, err
 			}
 			return MeasureBIOSDirectoryTable(pspFirmware.BIOSDirectoryLevel2, pspFirmware.BIOSDirectoryLevel2Range)
+		}
+
+	case MeasurementIDBIOSDirectoryLevel1Entries:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasureBIOSDirectoryTableEntries(pspFirmware.BIOSDirectoryLevel1)
+		}
+
+	case MeasurementIDBIOSDirectoryLevel2Entries:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasureBIOSDirectoryTableEntries(pspFirmware.BIOSDirectoryLevel2)
+		}
+
+	case MeasurementIDPSPDirectoryLevel1Header:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasurePSPDirectoryHeader(pspFirmware.PSPDirectoryLevel1, pspFirmware.PSPDirectoryLevel1Range)
+		}
+	case MeasurementIDPSPDirectoryLevel2Header:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasurePSPDirectoryHeader(pspFirmware.PSPDirectoryLevel2, pspFirmware.PSPDirectoryLevel2Range)
+		}
+	case MeasurementIDPSPDirectoryLevel1:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasurePSPDirectoryTable(pspFirmware.PSPDirectoryLevel1, pspFirmware.PSPDirectoryLevel1Range)
+		}
+	case MeasurementIDPSPDirectoryLevel2:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasurePSPDirectoryTable(pspFirmware.PSPDirectoryLevel2, pspFirmware.PSPDirectoryLevel2Range)
+		}
+
+	case MeasurementIDPSPDirectoryLevel1Entries:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasurePSPDirectoryTableEntries(pspFirmware.PSPDirectoryLevel1)
+		}
+
+	case MeasurementIDPSPDirectoryLevel2Entries:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasurePSPDirectoryTableEntries(pspFirmware.PSPDirectoryLevel2)
 		}
 
 	case MeasurementIDMP0C2PMsgRegisters:
