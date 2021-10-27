@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/amd/psb"
@@ -156,7 +157,18 @@ func (v *dumpEntryCmd) Run(ctx *context) error {
 		return fmt.Errorf("could not parse hexadecimal entry (%s) : %w", v.Entry, err)
 	}
 
-	n, err := psb.DumpEntry(amdFw, v.Level, v.Type, uint64(id), v.EntryFile)
+	f, err := os.Create(v.EntryFile)
+	if err != nil {
+		return fmt.Errorf("could not create file `%s` for dumping entry %x: %w", v.EntryFile, id, err)
+	}
+	defer func() {
+		err := f.Close()
+		if err != nil {
+			fmt.Printf("could not close file %s after dumping entry %x", v.EntryFile, id)
+		}
+	}()
+
+	n, err := psb.DumpEntry(amdFw, v.Level, v.Type, uint64(id), f)
 	if err != nil {
 		return err
 	}
@@ -175,7 +187,23 @@ func (v *patchEntryCmd) Run(ctx *context) error {
 		return fmt.Errorf("could not parse hexadecimal entry (%s) : %w", v.Entry, err)
 	}
 
-	n, err := psb.PatchEntry(amdFw, v.Level, v.Type, uint64(id), v.EntryFile, v.ModifiedFirmwareFile)
+	inFile, err := os.Open(v.EntryFile)
+	if err != nil {
+		return fmt.Errorf("could not read modified entry file: %w", err)
+	}
+
+	outFile, err := os.Create(v.ModifiedFirmwareFile)
+	if err != nil {
+		return fmt.Errorf("could not create file `%s` for patched firmware: %w", v.ModifiedFirmwareFile, err)
+	}
+	defer func() {
+		err := outFile.Close()
+		if err != nil {
+			fmt.Printf("could not close file %s after dumping entry %x", v.EntryFile, id)
+		}
+	}()
+
+	n, err := psb.PatchEntry(amdFw, v.Level, v.Type, uint64(id), inFile, outFile)
 	if err != nil {
 		return err
 	}
