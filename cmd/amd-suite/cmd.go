@@ -6,9 +6,9 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/amd/psb"
 
-	"github.com/9elements/converged-security-suite/pkg/uefi"
+	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
 
-	amd_manifest "github.com/9elements/converged-security-suite/pkg/amd/manifest"
+	amd_manifest "github.com/9elements/converged-security-suite/v2/pkg/amd/manifest"
 )
 
 // Context for kong command line parser

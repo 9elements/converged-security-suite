@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/9elements/converged-security-suite/pkg/log"
+	"github.com/9elements/converged-security-suite/v2/pkg/log"
 	"github.com/alecthomas/kong"
 	fianoLog "github.com/linuxboot/fiano/pkg/log"
 )
