@@ -2,7 +2,7 @@ package tpmeventlog
 
 // EventType defines the kind of data reported by an Event.
 //
-// See also: https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientSpecPlat_TPM_2p0_1p04_pub.pdf#page=103
+// See also: https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClient_PFP_r1p05_v23_pub.pdf#page=102
 type EventType uint32
 
 // The list of available EventLog entry types.
@@ -36,6 +36,7 @@ const (
 	EV_EFI_ACTION                    = EventType(0x80000007)
 	EV_EFI_PLATFORM_FIRMWARE_BLOB    = EventType(0x80000008)
 	EV_EFI_HANDOFF_TABLES            = EventType(0x80000009)
+	EV_EFI_PLATFORM_FIRMWARE_BLOB2   = EventType(0x8000000A)
 	EV_EFI_HCRTM_EVENT               = EventType(0x80000010)
 	EV_EFI_VARIABLE_AUTHORITY        = EventType(0x800000E0)
 )
