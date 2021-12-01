@@ -165,10 +165,10 @@ func (m Measurement) NoHash() bool {
 	return m.ID.NoHash()
 }
 
-// EventLogEventType returns value of "Type" field of the EventLog entry
-// associated with the measurement.
-func (m Measurement) EventLogEventType() *tpmeventlog.EventType {
-	return m.ID.EventLogEventType()
+// EventLogEventTypes returns multiple potential values of
+//"Type" field of the EventLog entry associated with the measurement.
+func (m Measurement) EventLogEventTypes() []*tpmeventlog.EventType {
+	return m.ID.EventLogEventTypes()
 }
 
 func (m Measurement) String() string {

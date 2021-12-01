@@ -263,46 +263,48 @@ func (id MeasurementID) PCRIDs() []ID {
 	return nil
 }
 
-// EventLogEventType returns value of "Type" field of the EventLog entry
+// EventLogEventTypes returns multiple potential values of "Type" field of the EventLog entry
 // associated with the measurement.
-func (id MeasurementID) EventLogEventType() *tpmeventlog.EventType {
+func (id MeasurementID) EventLogEventTypes() []*tpmeventlog.EventType {
+	var eventTypes []*tpmeventlog.EventType
 	switch id {
 	case MeasurementIDInit:
-		return eventTypePtr(tpmeventlog.EV_NO_ACTION)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_NO_ACTION))
 	case MeasurementIDPCR0DATA:
-		return eventTypePtr(tpmeventlog.EV_S_CRTM_CONTENTS)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_S_CRTM_CONTENTS))
 	case MeasurementIDACMDate:
-		return eventTypePtr(tpmeventlog.EV_S_CRTM_CONTENTS)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_S_CRTM_CONTENTS))
 	case MeasurementIDACMDateInPlace:
-		return eventTypePtr(tpmeventlog.EV_S_CRTM_CONTENTS)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_S_CRTM_CONTENTS))
 	case MeasurementIDBIOSStartupModule:
-		return eventTypePtr(tpmeventlog.EV_S_CRTM_CONTENTS)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_S_CRTM_CONTENTS))
 	case MeasurementIDSCRTMSeparator:
-		return eventTypePtr(tpmeventlog.EV_S_CRTM_CONTENTS)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_S_CRTM_CONTENTS))
 	case MeasurementIDPCDFirmwareVendorVersionData:
-		return eventTypePtr(tpmeventlog.EV_S_CRTM_VERSION)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_S_CRTM_VERSION))
 	case MeasurementIDDXE:
-		return eventTypePtr(tpmeventlog.EV_POST_CODE)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_POST_CODE))
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2))
 	case MeasurementIDSeparator:
-		return eventTypePtr(tpmeventlog.EV_SEPARATOR)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_SEPARATOR))
 	case MeasurementIDBIOSDirectoryLevel1Header:
-		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
 	case MeasurementIDBIOSDirectoryLevel1:
-		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
 	case MeasurementIDBIOSDirectoryLevel2Header:
-		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
 	case MeasurementIDBIOSDirectoryLevel2:
-		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
 	case MeasurementIDMP0C2PMsgRegisters:
-		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
 	case MeasurementIDEmbeddedFirmwareStructure:
-		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
 	case MeasurementIDPSPVersion:
-		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
 	case MeasurementIDBIOSRTMVolume:
-		return eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB)
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
 	}
-	return nil
+	return eventTypes
 }
 
 // TPMEventTypeToMeasurementIDs returns all measurement ID-s which could be
@@ -322,16 +324,17 @@ func TPMEventTypeToMeasurementIDs(pcrID ID, tpmEventType tpmeventlog.EventType) 
 			continue
 		}
 
-		eventType := measurementID.EventLogEventType()
-		if eventType == nil {
+		eventTypes := measurementID.EventLogEventTypes()
+
+		if len(eventTypes) == 0 {
 			continue
 		}
 
-		if *eventType != tpmEventType {
-			continue
+		for _, eventType := range eventTypes {
+			if *eventType == tpmEventType {
+				result = append(result, measurementID)
+			}
 		}
-
-		result = append(result, measurementID)
 	}
 
 	return result
