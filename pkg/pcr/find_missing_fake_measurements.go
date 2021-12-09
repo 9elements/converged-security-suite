@@ -8,8 +8,8 @@ import (
 	"sync"
 	"sync/atomic"
 
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
 // findMissingFakeMeasurements is a slow bruteforcy procedure which will check

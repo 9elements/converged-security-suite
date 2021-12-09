@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
 func TestMeasurements_FindOverlapping(t *testing.T) {

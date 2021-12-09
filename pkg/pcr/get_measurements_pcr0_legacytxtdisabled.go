@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"math"
 
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcd"
 	ffsConsts "github.com/9elements/converged-security-suite/v2/pkg/uefi/ffs/consts"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
 // MeasurePCDFirmwareVendorVersionData returns PCD firmware vendor version measurement.

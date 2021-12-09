@@ -3,7 +3,7 @@ package diff
 import (
 	"testing"
 
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 	"github.com/stretchr/testify/require"
 )
 

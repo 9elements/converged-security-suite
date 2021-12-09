@@ -4,12 +4,12 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/bootpolicy"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/key"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
 type pcr0Data struct {

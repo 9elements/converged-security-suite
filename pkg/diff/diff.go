@@ -3,7 +3,7 @@ package diff
 import (
 	"bytes"
 
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
 // Diff compares firmwareGoodData and firmwareBadData in areas specified by

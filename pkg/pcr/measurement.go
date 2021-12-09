@@ -6,8 +6,8 @@ import (
 	"hash"
 	"reflect"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/bytes"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
+	"github.com/linuxboot/fiano/pkg/bytes"
 )
 
 var (

@@ -17,16 +17,15 @@ require (
 	github.com/google/go-tpm v0.3.3-0.20210120190357-1ff48daca32f
 	github.com/google/uuid v1.2.0
 	github.com/kr/pretty v0.2.1 // indirect
-	github.com/linuxboot/cbfs v0.0.0-20210504130259-7e6ab4ccb5aa
-	github.com/linuxboot/fiano v6.0.0-rc.0.20210427094458-991eadf32b6a+incompatible
+	github.com/linuxboot/cbfs v0.0.0-20211210001102-24fbc7531eca
+	github.com/linuxboot/fiano v1.0.3-0.20211209035654-9a1898c2f083
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3
 	github.com/stretchr/testify v1.6.1
 	github.com/tidwall/pretty v1.0.2
 	github.com/tjfoc/gmsm v1.4.0
-	github.com/ulikunitz/xz v0.5.8
+	github.com/ulikunitz/xz v0.5.10
 	github.com/xaionaro-go/gosrc v0.0.0-20201124181305-3fdf8476a735
 	github.com/xaionaro-go/unsafetools v0.0.0-20200202162159-021b112c4d30
 	golang.org/x/crypto v0.0.0-20201117144127-c1f2f97bffc9
-	golang.org/x/sys v0.0.0-20210218155724-8ebf48af031b // indirect
 )

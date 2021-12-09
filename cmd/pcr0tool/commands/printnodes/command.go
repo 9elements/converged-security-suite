@@ -10,9 +10,9 @@ import (
 	fianoGUID "github.com/linuxboot/fiano/pkg/guid"
 	fianoUEFI "github.com/linuxboot/fiano/pkg/uefi"
 
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi/ffs"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
 func assertNoError(err error) {

@@ -4,9 +4,9 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
 	ffsConsts "github.com/9elements/converged-security-suite/v2/pkg/uefi/ffs/consts"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
 func init() {

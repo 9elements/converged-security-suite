@@ -13,12 +13,12 @@ import (
 	"strings"
 
 	"github.com/google/go-tpm/tpm2"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 	fianoUEFI "github.com/linuxboot/fiano/pkg/uefi"
 
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/diff/format"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
 	"github.com/9elements/converged-security-suite/v2/pkg/diff"
 	"github.com/9elements/converged-security-suite/v2/pkg/ostools"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"

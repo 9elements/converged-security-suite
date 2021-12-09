@@ -1,7 +1,7 @@
 package ffs
 
 import (
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
 // GetByRange returns nodes which overlaps the range `byteRange`.

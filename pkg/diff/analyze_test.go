@@ -3,9 +3,9 @@ package diff
 import (
 	"testing"
 
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi/ffs"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 	"github.com/stretchr/testify/require"
 )
 
