@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
-	amd_manifest "github.com/9elements/converged-security-suite/v2/pkg/amd/manifest"
+	amd "github.com/linuxboot/fiano/pkg/amd/manifest"
+
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
@@ -122,7 +123,7 @@ func IsCBnTFirmware(firmware Firmware) bool {
 
 // IsAMDPSPFirmware checks if firmware belongs to AMD Platform security
 func IsAMDPSPFirmware(firmware Firmware) bool {
-	_, _, err := amd_manifest.FindEmbeddedFirmwareStructure(firmware)
+	_, _, err := amd.FindEmbeddedFirmwareStructure(firmware)
 	return err == nil
 }
 

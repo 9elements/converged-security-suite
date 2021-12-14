@@ -3,7 +3,7 @@ package pcr
 import (
 	"fmt"
 
-	amd_manifest "github.com/9elements/converged-security-suite/v2/pkg/amd/manifest"
+	amd "github.com/linuxboot/fiano/pkg/amd/manifest"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
@@ -53,7 +53,7 @@ type pcr0MeasurementsCollector struct {
 	firmware         Firmware
 	fitEntriesResult *[]fit.Entry
 	pcdDataResult    *pcd.ParsedFirmware
-	amdFirmware      *amd_manifest.AMDFirmware
+	amdFirmware      *amd.AMDFirmware
 	errors           errors.MultiError
 	warnings         errors.MultiError
 }
@@ -94,12 +94,12 @@ func (c *pcr0MeasurementsCollector) PCDData() pcd.ParsedFirmware {
 	return pcdData
 }
 
-func (c *pcr0MeasurementsCollector) PSPFirmware() *amd_manifest.PSPFirmware {
+func (c *pcr0MeasurementsCollector) PSPFirmware() *amd.PSPFirmware {
 	if c.amdFirmware != nil {
 		return c.amdFirmware.PSPFirmware()
 	}
 	var err error
-	amdFirmware, err := amd_manifest.NewAMDFirmware(c.firmware)
+	amdFirmware, err := amd.NewAMDFirmware(c.firmware)
 	if err != nil {
 		_ = c.errors.Add(err)
 	}
