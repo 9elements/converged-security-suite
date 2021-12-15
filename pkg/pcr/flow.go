@@ -3,6 +3,9 @@ package pcr
 import (
 	"fmt"
 	"strings"
+
+	"github.com/9elements/go-linux-lowlevel-hw/pkg/platformsecurity"
+	"github.com/klauspost/cpuid/v2"
 )
 
 // Flow defines which measurements are used to get the final PCR values.
@@ -250,4 +253,28 @@ func (f Flow) ValidateFlow() ValidateFlow {
 	}
 
 	return nil
+}
+
+// PlatformSecurityID returns the ID of the platform security family (which combines CPU and
+// RTM).
+func (f Flow) PlatformSecurityID() platformsecurity.ID {
+	switch f {
+	case FlowIntelCBnT0T:
+		return platformsecurity.IDIntelCBnT
+	case FlowIntelLegacyTXTEnabled,
+		FlowIntelLegacyTXTEnabledTPM12,
+		FlowIntelLegacyTXTDisabled:
+		return platformsecurity.IDIntelTXT
+	case FlowAMDLocality3,
+		FlowAMDLocality0,
+		FlowLegacyAMDLocality3,
+		FlowLegacyAMDLocality0:
+		return platformsecurity.IDAMDMilan
+	}
+	return platformsecurity.IDUndefined
+}
+
+// CPUVendorID returns vendor ID of the CPU.
+func (f Flow) CPUVendorID() cpuid.Vendor {
+	return f.PlatformSecurityID().CPUVendorID()
 }
