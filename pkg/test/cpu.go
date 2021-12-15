@@ -222,12 +222,12 @@ func SupportVMX(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configura
 
 // Ia32FeatureCtrl Check IA_32FEATURE_CONTROL
 func Ia32FeatureCtrl(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	vmxInSmx, err := txtAPI.AllowsVMXInSMX()
+	vmxInSmx, err := hwapi.AllowsVMXInSMX(txtAPI)
 	if err != nil || !vmxInSmx {
 		return vmxInSmx, nil, err
 	}
 
-	locked, err := txtAPI.IA32FeatureControlIsLocked()
+	locked, err := hwapi.IA32FeatureControlIsLocked(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
@@ -250,7 +250,7 @@ func SMXIsEnabled(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configu
 
 // TXTNotDisabled Check TXT_DISABLED bit in TXT_ACM_STATUS
 func TXTNotDisabled(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	ret, err := txtAPI.TXTLeavesAreEnabled()
+	ret, err := hwapi.TXTLeavesAreEnabled(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
@@ -322,7 +322,7 @@ func IA32DebugInterfaceLockedDisabled(txtAPI hwapi.LowLevelHardwareInterfaces, c
 		// Nothing to check. Return success.
 		return true, nil, nil
 	}
-	debug, err := txtAPI.IA32DebugInterfaceEnabledOrLocked()
+	debug, err := hwapi.IA32DebugInterfaceEnabledOrLocked(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}

@@ -3,7 +3,7 @@ module github.com/9elements/converged-security-suite/v2
 go 1.13
 
 require (
-	github.com/9elements/go-linux-lowlevel-hw v0.0.0-20210922135846-40d2937646a8
+	github.com/9elements/go-linux-lowlevel-hw v0.0.0-20211215141225-8375dd201aae
 	github.com/alecthomas/kong v0.2.11
 	github.com/creasty/defaults v1.5.1
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e
@@ -16,6 +16,7 @@ require (
 	github.com/google/go-attestation v0.2.2
 	github.com/google/go-tpm v0.3.3-0.20210120190357-1ff48daca32f
 	github.com/google/uuid v1.2.0
+	github.com/klauspost/cpuid/v2 v2.0.9
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/linuxboot/cbfs v0.0.0-20211210001102-24fbc7531eca
 	github.com/linuxboot/fiano v1.0.3-0.20211209035654-9a1898c2f083

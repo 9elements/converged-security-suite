@@ -300,7 +300,7 @@ func TXTHeapSpaceValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Co
 
 // TXTPublicReservedInE820 checks if TXTPublic area is marked reserved in e820 map
 func TXTPublicReservedInE820(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	res, err := txtAPI.IsReservedInE820(uint64(tools.TxtPublicSpace), uint64(tools.TxtPublicSpace+tools.TxtPublicSpaceSize))
+	res, err := hwapi.IsReservedInE820(txtAPI, uint64(tools.TxtPublicSpace), uint64(tools.TxtPublicSpace+tools.TxtPublicSpaceSize))
 	if err != nil {
 		return false, nil, err
 	}
@@ -313,7 +313,7 @@ func TXTPublicReservedInE820(txtAPI hwapi.LowLevelHardwareInterfaces, config *to
 
 // TXTPrivateReservedInE820 checks if TXTPrivate area is marked reserved in e820 map
 func TXTPrivateReservedInE820(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	res, err := txtAPI.IsReservedInE820(uint64(tools.TxtPrivateSpace), uint64(tools.TxtPrivateSpace+tools.TxtPrivateSpaceSize))
+	res, err := hwapi.IsReservedInE820(txtAPI, uint64(tools.TxtPrivateSpace), uint64(tools.TxtPrivateSpace+tools.TxtPrivateSpaceSize))
 	if err != nil {
 		return false, nil, err
 	}
@@ -334,12 +334,12 @@ func TXTReservedInE820(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Co
 		return false, nil, err
 	}
 
-	heapReserved, err := txtAPI.IsReservedInE820(uint64(regs.HeapBase), uint64(regs.HeapBase+regs.HeapSize))
+	heapReserved, err := hwapi.IsReservedInE820(txtAPI, uint64(regs.HeapBase), uint64(regs.HeapBase+regs.HeapSize))
 	if err != nil {
 		return false, nil, err
 	}
 
-	sinitReserved, err := txtAPI.IsReservedInE820(uint64(regs.SinitBase), uint64(regs.SinitBase+regs.SinitSize))
+	sinitReserved, err := hwapi.IsReservedInE820(txtAPI, uint64(regs.SinitBase), uint64(regs.SinitBase+regs.SinitSize))
 	if err != nil {
 		return false, nil, err
 	}
@@ -352,7 +352,7 @@ func TXTReservedInE820(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Co
 
 // TXTTPMDecodeSpaceIn820 checks if TPMDecode area is marked as reserved in e820 map
 func TXTTPMDecodeSpaceIn820(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	res, err := txtAPI.IsReservedInE820(uint64(tools.TxtTPMDecode), uint64(tools.TxtTPMDecode+tools.TxtTPMDecodeSize-1))
+	res, err := hwapi.IsReservedInE820(txtAPI, uint64(tools.TxtTPMDecode), uint64(tools.TxtTPMDecode+tools.TxtTPMDecodeSize-1))
 	if err != nil {
 		return false, nil, err
 	}
@@ -429,7 +429,7 @@ func TXTDPRisLock(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configu
 // HostbridgeIsSupported checks if the suite supports the hostbridge
 func HostbridgeIsSupported(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
 
-	_, _, err := txtAPI.ReadHostBridgeTseg()
+	_, _, err := hwapi.ReadHostBridgeTseg(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
@@ -447,7 +447,7 @@ func HostbridgeDPRCorrect(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools
 		return false, fmt.Errorf("cannot parse DPR registers: %s", err), nil
 	}
 
-	hostbridgeDpr, err := txtAPI.ReadHostBridgeDPR()
+	hostbridgeDpr, err := hwapi.ReadHostBridgeDPR(txtAPI)
 	// No need to validate hostbridge register, already done for TXT DPR
 	// Just make sure they match.
 	if err != nil {
@@ -467,7 +467,7 @@ func HostbridgeDPRCorrect(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools
 
 // HostbridgeDPRisLocked checks if the Hostbridge DPR is marked as locked
 func HostbridgeDPRisLocked(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	hostbridgeDpr, err := txtAPI.ReadHostBridgeDPR()
+	hostbridgeDpr, err := hwapi.ReadHostBridgeDPR(txtAPI)
 
 	if err != nil {
 		return false, nil, err
@@ -576,7 +576,7 @@ func SINITMatchesCPU(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Conf
 	}
 
 	// IA32_PLATFORM_ID
-	platform, err := txtAPI.IA32PlatformID()
+	platform, err := hwapi.IA32PlatformID(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
@@ -663,7 +663,7 @@ func HasMTRR(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuratio
 
 // HasSMRR checks if SMRR is supported
 func HasSMRR(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	ret, err := txtAPI.HasSMRR()
+	ret, err := hwapi.HasSMRR(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
@@ -675,7 +675,7 @@ func HasSMRR(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuratio
 
 // ValidSMRR checks if SMRR is valid
 func ValidSMRR(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	smrr, err := txtAPI.GetSMRRInfo()
+	smrr, err := hwapi.GetSMRRInfo(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
@@ -687,7 +687,7 @@ func ValidSMRR(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configurat
 		return false, fmt.Errorf("SMRR PhysBase isn't set"), nil
 	}
 
-	tsegbase, tseglimit, err := txtAPI.ReadHostBridgeTseg()
+	tsegbase, tseglimit, err := hwapi.ReadHostBridgeTseg(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
@@ -716,7 +716,7 @@ func ValidSMRR(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configurat
 
 // ActiveSMRR checks if SMMR is set active
 func ActiveSMRR(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	smrr, err := txtAPI.GetSMRRInfo()
+	smrr, err := hwapi.GetSMRRInfo(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
@@ -729,12 +729,12 @@ func ActiveSMRR(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configura
 
 // ActiveIOMMU checks if IOMMU is active
 func ActiveIOMMU(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	smrr, err := txtAPI.GetSMRRInfo()
+	smrr, err := hwapi.GetSMRRInfo(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
 	smrrPhysEnd := (smrr.PhysBase | ^smrr.PhysMask) & 0xfffff
-	ret, err := txtAPI.AddressRangesIsDMAProtected(smrr.PhysBase, smrrPhysEnd)
+	ret, err := hwapi.AddressRangesIsDMAProtected(txtAPI, smrr.PhysBase, smrrPhysEnd)
 	if err != nil {
 		return false, fmt.Errorf("failed to check SMRR DMA protection: %s", err), nil
 	}
@@ -748,7 +748,7 @@ func ActiveIOMMU(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configur
 func ServerModeTXT(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
 	// FIXME: FindOverlapping GetSec[Parameters] ebx = 5
 	// Assume yes if dependencies are satisfied
-	val, err := txtAPI.HasSMRR()
+	val, err := hwapi.HasSMRR(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
