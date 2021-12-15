@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 	fianoUEFI "github.com/linuxboot/fiano/pkg/uefi"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"

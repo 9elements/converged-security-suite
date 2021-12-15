@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+
 	amd_manifest "github.com/9elements/converged-security-suite/v2/pkg/amd/manifest"
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
 // MeasureBIOSDirectoryHeader constructs measurements of BIOS Directory table header

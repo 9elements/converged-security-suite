@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	bytes2 "github.com/9elements/converged-security-suite/v2/pkg/bytes"
 	"io"
 	"strings"
+
+	bytes2 "github.com/linuxboot/fiano/pkg/bytes"
 )
 
 // Refer to: AMD Platform Security Processor BIOS Architecture Design Guide for AMD Family 17h and Family 19h

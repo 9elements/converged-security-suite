@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	bytes2 "github.com/9elements/converged-security-suite/v2/pkg/bytes"
+	bytes2 "github.com/linuxboot/fiano/pkg/bytes"
 )
 
 // Firmware is an abstraction of a firmware image, obtained for example via flashrom

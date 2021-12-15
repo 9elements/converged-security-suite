@@ -1,10 +1,9 @@
 package ffs
 
 import (
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 	fianoGUID "github.com/linuxboot/fiano/pkg/guid"
 	fianoUEFI "github.com/linuxboot/fiano/pkg/uefi"
-
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
 )
 
 type Node struct {

@@ -12,10 +12,10 @@ import (
 	fianoUEFI "github.com/linuxboot/fiano/pkg/uefi"
 	"github.com/steakknife/hamming"
 
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
 	"github.com/9elements/converged-security-suite/v2/pkg/mathtools"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi/ffs"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
 const (

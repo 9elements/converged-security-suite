@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
 	"github.com/9elements/converged-security-suite/v2/pkg/diff"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
 const (

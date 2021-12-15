@@ -3,8 +3,8 @@ package pcd
 import (
 	"github.com/linuxboot/fiano/pkg/guid"
 
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
 // "PCD" means "Platform Configuration Database"

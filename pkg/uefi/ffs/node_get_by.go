@@ -12,7 +12,7 @@ import (
 	"github.com/linuxboot/fiano/pkg/visitors"
 	"github.com/xaionaro-go/unsafetools"
 
-	pkgbytes "github.com/9elements/converged-security-suite/v2/pkg/bytes"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
 // NameToRangesMap returns a map which maps node ID ("nameString") to its Range.
