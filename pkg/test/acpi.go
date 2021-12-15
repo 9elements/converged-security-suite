@@ -348,7 +348,7 @@ type ACPIRsdp struct {
 }
 
 func checkTableValid(txtAPI hwapi.LowLevelHardwareInterfaces, name string) ([]byte, bool, error, error) {
-	table, err := txtAPI.GetACPITableDevMem(name)
+	table, err := hwapi.GetACPITableDevMem(txtAPI, name)
 	if os.IsNotExist(err) {
 		return nil, false, fmt.Errorf("ACPI table %s not found", name), nil
 	} else if err != nil {
@@ -385,7 +385,7 @@ func checkTableValid(txtAPI hwapi.LowLevelHardwareInterfaces, name string) ([]by
 }
 
 func checkPresence(txtAPI hwapi.LowLevelHardwareInterfaces, name string) (bool, error, error) {
-	_, err := txtAPI.GetACPITableDevMem(name)
+	_, err := hwapi.GetACPITableDevMem(txtAPI, name)
 	if os.IsNotExist(err) {
 		return false, fmt.Errorf("ACPI table %s not found", name), nil
 	} else if err != nil {
@@ -401,7 +401,7 @@ func CheckRSDPValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Confi
 
 //CheckRSDTPresent tests if the RSDT ACPI table is present
 func CheckRSDTPresent(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	rawRsdp, err := txtAPI.GetACPITableDevMem("RSDP")
+	rawRsdp, err := hwapi.GetACPITableDevMem(txtAPI, "RSDP")
 	var rsdp ACPIRsdp
 	if os.IsNotExist(err) {
 		return false, fmt.Errorf("ACPI table RSDP not found"), nil
@@ -420,7 +420,7 @@ func CheckRSDTPresent(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Con
 
 //CheckXSDTPresent tests if the XSDT ACPI table is present
 func CheckXSDTPresent(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	rawRsdp, err := txtAPI.GetACPITableDevMem("RSDP")
+	rawRsdp, err := hwapi.GetACPITableDevMem(txtAPI, "RSDP")
 	var rsdp ACPIRsdp
 	if os.IsNotExist(err) {
 		return false, fmt.Errorf("ACPI table RSDP not found"), nil
@@ -442,7 +442,7 @@ func CheckXSDTPresent(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Con
 
 //CheckRSDTValid tests if the RSDT ACPI table is valid
 func CheckRSDTValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	_, err := txtAPI.GetACPITableDevMem("RSDT") // HWAPI will validate the table
+	_, err := hwapi.GetACPITableDevMem(txtAPI, "RSDT") // HWAPI will validate the table
 	if os.IsNotExist(err) {
 		return false, fmt.Errorf("ACPI table RSDT is invalid"), nil
 	} else if err != nil {
@@ -454,8 +454,8 @@ func CheckRSDTValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Confi
 
 //CheckXSDTValid tests if the XSDT ACPI table is valid
 func CheckXSDTValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	_, err1 := txtAPI.GetACPITableSysFS("XSDT")  // HWAPI will validate the table
-	_, err2 := txtAPI.GetACPITableDevMem("XSDT") // HWAPI will validate the table
+	_, err1 := hwapi.GetACPITableSysFS(txtAPI, "XSDT")  // HWAPI will validate the table
+	_, err2 := hwapi.GetACPITableDevMem(txtAPI, "XSDT") // HWAPI will validate the table
 	if os.IsNotExist(err1) && os.IsNotExist(err2) {
 		return false, fmt.Errorf("ACPI table XSDT is invalid"), nil
 	} else if err1 != nil && err2 != nil {
@@ -466,8 +466,8 @@ func CheckXSDTValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Confi
 
 //CheckRSDTorXSDTValid tests if the RSDT or XSDT ACPI table is valid
 func CheckRSDTorXSDTValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	_, err1 := txtAPI.GetACPITableDevMem("RSDT") // HWAPI will validate the table
-	_, err2 := txtAPI.GetACPITableDevMem("XSDT") // HWAPI will validate the table
+	_, err1 := hwapi.GetACPITableDevMem(txtAPI, "RSDT") // HWAPI will validate the table
+	_, err2 := hwapi.GetACPITableDevMem(txtAPI, "XSDT") // HWAPI will validate the table
 	if err1 != nil && err2 != nil {
 		return false, fmt.Errorf("no valid RSDT and XSDT present"), nil
 	}

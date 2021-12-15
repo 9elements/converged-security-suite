@@ -599,7 +599,7 @@ func BIOSACMMatchesCPU(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Co
 	}
 
 	// IA32_PLATFORM_ID
-	platform, err := txtAPI.IA32PlatformID()
+	platform, err := hwapi.IA32PlatformID(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}

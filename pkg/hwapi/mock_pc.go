@@ -70,8 +70,8 @@ func (n pcmock) AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
 	return false, fmt.Errorf("not implemented")
 }
 
-func (n pcmock) ReadMSR(msr int64) (uint64, error) {
-	return 0, fmt.Errorf("not implemented")
+func (n pcmock) ReadMSR(msr int64) []uint64 {
+	panic("not implemented")
 }
 
 func (n pcmock) ReadMSRAllCores(msr int64) (uint64, error) {
@@ -328,6 +328,18 @@ func (n pcmock) IterateOverSMBIOSTablesType0(callback func(t0 *hwapi.SMBIOSType0
 
 func (n pcmock) IterateOverSMBIOSTablesType17(callback func(t17 *hwapi.SMBIOSType17) bool) (ret bool, err error) {
 	return false, fmt.Errorf("not implemented")
+}
+
+func (n pcmock) IterateOverE820Ranges(target string, callback func(start uint64, end uint64) bool) (bool, error) {
+	return false, fmt.Errorf("not implemented")
+}
+
+func (n pcmock) PCIReadConfigSpace(d hwapi.PCIDevice, off int, len int) ([]byte, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (n pcmock) PCIWriteConfigSpace(d hwapi.PCIDevice, off int, val interface{}) error {
+	return fmt.Errorf("not implemented")
 }
 
 //GetPcMock returns APIInterfaces for mocking the hwapi used in unittests
