@@ -9,7 +9,7 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
 
-	amd_manifest "github.com/9elements/converged-security-suite/v2/pkg/amd/manifest"
+	amd_manifest "github.com/linuxboot/fiano/pkg/amd/manifest"
 )
 
 // Context for kong command line parser
