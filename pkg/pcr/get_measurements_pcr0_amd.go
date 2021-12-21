@@ -124,7 +124,7 @@ func MeasureBIOSDirectoryTableEntries(table *amd.BIOSDirectoryTable) (*Measureme
 	var ranges []pkgbytes.Range
 	for _, entry := range table.Entries {
 		switch entry.Type {
-		case amd.APCBBinaryEntry: // this can vary
+		case amd.APCBDataEntry: // this can vary
 		case amd.APOBBinaryEntry: // this can vary
 		default:
 			ranges = append(ranges, pkgbytes.Range{Offset: entry.SourceAddress, Length: uint64(entry.Size)})

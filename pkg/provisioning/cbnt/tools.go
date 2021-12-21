@@ -13,7 +13,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi/consts"
 
-	"github.com/linuxboot/cbfs/pkg/cbfs"
+	"github.com/linuxboot/fiano/pkg/cbfs"
 )
 
 // WriteCBnTStructures takes a firmware image and extracts boot policy manifest, key manifest and acm into separate files.
