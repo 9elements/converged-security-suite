@@ -211,6 +211,10 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 			MeasurementIDBIOSDirectoryLevel1,
 			MeasurementIDBIOSDirectoryLevel2Header,
 			MeasurementIDBIOSDirectoryLevel2,
+			MeasurementIDPMUFirmwareInstructions,
+			MeasurementIDPMUFirmwareData,
+			MeasurementIDMicrocodePatch,
+			MeasurementIDVideoImageInterpreter,
 			MeasurementIDPCDFirmwareVendorVersionData,
 			MeasurementIDDXE,
 			MeasurementIDSeparator,
@@ -233,6 +237,10 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 			MeasurementIDPSPDirectoryLevel2,         // fake measurement
 			MeasurementIDPSPDirectoryLevel2Entries,  // fake measurement
 			MeasurementIDPSPDirectoryLevel2Header,   // fake measurement
+			MeasurementIDPMUFirmwareInstructions,
+			MeasurementIDPMUFirmwareData,
+			MeasurementIDMicrocodePatch,
+			MeasurementIDVideoImageInterpreter,
 			MeasurementIDPCDFirmwareVendorVersionData,
 			MeasurementIDDXE,
 			MeasurementIDSeparator,

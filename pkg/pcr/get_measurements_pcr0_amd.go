@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"sort"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	amd "github.com/linuxboot/fiano/pkg/amd/manifest"
@@ -203,20 +204,41 @@ func MeasurePSPVersion(image []byte, pspDirectoryLevel1, pspDirectoryLevel2 *amd
 	return nil, fmt.Errorf("failed to find PSP Bootloader entry")
 }
 
-// MeasureBIOSRTMVolume constructs measurement of BIOS RTM Volume
-func MeasureBIOSRTMVolume(biosDirectoryLevel1, biosDirectoryLevel2 *amd.BIOSDirectoryTable) (*Measurement, error) {
+// MeasureEntryFromBIOSDirectory returns measurements of BIOS directory items
+// It also does an optional check items count if optCountCheck input arguments is provided
+func MeasureEntryFromBIOSDirectory(entryType amd.BIOSDirectoryTableEntryType, optCountCheck *int,
+	biosDirectoryLevel1, biosDirectoryLevel2 *amd.BIOSDirectoryTable,
+	measurementID MeasurementID,
+) (Measurements, error) {
+	var foundEntries []amd.BIOSDirectoryTableEntry
 	for _, biosDirectory := range []*amd.BIOSDirectoryTable{biosDirectoryLevel2, biosDirectoryLevel1} {
 		if biosDirectory == nil {
 			continue
 		}
-
 		for _, entry := range biosDirectory.Entries {
-			if entry.Type == amd.BIOSRTMVolumeEntry {
-				return NewRangeMeasurement(MeasurementIDBIOSRTMVolume, entry.SourceAddress, uint64(entry.Size)), nil
+			if entry.Type == entryType {
+				foundEntries = append(foundEntries, entry)
 			}
 		}
+		break
 	}
-	return nil, fmt.Errorf("failed to find BIOS RTM Volume entry")
+
+	if optCountCheck != nil && *optCountCheck != len(foundEntries) {
+		return nil, fmt.Errorf("expected %d number of %v bios directory items, found: %d",
+			*optCountCheck,
+			entryType,
+			len(foundEntries))
+	}
+
+	sort.Slice(foundEntries, func(i, j int) bool {
+		return foundEntries[i].Instance < foundEntries[j].Instance
+	})
+
+	var result Measurements
+	for _, entry := range foundEntries {
+		result = append(result, NewRangeMeasurement(measurementID, entry.SourceAddress, uint64(entry.Size)))
+	}
+	return result, nil
 }
 
 func checkPSPFirmwareFound(pspFirmware *amd.PSPFirmware) error {

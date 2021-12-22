@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	amd_manifest "github.com/linuxboot/fiano/pkg/amd/manifest"
+	amd "github.com/linuxboot/fiano/pkg/amd/manifest"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcd"
@@ -68,6 +68,10 @@ const (
 	MeasurementIDEmbeddedFirmwareStructure
 	MeasurementIDPSPVersion
 	MeasurementIDBIOSRTMVolume
+	MeasurementIDPMUFirmwareInstructions
+	MeasurementIDPMUFirmwareData
+	MeasurementIDMicrocodePatch
+	MeasurementIDVideoImageInterpreter
 	EndOfMeasurementID
 )
 
@@ -117,6 +121,14 @@ func (id MeasurementID) IsFake() bool {
 
 // IsMultiple means that this MeasurementID describes multiple measurements
 func (id MeasurementID) IsMultiple() bool {
+	switch id {
+	case MeasurementIDPMUFirmwareInstructions:
+		return true
+	case MeasurementIDPMUFirmwareData:
+		return true
+	case MeasurementIDMicrocodePatch:
+		return true
+	}
 	return false
 }
 
@@ -200,6 +212,14 @@ func (id MeasurementID) String() string {
 		return "PSP firmware version"
 	case MeasurementIDBIOSRTMVolume:
 		return "BIOS RTM Volume"
+	case MeasurementIDPMUFirmwareInstructions:
+		return "PMU Firmware instructions"
+	case MeasurementIDPMUFirmwareData:
+		return "PMU Firmware data"
+	case MeasurementIDMicrocodePatch:
+		return "Microcode patch file"
+	case MeasurementIDVideoImageInterpreter:
+		return "Interpreter binary that displays the video image"
 	}
 	return fmt.Sprintf("unknown_measurement_ID_%d", int(id))
 }
@@ -259,6 +279,14 @@ func (id MeasurementID) PCRIDs() []ID {
 		return []ID{0}
 	case MeasurementIDBIOSRTMVolume:
 		return []ID{0}
+	case MeasurementIDPMUFirmwareInstructions:
+		return []ID{0}
+	case MeasurementIDPMUFirmwareData:
+		return []ID{0}
+	case MeasurementIDMicrocodePatch:
+		return []ID{0}
+	case MeasurementIDVideoImageInterpreter:
+		return []ID{0}
 	}
 	return nil
 }
@@ -303,6 +331,12 @@ func (id MeasurementID) EventLogEventTypes() []*tpmeventlog.EventType {
 		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
 	case MeasurementIDBIOSRTMVolume:
 		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
+	case MeasurementIDPMUFirmwareInstructions:
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
+	case MeasurementIDPMUFirmwareData:
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
+	case MeasurementIDVideoImageInterpreter:
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
 	}
 	return eventTypes
 }
@@ -345,7 +379,7 @@ type DataProvider interface {
 	Firmware() Firmware
 	FITEntries() []fit.Entry
 	PCDData() pcd.ParsedFirmware
-	PSPFirmware() *amd_manifest.PSPFirmware
+	PSPFirmware() *amd.PSPFirmware
 }
 
 // MeasureFunc performs a measurement.
@@ -355,7 +389,13 @@ type singleMeasureFunc func(MeasurementConfig, DataProvider) (*Measurement, erro
 
 // MeasureFunc returns the function to be used for the measurement.
 func (id MeasurementID) MeasureFunc() MeasureFunc {
+	if id.IsMultiple() {
+		return id.multipleMeasureFunc()
+	}
 	measureFunc := id.singleMeasureFunc()
+	if measureFunc == nil {
+		return nil
+	}
 	return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
 		m, err := measureFunc(config, provider)
 		return Measurements{m}, err
@@ -563,10 +603,64 @@ func (id MeasurementID) singleMeasureFunc() singleMeasureFunc {
 			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
 				return nil, err
 			}
-			return MeasureBIOSRTMVolume(pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel2)
+			expectedInstancesCount := 1
+			measurements, err := MeasureEntryFromBIOSDirectory(amd.BIOSRTMVolumeEntry, &expectedInstancesCount,
+				pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel2, MeasurementIDBIOSRTMVolume)
+			var result *Measurement
+			if len(measurements) > 0 {
+				result = measurements[0]
+			}
+			return result, err
+		}
+	case MeasurementIDVideoImageInterpreter:
+		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			expectedInstancesCount := 1
+			measurements, err := MeasureEntryFromBIOSDirectory(amd.VideoInterpreterEntry, &expectedInstancesCount,
+				pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel2, MeasurementIDVideoImageInterpreter)
+			var result *Measurement
+			if len(measurements) > 0 {
+				result = measurements[0]
+			}
+			return result, err
 		}
 	}
+	return nil
+}
 
+func (id MeasurementID) multipleMeasureFunc() MeasureFunc {
+	switch id {
+	case MeasurementIDPMUFirmwareInstructions:
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasureEntryFromBIOSDirectory(amd.PMUFirmwareInstructionsEntry, nil,
+				pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel2, MeasurementIDPMUFirmwareInstructions)
+		}
+	case MeasurementIDPMUFirmwareData:
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasureEntryFromBIOSDirectory(amd.PMUFirmwareDataEntry, nil,
+				pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel2, MeasurementIDPMUFirmwareData)
+		}
+	case MeasurementIDMicrocodePatch:
+		return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
+			pspFirmware := provider.PSPFirmware()
+			if err := checkPSPFirmwareFound(pspFirmware); err != nil {
+				return nil, err
+			}
+			return MeasureEntryFromBIOSDirectory(amd.MicrocodePatchEntry, nil,
+				pspFirmware.BIOSDirectoryLevel1, pspFirmware.BIOSDirectoryLevel2, MeasurementIDMicrocodePatch)
+		}
+	}
 	return nil
 }
 
