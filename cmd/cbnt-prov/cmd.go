@@ -199,10 +199,19 @@ func (kmp *kmPrintCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	reader := bytes.NewReader(data)
-	km, err := cbnt.ParseKM(reader)
+	var km *key.Manifest
+	_, kmEntry, _, err := cbnt.ParseFITEntries(data)
 	if err != nil {
-		return err
+		reader := bytes.NewReader(data)
+		km, err = cbnt.ParseKM(reader)
+		if err != nil {
+			return err
+		}
+	} else {
+		km, err = kmEntry.ParseData()
+		if err != nil {
+			return fmt.Errorf("unable to parse KM: %w", err)
+		}
 	}
 	km.Print()
 	if km.KeyAndSignature.Signature.DataTotalSize() > 1 {
@@ -218,10 +227,19 @@ func (bpmp *bpmPrintCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	reader := bytes.NewReader(data)
-	bpm, err := cbnt.ParseBPM(reader)
+	var bpm *bootpolicy.Manifest
+	bpmEntry, _, _, err := cbnt.ParseFITEntries(data)
 	if err != nil {
-		return err
+		reader := bytes.NewReader(data)
+		bpm, err = cbnt.ParseBPM(reader)
+		if err != nil {
+			return err
+		}
+	} else {
+		bpm, err = bpmEntry.ParseData()
+		if err != nil {
+			return fmt.Errorf("unable to parse BPM: %w", err)
+		}
 	}
 	bpm.Print()
 	if bpm.PMSE.Signature.DataTotalSize() > 1 {
@@ -236,6 +254,10 @@ func (acmp *acmPrintCmd) Run(ctx *context) error {
 	data, err := ioutil.ReadFile(acmp.Path)
 	if err != nil {
 		return err
+	}
+	_, _, acmEntry, err := cbnt.ParseFITEntries(data)
+	if err == nil {
+		data = acmEntry.DataBytes
 	}
 	acm, chipsets, processors, tpms, err, err2 := tools.ParseACM(data)
 	if err != nil {
