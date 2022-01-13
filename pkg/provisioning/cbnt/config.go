@@ -7,6 +7,7 @@ import (
 	"crypto/sha512"
 	"encoding/json"
 	"fmt"
+	"hash"
 	"io"
 	"io/ioutil"
 	"os"
@@ -95,80 +96,37 @@ func getIBBSegment(ibbs []bootpolicy.IBBSegment, image []byte) ([][]byte, error)
 	return ibbSegments, nil
 }
 
-func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo manifest.Algorithm) ([]byte, error) {
-	var hash []byte
+func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo manifest.Algorithm) (hashout []byte, err error) {
+	var hashFunc hash.Hash
 	switch algo {
 	case manifest.AlgSHA1:
-		h := sha1.New()
-		segments, err := getIBBSegment(ibbs, image)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get IBB segments: %w", err)
-		}
-		for _, segment := range segments {
-			_, err = h.Write(segment)
-			if err != nil {
-				return nil, fmt.Errorf("unable to hash a segment: %w", err)
-			}
-		}
-		hash = h.Sum(nil)
+		hashFunc = sha1.New()
 	case manifest.AlgSHA256:
-		h := sha256.New()
-		segments, err := getIBBSegment(ibbs, image)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get IBB segments: %w", err)
-		}
-		for _, segment := range segments {
-			_, err = h.Write(segment)
-			if err != nil {
-				return nil, fmt.Errorf("unable to hash a segment: %w", err)
-			}
-		}
-		hash = h.Sum(nil)
+		hashFunc = sha256.New()
 	case manifest.AlgSHA384:
-		h := sha512.New384()
-		segments, err := getIBBSegment(ibbs, image)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get IBB segments: %w", err)
-		}
-		for _, segment := range segments {
-			_, err = h.Write(segment)
-			if err != nil {
-				return nil, fmt.Errorf("unable to hash a segment: %w", err)
-			}
-		}
-		hash = h.Sum(nil)
+		hashFunc = sha512.New384()
 	case manifest.AlgSHA512:
-		h := sha512.New512_256()
-		segments, err := getIBBSegment(ibbs, image)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get IBB segments: %w", err)
-		}
-		for _, segment := range segments {
-			_, err = h.Write(segment)
-			if err != nil {
-				return nil, fmt.Errorf("unable to hash a segment: %w", err)
-			}
-		}
-		hash = h.Sum(nil)
+		hashFunc = sha512.New512_256()
 	case manifest.AlgSM3:
-		h := sm3.New()
-		segments, err := getIBBSegment(ibbs, image)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get IBB segments: %w", err)
-		}
-		for _, segment := range segments {
-			_, err = h.Write(segment)
-			if err != nil {
-				return nil, fmt.Errorf("unable to hash a segment: %w", err)
-			}
-		}
-		hash = h.Sum(nil)
+		hashFunc = sm3.New()
 	case manifest.AlgNull:
 		return nil, nil
 	default:
 		return nil, fmt.Errorf("couldn't match requested hash algorithm: 0x%x", algo)
 	}
-	return hash, nil
+	segments, err := getIBBSegment(ibbs, image)
+	if err != nil {
+		return nil, err
+	}
+	for _, segment := range segments {
+		_, err = hashFunc.Write(segment)
+		if err != nil {
+			return nil, err
+		}
+	}
+	hashout = hashFunc.Sum(nil)
+
+	return hashout, nil
 }
 
 func setIBBSegment(cbnto *Options, image []byte) (*bootpolicy.SE, error) {
