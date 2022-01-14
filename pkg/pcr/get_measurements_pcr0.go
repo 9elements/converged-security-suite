@@ -6,8 +6,8 @@ import (
 	amd "github.com/linuxboot/fiano/pkg/amd/manifest"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcd"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
 func getMeasurementsPCR0(

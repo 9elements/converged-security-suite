@@ -6,12 +6,12 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/bootpolicy"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/common/pretty"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/key"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi/consts"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/common/pretty"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
 
 	"github.com/linuxboot/fiano/pkg/cbfs"
 )
@@ -22,18 +22,18 @@ func WriteCBnTStructures(image []byte, bpmFile, kmFile, acmFile *os.File) error 
 	if err != nil && (bpm == nil && bpmFile != nil || km == nil && kmFile != nil || acm == nil && acmFile != nil) {
 		return err
 	}
-	if bpmFile != nil && len(bpm.DataBytes) > 0 {
-		if _, err = bpmFile.Write(bpm.DataBytes); err != nil {
+	if bpmFile != nil && len(bpm.DataSegmentBytes) > 0 {
+		if _, err = bpmFile.Write(bpm.DataSegmentBytes); err != nil {
 			return err
 		}
 	}
-	if kmFile != nil && len(km.DataBytes) > 0 {
-		if _, err = kmFile.Write(km.DataBytes); err != nil {
+	if kmFile != nil && len(km.DataSegmentBytes) > 0 {
+		if _, err = kmFile.Write(km.DataSegmentBytes); err != nil {
 			return err
 		}
 	}
-	if acmFile != nil && len(acm.DataBytes) > 0 {
-		if _, err = acmFile.Write(acm.DataBytes); err != nil {
+	if acmFile != nil && len(acm.DataSegmentBytes) > 0 {
+		if _, err = acmFile.Write(acm.DataSegmentBytes); err != nil {
 			return err
 		}
 	}
@@ -62,7 +62,7 @@ func PrintCBnTStructures(image []byte) error {
 		return fmt.Errorf("unable to parse KM: %w", err)
 	}
 
-	acm, chipsets, processors, tpms, err, err2 = tools.ParseACM(acmEntry.DataBytes)
+	acm, chipsets, processors, tpms, err, err2 = tools.ParseACM(acmEntry.DataSegmentBytes)
 	if err != nil || err2 != nil {
 		return err
 	}
@@ -120,7 +120,7 @@ func CalculateNEMSize(image []byte, bpm *bootpolicy.Manifest, km *key.Manifest, 
 		return 0, fmt.Errorf("unable to get FIT: %w", err)
 	}
 	fitEntries := fitTable.GetEntries(image)
-	if len(fitEntries) == 0 || fitEntries[0].GetType() != fit.EntryTypeFITHeaderEntry {
+	if len(fitEntries) == 0 || fitEntries[0].GetEntryBase().Headers.Type() != fit.EntryTypeFITHeaderEntry {
 		return 0, fmt.Errorf("unable to get FIT headers")
 	}
 	hdr := fitEntries[0]
@@ -129,7 +129,7 @@ func CalculateNEMSize(image []byte, bpm *bootpolicy.Manifest, km *key.Manifest, 
 	}
 	totalSize += uint32(km.KeyManifestSignatureOffset)
 	totalSize += keySignatureElementMaxSize
-	totalSize += hdr.GetHeaders().DataSize()
+	totalSize += uint32(hdr.GetEntryBase().Headers.Size.Uint32() << 4)
 	totalSize += uint32(2048)
 	totalSize += keySignatureElementMaxSize
 	totalSize += uint32((&bootpolicy.BPMH{}).TotalSize())
@@ -184,10 +184,10 @@ func StitchFITEntries(biosFilename string, acm, bpm, km []byte) error {
 			if len(bpm) <= 0 {
 				continue
 			}
-			if len(entry.DataBytes) == 0 {
+			if len(entry.DataSegmentBytes) == 0 {
 				return fmt.Errorf("FIT entry size is zero for BPM")
 			}
-			if len(bpm) > len(entry.DataBytes) {
+			if len(bpm) > len(entry.DataSegmentBytes) {
 				return fmt.Errorf("new BPM bigger than older BPM")
 			}
 			addr, err := tools.CalcImageOffset(image, entry.Headers.Address.Pointer())
@@ -209,10 +209,10 @@ func StitchFITEntries(biosFilename string, acm, bpm, km []byte) error {
 			if len(km) <= 0 {
 				continue
 			}
-			if len(entry.DataBytes) == 0 {
+			if len(entry.DataSegmentBytes) == 0 {
 				return fmt.Errorf("FIT entry size is zero for KM")
 			}
-			if len(km) > len(entry.DataBytes) {
+			if len(km) > len(entry.DataSegmentBytes) {
 				return fmt.Errorf("new KM bigger than older KM")
 			}
 			addr, err := tools.CalcImageOffset(image, entry.Headers.Address.Pointer())
@@ -302,10 +302,10 @@ func FindAdditionalIBBs(imagepath string) ([]bootpolicy.IBBSegment, error) {
 			return ibbs, err
 		}
 		for _, entry := range fitentries {
-			if entry.GetType() == fit.EntryTypeBIOSStartupModuleEntry {
+			if entry.GetEntryBase().Headers.Type() == fit.EntryTypeBIOSStartupModuleEntry {
 				ibb := bootpolicy.NewIBBSegment()
-				ibb.Base = uint32(entry.GetHeaders().Address.Pointer())
-				ibb.Size = entry.GetHeaders().Size.Uint32() << 4
+				ibb.Base = uint32(entry.GetEntryBase().Headers.Address.Pointer())
+				ibb.Size = entry.GetEntryBase().Headers.Size.Uint32() << 4
 				ibbs = append(ibbs, *ibb)
 			}
 		}
