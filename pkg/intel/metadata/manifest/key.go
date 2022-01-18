@@ -197,9 +197,6 @@ func (k *Key) PrintKMPubKey(kmAlg Algorithm) error {
 			if err := binary.Write(buf, binary.LittleEndian, k.Data[:4]); err != nil {
 				return err
 			}
-			if kmAlg != AlgSHA256 {
-				return fmt.Errorf("KM public key hash algorithm must be SHA256")
-			}
 			hash, err := kmAlg.Hash()
 			if err != nil {
 				return err
