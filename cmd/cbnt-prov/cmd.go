@@ -546,6 +546,7 @@ func (g *generateACMCmd) config() (*cbnt.Options, error) {
 	acmHeaders.GDTBasePtr = g.GDTBasePtr
 	acmHeaders.SegSel = g.SegSel
 	acmHeaders.EntryPoint = g.EntryPoint
+	acmHeaders.KeySize.SetSize(384)
 	return &cbnt.Options{
 		ACMHeaders: &acmHeaders,
 	}, nil
