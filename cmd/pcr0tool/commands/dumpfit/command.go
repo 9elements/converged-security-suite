@@ -7,8 +7,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
 func assertNoError(err error) {

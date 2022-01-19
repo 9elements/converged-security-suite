@@ -5,10 +5,11 @@ import (
 	"math"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcd"
 	ffsConsts "github.com/9elements/converged-security-suite/v2/pkg/uefi/ffs/consts"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
+	"github.com/xaionaro-go/bytesextra"
 )
 
 // MeasurePCDFirmwareVendorVersionData returns PCD firmware vendor version measurement.
@@ -84,17 +85,20 @@ func MeasureDXE(firmware Firmware) (*Measurement, error) {
 
 // MeasureFITPointer returns a fake measurement for FIT pointer.
 func MeasureFITPointer(firmware Firmware) *Measurement {
-	fitHeadersPtrStartIdx, fitHeadersPtrEndIdx := fit.GetPointerCoordinates(firmware.Buf())
+	fitHeadersPtrStartIdx, fitHeadersPtrEndIdx := fit.GetPointerCoordinates(uint64(len(firmware.Buf())))
+	if fitHeadersPtrStartIdx < 0 || fitHeadersPtrEndIdx < 0 || fitHeadersPtrEndIdx < fitHeadersPtrStartIdx {
+		return nil
+	}
 	return NewRangeMeasurement(
 		MeasurementIDFITPointer,
-		fitHeadersPtrStartIdx,
-		fitHeadersPtrEndIdx-fitHeadersPtrStartIdx,
+		uint64(fitHeadersPtrStartIdx),
+		uint64(fitHeadersPtrEndIdx-fitHeadersPtrStartIdx),
 	)
 }
 
 // MeasureFITHeaders returns a fake measurement for FIT headers.
 func MeasureFITHeaders(firmware Firmware) (*Measurement, error) {
-	fitHeadersStartIdx, fitHeadersEndIdx, err := fit.GetHeadersTableRange(firmware.Buf())
+	fitHeadersStartIdx, fitHeadersEndIdx, err := fit.GetHeadersTableRangeFrom(bytesextra.NewReadWriteSeeker(firmware.Buf()))
 	if err != nil {
 		return nil, err
 	}

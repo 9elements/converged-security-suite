@@ -6,9 +6,9 @@ import (
 
 	amd "github.com/linuxboot/fiano/pkg/amd/manifest"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcd"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
 // MeasurementID is the unique identifier of a PCR measurement.
@@ -410,27 +410,27 @@ func (id MeasurementID) singleMeasureFunc() singleMeasureFunc {
 		}
 	case MeasurementIDPCR0DATA:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasurePCR0Data(config, provider.FITEntries())
+			return MeasurePCR0Data(config, uint64(len(provider.Firmware().Buf())), provider.FITEntries())
 		}
 	case MeasurementIDKeyManifest:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureKeyManifest(provider.FITEntries())
+			return MeasureKeyManifest(uint64(len(provider.Firmware().Buf())), provider.FITEntries())
 		}
 	case MeasurementIDBootPolicyManifest:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureBootPolicy(provider.FITEntries())
+			return MeasureBootPolicy(uint64(len(provider.Firmware().Buf())), provider.FITEntries())
 		}
 	case MeasurementIDACM:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureACM(provider.FITEntries())
+			return MeasureACM(uint64(len(provider.Firmware().Buf())), provider.FITEntries())
 		}
 	case MeasurementIDACMDate:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureACMDate(provider.FITEntries())
+			return MeasureACMDate(uint64(len(provider.Firmware().Buf())), provider.FITEntries())
 		}
 	case MeasurementIDACMDateInPlace:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureACMDateInPlace(config.PCR0DataIbbDigestHashAlgorithm, provider.FITEntries())
+			return MeasureACMDateInPlace(config.PCR0DataIbbDigestHashAlgorithm, uint64(len(provider.Firmware().Buf())), provider.FITEntries())
 		}
 	case MeasurementIDIBBFake:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
@@ -438,7 +438,7 @@ func (id MeasurementID) singleMeasureFunc() singleMeasureFunc {
 		}
 	case MeasurementIDBIOSStartupModule:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
-			return MeasureBIOSStartupModule(provider.FITEntries())
+			return MeasureBIOSStartupModule(uint64(len(provider.Firmware().Buf())), provider.FITEntries())
 		}
 	case MeasurementIDSCRTMSeparator:
 		return func(config MeasurementConfig, provider DataProvider) (*Measurement, error) {
