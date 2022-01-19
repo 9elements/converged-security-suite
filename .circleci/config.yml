@@ -13,7 +13,6 @@ jobs:
       - checkout
       - run: sudo apt install -y golint
       # specify any bash command here prefixed with `run: `
-      - run: GO111MODULE=off go get github.com/tjfoc/gmsm/sm2 github.com/dustin/go-humanize github.com/linuxboot/fiano/pkg/uefi && go run ./pkg/intel/metadata/manifest/common/manifestcodegen/cmd/manifestcodegen -check ./pkg/intel/metadata/manifest ./pkg/intel/metadata/manifest/bootpolicy ./pkg/intel/metadata/manifest/key
       - run: if [ "$(gofmt -l .)" != "" ]; then exit 1; fi
       - run: golint -set_exit_status ./cmd/txt-suite
       - run: golint -set_exit_status ./cmd/txt-prov
@@ -27,10 +26,6 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install libtspi-dev && go test ./pkg/diff/
       - run: go test ./pkg/errors/
       - run: go test ./pkg/hwapi/
-      - run: go test ./pkg/intel/metadata/fit/
-      - run: go test ./pkg/intel/metadata/manifest/
-      - run: go test ./pkg/intel/metadata/manifest/bootpolicy/
-      - run: go test ./pkg/intel/metadata/manifest/key/
       - run: go test ./pkg/mathtools/
       - run: go test ./pkg/ostools/
       - run: go test ./pkg/pcd/

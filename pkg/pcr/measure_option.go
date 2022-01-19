@@ -4,8 +4,8 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
 	"github.com/google/go-tpm/tpm2"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
 )
 
 // MeasureOption is the interface of an option which may change

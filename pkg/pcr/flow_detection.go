@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	amd "github.com/linuxboot/fiano/pkg/amd/manifest"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
 )
@@ -70,7 +70,8 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (tpmdetection.Type, 
 				// chipset.TPMInfoList is an offset in bytes from ACM start.
 				image := firmware.ImageBytes()
 				var tpmInfo manifest.TPMInfoList
-				_, err = tpmInfo.ReadFrom(bytes.NewBuffer(image[fitEntry.GetDataOffset()+uint64(chipset.TPMInfoList):]))
+				sacmOffset := fitEntry.Headers.Address.Offset(uint64(len(image)))
+				_, err = tpmInfo.ReadFrom(bytes.NewBuffer(image[sacmOffset+uint64(chipset.TPMInfoList):]))
 				if err != nil {
 					return 0, fmt.Errorf("failed to read TPMInfoList, err: %w", err)
 				}
@@ -131,7 +132,7 @@ func IsAMDPSPFirmware(firmware Firmware) bool {
 // no validation errors occurred.
 func DetectMainAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevice tpmdetection.Type) (Flow, error) {
 	if IsAMDPSPFirmware(firmware) {
-		// TODO: whether TPM is initialised in locality 0 or 3 depends on the APCB binary tokens
+		// TODO: whether TPM is initialized in locality 0 or 3 depends on the APCB binary tokens
 		// Return the most common default
 		return FlowLegacyAMDLocality3, nil
 	}

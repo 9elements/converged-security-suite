@@ -7,9 +7,9 @@ import (
 	"encoding/pem"
 	"fmt"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/bootpolicy"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/key"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
 )
 
 // WriteKM returns a key manifest as bytes in format defined in #575623.

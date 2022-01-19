@@ -18,14 +18,15 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/klauspost/cpuid/v2 v2.0.9
 	github.com/kr/pretty v0.2.1 // indirect
-	github.com/linuxboot/fiano v1.0.4-0.20211220133044-7de4aa4d8e3d
+	github.com/linuxboot/fiano v1.0.4-0.20220110153808-38194836b6f1
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/pretty v1.0.2
-	github.com/tjfoc/gmsm v1.4.0
+	github.com/tjfoc/gmsm v1.4.1
 	github.com/ulikunitz/xz v0.5.10
+	github.com/xaionaro-go/bytesextra v0.0.0-20220103144954-846e454ddea9 // indirect
 	github.com/xaionaro-go/gosrc v0.0.0-20201124181305-3fdf8476a735
-	github.com/xaionaro-go/unsafetools v0.0.0-20200202162159-021b112c4d30
+	github.com/xaionaro-go/unsafetools v0.0.0-20210722164218-75ba48cf7b3c
 	golang.org/x/crypto v0.0.0-20201117144127-c1f2f97bffc9
 )
