@@ -13,6 +13,7 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/creasty/defaults"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
@@ -38,6 +39,7 @@ type KeyHash struct {
 type Options struct {
 	BootPolicyManifest *bootpolicy.Manifest
 	KeyManifest        *key.Manifest
+	ACMHeaders         *fit.EntrySACMData3
 }
 
 // ParseConfig parses a boot guard option json file
