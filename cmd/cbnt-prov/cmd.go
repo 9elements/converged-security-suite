@@ -5,21 +5,22 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 
 	"github.com/linuxboot/fiano/pkg/uefi"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/bootpolicy"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/key"
 	"github.com/9elements/converged-security-suite/v2/pkg/provisioning/cbnt"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
 )
 
 type context struct {
@@ -86,6 +87,30 @@ type kmExportCmd struct {
 type bpmExportCmd struct {
 	BIOS string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
 	Out  string `arg required name:"out" help:"Path to the newly generated BPM binary file." type:"path"`
+}
+
+type generateACMCmd struct {
+	ACMOut           string `arg required name:"acm" help:"Path to the newly generated ACM headers binary file." type:"path"`
+	ConfigIn         string `flag optional name:"config" help:"Path to the JSON config file." type:"path"`
+	ConfigOut        string `flag optional name:"out" help:"Path to write applied config to" type:"path"`
+	BodyPath         string `flag optional name:"bodypath" help:"Path to the ACM body" type:"path"`
+	RSAPrivateKeyPEM string `flag optional name:"rsaprivkeypem" help:"RSA key used to sign the ACM" type:"path"`
+
+	ModuleType      fit.ACModuleType    `flag optional name:"moduletype"`
+	ModuleSubType   fit.ACModuleSubType `flag optional name:"modulesubtype"`
+	ChipsetID       fit.ACChipsetID     `flag optional name:"chipsetid"`
+	Flags           fit.ACFlags         `flag optional name:"flags"`
+	ModuleVendor    fit.ACModuleVendor  `flag optional name:"modulevendor"`
+	Date            fit.BCDDate         `flag optional name:"date"`
+	Size            uint64              `flag optional name:"size"`
+	TXTSVN          fit.TXTSVN          `flag optional name:"txtsvn"`
+	SESVN           fit.SESVN           `flag optional name:"sesvn"`
+	CodeControl     fit.CodeControl     `flag optional name:"codecontrol"`
+	ErrorEntryPoint fit.ErrorEntryPoint `flag optional name:"errorentrypoint"`
+	GDTLimit        fit.GDTLimit        `flag optional name:"gdtlimit"`
+	GDTBasePtr      fit.GDTBasePtr      `flag optional name:"gdtbaseptr"`
+	SegSel          fit.SegSel          `flag optional name:"segsel"`
+	EntryPoint      fit.EntryPoint      `flag optional name:"entrypoint"`
 }
 
 type generateKMCmd struct {
@@ -494,6 +519,82 @@ func (g *generateBPMCmd) Run(ctx *context) error {
 	return nil
 }
 
+func (g *generateACMCmd) config() (*cbnt.Options, error) {
+	if g.ConfigIn != "" {
+		config, err := cbnt.ParseConfig(g.ConfigIn)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse config file '%s': %w", g.ConfigIn, err)
+		}
+		return config, nil
+	}
+
+	var acmHeaders fit.EntrySACMData3
+	acmHeaders.HeaderVersion = fit.ACHeaderVersion3
+	acmHeaders.HeaderLen.SetSize(uint64(binary.Size(acmHeaders)))
+	acmHeaders.ModuleType = g.ModuleType
+	acmHeaders.ModuleSubType = g.ModuleSubType
+	acmHeaders.ChipsetID = g.ChipsetID
+	acmHeaders.Flags = g.Flags
+	acmHeaders.ModuleVendor = g.ModuleVendor
+	acmHeaders.Date = g.Date
+	acmHeaders.Size.SetSize(g.Size)
+	acmHeaders.TXTSVN = g.TXTSVN
+	acmHeaders.SESVN = g.SESVN
+	acmHeaders.CodeControl = g.CodeControl
+	acmHeaders.ErrorEntryPoint = g.ErrorEntryPoint
+	acmHeaders.GDTLimit = g.GDTLimit
+	acmHeaders.GDTBasePtr = g.GDTBasePtr
+	acmHeaders.SegSel = g.SegSel
+	acmHeaders.EntryPoint = g.EntryPoint
+	acmHeaders.KeySize.SetSize(384)
+	return &cbnt.Options{
+		ACMHeaders: &acmHeaders,
+	}, nil
+}
+
+func (g *generateACMCmd) Run(ctx *context) error {
+	config, err := g.config()
+	if err != nil {
+		return fmt.Errorf("unable to construct basic ACM headers from the provided config: %w", err)
+	}
+
+	if g.ConfigOut != "" {
+		out, err := os.Create(g.ConfigOut)
+		if err != nil {
+			return err
+		}
+		if err := cbnt.WriteConfig(out, config); err != nil {
+			return err
+		}
+	}
+
+	acm := fit.EntrySACMData{
+		EntrySACMDataInterface: config.ACMHeaders,
+	}
+	if g.BodyPath != "" {
+		bodyData, err := ioutil.ReadFile(g.BodyPath)
+		if err != nil {
+			return fmt.Errorf("unable to read the ACM body file '%s': %w", g.BodyPath, err)
+		}
+
+		acm.UserArea = bodyData
+	}
+
+	if g.RSAPrivateKeyPEM != "" {
+		return fmt.Errorf("signing is not implemented, yet")
+	}
+
+	var acmBytes bytes.Buffer
+	if _, err := acm.WriteTo(&acmBytes); err != nil {
+		return fmt.Errorf("unable to compile the ACM module: %w", err)
+	}
+
+	if err = ioutil.WriteFile(g.ACMOut, acmBytes.Bytes(), 0600); err != nil {
+		return fmt.Errorf("unable to write KM to file: %w", err)
+	}
+	return nil
+}
+
 func (s *signKMCmd) Run(ctx *context) error {
 	encKey, err := ioutil.ReadFile(s.Key)
 	if err != nil {
@@ -842,8 +943,9 @@ var cli struct {
 	BPMStitch stitchingBPMCmd `cmd help:"Stitches BPM Signatue into unsigned BPM"`
 	BPMExport bpmExportCmd    `cmd help:"Exports BPM structures from BIOS image into file"`
 
-	ACMExport acmExportCmd `cmd help:"Exports ACM structures from BIOS image into file"`
-	ACMShow   acmPrintCmd  `cmd help:"Prints ACM binary in human-readable format"`
+	ACMGen    generateACMCmd `cmd help:"Generate an ACM module (usable only for unit-tests)"`
+	ACMExport acmExportCmd   `cmd help:"Exports ACM structures from BIOS image into file"`
+	ACMShow   acmPrintCmd    `cmd help:"Prints ACM binary in human-readable format"`
 
 	FITShow printFITCmd `cmd help:"Prints the FIT Table of given BIOS image file"`
 

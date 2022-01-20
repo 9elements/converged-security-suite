@@ -7,8 +7,8 @@ import (
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
 )
 
 // MeasureInit returns the fake measurement for TPM initialization, it
@@ -18,7 +18,7 @@ func MeasureInit() *Measurement {
 }
 
 // MeasureACM returns a fake measurement of ACM.
-func MeasureACM(fitEntries []fit.Entry) (*Measurement, error) {
+func MeasureACM(imageSize uint64, fitEntries []fit.Entry) (*Measurement, error) {
 	m := Measurement{
 		ID: MeasurementIDACM,
 	}
@@ -29,7 +29,8 @@ func MeasureACM(fitEntries []fit.Entry) (*Measurement, error) {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntrySACM: // startup AC module entry
 			_ = mErr.Add(fitEntry.HeadersErrors...)
-			m.Data = append(m.Data, *NewRangeDataChunk(0, fitEntry.GetDataOffset(), uint64(len(fitEntry.GetDataBytes()))))
+			acmOffset := fitEntry.Headers.Address.Offset(imageSize)
+			m.Data = append(m.Data, *NewRangeDataChunk(0, acmOffset, uint64(len(fitEntry.DataSegmentBytes))))
 		}
 	}
 
@@ -41,7 +42,7 @@ func MeasureACM(fitEntries []fit.Entry) (*Measurement, error) {
 }
 
 // MeasureACMDate returns a measurement of ACM date.
-func MeasureACMDate(fitEntries []fit.Entry) (*Measurement, error) {
+func MeasureACMDate(imageSize uint64, fitEntries []fit.Entry) (*Measurement, error) {
 	m := Measurement{
 		ID: MeasurementIDACMDate,
 	}
@@ -62,7 +63,8 @@ func MeasureACMDate(fitEntries []fit.Entry) (*Measurement, error) {
 				continue
 			}
 
-			offset := fitEntry.GetDataOffset() + uint64(data.DateBinaryOffset())
+			sacmOffset := fitEntry.Headers.Address.Offset(imageSize)
+			offset := sacmOffset + uint64(data.DateBinaryOffset())
 			length := uint64(binary.Size(data.GetDate()))
 
 			m.Data = append(m.Data, *NewRangeDataChunk(0, offset, length))
@@ -81,7 +83,7 @@ func MeasureACMDate(fitEntries []fit.Entry) (*Measurement, error) {
 
 // MeasureACMDateInPlace returns a measurement of ACM date, but without hashing
 // it (it is used in obsolete TPM1.2 flows; a bug of the initial implementation?).
-func MeasureACMDateInPlace(hashAlg manifest.Algorithm, fitEntries []fit.Entry) (*Measurement, error) {
+func MeasureACMDateInPlace(hashAlg manifest.Algorithm, imageSize uint64, fitEntries []fit.Entry) (*Measurement, error) {
 	m := Measurement{
 		ID: MeasurementIDACMDateInPlace,
 	}
@@ -112,7 +114,8 @@ func MeasureACMDateInPlace(hashAlg manifest.Algorithm, fitEntries []fit.Entry) (
 				continue
 			}
 
-			offset := fitEntry.GetDataOffset() + uint64(data.DateBinaryOffset())
+			sacmOffset := fitEntry.Headers.Address.Offset(imageSize)
+			offset := sacmOffset + uint64(data.DateBinaryOffset())
 			length := uint64(binary.Size(data.GetDate()))
 
 			m.Data = append(m.Data, *NewRangeDataChunk(DataChunkIDUndefined, offset, length))
@@ -132,7 +135,7 @@ func MeasureACMDateInPlace(hashAlg manifest.Algorithm, fitEntries []fit.Entry) (
 }
 
 // MeasureBIOSStartupModule return the measurement of BIOS startup module.
-func MeasureBIOSStartupModule(fitEntries []fit.Entry) (*Measurement, error) {
+func MeasureBIOSStartupModule(imageSize uint64, fitEntries []fit.Entry) (*Measurement, error) {
 	m := Measurement{
 		ID: MeasurementIDBIOSStartupModule,
 	}
@@ -143,11 +146,12 @@ func MeasureBIOSStartupModule(fitEntries []fit.Entry) (*Measurement, error) {
 		case *fit.EntryBIOSStartupModuleEntry:
 			_ = mErr.Add(fitEntry.HeadersErrors...)
 
+			biosSMOffset := fitEntry.Headers.Address.Offset(imageSize)
 			m.Data = append(m.Data,
 				*NewRangeDataChunk(
 					DataChunkIDBIOSStartup(uint(len(m.Data))),
-					fitEntry.GetDataOffset(),
-					uint64(len(fitEntry.DataBytes)),
+					biosSMOffset,
+					uint64(len(fitEntry.DataSegmentBytes)),
 				),
 			)
 		}

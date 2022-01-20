@@ -1,9 +1,9 @@
 package pcr
 
 import (
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
 )
 
 // MeasurementConfig is the structure used to store different gates about

@@ -7,10 +7,10 @@ import (
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 	fianoUEFI "github.com/linuxboot/fiano/pkg/uefi"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
 	"github.com/9elements/converged-security-suite/v2/pkg/ostools"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi/consts"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi/ffs"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
 func init() {

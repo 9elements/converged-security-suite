@@ -3,7 +3,7 @@ package pcr
 import (
 	"fmt"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
 // ValidateManifests validates if boot policy manifest (BPM) and key
@@ -22,7 +22,7 @@ func (v ValidateManifests) Validate(firmware Firmware) error {
 		return fmt.Errorf("unable to get Key Manifest: %w", err)
 	}
 
-	if err := km.KeyAndSignature.Verify(kmFIT.DataBytes[:km.KeyManifestSignatureOffset]); err != nil {
+	if err := km.KeyAndSignature.Verify(kmFIT.DataSegmentBytes[:km.KeyManifestSignatureOffset]); err != nil {
 		return fmt.Errorf("unable to confirm KM signature: %w", err)
 	}
 
@@ -31,7 +31,7 @@ func (v ValidateManifests) Validate(firmware Firmware) error {
 		return fmt.Errorf("unable to get Boot Policy Manifest: %w", err)
 	}
 
-	if err := bpm.PMSE.KeySignature.Verify(bpmFIT.DataBytes[:bpm.KeySignatureOffset]); err != nil {
+	if err := bpm.PMSE.KeySignature.Verify(bpmFIT.DataSegmentBytes[:bpm.KeySignatureOffset]); err != nil {
 		return fmt.Errorf("unable to confirm KM signature: %w", err)
 	}
 

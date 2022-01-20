@@ -12,11 +12,12 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/bootpolicy"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/key"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/creasty/defaults"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
 	"github.com/tidwall/pretty"
 	"github.com/tjfoc/gmsm/sm3"
 )
@@ -39,6 +40,7 @@ type KeyHash struct {
 type Options struct {
 	BootPolicyManifest *bootpolicy.Manifest
 	KeyManifest        *key.Manifest
+	ACMHeaders         *fit.EntrySACMData3
 }
 
 // ParseConfig parses a boot guard option json file

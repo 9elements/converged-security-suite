@@ -4,12 +4,12 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/fit"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/bootpolicy"
-	"github.com/9elements/converged-security-suite/v2/pkg/intel/metadata/manifest/key"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
 )
 
 type pcr0Data struct {
@@ -44,7 +44,7 @@ func (d pcr0Data) Measurement() *Measurement {
 }
 
 // MeasurePCR0Data returns a PCR0_DATA measurement.
-func MeasurePCR0Data(config MeasurementConfig, fitEntries []fit.Entry) (*Measurement, error) {
+func MeasurePCR0Data(config MeasurementConfig, imageSize uint64, fitEntries []fit.Entry) (*Measurement, error) {
 	var data pcr0Data
 
 	acmPolicyStatus, found := registers.FindACMPolicyStatus(config.Registers)
@@ -57,14 +57,17 @@ func MeasurePCR0Data(config MeasurementConfig, fitEntries []fit.Entry) (*Measure
 	if err != nil {
 		return nil, err
 	}
+
+	acmOffset := acmFITEntry.GetEntryBase().Headers.Address.Offset(imageSize)
+
 	// From Intel CBnT doc: "SVN field of ACM header (offset 28) indicates..."
 	// Offset 28 == TxtSVN
 	data.acmHeaderSVN = pkgbytes.Range{
-		Offset: acmFITEntry.GetDataOffset() + acmEntry.GetCommon().TXTSVNBinaryOffset(),
+		Offset: acmOffset + acmEntry.GetCommon().TXTSVNBinaryOffset(),
 		Length: uint64(binary.Size(acmEntry.GetTXTSVN())),
 	}
 	data.acmSignature = pkgbytes.Range{
-		Offset: acmFITEntry.GetDataOffset() + acmEntry.RSASigBinaryOffset(),
+		Offset: acmOffset + acmEntry.RSASigBinaryOffset(),
 		Length: uint64(len(acmEntry.GetRSASig())),
 	}
 
@@ -72,8 +75,9 @@ func MeasurePCR0Data(config MeasurementConfig, fitEntries []fit.Entry) (*Measure
 	if err != nil {
 		return nil, err
 	}
+	kmOffset := keyManifestFITEntry.Headers.Address.Offset(imageSize)
 	data.kmSignature = pkgbytes.Range{
-		Offset: keyManifestFITEntry.GetDataOffset() + keyManifest.KeyAndSignatureOffset() + keyManifest.KeyAndSignature.SignatureOffset() + keyManifest.KeyAndSignature.Signature.DataOffset(),
+		Offset: kmOffset + keyManifest.KeyAndSignatureOffset() + keyManifest.KeyAndSignature.SignatureOffset() + keyManifest.KeyAndSignature.Signature.DataOffset(),
 		Length: uint64(len(keyManifest.KeyAndSignature.Signature.Data)),
 	}
 
@@ -81,8 +85,9 @@ func MeasurePCR0Data(config MeasurementConfig, fitEntries []fit.Entry) (*Measure
 	if err != nil {
 		return nil, err
 	}
+	bpmOffset := bpManifestFITEntry.Headers.Address.Offset(imageSize)
 	data.bpmSignature = pkgbytes.Range{
-		Offset: bpManifestFITEntry.GetDataOffset() + uint64(bpManifest.KeySignatureOffset) + bpManifest.PMSE.SignatureOffset() + bpManifest.PMSE.Signature.DataOffset(),
+		Offset: bpmOffset + uint64(bpManifest.KeySignatureOffset) + bpManifest.PMSE.SignatureOffset() + bpManifest.PMSE.Signature.DataOffset(),
 		Length: uint64(len(bpManifest.PMSE.Signature.Data)),
 	}
 
@@ -91,7 +96,7 @@ func MeasurePCR0Data(config MeasurementConfig, fitEntries []fit.Entry) (*Measure
 		return nil, fmt.Errorf("IBBDigest list is empty")
 	}
 	// Note: +2 - skip array size field to get the first element
-	offsetToTheFirstDigest := bpManifestFITEntry.GetDataOffset() + bpManifest.SEOffset() +
+	offsetToTheFirstDigest := bpmOffset + bpManifest.SEOffset() +
 		bpManifest.SE[0].DigestListOffset() + (bpManifest.SE[0].DigestList.ListOffset() + 2)
 	if config.PCR0DataIbbDigestHashAlgorithm == manifest.AlgUnknown || config.PCR0DataIbbDigestHashAlgorithm == manifest.AlgNull {
 		// take the fist element as stated in the doc above
@@ -166,44 +171,36 @@ func getBootPolicyManifest(fitEntries []fit.Entry) (*bootpolicy.Manifest, *fit.E
 }
 
 // MeasureKeyManifest returns a measurement containing CBnT key manifest.
-func MeasureKeyManifest(fitEntries []fit.Entry) (*Measurement, error) {
+func MeasureKeyManifest(imageSize uint64, fitEntries []fit.Entry) (*Measurement, error) {
 	_, kmFITEntry, err := getKeyManifest(fitEntries)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get key manifest (KM): %w", err)
-	}
-
-	if kmFITEntry.DataOffset == nil {
-		return nil, fmt.Errorf("unable to key manifest (KM) offset")
 	}
 
 	return &Measurement{
 		ID: MeasurementIDKeyManifest,
 		Data: DataChunks{{
 			Range: pkgbytes.Range{
-				Offset: *kmFITEntry.DataOffset,
-				Length: uint64(len(kmFITEntry.DataBytes)),
+				Offset: kmFITEntry.Headers.Address.Offset(imageSize),
+				Length: uint64(len(kmFITEntry.DataSegmentBytes)),
 			},
 		}},
 	}, nil
 }
 
 // MeasureBootPolicy returns a measurement containing CBnT key manifest.
-func MeasureBootPolicy(fitEntries []fit.Entry) (*Measurement, error) {
+func MeasureBootPolicy(imageSize uint64, fitEntries []fit.Entry) (*Measurement, error) {
 	_, bpmFITEntry, err := getBootPolicyManifest(fitEntries)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get boot policy manifest (BPM): %w", err)
-	}
-
-	if bpmFITEntry.DataOffset == nil {
-		return nil, fmt.Errorf("unable to boot policy manifest (BPM) offset")
 	}
 
 	return &Measurement{
 		ID: MeasurementIDBootPolicyManifest,
 		Data: DataChunks{{
 			Range: pkgbytes.Range{
-				Offset: *bpmFITEntry.DataOffset,
-				Length: uint64(len(bpmFITEntry.DataBytes)),
+				Offset: bpmFITEntry.Headers.Address.Offset(imageSize),
+				Length: uint64(len(bpmFITEntry.DataSegmentBytes)),
 			},
 		}},
 	}, nil
