@@ -53,7 +53,7 @@ func (m *Manifest) SetSignature(
 	if err != nil {
 		return fmt.Errorf("unable to set the signature: %w", err)
 	}
-	m.PubKeyHashAlg = m.KeyAndSignature.Signature.HashAlg
+	//m.PubKeyHashAlg = m.KeyAndSignature.Signature.HashAlg
 
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/sha512"
 	"fmt"
 	"math/big"
 
@@ -40,15 +41,15 @@ func NewSignatureData(
 		if !ok {
 			return nil, fmt.Errorf("expected private RSA key (type %T), but received %T", rsaPrivateKey, privKey)
 		}
-		h := sha256.New()
+		h := sha512.New384()
 		_, _ = h.Write(signedData)
 		bpmHash := h.Sum(nil)
 
 		pss := rsa.PSSOptions{
 			SaltLength: rsa.PSSSaltLengthAuto,
-			Hash:       crypto.SHA256,
+			Hash:       crypto.SHA384,
 		}
-		data, err := rsa.SignPSS(RandReader, rsaPrivateKey, crypto.SHA256, bpmHash, &pss)
+		data, err := rsa.SignPSS(RandReader, rsaPrivateKey, crypto.SHA384, bpmHash, &pss)
 		if err != nil {
 			return nil, fmt.Errorf("unable to sign with RSAPSS the data: %w", err)
 		}

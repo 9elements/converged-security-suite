@@ -515,7 +515,7 @@ func (s *signKMCmd) Run(ctx *context) error {
 	}
 	km.RehashRecursive()
 	unsignedKM := kmRaw[:km.KeyAndSignatureOffset()]
-	if err = km.SetSignature(0, privkey.(crypto.Signer), unsignedKM); err != nil {
+	if err = km.SetSignature(0x16, privkey.(crypto.Signer), unsignedKM); err != nil {
 		return err
 	}
 	bKMSigned, err := cbnt.WriteKM(&km)
@@ -564,7 +564,7 @@ func (s *signBPMCmd) Run(ctx *context) error {
 	bpm.RehashRecursive()
 	unsignedBPM := bpmRaw[:bpm.KeySignatureOffset]
 	//err = bpm.PMSE.SetSignature(0, key.(crypto.Signer), unsignedBPM)
-	err = bpm.PMSE.Signature.SetSignature(0, key.(crypto.Signer), unsignedBPM)
+	err = bpm.PMSE.Signature.SetSignature(0x16, key.(crypto.Signer), unsignedBPM)
 	if err != nil {
 		return fmt.Errorf("unable to make a signature: %w", err)
 	}

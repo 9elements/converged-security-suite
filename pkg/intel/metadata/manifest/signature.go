@@ -76,7 +76,7 @@ func (m *Signature) SetSignatureByData(sig SignatureDataInterface, hashAlgo Algo
 	case SignatureRSAPSS:
 		m.SigScheme = AlgRSAPSS
 		if hashAlgo.IsNull() {
-			m.HashAlg = AlgSHA256
+			m.HashAlg = AlgSHA384
 		} else {
 			m.HashAlg = hashAlgo
 		}
@@ -160,7 +160,7 @@ func (m *Signature) SetSignature(signAlgo Algorithm, privKey crypto.Signer, sign
 		return fmt.Errorf("unable to construct the signature data: %w", err)
 	}
 
-	err = m.SetSignatureByData(signData, AlgNull)
+	err = m.SetSignatureByData(signData, m.HashAlg)
 	if err != nil {
 		return fmt.Errorf("unable to set the signature: %w", err)
 	}
