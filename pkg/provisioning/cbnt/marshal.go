@@ -70,6 +70,13 @@ func parsePrivateKey(raw []byte) (crypto.Signer, error) {
 				}
 				return nil, fmt.Errorf("found unknown private key type (%T) in PKCS#8 wrapping", key)
 			}
+			key, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+			if err == nil {
+				if key, ok := key.(crypto.Signer); ok {
+					return key, nil
+				}
+				return nil, fmt.Errorf("found unknown private key type (%T) in PKCS#8 wrapping", key)
+			}
 			return nil, err
 
 		}
