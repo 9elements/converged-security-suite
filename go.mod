@@ -10,7 +10,7 @@ require (
 	github.com/edsrzf/mmap-go v1.0.0
 	github.com/fearful-symmetry/gomsr v0.0.1
 	github.com/golang-collections/go-datastructures v0.0.0-20150211160725-59788d5eb259
-	github.com/google/go-attestation v0.2.2
+	github.com/google/go-attestation v0.4.0
 	github.com/google/go-tpm v0.3.3-0.20210120190357-1ff48daca32f
 	github.com/google/uuid v1.2.0
 	github.com/klauspost/cpuid/v2 v2.0.9
@@ -24,5 +24,5 @@ require (
 	github.com/ulikunitz/xz v0.5.10
 	github.com/xaionaro-go/bytesextra v0.0.0-20220103144954-846e454ddea9
 	github.com/xaionaro-go/unsafetools v0.0.0-20210722164218-75ba48cf7b3c
-	golang.org/x/crypto v0.0.0-20201117144127-c1f2f97bffc9
+	golang.org/x/crypto v0.0.0-20210314154223-e6e6c4f2bb5b
 )
