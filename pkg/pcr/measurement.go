@@ -376,6 +376,26 @@ func (s Measurements) CompileMeasurableData(image []byte) []byte {
 	return result
 }
 
+// FilterByPCRIndex returns a subset of measurements only which corresponds to specified PCR index.
+func (s Measurements) FilterByPCRIndex(pcrIndex ID) Measurements {
+	var r Measurements
+	for _, m := range s {
+		found := false
+		for _, pcrIndexCmp := range m.ID.PCRIDs() {
+			if pcrIndexCmp == pcrIndex {
+				found = true
+				break
+			}
+		}
+		if !found {
+			continue
+		}
+		r = append(r, m)
+	}
+
+	return r
+}
+
 // FindOverlapping returns those measurements which overlaps with byte range
 // `byteRange`.
 func (s Measurements) FindOverlapping(byteRange bytes.Range) Measurements {

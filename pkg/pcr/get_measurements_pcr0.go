@@ -10,7 +10,8 @@ import (
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
-func getMeasurementsPCR0(
+func getMeasurements(
+	pcrID ID,
 	firmware Firmware,
 	config MeasurementConfig,
 ) (
@@ -40,7 +41,7 @@ func getMeasurementsPCR0(
 	}
 
 	// Collect measurements
-	measurements, warnings, err := newPCR0MeasurementsCollector(firmware).CollectPRC0Measurements(resultConfig)
+	measurements, warnings, err := newMeasurementsCollector(firmware).CollectMeasurements(pcrID, resultConfig)
 	if err != nil {
 		err = fmt.Errorf("unable to collect measurements: %w", err)
 	}
@@ -49,7 +50,7 @@ func getMeasurementsPCR0(
 	return measurements, resultConfig.Flow, debugInfo, err
 }
 
-type pcr0MeasurementsCollector struct {
+type measurementsCollector struct {
 	firmware         Firmware
 	fitEntriesResult *[]fit.Entry
 	pcdDataResult    *pcd.ParsedFirmware
@@ -58,17 +59,17 @@ type pcr0MeasurementsCollector struct {
 	warnings         errors.MultiError
 }
 
-func newPCR0MeasurementsCollector(firmware Firmware) *pcr0MeasurementsCollector {
-	return &pcr0MeasurementsCollector{
+func newMeasurementsCollector(firmware Firmware) *measurementsCollector {
+	return &measurementsCollector{
 		firmware: firmware,
 	}
 }
 
-func (c *pcr0MeasurementsCollector) Firmware() Firmware {
+func (c *measurementsCollector) Firmware() Firmware {
 	return c.firmware
 }
 
-func (c *pcr0MeasurementsCollector) FITEntries() []fit.Entry {
+func (c *measurementsCollector) FITEntries() []fit.Entry {
 	if c.fitEntriesResult != nil {
 		return *c.fitEntriesResult
 	}
@@ -81,7 +82,7 @@ func (c *pcr0MeasurementsCollector) FITEntries() []fit.Entry {
 	return fitEntries
 }
 
-func (c *pcr0MeasurementsCollector) PCDData() pcd.ParsedFirmware {
+func (c *measurementsCollector) PCDData() pcd.ParsedFirmware {
 	if c.pcdDataResult != nil {
 		return *c.pcdDataResult
 	}
@@ -94,7 +95,7 @@ func (c *pcr0MeasurementsCollector) PCDData() pcd.ParsedFirmware {
 	return pcdData
 }
 
-func (c *pcr0MeasurementsCollector) PSPFirmware() *amd.PSPFirmware {
+func (c *measurementsCollector) PSPFirmware() *amd.PSPFirmware {
 	if c.amdFirmware != nil {
 		return c.amdFirmware.PSPFirmware()
 	}
@@ -107,11 +108,18 @@ func (c *pcr0MeasurementsCollector) PSPFirmware() *amd.PSPFirmware {
 	return c.amdFirmware.PSPFirmware()
 }
 
-// CollectPRC0Measurements just returns all the measurements
-func (c *pcr0MeasurementsCollector) CollectPRC0Measurements(
+// CollectMeasurements just returns all the measurements for the specified PCR index.
+func (c *measurementsCollector) CollectMeasurements(
+	pcrIndex ID,
 	config MeasurementConfig,
 ) (result Measurements, warnings error, err error) {
-	for _, measurementID := range config.Flow.MeasurementIDs() {
+	switch pcrIndex {
+	case 0, 1:
+	default:
+		return nil, nil, &ErrUnknownPCRID{pcrIndex}
+	}
+
+	for _, measurementID := range config.Flow.MeasurementIDs().FilterByPCRIndex(pcrIndex) {
 		measurements, err := measurementID.MeasureFunc()(config, c)
 		if err != nil {
 			if measurementID.IsFake() || len(measurements) > 0 {

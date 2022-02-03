@@ -29,12 +29,7 @@ func GetMeasurements(
 		}
 	}
 
-	switch pcrID {
-	case 0:
-		measurements, flow, debugInfo, err = getMeasurementsPCR0(firmware, config)
-	default:
-		return nil, 0, nil, &ErrUnknownPCRID{pcrID}
-	}
+	measurements, flow, debugInfo, err = getMeasurements(pcrID, firmware, config)
 
 	if measurements == nil {
 		return
