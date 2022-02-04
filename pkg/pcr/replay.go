@@ -25,11 +25,32 @@ func Replay(eventLog *tpmeventlog.TPMEventLog, pcrIndex pcr.ID, hashAlgo tpmeven
 		return nil, fmt.Errorf("unable to filter events: %w", err)
 	}
 
+	// Set the initial value.
+	//
+	// Different PCR values has different rules how to set the initial value:
+	// * PCR0 is initially filled with zeros, but with the last byte equals to TPM initialization locality.
+	// * PCR1 is initially just filled with zeros.
+	// * Some PCR values are initially filled with 0xFF-s.
 	var result []byte
+	switch pcrIndex {
+	// We currently support only PCR0 and PCR1
+	case 0:
+		// The locality to be determined from EventLog, so do not initialize it, yet.
+	case 1:
+		// The initial value is always a bunch of zeros.
+		result = make([]byte, hasher.Size())
+		_, _ = fmt.Fprintf(logOut, "set(0x%X)\n", result)
+	default:
+		return nil, ErrNotSupportedIndex{Index: pcrIndex}
+	}
+
+	// Replay the log
 	for _, event := range events {
 		measurementIDs := TPMEventTypeToMeasurementIDs(pcrIndex, event.Type)
 		switch {
-		case len(measurementIDs) == 0:
+		case len(measurementIDs) == 0 && len(result) == 0:
+			// The PCR value is not initialized, and we cannot determine which event log entry contains
+			// the information to initialize it.
 			return nil, ErrUnexpectedEventType{Event: *event, Reason: fmt.Sprintf("unknown event type: %v", event.Type)}
 		case measurementIDs.Contains(MeasurementIDInit):
 			if len(result) != 0 {
@@ -45,7 +66,10 @@ func Replay(eventLog *tpmeventlog.TPMEventLog, pcrIndex pcr.ID, hashAlgo tpmeven
 				result[len(result)-1] = locality
 				_, _ = fmt.Fprintf(logOut, "set(0x%X)\n", result)
 			default:
-				return nil, ErrNotSupportedIndex{Index: pcrIndex}
+				return nil, ErrNotSupportedIndex{
+					Index:       pcrIndex,
+					Description: "measurement value init event is currently supported for PCR0 only",
+				}
 			}
 		default:
 			if len(result) == 0 {
