@@ -216,6 +216,13 @@ type printFITCmd struct {
 	BIOS string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
 }
 
+type verifyKMSigCmd struct {
+	KM string `arg required name:"km" help:"Path to the Key Manifest binary file." type:"path"`
+}
+type verifyBPMSigCmd struct {
+	BPM string `arg required name:"bpm" help:"Path to the Boot Policy Manifest binary file." type:"path"`
+}
+
 func (v *versionCmd) Run(ctx *context) error {
 	tools.ShowVersion(programName, gittag, gitcommit)
 	return nil
@@ -937,6 +944,42 @@ func (p printFITCmd) Run(ctx *context) error {
 	return nil
 }
 
+func (v *verifyKMSigCmd) Run(ctx *context) error {
+	kmRaw, err := ioutil.ReadFile(v.KM)
+	if err != nil {
+		return err
+	}
+
+	var km key.Manifest
+	r := bytes.NewReader(kmRaw)
+	if _, err = km.ReadFrom(r); err != nil {
+		return err
+	}
+	if err := km.KeyAndSignature.Verify(kmRaw[:km.KeyAndSignatureOffset()]); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *verifyBPMSigCmd) Run(ctx *context) error {
+	bpmraw, err := ioutil.ReadFile(b.BPM)
+	if err != nil {
+		return err
+	}
+
+	var bpm bootpolicy.Manifest
+	r := bytes.NewReader(bpmraw)
+	if _, err = bpm.ReadFrom(r); err != nil {
+		return err
+	}
+	if err := bpm.PMSE.Verify(bpmraw[:bpm.KeySignatureOffset]); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 var cli struct {
 	Debug                    bool `help:"Enable debug mode."`
 	ManifestStrictOrderCheck bool `help:"Enable checking of manifest elements order"`
@@ -944,12 +987,14 @@ var cli struct {
 	KMShow   kmPrintCmd     `cmd help:"Prints Key Manifest binary in human-readable format"`
 	KMGen    generateKMCmd  `cmd help:"Generate KM file based von json configuration"`
 	KMSign   signKMCmd      `cmd help:"Sign key manifest with given key"`
+	KMVerify verifyKMSigCmd `cmd help:"Verify the signature of a given KM"`
 	KMStitch stitchingKMCmd `cmd help:"Stitches KM Signatue into unsigned KM"`
 	KMExport kmExportCmd    `cmd help:"Exports KM structures from BIOS image into file"`
 
 	BPMShow   bpmPrintCmd     `cmd help:"Prints Boot Policy Manifest binary in human-readable format"`
 	BPMGen    generateBPMCmd  `cmd help:"Generate BPM file based von json configuration"`
 	BPMSign   signBPMCmd      `cmd help:"Sign Boot Policy Manifest with given key"`
+	BPMVerify verifyBPMSigCmd `cmd help:"Verify the signature of a given KM"`
 	BPMStitch stitchingBPMCmd `cmd help:"Stitches BPM Signatue into unsigned BPM"`
 	BPMExport bpmExportCmd    `cmd help:"Exports BPM structures from BIOS image into file"`
 
