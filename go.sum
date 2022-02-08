@@ -305,6 +305,8 @@ github.com/letsencrypt/pkcs11key/v4 v4.0.0/go.mod h1:EFUvBDay26dErnNb70Nd0/VW3tJ
 github.com/lib/pq v1.8.0/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
 github.com/linuxboot/fiano v1.0.4-0.20220119141046-2f62e2f75b44 h1:b8Cu/qf9K+BNPReLHARMtpz9uXFz6wZ6ysriJ76qbWc=
 github.com/linuxboot/fiano v1.0.4-0.20220119141046-2f62e2f75b44/go.mod h1:lsLW5PqsAN0OvdhI6SBszDwTF16ab8wfVPpewsQBOu8=
+github.com/linuxboot/fiano v1.0.6-0.20220208095308-e3fa29a6b2aa h1:EdI6AWh797oO1RTEngQegbeIThWRddsGKN75TfKWC7U=
+github.com/linuxboot/fiano v1.0.6-0.20220208095308-e3fa29a6b2aa/go.mod h1:lsLW5PqsAN0OvdhI6SBszDwTF16ab8wfVPpewsQBOu8=
 github.com/logrusorgru/aurora v2.0.3+incompatible h1:tOpm7WcpBTn4fjmVfgpQq0EfczGlG91VSDkswnjF5A8=
 github.com/logrusorgru/aurora v2.0.3+incompatible/go.mod h1:7rIyQOR62GCctdiQpZ/zOJlFyk6y+94wXzv6RNZgaR4=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=

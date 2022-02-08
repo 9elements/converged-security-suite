@@ -15,7 +15,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/klauspost/cpuid/v2 v2.0.9
 	github.com/kr/pretty v0.2.1 // indirect
-	github.com/linuxboot/fiano v1.0.4-0.20220119141046-2f62e2f75b44
+	github.com/linuxboot/fiano v1.0.6-0.20220208095308-e3fa29a6b2aa
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3
 	github.com/stretchr/testify v1.7.0
