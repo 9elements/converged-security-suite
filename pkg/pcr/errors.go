@@ -61,12 +61,17 @@ func (err ErrPCDVendorVersion) Error() string {
 
 // ErrNotSupportedIndex means selected PCR index is not supported (yet?)
 type ErrNotSupportedIndex struct {
-	Index ID
+	Index       ID
+	Description string
 }
 
 // Error implements interface `error`.
 func (err ErrNotSupportedIndex) Error() string {
-	return fmt.Sprintf("PCR index %d is not supported", err.Index)
+	result := fmt.Sprintf("PCR index %d is not supported", err.Index)
+	if len(err.Description) > 0 {
+		result += ": " + err.Description
+	}
+	return result
 }
 
 // ErrUnexpectedEventType means there was received an unexpected event type
