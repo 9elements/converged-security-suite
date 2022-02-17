@@ -26,10 +26,10 @@ type showKeysCmd struct {
 }
 
 type validatePSPEntriesCmd struct {
-	FwPath     string   `required name:"fwpath"    help:"Path to UEFI firmware image." type:"path"`
-	PSPLevel   uint     `required name:"psp-level" help:"PSP Directory Level to use for key database"`
-	Directory  string   `required name:"directory" help:"Directory to check items in: PSPDirectoryLevel1|PSPDirectoryLevel2|BIOSDirectoryLevel1|BIOSDirectoryLevel2"`
-	PSPEntries []string `arg required name:"psp-entries-hex-codes" help:"Hex codes of PSP entries to validate" type:"list"`
+	FwPath        string   `required name:"fwpath"                    help:"Path to UEFI firmware image." type:"path"`
+	KeyDBPSPLevel uint     `required name:"keydb-psp-level"           help:"PSP Directory Level to use for key database"`
+	Directory     string   `required name:"directory"                 help:"Directory to check items in: PSPDirectoryLevel1|PSPDirectoryLevel2|BIOSDirectoryLevel1|BIOSDirectoryLevel2"`
+	PSPEntries    []string `arg required name:"psp-entries-hex-codes" help:"Hex codes of PSP entries to validate" type:"list"`
 }
 
 type validateRTMCmd struct {
@@ -116,12 +116,22 @@ func (s *showKeysCmd) Run(ctx *context) error {
 }
 
 func (v *validatePSPEntriesCmd) Run(ctx *context) error {
+	directory, err := psb.DirectoryTypeFromString(v.Directory)
+	if err != nil {
+		return err
+	}
+
 	amdFw, err := psb.ParseAMDFirmwareFile(v.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
 
-	signatureValidations, err := psb.ValidatePSPEntries(amdFw, v.PSPLevel, v.PSPEntries)
+	keyDB, err := psb.GetKeys(amdFw, v.KeyDBPSPLevel)
+	if err != nil {
+		return fmt.Errorf("could not extract keys from the firmware image: %w", err)
+	}
+
+	signatureValidations, err := psb.ValidatePSPEntries(amdFw, keyDB, directory, v.PSPEntries)
 	if err != nil {
 		return err
 	}
