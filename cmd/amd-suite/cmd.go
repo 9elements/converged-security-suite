@@ -131,7 +131,16 @@ func (v *validatePSPEntriesCmd) Run(ctx *context) error {
 		return fmt.Errorf("could not extract keys from the firmware image: %w", err)
 	}
 
-	signatureValidations, err := psb.ValidatePSPEntries(amdFw, keyDB, directory, v.PSPEntries)
+	var pspEntryIDs []uint32
+	for _, pspEntry := range v.PSPEntries {
+		id, err := strconv.ParseInt(pspEntry, 16, 32)
+		if err != nil {
+			return fmt.Errorf("could not parse hexadecimal entry: %w", err)
+		}
+		pspEntryIDs = append(pspEntryIDs, uint32(id))
+	}
+
+	signatureValidations, err := psb.ValidatePSPEntries(amdFw, keyDB, directory, pspEntryIDs)
 	if err != nil {
 		return err
 	}
