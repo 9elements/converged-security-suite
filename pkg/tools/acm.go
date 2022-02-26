@@ -70,6 +70,14 @@ type UUID struct {
 	Field5 [6]uint8
 }
 
+// ACMRevision is the version of the ACM module in format <major>.<minor>.<build>
+type ACMRevision [3]uint8
+
+// String implements fmt.Stringer
+func (r ACMRevision) String() string {
+	return fmt.Sprintf("%d.%d.%d", r[0], r[1], r[2])
+}
+
 // ACMInfo holds the metadata extracted from the ACM header
 type ACMInfo struct {
 	UUID                UUID
@@ -81,7 +89,7 @@ type ACMInfo struct {
 	MinMleHeaderVersion uint32
 	TxtCaps             uint32
 	ACMVersion          uint8
-	Reserved            [3]uint8
+	ACMRevision         ACMRevision
 	ProcessorIDList     uint32
 	TPMInfoList         uint32
 }
@@ -398,6 +406,7 @@ func (a *ACM) PrettyPrint() {
 	fmt.Printf("      Min. MLE Header Version: 0x%08x\n", a.Info.MinMleHeaderVersion)
 	fmt.Printf("      Capabilities: 0x%08x\n", a.Info.TxtCaps)
 	fmt.Printf("      ACM Version: %d\n", a.Info.ACMVersion)
+	fmt.Printf("      ACM Revision: %s\n", a.Info.ACMRevision)
 }
 
 //PrettyPrint prints a human readable representation of the Chipsets
