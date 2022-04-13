@@ -11,7 +11,8 @@ import (
 
 // Command is the implementation of `commands.Command`.
 type Command struct {
-	outputFile *string
+	outputFile    *string
+	txtPublicDump *string
 }
 
 // Usage prints the syntax of arguments for this command
@@ -29,6 +30,8 @@ func (cmd Command) Description() string {
 func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
 	cmd.outputFile = flag.String("output", "",
 		"[optional] dumps all registers into a file")
+	cmd.txtPublicDump = flag.String("txt-public-dump", "",
+		"[optional] override TXT public space with a file")
 }
 
 // Execute is the main function here. It is responsible to
@@ -36,7 +39,11 @@ func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
 //
 // `args` are the arguments left unused by verb itself and options.
 func (cmd Command) Execute(args []string) {
-	regs, err := helpers.GetLocalRegisters()
+	getRegistersOpts := []helpers.GetRegistersOption{helpers.OptLocalhostByDefault(true)}
+	if *cmd.txtPublicDump != "" {
+		getRegistersOpts = append(getRegistersOpts, helpers.OptTXTPublic(*cmd.txtPublicDump))
+	}
+	regs, err := helpers.GetRegisters(getRegistersOpts...)
 	if regs == nil && err != nil {
 		panic(err)
 	}

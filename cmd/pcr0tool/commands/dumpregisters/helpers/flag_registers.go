@@ -28,7 +28,7 @@ func (f *FlagRegisters) Set(in string) error {
 		// using local values.
 		return nil
 	case "/dev":
-		regs, err := GetLocalRegisters()
+		regs, err := GetRegisters(OptLocalhostByDefault(true))
 		if err != nil && regs == nil {
 			return fmt.Errorf("unable to get register values of the local machine: %w", err)
 		}
