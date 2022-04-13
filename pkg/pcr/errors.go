@@ -32,7 +32,8 @@ type ErrCollect struct {
 }
 
 func (err ErrCollect) Error() string {
-	return fmt.Sprintf("unable to collect measurement '%s': %v", err.MeasurementID, err.Err)
+	return fmt.Sprintf("unable to collect measurement '%s' (is_fake:%v): %v",
+		err.MeasurementID, err.MeasurementID.IsFake(), err.Err)
 }
 
 func (err ErrCollect) Unwrap() error {

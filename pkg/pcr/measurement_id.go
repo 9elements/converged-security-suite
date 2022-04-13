@@ -398,6 +398,9 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 	}
 	return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
 		m, err := measureFunc(config, provider)
+		if err != nil {
+			return nil, err
+		}
 		return Measurements{m}, err
 	}
 }
