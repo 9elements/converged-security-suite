@@ -5,6 +5,10 @@ import (
 	"encoding/binary"
 )
 
+func init() {
+	registry.AddRegister(TXTHeapBase(0))
+}
+
 const TXTHeapBaseRegisterID RegisterID = "TXT.HEAP.BASE"
 const TXTHeapBaseRegisterOffset = 0x300
 
@@ -12,6 +16,11 @@ type TXTHeapBase uint32
 
 func (reg TXTHeapBase) ID() RegisterID {
 	return TXTHeapBaseRegisterID
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg TXTHeapBase) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg TXTHeapBase) Raw() uint32 {

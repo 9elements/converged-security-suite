@@ -1,5 +1,9 @@
 package registers
 
+func init() {
+	registry.AddRegister(BootGuardPBEC(0))
+}
+
 const BootGuardPBECRegisterID = "BOOT_GUARD_PBEC"
 const BootGuardPBECRegisterOffset = 0x139
 
@@ -29,6 +33,11 @@ func (reg BootGuardPBEC) Fields() []Field {
 		},
 	}
 	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg BootGuardPBEC) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg BootGuardPBEC) Raw() uint64 {

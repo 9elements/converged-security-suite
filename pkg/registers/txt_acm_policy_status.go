@@ -6,6 +6,10 @@ import (
 	"io"
 )
 
+func init() {
+	registry.AddRegister(ACMPolicyStatus(0))
+}
+
 const AcmPolicyStatusRegisterID RegisterID = "ACM_POLICY_STATUS"
 const ACMPolicyStatusRegisterOffset = 0x378
 
@@ -47,6 +51,11 @@ type ACMPolicyStatus uint64
 
 func (reg ACMPolicyStatus) ID() RegisterID {
 	return AcmPolicyStatusRegisterID
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg ACMPolicyStatus) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg ACMPolicyStatus) Raw() uint64 {

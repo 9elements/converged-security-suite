@@ -5,6 +5,10 @@ import (
 	"encoding/binary"
 )
 
+func init() {
+	registry.AddRegister(TXTDeviceID(0))
+}
+
 const TXTDeviceIDRegisterID RegisterID = "TXT.DIDVID"
 const TXTDeviceIDRegisterOffset = 0x110
 
@@ -12,6 +16,11 @@ type TXTDeviceID uint64
 
 func (reg TXTDeviceID) ID() RegisterID {
 	return TXTDeviceIDRegisterID
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg TXTDeviceID) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg TXTDeviceID) Raw() uint64 {

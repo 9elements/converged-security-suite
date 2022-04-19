@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
+	"gopkg.in/yaml.v3"
 )
 
 // FlagRegisters is a flag.Value implementation to enter status registers.
@@ -39,9 +40,19 @@ func (f *FlagRegisters) Set(in string) error {
 		if err != nil {
 			return fmt.Errorf("unable to parse file '%s': %w", in, err)
 		}
+
+		// ===
+		// TODO: Remove the JSON format, it is added only for backward compatibility
+		//       In year like 2025 this should be deleted.
 		err = json.Unmarshal(contents, (*registers.Registers)(f))
+		if err == nil {
+			return nil
+		}
+		// ===
+
+		err = yaml.Unmarshal(contents, (*registers.Registers)(f))
 		if err != nil {
-			return fmt.Errorf("unable to unmarshal JSON from file '%s': %w", in, err)
+			return fmt.Errorf("unable to unmarshal YAML from file '%s': %w", in, err)
 		}
 		return nil
 	}

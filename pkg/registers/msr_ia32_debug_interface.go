@@ -1,5 +1,9 @@
 package registers
 
+func init() {
+	registry.AddRegister(IA32DebugInterface(0))
+}
+
 const IA32DebugInterfaceRegisterID = "IA32_DEBUG_INTERFACE"
 const IA32DebugInterfaceRegisterOffset = 0xC80
 
@@ -41,6 +45,11 @@ func (reg IA32DebugInterface) Fields() []Field {
 		},
 	}
 	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg IA32DebugInterface) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg IA32DebugInterface) Raw() uint64 {

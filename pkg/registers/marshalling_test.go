@@ -43,12 +43,12 @@ func TestMarshalUnmarshal(t *testing.T) {
 
 	regs := append(txtRegisters, append(amdRegisters, msrRegisters...)...)
 	for _, reg := range regs {
-		rawValue, err := registers.MarshalValue(reg)
+		rawValue, err := registers.ValueBytes(reg)
 		if err != nil {
 			t.Errorf("failed to marhal register's %s value, err: %v", reg.ID(), err)
 			continue
 		}
-		result, err := registers.Unmarshal(reg.ID(), rawValue)
+		result, err := registers.ValueFromBytes(reg.ID(), rawValue)
 		if err != nil {
 			t.Errorf("failed to unmarhal register %s, err: %v", reg.ID(), err)
 			continue

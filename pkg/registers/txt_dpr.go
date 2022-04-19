@@ -5,6 +5,10 @@ import (
 	"encoding/binary"
 )
 
+func init() {
+	registry.AddRegister(TXTDMAProtectedRange(0))
+}
+
 const TXTDMAProtectedRangeRegisterID RegisterID = "TXT.DPR"
 const TXTDMAProtectedRangeRegisterOffset = 0x330
 
@@ -21,6 +25,11 @@ type TXTDMAProtectedRange uint32
 
 func (reg TXTDMAProtectedRange) ID() RegisterID {
 	return TXTDMAProtectedRangeRegisterID
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg TXTDMAProtectedRange) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg TXTDMAProtectedRange) Raw() uint32 {

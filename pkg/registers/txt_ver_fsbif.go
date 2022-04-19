@@ -5,6 +5,10 @@ import (
 	"encoding/binary"
 )
 
+func init() {
+	registry.AddRegister(TXTVerFSBIF(0))
+}
+
 const TXTVerFSBIfRegisterID RegisterID = "TXT.VER.FSBIF"
 const TXTVerFSBIfRegisterOffset = 0x100
 
@@ -12,6 +16,11 @@ type TXTVerFSBIF uint32
 
 func (reg TXTVerFSBIF) ID() RegisterID {
 	return TXTVerFSBIfRegisterID
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg TXTVerFSBIF) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg TXTVerFSBIF) Raw() uint32 {

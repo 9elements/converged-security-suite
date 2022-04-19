@@ -5,6 +5,10 @@ import (
 	"encoding/binary"
 )
 
+func init() {
+	registry.AddRegister(TXTErrorStatus(0))
+}
+
 const TXTErrorStatusRegisterID RegisterID = "TXT.ESTS"
 const TXTErrorStatusRegisterOffset = 0x8
 
@@ -12,6 +16,11 @@ type TXTErrorStatus uint8
 
 func (reg TXTErrorStatus) ID() RegisterID {
 	return TXTErrorStatusRegisterID
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg TXTErrorStatus) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg TXTErrorStatus) Raw() uint8 {

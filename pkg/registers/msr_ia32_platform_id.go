@@ -1,5 +1,9 @@
 package registers
 
+func init() {
+	registry.AddRegister(IA32PlatformID(0))
+}
+
 const IA32PlatformIDRegisterID = "IA32_PLATFORM_ID"
 const IA32PlatformIDRegisterOffset = 0x17
 
@@ -33,6 +37,11 @@ func (reg IA32PlatformID) Fields() []Field {
 		},
 	}
 	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg IA32PlatformID) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg IA32PlatformID) Raw() uint64 {

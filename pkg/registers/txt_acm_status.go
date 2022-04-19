@@ -5,6 +5,10 @@ import (
 	"encoding/binary"
 )
 
+func init() {
+	registry.AddRegister(ACMStatus(0))
+}
+
 const ACMStatusRegisterID RegisterID = "ACM_STATUS"
 const ACMStatusRegisterOffset = 0x328
 
@@ -57,12 +61,13 @@ func (reg ACMStatus) Fields() []Field {
 	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
 }
 
-func (reg ACMStatus) Raw() uint64 {
-	return uint64(reg)
+// Value returns the raw value wrapped into an interface.
+func (reg ACMStatus) Value() interface{} {
+	return reg.Raw()
 }
 
-func (reg ACMStatus) String() string {
-	panic("Not implemented")
+func (reg ACMStatus) Raw() uint64 {
+	return uint64(reg)
 }
 
 func (reg ACMStatus) ModuleType() uint8 {

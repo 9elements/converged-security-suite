@@ -1,5 +1,9 @@
 package registers
 
+func init() {
+	registry.AddRegister(IA32FeatureControl(0))
+}
+
 const IA32FeatureControlRegisterID = "IA32_FEATURE_CONTROL"
 const IA32FeatureControlRegisterOffset = 0x3A
 
@@ -20,7 +24,7 @@ func (reg IA32FeatureControl) Address() uint64 {
 func (reg IA32FeatureControl) Fields() []Field {
 	fieldsRaw := []FieldDescription{
 		{
-			Name:      "Lock (0 =unlocked, 1 = locked)",
+			Name:      "Lock (0 = unlocked, 1 = locked)",
 			BitOffset: 0,
 		},
 		{
@@ -49,6 +53,11 @@ func (reg IA32FeatureControl) Fields() []Field {
 		},
 	}
 	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg IA32FeatureControl) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg IA32FeatureControl) Raw() uint64 {

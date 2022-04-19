@@ -1,5 +1,9 @@
 package registers
 
+func init() {
+	registry.AddRegister(IA32MTRRCAP(0))
+}
+
 const IA32MTRRCAPRegisterID = "IA32_MTRRCAP"
 const IA32MTRRCAPRegisterOffset = 0xfe
 
@@ -61,6 +65,11 @@ func (reg IA32MTRRCAP) WriteCombiningMemoryTypeSupported() bool {
 
 func (reg IA32MTRRCAP) SMRRInterfaceSupported() bool {
 	return (reg>>11)&0x1 != 0
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg IA32MTRRCAP) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg IA32MTRRCAP) Raw() uint64 {
