@@ -5,6 +5,10 @@ import (
 	"encoding/binary"
 )
 
+func init() {
+	registry.AddRegister(TXTMLEJoin(0))
+}
+
 const TXTMLEJoinRegisterID RegisterID = "TXT.MLE.JOIN"
 const TXTMLEJoinRegisterOffset = 0x290
 
@@ -12,6 +16,11 @@ type TXTMLEJoin uint32
 
 func (reg TXTMLEJoin) ID() RegisterID {
 	return TXTMLEJoinRegisterID
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg TXTMLEJoin) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg TXTMLEJoin) Raw() uint32 {

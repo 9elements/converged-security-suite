@@ -1,5 +1,9 @@
 package registers
 
+func init() {
+	registry.AddRegister(BTGSACMInfo(0))
+}
+
 const BTGSACMInfoRegisterID = "BTG_SACM_INFO"
 const BTGSACMInfoRegisterOffset = 0x13A
 
@@ -73,6 +77,11 @@ func (reg BTGSACMInfo) Fields() []Field {
 		},
 	}
 	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg BTGSACMInfo) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg BTGSACMInfo) Raw() uint64 {

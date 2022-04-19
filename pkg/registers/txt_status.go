@@ -5,6 +5,10 @@ import (
 	"encoding/binary"
 )
 
+func init() {
+	registry.AddRegister(TXTStatus(0))
+}
+
 const TXTStatusRegisterID RegisterID = "TXT.STS"
 const TXTStatusRegisterOffset = 0
 
@@ -13,6 +17,11 @@ type TXTStatus uint64
 
 func (reg TXTStatus) ID() RegisterID {
 	return TXTStatusRegisterID
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg TXTStatus) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg TXTStatus) Raw() uint64 {

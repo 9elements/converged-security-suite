@@ -1,5 +1,9 @@
 package registers
 
+func init() {
+	registry.AddRegister(IA32SMRRPhysMask(0))
+}
+
 const IA32SMRRPhysMaskRegisterID = "IA32_SMRR_PHYSMASK"
 const IA32SMRRPhysMaskRegisterOffset = 0x1F3
 
@@ -37,6 +41,11 @@ func (reg IA32SMRRPhysMask) Fields() []Field {
 		},
 	}
 	return CalculateRegisterFields(reg.Raw(), reg.BitSize(), fieldsRaw)
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg IA32SMRRPhysMask) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg IA32SMRRPhysMask) Raw() uint64 {

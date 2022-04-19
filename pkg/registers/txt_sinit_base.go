@@ -5,6 +5,10 @@ import (
 	"encoding/binary"
 )
 
+func init() {
+	registry.AddRegister(TXTSInitBase(0))
+}
+
 const TXTSINITBaseRegisterID RegisterID = "TXT.SINIT.BASE"
 const TXTSINITBaseRegisterOffset = 0x270
 
@@ -12,6 +16,11 @@ type TXTSInitBase uint32
 
 func (reg TXTSInitBase) ID() RegisterID {
 	return TXTSINITBaseRegisterID
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg TXTSInitBase) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg TXTSInitBase) Raw() uint32 {

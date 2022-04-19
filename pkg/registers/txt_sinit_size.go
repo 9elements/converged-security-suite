@@ -5,6 +5,10 @@ import (
 	"encoding/binary"
 )
 
+func init() {
+	registry.AddRegister(TXTSInitSize(0))
+}
+
 const TXTSINITSizeRegisterID RegisterID = "TXT.SINIT.SIZE"
 const TXTSINITSizeRegisterOffset = 0x278
 
@@ -12,6 +16,11 @@ type TXTSInitSize uint32
 
 func (reg TXTSInitSize) ID() RegisterID {
 	return TXTSINITSizeRegisterID
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg TXTSInitSize) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg TXTSInitSize) Raw() uint32 {
