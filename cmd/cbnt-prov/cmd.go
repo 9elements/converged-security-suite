@@ -167,6 +167,7 @@ type signKMCmd struct {
 	KmIn     string `arg required name:"kmin" help:"Path to the generated Key Manifest binary file." type:"path"`
 	KmOut    string `arg required name:"kmout" help:"Path to write the signed KM to"`
 	Key      string `arg required name:"km-keyfile" help:"Path to the encrypted PKCS8 private key file." type:"path"`
+	SignAlgo string `arg required name:"signalgo" help:"Signing algorithm for KM. E.g.: RSASSA, RSAPSS, SM2"`
 	Password string `arg required name:"password" help:"Password to decrypted PKCS8 private key file"`
 }
 
@@ -174,6 +175,7 @@ type signBPMCmd struct {
 	BpmIn    string `arg required name:"bpmin" help:"Path to the newly generated Boot Policy Manifest binary file." type:"path"`
 	BpmOut   string `arg required name."bpmout" help:"Path to write the signed BPM to"`
 	Key      string `arg required name:"bpm-keyfile" help:"Path to the encrypted PKCS8 private key file." type:"path"`
+	SignAlgo string `arg required name:"signalgo" help:"Signing algorithm for KM. E.g.: RSASSA, RSAPSS, SM2"`
 	Password string `arg required name:"password" help:"Password to decrypt PKCS8 private key file"`
 }
 
@@ -212,6 +214,13 @@ type keygenCmd struct {
 
 type printFITCmd struct {
 	BIOS string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
+}
+
+type verifyKMSigCmd struct {
+	KM string `arg required name:"km" help:"Path to the Key Manifest binary file." type:"path"`
+}
+type verifyBPMSigCmd struct {
+	BPM string `arg required name:"bpm" help:"Path to the Boot Policy Manifest binary file." type:"path"`
 }
 
 func (v *versionCmd) Run(ctx *context) error {
@@ -608,6 +617,10 @@ func (s *signKMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
+	signAlgo, err := manifest.GetAlgFromString(s.SignAlgo)
+	if err != nil {
+		return err
+	}
 	var km key.Manifest
 	r := bytes.NewReader(kmRaw)
 	_, err = km.ReadFrom(r)
@@ -616,7 +629,7 @@ func (s *signKMCmd) Run(ctx *context) error {
 	}
 	km.RehashRecursive()
 	unsignedKM := kmRaw[:km.KeyAndSignatureOffset()]
-	if err = km.SetSignature(0, privkey.(crypto.Signer), unsignedKM); err != nil {
+	if err = km.SetSignature(signAlgo, km.PubKeyHashAlg, privkey.(crypto.Signer), unsignedKM); err != nil {
 		return err
 	}
 	bKMSigned, err := cbnt.WriteKM(&km)
@@ -639,6 +652,10 @@ func (s *signBPMCmd) Run(ctx *context) error {
 		return err
 	}
 	bpmRaw, err := ioutil.ReadFile(s.BpmIn)
+	if err != nil {
+		return err
+	}
+	signAlgo, err := manifest.GetAlgFromString(s.SignAlgo)
 	if err != nil {
 		return err
 	}
@@ -665,7 +682,7 @@ func (s *signBPMCmd) Run(ctx *context) error {
 	bpm.RehashRecursive()
 	unsignedBPM := bpmRaw[:bpm.KeySignatureOffset]
 	//err = bpm.PMSE.SetSignature(0, key.(crypto.Signer), unsignedBPM)
-	err = bpm.PMSE.Signature.SetSignature(0, key.(crypto.Signer), unsignedBPM)
+	err = bpm.PMSE.Signature.SetSignature(signAlgo, 0, key.(crypto.Signer), unsignedBPM)
 	if err != nil {
 		return fmt.Errorf("unable to make a signature: %w", err)
 	}
@@ -927,6 +944,42 @@ func (p printFITCmd) Run(ctx *context) error {
 	return nil
 }
 
+func (v *verifyKMSigCmd) Run(ctx *context) error {
+	kmRaw, err := ioutil.ReadFile(v.KM)
+	if err != nil {
+		return err
+	}
+
+	var km key.Manifest
+	r := bytes.NewReader(kmRaw)
+	if _, err = km.ReadFrom(r); err != nil {
+		return err
+	}
+	if err := km.KeyAndSignature.Verify(kmRaw[:km.KeyAndSignatureOffset()]); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *verifyBPMSigCmd) Run(ctx *context) error {
+	bpmraw, err := ioutil.ReadFile(b.BPM)
+	if err != nil {
+		return err
+	}
+
+	var bpm bootpolicy.Manifest
+	r := bytes.NewReader(bpmraw)
+	if _, err = bpm.ReadFrom(r); err != nil {
+		return err
+	}
+	if err := bpm.PMSE.Verify(bpmraw[:bpm.KeySignatureOffset]); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 var cli struct {
 	Debug                    bool `help:"Enable debug mode."`
 	ManifestStrictOrderCheck bool `help:"Enable checking of manifest elements order"`
@@ -934,12 +987,14 @@ var cli struct {
 	KMShow   kmPrintCmd     `cmd help:"Prints Key Manifest binary in human-readable format"`
 	KMGen    generateKMCmd  `cmd help:"Generate KM file based von json configuration"`
 	KMSign   signKMCmd      `cmd help:"Sign key manifest with given key"`
+	KMVerify verifyKMSigCmd `cmd help:"Verify the signature of a given KM"`
 	KMStitch stitchingKMCmd `cmd help:"Stitches KM Signatue into unsigned KM"`
 	KMExport kmExportCmd    `cmd help:"Exports KM structures from BIOS image into file"`
 
 	BPMShow   bpmPrintCmd     `cmd help:"Prints Boot Policy Manifest binary in human-readable format"`
 	BPMGen    generateBPMCmd  `cmd help:"Generate BPM file based von json configuration"`
 	BPMSign   signBPMCmd      `cmd help:"Sign Boot Policy Manifest with given key"`
+	BPMVerify verifyBPMSigCmd `cmd help:"Verify the signature of a given KM"`
 	BPMStitch stitchingBPMCmd `cmd help:"Stitches BPM Signatue into unsigned BPM"`
 	BPMExport bpmExportCmd    `cmd help:"Exports BPM structures from BIOS image into file"`
 

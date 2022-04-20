@@ -147,9 +147,13 @@ func MeasureBIOSStartupModule(imageSize uint64, fitEntries []fit.Entry) (*Measur
 			_ = mErr.Add(fitEntry.HeadersErrors...)
 
 			biosSMOffset := fitEntry.Headers.Address.Offset(imageSize)
+			biosStartup, err := DataChunkIDBIOSStartup(uint(len(m.Data)))
+			if err != nil {
+				return nil, err
+			}
 			m.Data = append(m.Data,
 				*NewRangeDataChunk(
-					DataChunkIDBIOSStartup(uint(len(m.Data))),
+					biosStartup,
 					biosSMOffset,
 					uint64(len(fitEntry.DataSegmentBytes)),
 				),
