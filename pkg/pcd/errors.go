@@ -111,3 +111,20 @@ type ErrUnknownVendorType struct{}
 func (err *ErrUnknownVendorType) Error() string {
 	return "unable to find an appropriate PCD parser for the firmware image"
 }
+
+// ErrTooDummyFirmwareVersionFiles means there were found too many files
+// with the GUID used exclusively in dummy firmwares we invented. There
+// should be only one such file in a dummy firmware.
+type ErrTooDummyFirmwareVersionFiles struct{}
+
+func (err *ErrTooDummyFirmwareVersionFiles) Error() string {
+	return "too many version files of a dummy firmware"
+}
+
+// ErrDummyFirmwareVersionFileWrongType means the version file of a dummy
+// firmware is not a file.
+type ErrDummyFirmwareVersionFileWrongType struct{}
+
+func (err *ErrDummyFirmwareVersionFileWrongType) Error() string {
+	return "version file of a dummy firmware is not a file"
+}

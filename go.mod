@@ -3,9 +3,11 @@ module github.com/9elements/converged-security-suite/v2
 go 1.13
 
 require (
+	github.com/9elements/converged-security-suite/v2/testdata/firmware v0.0.0-00010101000000-000000000000
 	github.com/9elements/go-linux-lowlevel-hw v0.0.0-20211215141225-8375dd201aae
 	github.com/alecthomas/kong v0.2.11
 	github.com/creasty/defaults v1.5.1
+	github.com/davecgh/go-spew v1.1.1
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e
 	github.com/edsrzf/mmap-go v1.0.0
 	github.com/fearful-symmetry/gomsr v0.0.1
@@ -17,12 +19,17 @@ require (
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/linuxboot/fiano v1.0.6-0.20220208095308-e3fa29a6b2aa
 	github.com/logrusorgru/aurora v2.0.3+incompatible
+	github.com/marcoguerri/go-tpm-tcti v0.0.0-20210425104733-8e8c8fe68e60
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/pretty v1.0.2
 	github.com/tjfoc/gmsm v1.4.1
 	github.com/ulikunitz/xz v0.5.10
+	github.com/xaionaro-facebook/go-dmidecode v0.0.0-20220413144237-c42d5bef2498
 	github.com/xaionaro-go/bytesextra v0.0.0-20220103144954-846e454ddea9
 	github.com/xaionaro-go/unsafetools v0.0.0-20210722164218-75ba48cf7b3c
-	golang.org/x/crypto v0.0.0-20210314154223-e6e6c4f2bb5b
+	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
+
+replace github.com/9elements/converged-security-suite/v2/testdata/firmware => ./testdata/firmware
