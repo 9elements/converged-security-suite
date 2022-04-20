@@ -474,7 +474,7 @@ func (g *generateBPMCmd) Run(ctx *context) error {
 
 		ibbs, err := cbnt.FindAdditionalIBBs(g.BIOS)
 		if err != nil {
-			return err
+			return fmt.Errorf("FindAdditionalIBBs: %w", err)
 		}
 		for counter := range ibbs {
 			ibbs[counter].Flags = g.IbbSegFlag
@@ -499,7 +499,7 @@ func (g *generateBPMCmd) Run(ctx *context) error {
 
 	bpm, err := cbnt.GenerateBPM(options, g.BIOS)
 	if err != nil {
-		return err
+		return fmt.Errorf("GenerateBPM: %w", err)
 	}
 
 	// This section is hacky, just to make the parsing work

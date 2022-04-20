@@ -79,17 +79,17 @@ func getIBBSegment(ibbs []bootpolicy.IBBSegment, image []byte) ([][]byte, error)
 		//offset := uint64(ibb.BaseOffset())
 		addr, err := tools.CalcImageOffset(image, uint64(ibb.Base))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to calculate the offset: %w", err)
 		}
 		_, err = reader.Seek(int64(addr), io.SeekStart)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("got error from Seek: %w", err)
 		}
 		size := uint64(ibb.Size)
 		ibbSegments[idx] = make([]byte, size)
 		_, err = reader.Read(ibbSegments[idx])
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to read the segment: %w", err)
 		}
 	}
 	return ibbSegments, nil
@@ -102,12 +102,12 @@ func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo manifest.Alg
 		h := sha1.New()
 		segments, err := getIBBSegment(ibbs, image)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to get IBB segments: %w", err)
 		}
 		for _, segment := range segments {
 			_, err = h.Write(segment)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("unable to hash a segment: %w", err)
 			}
 		}
 		hash = h.Sum(nil)
@@ -115,12 +115,12 @@ func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo manifest.Alg
 		h := sha256.New()
 		segments, err := getIBBSegment(ibbs, image)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to get IBB segments: %w", err)
 		}
 		for _, segment := range segments {
 			_, err = h.Write(segment)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("unable to hash a segment: %w", err)
 			}
 		}
 		hash = h.Sum(nil)
@@ -128,12 +128,12 @@ func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo manifest.Alg
 		h := sha512.New384()
 		segments, err := getIBBSegment(ibbs, image)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to get IBB segments: %w", err)
 		}
 		for _, segment := range segments {
 			_, err = h.Write(segment)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("unable to hash a segment: %w", err)
 			}
 		}
 		hash = h.Sum(nil)
@@ -141,12 +141,12 @@ func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo manifest.Alg
 		h := sha512.New512_256()
 		segments, err := getIBBSegment(ibbs, image)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to get IBB segments: %w", err)
 		}
 		for _, segment := range segments {
 			_, err = h.Write(segment)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("unable to hash a segment: %w", err)
 			}
 		}
 		hash = h.Sum(nil)
@@ -154,12 +154,12 @@ func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo manifest.Alg
 		h := sm3.New()
 		segments, err := getIBBSegment(ibbs, image)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to get IBB segments: %w", err)
 		}
 		for _, segment := range segments {
 			_, err = h.Write(segment)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("unable to hash a segment: %w", err)
 			}
 		}
 		hash = h.Sum(nil)
@@ -175,7 +175,7 @@ func setIBBSegment(cbnto *Options, image []byte) (*bootpolicy.SE, error) {
 	for iterator, item := range cbnto.BootPolicyManifest.SE[0].DigestList.List {
 		d, err := getIBBsDigest(cbnto.BootPolicyManifest.SE[0].IBBSegments, image, item.HashAlg)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to getIBBsDigest for %v: %w", item.HashAlg, err)
 		}
 		cbnto.BootPolicyManifest.SE[0].DigestList.List[iterator].HashBuffer = make([]byte, len(d))
 		copy(cbnto.BootPolicyManifest.SE[0].DigestList.List[iterator].HashBuffer, d)
@@ -221,33 +221,33 @@ func GenerateBPM(cbnto *Options, biosFilepath string) (*bootpolicy.Manifest, err
 	bpm := bootpolicy.NewManifest()
 	data, err := ioutil.ReadFile(biosFilepath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to read file '%s': %w", biosFilepath, err)
 	}
 	se, err := setIBBSegment(cbnto, data)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("setIBBSegment: %w", err)
 	}
 	bpm.SE = append(bpm.SE, *se)
 	bpm.TXTE, err = setTXTElement(cbnto)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("setTXTElement: %w", err)
 	}
 	bpm.PCDE, err = setPCDElement(cbnto)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("setPCDElement: %w", err)
 	}
 	bpm.PME, err = setPMElement(cbnto)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("setPMElement: %w", err)
 	}
 	bpmh, err := setBPMHeader(cbnto, bpm)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("setBPMHeader: %w", err)
 	}
 	bpm.BPMH = *bpmh
 	pmse, err := setPMSElement(cbnto, bpm)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("setPMSElement: %w", err)
 	}
 	bpm.PMSE = *pmse
 
