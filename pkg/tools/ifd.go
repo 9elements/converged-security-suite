@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"math"
 
 	"github.com/linuxboot/fiano/pkg/fmap"
 	"github.com/linuxboot/fiano/pkg/uefi"
@@ -35,10 +36,21 @@ func CalcImageOffset(image []byte, addr uint64) (uint64, error) {
 	var cbErr error
 	off, size, cbErr = getCorebootRegion(image)
 	// If it's not a proper coreboot image return the IFD error as this is more generic.
-	if cbErr != nil {
-		return 0, ifdErr
+	if cbErr == nil {
+		return uint64(off+size) - consts.BasePhysAddr + addr, nil
 	}
-	return uint64(off+size) - consts.BasePhysAddr + addr, nil
+
+	// Sometimes the image is just the BIOS region directly.
+	// Let's try to parse the image as BIOS region, and if it works,
+	// then the BIOS region offset is just zero and we can calculate
+	// the `addr` offset as just `consts.BasePhysAddr - addr`.
+	_, biosRegErr := uefi.NewBIOSRegion(image, nil, uefi.RegionTypeBIOS)
+	if biosRegErr == nil {
+		return consts.BasePhysAddr - addr, nil
+	}
+
+	return math.MaxUint64, fmt.Errorf("ifdErr == %w, cbErr == %v, biosRegErr == %v",
+		ifdErr, cbErr, biosRegErr)
 }
 
 // GetRegion returns offset and size of the given region type.
