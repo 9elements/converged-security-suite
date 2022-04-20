@@ -52,9 +52,7 @@ func (opts getRegistersOptions) Config() (getRegistersConfig, error) {
 }
 
 // GetRegisters extracts status registers.
-func GetRegisters(
-	options ...GetRegistersOption,
-) (registers.Registers, error) {
+func GetRegisters(options ...GetRegistersOption) (registers.Registers, error) {
 	cfg, err := getRegistersOptions(options).Config()
 	if err != nil {
 		return nil, fmt.Errorf("invalid arguments: %w", err)
