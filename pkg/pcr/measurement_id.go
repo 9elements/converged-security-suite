@@ -680,6 +680,26 @@ func (s MeasurementIDs) Contains(id MeasurementID) bool {
 	return false
 }
 
+// FilterByPCRIndex returns a subset of measurement IDs only which corresponds to specified PCR index.
+func (s MeasurementIDs) FilterByPCRIndex(pcrIndex ID) MeasurementIDs {
+	var r MeasurementIDs
+	for _, m := range s {
+		found := false
+		for _, pcrIndexCmp := range m.PCRIDs() {
+			if pcrIndexCmp == pcrIndex {
+				found = true
+				break
+			}
+		}
+		if !found {
+			continue
+		}
+		r = append(r, m)
+	}
+
+	return r
+}
+
 // DataChunkID is an unique identified of the measured data chunk
 type DataChunkID int
 
