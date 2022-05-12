@@ -205,7 +205,7 @@ func (v *dumpPSPEntryCmd) Run(ctx *context) error {
 
 func (v *dumpBIOSEntryCmd) Run(ctx *context) error {
 	return dumpHelper(v.FwPath, v.Entry, v.EntryFile, func(amdFw *amd_manifest.AMDFirmware, entryID uint32, w io.Writer) (int, error) {
-		return psb.DumpBIOSEntry(amdFw, v.BIOSLevel, amd_manifest.BIOSDirectoryTableEntryType(entryID), int(v.Instance), w)
+		return psb.DumpBIOSEntry(amdFw, v.BIOSLevel, amd_manifest.BIOSDirectoryTableEntryType(entryID), v.Instance, w)
 	})
 }
 
@@ -260,6 +260,6 @@ func (v *patchPSPEntryCmd) Run(ctx *context) error {
 
 func (v *patchBIOSEntryCmd) Run(ctx *context) error {
 	return patchHelper(v.FwPath, v.Entry, v.EntryFile, v.ModifiedFirmwareFile, func(amdFw *amd_manifest.AMDFirmware, entryID uint32, r io.Reader, w io.Writer) (int, error) {
-		return psb.PatchBIOSEntry(amdFw, v.BIOSLevel, amd_manifest.BIOSDirectoryTableEntryType(entryID), int(v.Instance), r, w)
+		return psb.PatchBIOSEntry(amdFw, v.BIOSLevel, amd_manifest.BIOSDirectoryTableEntryType(entryID), v.Instance, r, w)
 	})
 }
