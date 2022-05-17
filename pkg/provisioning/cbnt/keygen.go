@@ -52,7 +52,7 @@ func GenRSAKey(len int, password string, kmPubFile, kmPrivFile, bpmPubFile, bpmP
 		}
 		return nil
 	}
-	return fmt.Errorf("RSA key length must be 2048 or 3084 Bits, but length is: %d", len)
+	return fmt.Errorf("RSA key length must be 2048 or 3072 Bits, but length is: %d", len)
 }
 
 // GenECCKey takes the required curve, two boolean to decide for KM and BPM key and a path

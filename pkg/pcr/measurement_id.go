@@ -398,6 +398,9 @@ func (id MeasurementID) MeasureFunc() MeasureFunc {
 	}
 	return func(config MeasurementConfig, provider DataProvider) (Measurements, error) {
 		m, err := measureFunc(config, provider)
+		if err != nil {
+			return nil, err
+		}
 		return Measurements{m}, err
 	}
 }
@@ -677,6 +680,26 @@ func (s MeasurementIDs) Contains(id MeasurementID) bool {
 	return false
 }
 
+// FilterByPCRIndex returns a subset of measurement IDs only which corresponds to specified PCR index.
+func (s MeasurementIDs) FilterByPCRIndex(pcrIndex ID) MeasurementIDs {
+	var r MeasurementIDs
+	for _, m := range s {
+		found := false
+		for _, pcrIndexCmp := range m.PCRIDs() {
+			if pcrIndexCmp == pcrIndex {
+				found = true
+				break
+			}
+		}
+		if !found {
+			continue
+		}
+		r = append(r, m)
+	}
+
+	return r
+}
+
 // DataChunkID is an unique identified of the measured data chunk
 type DataChunkID int
 
@@ -705,6 +728,8 @@ const (
 	DataChunkIDBIOSStartup1
 	DataChunkIDBIOSStartup2
 	DataChunkIDBIOSStartup3
+	DataChunkIDBIOSStartup4
+	DataChunkIDBIOSStartup5
 	DataChunkIDACMPolicyStatus
 	DataChunkIDACMHeaderSVN
 	DataChunkIDACMSignature
@@ -716,18 +741,22 @@ const (
 
 // DataChunkIDBIOSStartup returns DataChunkID corresponding to
 // entryIndex-th BIOS Startup entry (accordingly to FIT).
-func DataChunkIDBIOSStartup(entryIndex uint) DataChunkID {
+func DataChunkIDBIOSStartup(entryIndex uint) (DataChunkID, error) {
 	switch entryIndex {
 	case 0:
-		return DataChunkIDBIOSStartup0
+		return DataChunkIDBIOSStartup0, nil
 	case 1:
-		return DataChunkIDBIOSStartup1
+		return DataChunkIDBIOSStartup1, nil
 	case 2:
-		return DataChunkIDBIOSStartup2
+		return DataChunkIDBIOSStartup2, nil
 	case 3:
-		return DataChunkIDBIOSStartup3
+		return DataChunkIDBIOSStartup3, nil
+	case 4:
+		return DataChunkIDBIOSStartup4, nil
+	case 5:
+		return DataChunkIDBIOSStartup5, nil
 	}
-	panic(fmt.Sprintf("should not happen: %v", entryIndex))
+	return DataChunkIDUndefined, fmt.Errorf("invalid DataChunkIDBIOSStartup: %v", entryIndex)
 }
 
 // String implements fmt.Stringer
@@ -743,6 +772,10 @@ func (id DataChunkID) String() string {
 		return "BIOS_startup_module_2"
 	case DataChunkIDBIOSStartup3:
 		return "BIOS_startup_module_3"
+	case DataChunkIDBIOSStartup4:
+		return "BIOS_startup_module_4"
+	case DataChunkIDBIOSStartup5:
+		return "BIOS_startup_module_5"
 	case DataChunkIDACMPolicyStatus:
 		return "ACM_policy_status"
 	case DataChunkIDACMHeaderSVN:

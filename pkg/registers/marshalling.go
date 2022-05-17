@@ -1,3 +1,6 @@
+// TODO: delete this file, it uses obsolete serialization code,
+// now we use HEX instead of Base64, see marshal_value.go
+
 package registers
 
 import (
@@ -6,8 +9,9 @@ import (
 	"fmt"
 )
 
-// MarshalValue puts register's internal value into a sequence of bytes
-func MarshalValue(reg Register) ([]byte, error) {
+// ValueBytes puts register's internal value into a sequence of bytes
+// TODO: use dynamic conversion instead of hard-code
+func ValueBytes(reg Register) ([]byte, error) {
 	if reg == nil {
 		return nil, fmt.Errorf("input register is nil")
 	}
@@ -150,13 +154,14 @@ func getRegister8Parser(regID RegisterID) func(ui8 uint8) Register {
 	return nil
 }
 
-// Unmarshal constructs register from it's id and marshalled value
-func Unmarshal(id RegisterID, b []byte) (Register, error) {
+// ValueFromBytes constructs register from it's id and marshalled value
+// TODO: use dynamic conversion instead of hard-code
+func ValueFromBytes(id RegisterID, b []byte) (Register, error) {
 	// special case registers
 	switch id {
 	case TXTPublicKeyRegisterID:
 		if len(b) != 32 {
-			return nil, fmt.Errorf("incorrect input bytes length, 32 is expected, but got %d", len(b))
+			return nil, fmt.Errorf("incorrect input bytes length, 32 is expected, but got %d ('%s')", len(b), b)
 		}
 		var arr [32]byte
 		copy(arr[:], b[:])

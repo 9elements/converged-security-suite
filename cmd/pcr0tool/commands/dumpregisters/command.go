@@ -1,17 +1,21 @@
 package dumpregisters
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
+	"github.com/9elements/converged-security-suite/v2/pkg/registers"
+
+	"gopkg.in/yaml.v3"
 )
 
 // Command is the implementation of `commands.Command`.
 type Command struct {
-	outputFile *string
+	outputFile    *string
+	txtPublicDump *string
+	registers     helpers.FlagRegisters
 }
 
 // Usage prints the syntax of arguments for this command
@@ -29,6 +33,9 @@ func (cmd Command) Description() string {
 func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
 	cmd.outputFile = flag.String("output", "",
 		"[optional] dumps all registers into a file")
+	cmd.txtPublicDump = flag.String("txt-public-dump", "",
+		"[optional] override TXT public space with a file")
+	flag.Var(&cmd.registers, "registers", "[optional] file that contains registers as a json array (use value '/dev' to use registers of the local machine)")
 }
 
 // Execute is the main function here. It is responsible to
@@ -36,14 +43,29 @@ func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
 //
 // `args` are the arguments left unused by verb itself and options.
 func (cmd Command) Execute(args []string) {
-	regs, err := helpers.GetLocalRegisters()
+	if *cmd.txtPublicDump != "" && cmd.registers != nil {
+		panic(fmt.Errorf("cannot use flags -txt-public-dump and -registers together"))
+	}
+	var (
+		regs registers.Registers
+		err  error
+	)
+	if cmd.registers != nil {
+		regs = registers.Registers(cmd.registers)
+	} else {
+		getRegistersOpts := []helpers.GetRegistersOption{helpers.OptLocalhostByDefault(true)}
+		if *cmd.txtPublicDump != "" {
+			getRegistersOpts = append(getRegistersOpts, helpers.OptTXTPublic(*cmd.txtPublicDump))
+		}
+		regs, err = helpers.GetRegisters(getRegistersOpts...)
+	}
 	if regs == nil && err != nil {
 		panic(err)
 	}
 	helpers.PrintRegisters(regs)
 
 	if len(*cmd.outputFile) > 0 {
-		b, err := json.Marshal(regs)
+		b, err := yaml.Marshal(regs)
 		if err != nil {
 			panic(fmt.Sprintf("failed to marshal registers into json, err: %v", err))
 		}

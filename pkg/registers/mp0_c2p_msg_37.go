@@ -1,5 +1,9 @@
 package registers
 
+func init() {
+	registry.AddRegister(MP0C2PMsg37(0))
+}
+
 const MP0C2PMSG37RegisterID RegisterID = "MP0_C2P_MSG_37"
 
 type MP0C2PMsg37 uint32
@@ -31,6 +35,11 @@ func (r MP0C2PMsg37) Fields() []Field {
 		},
 	}
 	return CalculateRegisterFields(uint64(r.Raw()), r.BitSize(), fieldsRaw)
+}
+
+// Value returns the raw value wrapped into an interface.
+func (r MP0C2PMsg37) Value() interface{} {
+	return r.Raw()
 }
 
 // Raw returns the raw value of of MP0_C2P_MSG_37 register

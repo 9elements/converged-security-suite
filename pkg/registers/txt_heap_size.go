@@ -5,6 +5,10 @@ import (
 	"encoding/binary"
 )
 
+func init() {
+	registry.AddRegister(TXTHeapSize(0))
+}
+
 const TXTHeapSizeRegisterID RegisterID = "TXT.HEAP.SIZE"
 const TXTHeapSizeRegisterOffset = 0x308
 
@@ -12,6 +16,11 @@ type TXTHeapSize uint32
 
 func (reg TXTHeapSize) ID() RegisterID {
 	return TXTHeapSizeRegisterID
+}
+
+// Value returns the raw value wrapped into an interface.
+func (reg TXTHeapSize) Value() interface{} {
+	return reg.Raw()
 }
 
 func (reg TXTHeapSize) Raw() uint32 {

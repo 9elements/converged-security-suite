@@ -7,6 +7,8 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/diff"
+	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/displayeventlog"
+	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/displayfwinfo"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpfit"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/printnodes"
@@ -17,11 +19,13 @@ import (
 )
 
 var knownCommands = map[string]commands.Command{
-	"diff":           &diff.Command{},
-	"dump_fit":       &dumpfit.Command{},
-	"dump_registers": &dumpregisters.Command{},
-	"printnodes":     &printnodes.Command{},
-	"sum":            &sum.Command{},
+	"diff":             &diff.Command{},
+	"display_eventlog": &displayeventlog.Command{},
+	"display_fwinfo":   &displayfwinfo.Command{},
+	"dump_fit":         &dumpfit.Command{},
+	"dump_registers":   &dumpregisters.Command{},
+	"printnodes":       &printnodes.Command{},
+	"sum":              &sum.Command{},
 }
 
 func usageAndExit() {
