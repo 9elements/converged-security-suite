@@ -30,7 +30,7 @@ Verify all downloaded dependencies run:
 To build the test suite run:
 
 ```
-<GO111MODULE=on> go build -o txt-suite cmd/cbnt-prov/*.go
+<GO111MODULE=on> go build -o cbnt-prov cmd/cbnt-prov/*.go
 ```
 
 Commandline subcommands:
