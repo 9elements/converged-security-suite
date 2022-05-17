@@ -291,7 +291,7 @@ func (acmp *acmPrintCmd) Run(ctx *context) error {
 	}
 	_, _, acmEntry, err := cbnt.ParseFITEntries(data)
 	if err == nil {
-		data = acmEntry.DataBytes
+		data = acmEntry.DataSegmentBytes
 	}
 	acm, chipsets, processors, tpms, err, err2 := tools.ParseACM(data)
 	if err != nil {
