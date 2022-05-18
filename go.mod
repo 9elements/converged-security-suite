@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/9elements/converged-security-suite/v2/testdata/firmware v0.0.0-00010101000000-000000000000
-	github.com/9elements/go-linux-lowlevel-hw v0.0.0-20211215141225-8375dd201aae
+	github.com/9elements/go-linux-lowlevel-hw v0.0.0-20220518111144-a82949f8ff5b
 	github.com/alecthomas/kong v0.2.11
 	github.com/creasty/defaults v1.5.1
 	github.com/davecgh/go-spew v1.1.1

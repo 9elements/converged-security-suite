@@ -91,14 +91,14 @@ func (uefi *UEFI) ImageBytes() []byte {
 // PhysAddrToOffset returns the offset of `physAddr` relatively
 // to the beginning of the firmware.
 func (uefi *UEFI) PhysAddrToOffset(physAddr uint64) uint64 {
-	startAddr := uint64(consts.BasePhysAddr - len(uefi.ImageBytes()))
+	startAddr := uint64(consts.BasePhysAddr) - uint64(len(uefi.ImageBytes()))
 	return physAddr - startAddr
 }
 
 // OffsetToPhysAddr returns the `physAddr` of offset relatively
 // to the beginning of the firmware.
 func (uefi *UEFI) OffsetToPhysAddr(offset uint64) uint64 {
-	startAddr := uint64(consts.BasePhysAddr - len(uefi.ImageBytes()))
+	startAddr := uint64(consts.BasePhysAddr) - uint64(len(uefi.ImageBytes()))
 	return offset + startAddr
 }
 
