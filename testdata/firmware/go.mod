@@ -1,4 +1,4 @@
-module github.com/9elements/converged-security-suite/v2/testdata/firmware
+module github.com/9elements/converged-security-suite/testdata/firmware
 
 go 1.17
 

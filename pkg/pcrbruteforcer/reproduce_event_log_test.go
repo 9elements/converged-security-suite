@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/9elements/converged-security-suite/testdata/firmware"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
-	"github.com/9elements/converged-security-suite/v2/testdata/firmware"
 	"github.com/google/go-tpm/tpm2"
 	"github.com/stretchr/testify/require"
 )

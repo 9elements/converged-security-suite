@@ -3,7 +3,7 @@ package uefi
 import (
 	"testing"
 
-	"github.com/9elements/converged-security-suite/v2/testdata/firmware"
+	"github.com/9elements/converged-security-suite/testdata/firmware"
 	fianoUEFI "github.com/linuxboot/fiano/pkg/uefi"
 )
 

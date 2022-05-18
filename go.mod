@@ -3,7 +3,7 @@ module github.com/9elements/converged-security-suite/v2
 go 1.13
 
 require (
-	github.com/9elements/converged-security-suite/v2/testdata/firmware v0.0.0-00010101000000-000000000000
+	github.com/9elements/converged-security-suite/testdata/firmware v0.0.0-20220517223030-8bb065875e61
 	github.com/9elements/go-linux-lowlevel-hw v0.0.0-20211215141225-8375dd201aae
 	github.com/alecthomas/kong v0.2.11
 	github.com/creasty/defaults v1.5.1
@@ -33,4 +33,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
-replace github.com/9elements/converged-security-suite/v2/testdata/firmware => ./testdata/firmware
+replace github.com/9elements/converged-security-suite/testdata/firmware => ./testdata/firmware
