@@ -15,6 +15,7 @@ require (
 	github.com/google/go-attestation v0.4.0
 	github.com/google/go-tpm v0.3.3-0.20210120190357-1ff48daca32f
 	github.com/google/uuid v1.3.0
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/klauspost/cpuid/v2 v2.0.9
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/linuxboot/contest v0.0.0-20220404120719-d952dfa563c4
