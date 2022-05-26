@@ -9,6 +9,7 @@ type State struct {
 	SystemArtifacts
 	TrustChains
 	Flow
+	VerifiedData
 }
 
 type Data struct {
