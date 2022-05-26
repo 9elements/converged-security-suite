@@ -14,6 +14,7 @@ require (
 	github.com/google/go-attestation v0.4.3
 	github.com/google/go-tpm v0.3.3
 	github.com/google/uuid v1.3.0
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/klauspost/cpuid/v2 v2.2.3
 	github.com/linuxboot/fiano v1.1.4-0.20230131115913-85ddba13ba44
 	github.com/logrusorgru/aurora v2.0.3+incompatible
@@ -39,7 +40,7 @@ require (
 	github.com/google/go-tspi v0.2.1-0.20190423175329-115dea689aad // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/intel-go/cpuid v0.0.0-20220614022739-219e067757cb // indirect
+	github.com/intel-go/cpuid v0.0.0-20200819041909-2aa72927c3e2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d // indirect
