@@ -8,8 +8,8 @@ import (
 
 func OCPDXE() types.Flow {
 	return types.Flow{
-		tpmsteps.MeasurePCD("FirmwareVendorVersion"),
-		tpmsteps.MeasureUEFIGUIDFirst(ffsConsts.GUIDDXE, ffsConsts.GUIDDXEContainer),
+		tpmsteps.MeasurePCDVariable(0, "FirmwareVendorVersion"),
+		tpmsteps.MeasureUEFIGUIDFirst(0, ffsConsts.GUIDDXE, ffsConsts.GUIDDXEContainer),
 		tpmsteps.MeasureSeparator(0),
 	}
 }
