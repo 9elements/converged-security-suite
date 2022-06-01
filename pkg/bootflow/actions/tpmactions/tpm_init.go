@@ -18,11 +18,11 @@ func NewTPMInit(locality uint8) TPMInit {
 }
 
 func (init TPMInit) Apply(state *types.State) error {
-	return tpm.StateExec(state, func(_tpm *tpm.TPM) error {
-		if _tpm.IsInitialized() {
+	return tpm.StateExec(state, func(t *tpm.TPM) error {
+		if t.IsInitialized() {
 			return nil
 		}
-		return _tpm.TPMInit(init.Locality)
+		return t.TPMInit(init.Locality)
 	})
 }
 
