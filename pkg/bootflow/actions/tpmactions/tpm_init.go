@@ -19,9 +19,6 @@ func NewTPMInit(locality uint8) TPMInit {
 
 func (init TPMInit) Apply(state *types.State) error {
 	return tpm.StateExec(state, func(t *tpm.TPM) error {
-		if t.IsInitialized() {
-			return nil
-		}
 		return t.TPMInit(init.Locality)
 	})
 }
