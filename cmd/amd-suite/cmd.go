@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/amd/apcb"
 	"github.com/9elements/converged-security-suite/v2/pkg/amd/psb"
 
 	amd_manifest "github.com/linuxboot/fiano/pkg/amd/manifest"
@@ -23,6 +24,11 @@ type outputFirmwareCmd struct {
 type showKeysCmd struct {
 	FwPath   string `required name:"fwpath"    help:"Path to UEFI firmware image." type:"path"`
 	PSPLevel uint   `required name:"psp-level" help:"PSP Directory Level to use"`
+}
+
+type outputAPCBSecurityTokensCmd struct {
+	FwPath    string `required name:"fwpath"     help:"Path to UEFI firmware image." type:"path"`
+	BIOSLevel uint   `required name:"bios-level" help:"PSP Directory Level to use"`
 }
 
 type validatePSPEntriesCmd struct {
@@ -70,15 +76,16 @@ type patchBIOSEntryCmd struct {
 }
 
 var cli struct {
-	Debug              bool                  `help:"Enable debug mode"`
-	ShowKeys           showKeysCmd           `cmd help:"Shows all key known to the system, together with their origin"`
-	ValidatePSPEntries validatePSPEntriesCmd `cmd help:"Validates signatures of PSP entries"`
-	ValidateRTM        validateRTMCmd        `cmd help: Validated the signature of the extended RTM volume, which includes RTM and BIOS Directory Table`
-	OutputFirmware     outputFirmwareCmd     `cmd help:"Outputs information about the firmware and PSP/BIOS structure"`
-	DumpPSPEntry       dumpPSPEntryCmd       `cmd help:"Dump an entry from PSP Directory to a file on the filesystem"`
-	DumpBIOSEntry      dumpBIOSEntryCmd      `cmd help:"Dump an entry from BIOS Directory to a file on the filesystem"`
-	PatchPSPEntry      patchPSPEntryCmd      `cmd help:"take a path on the filesystem pointing to a dump of an PSP entry and re-apply it to the firmware"`
-	PatchBIOSEntry     patchBIOSEntryCmd     `cmd help:"take a path on the filesystem pointing to a dump of an BIOS entry and re-apply it to the firmware"`
+	Debug                     bool                        `help:"Enable debug mode"`
+	ShowKeys                  showKeysCmd                 `cmd help:"Shows all key known to the system, together with their origin"`
+	ValidatePSPEntries        validatePSPEntriesCmd       `cmd help:"Validates signatures of PSP entries"`
+	ValidateRTM               validateRTMCmd              `cmd help: Validated the signature of the extended RTM volume, which includes RTM and BIOS Directory Table`
+	OutputFirmware            outputFirmwareCmd           `cmd help:"Outputs information about the firmware and PSP/BIOS structure"`
+	DumpPSPEntry              dumpPSPEntryCmd             `cmd help:"Dump an entry from PSP Directory to a file on the filesystem"`
+	DumpBIOSEntry             dumpBIOSEntryCmd            `cmd help:"Dump an entry from BIOS Directory to a file on the filesystem"`
+	PatchPSPEntry             patchPSPEntryCmd            `cmd help:"take a path on the filesystem pointing to a dump of an PSP entry and re-apply it to the firmware"`
+	PatchBIOSEntry            patchBIOSEntryCmd           `cmd help:"take a path on the filesystem pointing to a dump of an BIOS entry and re-apply it to the firmware"`
+	OutputSecurityTokensEntry outputAPCBSecurityTokensCmd `cmd help:"output security tokens of all APCB (including backup) entries in specified BIOS directory"`
 }
 
 func (s *outputFirmwareCmd) Run(ctx *context) error {
@@ -262,4 +269,54 @@ func (v *patchBIOSEntryCmd) Run(ctx *context) error {
 	return patchHelper(v.FwPath, v.Entry, v.EntryFile, v.ModifiedFirmwareFile, func(amdFw *amd_manifest.AMDFirmware, entryID uint32, r io.Reader, w io.Writer) (int, error) {
 		return psb.PatchBIOSEntry(amdFw, v.BIOSLevel, amd_manifest.BIOSDirectoryTableEntryType(entryID), v.Instance, r, w)
 	})
+}
+
+func (v *outputAPCBSecurityTokensCmd) Run(ctx *context) error {
+	amdFw, err := psb.ParseAMDFirmwareFile(v.FwPath)
+	if err != nil {
+		return fmt.Errorf("could not parse firmware image: %w", err)
+	}
+	apcbEntries, err := psb.GetBIOSEntries(amdFw.PSPFirmware(), v.BIOSLevel, amd_manifest.APCBDataEntry)
+	if err != nil {
+		return fmt.Errorf("failed to get APCB binary entries: %w", err)
+	}
+	apcbBackupEntries, err := psb.GetBIOSEntries(amdFw.PSPFirmware(), v.BIOSLevel, amd_manifest.APCBDataBackupEntry)
+	if err != nil {
+		return fmt.Errorf("failed to get APCB backup binary entries: %w", err)
+	}
+	apcbEntries = append(apcbEntries, apcbBackupEntries...)
+
+	for _, entry := range apcbEntries {
+		data, err := psb.GetRangeBytes(amdFw.Firmware().ImageBytes(), entry.SourceAddress, uint64(entry.Size))
+		if err != nil {
+			return fmt.Errorf("failed to get bytes of entry %s, instance id: %d", psb.BIOSEntryType(entry.Type), entry.Instance)
+		}
+		tokens, err := apcb.ParseAPCBBinaryTokens(data)
+		if err != nil {
+			return fmt.Errorf("failed to get tokens of entry %s, instance id: %d", psb.BIOSEntryType(entry.Type), entry.Instance)
+		}
+		for _, token := range tokens {
+			switch token.ID {
+			case apcb.TokenIDPSPMeasureConfig:
+			case apcb.TokenIDPSPEnableDebugMode:
+			case apcb.TokenIDPSPErrorDisplay:
+			case apcb.TokenIDPSPStopOnError:
+			default:
+				continue
+			}
+
+			tokenID := apcb.GetTokenIDString(token.ID)
+			if len(tokenID) == 0 {
+				tokenID = fmt.Sprintf("0x%X", token.ID)
+			}
+
+			fmt.Println("============")
+			fmt.Printf("Token ID: %s\n", tokenID)
+			fmt.Printf("Priority Mask: %s\n", token.PriorityMask)
+			fmt.Printf("Board Mask: 0x%X\n", token.BoardMask)
+			fmt.Printf("Value: 0x%X\n", token.NumValue())
+			fmt.Println("============")
+		}
+	}
+	return nil
 }
