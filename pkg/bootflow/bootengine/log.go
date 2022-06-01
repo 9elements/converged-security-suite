@@ -10,6 +10,7 @@ import (
 
 type Step struct {
 	Step         types.Step
+	Actions      types.Actions
 	VerifiedData []types.VerifiedData
 	Issues       StepIssues
 }
@@ -24,6 +25,12 @@ func (log Log) GoString() string {
 			fmt.Fprintf(&result, "\tVerifiedData:\n")
 			for idx, verifiedData := range step.VerifiedData {
 				fmt.Fprintf(&result, "\t\t%d. %#v\n", idx, nestedGoStringOf(verifiedData))
+			}
+		}
+		if _, ok := step.Step.(types.StaticStep); !ok && len(step.Actions) > 0 {
+			fmt.Fprintf(&result, "\tActions:\n")
+			for idx, action := range step.Actions {
+				fmt.Fprintf(&result, "\t\t%d. %#v\n", idx, nestedGoStringOf(action))
 			}
 		}
 		if len(step.Issues) > 0 {

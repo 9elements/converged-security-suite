@@ -20,13 +20,13 @@ func NewBootProcess(state *types.State) *BootProcess {
 	}
 }
 
-func stateNextStep(state *types.State) (types.Step, StepIssues, bool) {
+func stateNextStep(state *types.State) (types.Step, types.Actions, StepIssues, bool) {
 	if state.CurrentFlow == nil {
-		return nil, nil, false
+		return nil, nil, nil, false
 	}
 
 	if state.CurrentStepIdx >= uint(len(state.CurrentFlow)) {
-		return nil, nil, false
+		return nil, nil, nil, false
 	}
 
 	step := state.CurrentFlow[state.CurrentStepIdx]
@@ -40,16 +40,16 @@ func stateNextStep(state *types.State) (types.Step, StepIssues, bool) {
 	}
 
 	state.CurrentStepIdx++
-	return step, stepIssues, true
+	return step, actions, stepIssues, true
 }
 
 func (process *BootProcess) NextStep() bool {
 	oldVerifiedData := process.CurrentState.VerifiedData
-	stepBackend, stepIssues, ok := stateNextStep(process.CurrentState)
+	stepBackend, actions, stepIssues, ok := stateNextStep(process.CurrentState)
 	if !ok {
 		return false
 	}
-	step := Step{Step: stepBackend}
+	step := Step{Step: stepBackend, Actions: actions}
 	step.Issues = stepIssues
 
 	if len(process.CurrentState.VerifiedData) > len(oldVerifiedData) {
