@@ -77,7 +77,7 @@ func main() {
 		panic("the TPMInit command wasn't found")
 	}
 
-	// let's construct the final flow:
+	// brute force:
 
 	type context struct {
 		sha1Hasher hash.Hash
