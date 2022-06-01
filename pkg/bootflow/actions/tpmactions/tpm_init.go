@@ -26,6 +26,10 @@ func (init TPMInit) Apply(state *types.State) error {
 	})
 }
 
+func (init TPMInit) GoString() string {
+	return fmt.Sprintf("TPMInit(%d)", init.Locality)
+}
+
 type TPMInitLazy struct {
 	TPMInit
 }
@@ -44,5 +48,5 @@ func (init TPMInitLazy) Apply(state *types.State) error {
 }
 
 func (init TPMInitLazy) GoString() string {
-	return fmt.Sprintf("TPMInit(0)")
+	return fmt.Sprintf("TPMInitLazy(%d)", init.Locality)
 }
