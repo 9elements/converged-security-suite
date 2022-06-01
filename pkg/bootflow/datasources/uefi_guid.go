@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosfirmware"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi/ffs"
 	"github.com/hashicorp/go-multierror"
@@ -16,7 +16,7 @@ type UEFIGUIDFirst []guid.GUID
 
 func (ds UEFIGUIDFirst) Data(state *types.State) (*types.Data, error) {
 	var data *types.Data
-	err := systemartifacts.BIOSFirmwareFunc(state, func(fwRaw *systemartifacts.BIOSFirmware) error {
+	err := biosfirmware.FromState(state, func(fwRaw *biosfirmware.BIOSFirmware) error {
 		firmware, err := fwRaw.Parse()
 		if err != nil {
 			return fmt.Errorf("unable to parse the firmware image: %w", err)

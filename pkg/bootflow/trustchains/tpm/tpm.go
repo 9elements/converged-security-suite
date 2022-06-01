@@ -1,4 +1,4 @@
-package trustchains
+package tpm
 
 import (
 	"fmt"
@@ -8,28 +8,91 @@ import (
 	"github.com/google/go-tpm/tpm2"
 )
 
+const (
+	// currently we support only PCR0 and PCR1
+	PCRRegistersAmount = 2
+)
+
 var _ types.TrustChain = (*TPM)(nil)
 
 type TPM struct {
-	PCRValues PCRValues
-	EventLog  TPMEventLog
+	PCRValues  PCRValues
+	CommandLog CommandLog
+	EventLog   EventLog
 }
 
-func TPMFunc(state *types.State, fn func(tpm *TPM) error) error {
-	for _, trustChain := range state.TrustChains {
-		if tpm, ok := trustChain.(*TPM); ok {
-			return fn(tpm)
+func NewTPM() *TPM {
+	return &TPM{}
+}
+
+func SupportedHashAlgos() []tpm2.Algorithm {
+	return []tpm2.Algorithm{
+		tpm2.AlgSHA1,
+		tpm2.AlgSHA256,
+	}
+}
+
+var tpmMaxHashAlgo tpm2.Algorithm
+
+func init() {
+	supportedAlgos := SupportedHashAlgos()
+	tpmMaxHashAlgo = supportedAlgos[0]
+	for _, algo := range supportedAlgos {
+		if algo > tpmMaxHashAlgo {
+			tpmMaxHashAlgo = algo
 		}
 	}
+}
 
-	return fmt.Errorf("unable to find a trust chain backed by TPM")
+func StateExec(state *types.State, fn func(tpm *TPM) error) error {
+	return state.TrustChainExec((*TPM)(nil), func(trustChain types.TrustChain) error {
+		return fn(trustChain.(*TPM))
+	})
 }
 
 func (chain *TPM) IsInitialized() bool {
 	return len(chain.PCRValues) > 0
 }
 
+func (chain *TPM) TPMInit(locality uint8) error {
+	chain.CommandLog = append(chain.CommandLog, CommandLogEntryInit{
+		Locality: locality,
+	})
+
+	chain.PCRValues = make(PCRValues, PCRRegistersAmount)
+
+	supportedAlgos := SupportedHashAlgos()
+	for _, hashAlgo := range supportedAlgos {
+		h, err := hashAlgo.Hash()
+		if err != nil {
+			return fmt.Errorf("unable to initialize a hasher factory for hash algo %v", hashAlgo)
+		}
+		hasher := h.New()
+		for pcrID := PCRID(0); pcrID < PCRRegistersAmount; pcrID++ {
+			if chain.PCRValues[pcrID] == nil {
+				chain.PCRValues[pcrID] = make([][]byte, tpmMaxHashAlgo+1)
+			}
+			chain.PCRValues[pcrID][hashAlgo] = make([]byte, hasher.Size())
+			pcrValue := chain.PCRValues[pcrID][hashAlgo]
+			switch pcrID {
+			case 0:
+				pcrValue[len(pcrValue)-1] = locality
+			case 1:
+			default:
+				return fmt.Errorf("unexpected PCR ID: %d", pcrID)
+			}
+		}
+	}
+	return nil
+}
+
 func (chain *TPM) TPMExtend(pcrIndex PCRID, hashAlgo tpm2.Algorithm, digest []byte) error {
+	chain.CommandLog = append(chain.CommandLog, CommandLogEntryExtend{
+		PCRIndex: pcrIndex,
+		HashAlgo: hashAlgo,
+		Digest:   digest,
+	})
+
 	h, err := hashAlgo.Hash()
 	if err != nil {
 		return fmt.Errorf("invalid hash algo: %w", err)
@@ -73,7 +136,7 @@ func (s PCRValues) Get(pcrID PCRID, hashAlg tpm2.Algorithm) ([]byte, error) {
 }
 
 func (s PCRValues) Set(pcrID PCRID, hashAlg tpm2.Algorithm, value []byte) error {
-	if hashAlg > tpm2.AlgSHA3_512 {
+	if hashAlg > tpmMaxHashAlgo {
 		panic(fmt.Errorf("too high value of hash algo: %d > %d", hashAlg, tpm2.AlgSHA3_512))
 	}
 
@@ -87,22 +150,4 @@ func (s PCRValues) Set(pcrID PCRID, hashAlg tpm2.Algorithm, value []byte) error 
 
 	s[pcrID][hashAlg] = value
 	return nil
-}
-
-type TPMEventLog []TPMEventLogEntry
-
-type TPMEventLogEntry struct {
-	PCRIndex PCRID
-	HashAlgo tpm2.Algorithm
-	Digest   []byte
-	Data     []byte
-}
-
-func (log *TPMEventLog) Add(pcrIndex PCRID, hashAlgo tpm2.Algorithm, digest, data []byte) {
-	*log = append(*log, TPMEventLogEntry{
-		PCRIndex: pcrIndex,
-		HashAlgo: hashAlgo,
-		Digest:   digest,
-		Data:     data,
-	})
 }

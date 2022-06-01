@@ -1,4 +1,4 @@
-package systemartifacts
+package biosfirmware
 
 import (
 	"bytes"
@@ -16,14 +16,14 @@ type BIOSFirmware struct {
 	CacheParseError error
 }
 
-func BIOSFirmwareFunc(state *types.State, fn func(fw *BIOSFirmware) error) error {
-	for _, artifact := range state.SystemArtifacts {
-		if artifact, ok := artifact.(*BIOSFirmware); ok {
-			return fn(artifact)
-		}
-	}
+func NewBIOSFirmware(content []byte) *BIOSFirmware {
+	return &BIOSFirmware{Content: content}
+}
 
-	return fmt.Errorf("unable to find a BIOS firmware in the list of artifacts")
+func FromState(state *types.State, fn func(fw *BIOSFirmware) error) error {
+	return state.SystemArtifactExec((*BIOSFirmware)(nil), func(artifact types.SystemArtifact) error {
+		return fn(artifact.(*BIOSFirmware))
+	})
 }
 
 func (fw *BIOSFirmware) Size() uint {
@@ -40,4 +40,8 @@ func (fw *BIOSFirmware) Parse() (*uefi.UEFI, error) {
 	}
 
 	return fw.CacheParsed, fw.CacheParseError
+}
+
+func (fw *BIOSFirmware) GoString() string {
+	return fmt.Sprintf("[%d]byte{}", len(fw.Content))
 }
