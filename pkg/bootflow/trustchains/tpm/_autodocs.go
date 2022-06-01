@@ -1,7 +1,7 @@
 //go:build none
 // +build none
 
-package trustchains
+package tpm
 
 import (
 	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
@@ -10,10 +10,10 @@ import (
 // This files is used only to provide hints to the "goplantuml" tool
 
 type TPM struct {
-	TPMEventLog
+	EventLog
 	PCRValues
 }
 
-type TPMEventLogEntry struct {
+type EventLogEntry struct {
 	PCRID
 }
