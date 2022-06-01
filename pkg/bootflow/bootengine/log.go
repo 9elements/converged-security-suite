@@ -24,19 +24,19 @@ func (log Log) GoString() string {
 		if len(step.VerifiedData) > 0 {
 			fmt.Fprintf(&result, "\tVerifiedData:\n")
 			for idx, verifiedData := range step.VerifiedData {
-				fmt.Fprintf(&result, "\t\t%d. %#v\n", idx, nestedGoStringOf(verifiedData))
+				fmt.Fprintf(&result, "\t\t%d. %s\n", idx, nestedGoStringOf(verifiedData))
 			}
 		}
 		if _, ok := step.Step.(types.StaticStep); !ok && len(step.Actions) > 0 {
 			fmt.Fprintf(&result, "\tActions:\n")
 			for idx, action := range step.Actions {
-				fmt.Fprintf(&result, "\t\t%d. %#v\n", idx, nestedGoStringOf(action))
+				fmt.Fprintf(&result, "\t\t%d. %s\n", idx, nestedGoStringOf(action))
 			}
 		}
 		if len(step.Issues) > 0 {
 			fmt.Fprintf(&result, "\tIssues:\n")
 			for idx, issue := range step.Issues {
-				fmt.Fprintf(&result, "\t\t%d. %#v\n", idx, nestedGoStringOf(issue))
+				fmt.Fprintf(&result, "\t\t%d. %s\n", idx, nestedGoStringOf(issue))
 			}
 		}
 	}

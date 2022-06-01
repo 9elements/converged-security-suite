@@ -1,6 +1,8 @@
 package tpmactions
 
 import (
+	"fmt"
+
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
@@ -39,4 +41,8 @@ func (init TPMInitLazy) Apply(state *types.State) error {
 		}
 		return init.TPMInit.Apply(state)
 	})
+}
+
+func (init TPMInitLazy) GoString() string {
+	return fmt.Sprintf("TPMInit(0)")
 }
