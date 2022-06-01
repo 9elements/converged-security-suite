@@ -83,7 +83,7 @@ func (state *State) EnableSystemArtifact(systemArtifact SystemArtifact) {
 
 	k := typeMapKey(systemArtifact)
 	if _, ok := state.SystemArtifacts[k]; ok {
-		panic(fmt.Sprintf("double-setting of the same trust chain type: %s", k))
+		panic(fmt.Sprintf("double-setting of the same system artifact type: %s", k))
 	}
 	state.SystemArtifacts[k] = systemArtifact
 }
