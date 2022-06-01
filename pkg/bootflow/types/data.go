@@ -12,6 +12,13 @@ type Data struct {
 	References References
 }
 
+func (d Data) GoString() string {
+	if d.ForceBytes != nil {
+		return fmt.Sprintf("{ForceBytes: %X}", d.ForceBytes)
+	}
+	return fmt.Sprintf("{Refs: %#v}", d.References)
+}
+
 func (d *Data) Bytes() []byte {
 	if d.ForceBytes != nil && d.References != nil {
 		panic("Data is supposed to be used as union")
@@ -39,6 +46,10 @@ type Reference struct {
 	Ranges   pkgbytes.Ranges
 }
 
+func (ref Reference) GoString() string {
+	return fmt.Sprintf("%T:%#v", ref.Artifact, ref.Ranges)
+}
+
 func (ref *Reference) Bytes() []byte {
 	totalLength := uint64(0)
 	ranges := ref.Ranges
@@ -64,4 +75,8 @@ func (ref *Reference) Bytes() []byte {
 type VerifiedData struct {
 	Data
 	TrustChain TrustChain
+}
+
+func (d VerifiedData) GoString() string {
+	return fmt.Sprintf("%s: %#v", typeMapKey(d.TrustChain).Name(), d.Data)
 }

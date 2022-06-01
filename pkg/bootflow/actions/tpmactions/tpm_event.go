@@ -60,3 +60,10 @@ func (ev TPMEvent) Apply(state *types.State) error {
 		return nil
 	})
 }
+
+func (ev TPMEvent) GoString() string {
+	if len(ev.EventData) == 0 {
+		return fmt.Sprintf("TPMEvent(PCR: %d, DataSource: %#v)", ev.PCRIndex, ev.DataSource)
+	}
+	return fmt.Sprintf("TPMEvent(PCR: %d, DataSource: %#v, EventData: %X)", ev.PCRIndex, ev.DataSource, ev.EventData)
+}
