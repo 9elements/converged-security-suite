@@ -33,10 +33,10 @@ type versionCmd struct {
 }
 
 type execTestsCmd struct {
-	Set         string `required default:"all" help:"Select subset of tests. Options: all, uefi, txtready, tboot, cbnt, legacy"`
-	Interactive bool   `optional short:"i" help:"Interactive mode. Errors will stop the testing."`
-	Config      string `optional short:"c" help:"Path/Filename to config file."`
-	Log         string `optional help:"Give a path/filename for test result output inJSON format. e.g.: /path/to/filename.json"`
+	Set         string `required:"" default:"all" help:"Select subset of tests. Options: all, uefi, txtready, tboot, cbnt, legacy"`
+	Interactive bool   `optional:"" short:"i" help:"Interactive mode. Errors will stop the testing."`
+	Config      string `optional:"" short:"c" help:"Path/Filename to config file."`
+	Log         string `optional:"" help:"Give a path/filename for test result output inJSON format. e.g.: /path/to/filename.json"`
 }
 
 var cli struct {
@@ -44,10 +44,10 @@ var cli struct {
 
 	TpmDev string `short:"t" help:"Select TPM-Path. e.g.:--tpmdev=/dev/tpmX, with X as number of the TPM module"`
 
-	ExecTests execTestsCmd `cmd help:"Executes tests given be TestNo or TestSet"`
-	List      listCmd      `cmd help:"Lists all tests"`
-	Markdown  markdownCmd  `cmd help:"Output test implementation state as Markdown"`
-	Version   versionCmd   `cmd help:"Prints the version of the program"`
+	ExecTests execTestsCmd `cmd:"" help:"Executes tests given be TestNo or TestSet"`
+	List      listCmd      `cmd:"" help:"Lists all tests"`
+	Markdown  markdownCmd  `cmd:"" help:"Output test implementation state as Markdown"`
+	Version   versionCmd   `cmd:"" help:"Prints the version of the program"`
 }
 
 func (e *execTestsCmd) Run(ctx *context) error {

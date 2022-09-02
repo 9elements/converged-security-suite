@@ -31,196 +31,196 @@ type versionCmd struct {
 }
 
 type templateCmd struct {
-	Path string `arg required name:"path" help:"Path to the newly generated JSON configuration file." type:"path"`
+	Path string `arg:"" required:"" name:"path" help:"Path to the newly generated JSON configuration file." type:"path"`
 	//CBnT Manifest Header args
-	Revision uint8             `flag optional name:"revision" help:"Platform Manufacturer’s BPM revision number."`
-	SVN      manifest.SVN      `flag optional name:"svn" help:"Boot Policy Manifest Security Version Number"`
-	ACMSVN   manifest.SVN      `flag optional name:"acmsvn" help:"Authorized ACM Security Version Number"`
-	NEMS     bootpolicy.Size4K `flag optional name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
+	Revision uint8             `flag:"" optional:"" name:"revision" help:"Platform Manufacturer’s BPM revision number."`
+	SVN      manifest.SVN      `flag:"" optional:"" name:"svn" help:"Boot Policy Manifest Security Version Number"`
+	ACMSVN   manifest.SVN      `flag:"" optional:"" name:"acmsvn" help:"Authorized ACM Security Version Number"`
+	NEMS     bootpolicy.Size4K `flag:"" optional:"" name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
 	// IBB args
-	PBET        bootpolicy.PBETValue `flag optional name:"pbet" help:"Protect BIOS Environment Timer (PBET) value."`
-	IBBSegFlags bootpolicy.SEFlags   `flag optional name:"ibbflags" help:"IBB Control flags"`
-	MCHBAR      uint64               `flag optional name:"mchbar" help:"MCHBAR address"`
-	VDTBAR      uint64               `flag optional name:"vdtbar" help:"VTDPVC0BAR address"`
-	DMABase0    uint32               `flag optional name:"dmabase0" help:"Low DMA protected range base"`
-	DMASize0    uint32               `flag optional name:"dmasize0" help:"Low DMA protected range limit"`
-	DMABase1    uint64               `flag optional name:"dmabase1" help:"High DMA protected range base."`
-	DMASize1    uint64               `flag optional name:"dmasize1" help:"High DMA protected range limit."`
-	EntryPoint  uint32               `flag optional name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
-	IbbHash     []string             `flag optional name:"ibbhash" help:"IBB Hash Algorithm. E.g.: SHA256, SHA384, SM3"`
+	PBET        bootpolicy.PBETValue `flag:"" optional:"" name:"pbet" help:"Protect BIOS Environment Timer (PBET) value."`
+	IBBSegFlags bootpolicy.SEFlags   `flag:"" optional:"" name:"ibbflags" help:"IBB Control flags"`
+	MCHBAR      uint64               `flag:"" optional:"" name:"mchbar" help:"MCHBAR address"`
+	VDTBAR      uint64               `flag:"" optional:"" name:"vdtbar" help:"VTDPVC0BAR address"`
+	DMABase0    uint32               `flag:"" optional:"" name:"dmabase0" help:"Low DMA protected range base"`
+	DMASize0    uint32               `flag:"" optional:"" name:"dmasize0" help:"Low DMA protected range limit"`
+	DMABase1    uint64               `flag:"" optional:"" name:"dmabase1" help:"High DMA protected range base."`
+	DMASize1    uint64               `flag:"" optional:"" name:"dmasize1" help:"High DMA protected range limit."`
+	EntryPoint  uint32               `flag:"" optional:"" name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
+	IbbHash     []string             `flag:"" optional:"" name:"ibbhash" help:"IBB Hash Algorithm. E.g.: SHA256, SHA384, SM3"`
 	// TXT args
-	SintMin           uint8                       `flag optional name:"sintmin" help:"OEM authorized SinitMinSvn value"`
-	TXTFlags          bootpolicy.TXTControlFlags  `flag optional name:"txtflags" help:"TXT Element control flags"`
-	PowerDownInterval bootpolicy.Duration16In5Sec `flag optional name:"powerdowninterval" help:"Duration of Power Down in 5 sec increments"`
-	ACPIBaseOffset    uint16                      `flag optional name:"acpibaseoffset" help:"ACPI IO offset."`
-	PowermBaseOffset  uint32                      `flag optional name:"powermbaseoffset" help:"ACPI MMIO offset."`
-	CMOSOff0          uint8                       `flag optional name:"cmosoff0" help:"CMOS byte in bank 0 to store platform wakeup time"`
-	CMOSOff1          uint8                       `flag optional name:"cmosoff1" help:"Second CMOS byte in bank 0 to store platform wakeup time"`
+	SintMin           uint8                       `flag:"" optional:"" name:"sintmin" help:"OEM authorized SinitMinSvn value"`
+	TXTFlags          bootpolicy.TXTControlFlags  `flag:"" optional:"" name:"txtflags" help:"TXT Element control flags"`
+	PowerDownInterval bootpolicy.Duration16In5Sec `flag:"" optional:"" name:"powerdowninterval" help:"Duration of Power Down in 5 sec increments"`
+	ACPIBaseOffset    uint16                      `flag:"" optional:"" name:"acpibaseoffset" help:"ACPI IO offset."`
+	PowermBaseOffset  uint32                      `flag:"" optional:"" name:"powermbaseoffset" help:"ACPI MMIO offset."`
+	CMOSOff0          uint8                       `flag:"" optional:"" name:"cmosoff0" help:"CMOS byte in bank 0 to store platform wakeup time"`
+	CMOSOff1          uint8                       `flag:"" optional:"" name:"cmosoff1" help:"Second CMOS byte in bank 0 to store platform wakeup time"`
 }
 
 type kmPrintCmd struct {
-	Path string `arg required name:"path" help:"Path to the Key Manifest binary file." type:"path"`
+	Path string `arg:"" required:"" name:"path" help:"Path to the Key Manifest binary file." type:"path"`
 }
 
 type bpmPrintCmd struct {
-	Path string `arg required name:"path" help:"Path to the Boot Policy Manifest binary file." type:"path"`
+	Path string `arg:"" required:"" name:"path" help:"Path to the Boot Policy Manifest binary file." type:"path"`
 }
 
 type acmPrintCmd struct {
-	Path string `arg required name:"path" help:"Path to the ACM binary file." type:"path"`
+	Path string `arg:"" required:"" name:"path" help:"Path to the ACM binary file." type:"path"`
 }
 
 type biosPrintCmd struct {
-	Path string `arg required name:"path" help:"Path to the full BIOS binary file." type:"path"`
+	Path string `arg:"" required:"" name:"path" help:"Path to the full BIOS binary file." type:"path"`
 }
 
 type acmExportCmd struct {
-	BIOS string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
-	Out  string `arg required name:"out" help:"Path to the newly generated ACM binary file." type:"path"`
+	BIOS string `arg:"" required:"" name:"bios" help:"Path to the full BIOS binary file." type:"path"`
+	Out  string `arg:"" required:"" name:"out" help:"Path to the newly generated ACM binary file." type:"path"`
 }
 
 type kmExportCmd struct {
-	BIOS string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
-	Out  string `arg required name:"out" help:"Path to the newly generated KM binary file." type:"path"`
+	BIOS string `arg:"" required:"" name:"bios" help:"Path to the full BIOS binary file." type:"path"`
+	Out  string `arg:"" required:"" name:"out" help:"Path to the newly generated KM binary file." type:"path"`
 }
 
 type bpmExportCmd struct {
-	BIOS string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
-	Out  string `arg required name:"out" help:"Path to the newly generated BPM binary file." type:"path"`
+	BIOS string `arg:"" required:"" name:"bios" help:"Path to the full BIOS binary file." type:"path"`
+	Out  string `arg:"" required:"" name:"out" help:"Path to the newly generated BPM binary file." type:"path"`
 }
 
 type generateACMCmd struct {
-	ACMOut           string `arg required name:"acm" help:"Path to the newly generated ACM headers binary file." type:"path"`
-	ConfigIn         string `flag optional name:"config" help:"Path to the JSON config file." type:"path"`
-	ConfigOut        string `flag optional name:"out" help:"Path to write applied config to" type:"path"`
-	BodyPath         string `flag optional name:"bodypath" help:"Path to the ACM body" type:"path"`
-	RSAPrivateKeyPEM string `flag optional name:"rsaprivkeypem" help:"RSA key used to sign the ACM" type:"path"`
+	ACMOut           string `arg:"" required:"" name:"acm" help:"Path to the newly generated ACM headers binary file." type:"path"`
+	ConfigIn         string `flag:"" optional:"" name:"config" help:"Path to the JSON config file." type:"path"`
+	ConfigOut        string `flag:"" optional:"" name:"out" help:"Path to write applied config to" type:"path"`
+	BodyPath         string `flag:"" optional:"" name:"bodypath" help:"Path to the ACM body" type:"path"`
+	RSAPrivateKeyPEM string `flag:"" optional:"" name:"rsaprivkeypem" help:"RSA key used to sign the ACM" type:"path"`
 
-	ModuleType      fit.ACModuleType    `flag optional name:"moduletype"`
-	ModuleSubType   fit.ACModuleSubType `flag optional name:"modulesubtype"`
-	ChipsetID       fit.ACChipsetID     `flag optional name:"chipsetid"`
-	Flags           fit.ACFlags         `flag optional name:"flags"`
-	ModuleVendor    fit.ACModuleVendor  `flag optional name:"modulevendor"`
-	Date            fit.BCDDate         `flag optional name:"date"`
-	Size            uint64              `flag optional name:"size"`
-	TXTSVN          fit.TXTSVN          `flag optional name:"txtsvn"`
-	SESVN           fit.SESVN           `flag optional name:"sesvn"`
-	CodeControl     fit.CodeControl     `flag optional name:"codecontrol"`
-	ErrorEntryPoint fit.ErrorEntryPoint `flag optional name:"errorentrypoint"`
-	GDTLimit        fit.GDTLimit        `flag optional name:"gdtlimit"`
-	GDTBasePtr      fit.GDTBasePtr      `flag optional name:"gdtbaseptr"`
-	SegSel          fit.SegSel          `flag optional name:"segsel"`
-	EntryPoint      fit.EntryPoint      `flag optional name:"entrypoint"`
+	ModuleType      fit.ACModuleType    `flag:"" optional:"" name:"moduletype"`
+	ModuleSubType   fit.ACModuleSubType `flag:"" optional:"" name:"modulesubtype"`
+	ChipsetID       fit.ACChipsetID     `flag:"" optional:"" name:"chipsetid"`
+	Flags           fit.ACFlags         `flag:"" optional:"" name:"flags"`
+	ModuleVendor    fit.ACModuleVendor  `flag:"" optional:"" name:"modulevendor"`
+	Date            fit.BCDDate         `flag:"" optional:"" name:"date"`
+	Size            uint64              `flag:"" optional:"" name:"size"`
+	TXTSVN          fit.TXTSVN          `flag:"" optional:"" name:"txtsvn"`
+	SESVN           fit.SESVN           `flag:"" optional:"" name:"sesvn"`
+	CodeControl     fit.CodeControl     `flag:"" optional:"" name:"codecontrol"`
+	ErrorEntryPoint fit.ErrorEntryPoint `flag:"" optional:"" name:"errorentrypoint"`
+	GDTLimit        fit.GDTLimit        `flag:"" optional:"" name:"gdtlimit"`
+	GDTBasePtr      fit.GDTBasePtr      `flag:"" optional:"" name:"gdtbaseptr"`
+	SegSel          fit.SegSel          `flag:"" optional:"" name:"segsel"`
+	EntryPoint      fit.EntryPoint      `flag:"" optional:"" name:"entrypoint"`
 }
 
 type generateKMCmd struct {
-	KM         string       `arg required name:"km" help:"Path to the newly generated Key Manifest binary file." type:"path"`
-	Key        string       `arg required name:"key" help:"Public signing key"`
-	Config     string       `flag optional name:"config" help:"Path to the JSON config file." type:"path"`
-	Revision   uint8        `flag optional name:"revision" help:"Platform Manufacturer’s BPM revision number."`
-	SVN        manifest.SVN `flag optional name:"svn" help:"Boot Policy Manifest Security Version Number"`
-	ID         uint8        `flag optional name:"id" help:"The key Manifest Identifier"`
-	PKHashAlg  string       `flag optional name:"pkhashalg" help:"Hash algorithm of OEM public key digest. E.g.: SHA256, SHA384, SM3"`
-	KMHashes   []key.Hash   `flag optional name:"kmhashes" help:"Key hashes for BPM, ACM, uCode etc"`
-	BpmPubkey  string       `flag optional name:"bpmpubkey" help:"Path to bpm public signing key"`
-	BpmHashAlg string       `flag optional name:"bpmhashalgo" help:"Hash algorithm for bpm public signing key.. E.g.: SHA256, SHA384, SM3"`
-	Out        string       `flag optional name:"out" help:"Path to write applied config to"`
-	Cut        bool         `flag optional name:"cut" help:"Cuts the signature before writing to binary."`
-	PrintME    bool         `flag optional name:"printme" help:"Prints the hash of KM public signing key"`
+	KM         string       `arg:"" required:"" name:"km" help:"Path to the newly generated Key Manifest binary file." type:"path"`
+	Key        string       `arg:"" required:"" name:"key" help:"Public signing key"`
+	Config     string       `flag:"" optional:"" name:"config" help:"Path to the JSON config file." type:"path"`
+	Revision   uint8        `flag:"" optional:"" name:"revision" help:"Platform Manufacturer’s BPM revision number."`
+	SVN        manifest.SVN `flag:"" optional:"" name:"svn" help:"Boot Policy Manifest Security Version Number"`
+	ID         uint8        `flag:"" optional:"" name:"id" help:"The key Manifest Identifier"`
+	PKHashAlg  string       `flag:"" optional:"" name:"pkhashalg" help:"Hash algorithm of OEM public key digest. E.g.: SHA256, SHA384, SM3"`
+	KMHashes   []key.Hash   `flag:"" optional:"" name:"kmhashes" help:"Key hashes for BPM, ACM, uCode etc"`
+	BpmPubkey  string       `flag:"" optional:"" name:"bpmpubkey" help:"Path to bpm public signing key"`
+	BpmHashAlg string       `flag:"" optional:"" name:"bpmhashalgo" help:"Hash algorithm for bpm public signing key.. E.g.: SHA256, SHA384, SM3"`
+	Out        string       `flag:"" optional:"" name:"out" help:"Path to write applied config to"`
+	Cut        bool         `flag:"" optional:"" name:"cut" help:"Cuts the signature before writing to binary."`
+	PrintME    bool         `flag:"" optional:"" name:"printme" help:"Prints the hash of KM public signing key"`
 }
 
 type generateBPMCmd struct {
-	BPM    string `arg required name:"bpm" help:"Path to the newly generated Boot Policy Manifest binary file." type:"path"`
-	BIOS   string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
-	Config string `flag optional name:"config" help:"Path to the JSON config file." type:"path"`
+	BPM    string `arg:"" required:"" name:"bpm" help:"Path to the newly generated Boot Policy Manifest binary file." type:"path"`
+	BIOS   string `arg:"" required:"" name:"bios" help:"Path to the full BIOS binary file." type:"path"`
+	Config string `flag:"" optional:"" name:"config" help:"Path to the JSON config file." type:"path"`
 	//CBnT Manifest Header args
-	Revision uint8             `flag optional name:"revision" help:"Platform Manufacturer’s BPM revision number."`
-	SVN      manifest.SVN      `flag optional name:"svn" help:"Boot Policy Manifest Security Version Number"`
-	ACMSVN   manifest.SVN      `flag optional name:"acmsvn" help:"Authorized ACM Security Version Number"`
-	NEMS     bootpolicy.Size4K `flag optional name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
+	Revision uint8             `flag:"" optional:"" name:"revision" help:"Platform Manufacturer’s BPM revision number."`
+	SVN      manifest.SVN      `flag:"" optional:"" name:"svn" help:"Boot Policy Manifest Security Version Number"`
+	ACMSVN   manifest.SVN      `flag:"" optional:"" name:"acmsvn" help:"Authorized ACM Security Version Number"`
+	NEMS     bootpolicy.Size4K `flag:"" optional:"" name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
 	// IBB args
-	PBET        bootpolicy.PBETValue `flag optional name:"pbet" help:"Protect BIOS Environment Timer (PBET) value."`
-	IBBSegFlags bootpolicy.SEFlags   `flag optional name:"ibbflags" help:"IBB Control flags"`
-	MCHBAR      uint64               `flag optional name:"mchbar" help:"MCHBAR address"`
-	VDTBAR      uint64               `flag optional name:"vdtbar" help:"VTDPVC0BAR address"`
-	DMABase0    uint32               `flag optional name:"dmabase0" help:"Low DMA protected range base"`
-	DMASize0    uint32               `flag optional name:"dmasize0" help:"Low DMA protected range limit"`
-	DMABase1    uint64               `flag optional name:"dmabase1" help:"High DMA protected range base."`
-	DMASize1    uint64               `flag optional name:"dmasize1" help:"High DMA protected range limit."`
-	EntryPoint  uint32               `flag optional name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
-	IbbHash     []string             `flag optional name:"ibbhash" help:"IBB Hash Algorithm. Valid options: SHA256, SHA384, SM3"`
-	IbbSegFlag  uint16               `flag optional name:"ibbsegflag" help:"Reducted"`
+	PBET        bootpolicy.PBETValue `flag:"" optional:"" name:"pbet" help:"Protect BIOS Environment Timer (PBET) value."`
+	IBBSegFlags bootpolicy.SEFlags   `flag:"" optional:"" name:"ibbflags" help:"IBB Control flags"`
+	MCHBAR      uint64               `flag:"" optional:"" name:"mchbar" help:"MCHBAR address"`
+	VDTBAR      uint64               `flag:"" optional:"" name:"vdtbar" help:"VTDPVC0BAR address"`
+	DMABase0    uint32               `flag:"" optional:"" name:"dmabase0" help:"Low DMA protected range base"`
+	DMASize0    uint32               `flag:"" optional:"" name:"dmasize0" help:"Low DMA protected range limit"`
+	DMABase1    uint64               `flag:"" optional:"" name:"dmabase1" help:"High DMA protected range base."`
+	DMASize1    uint64               `flag:"" optional:"" name:"dmasize1" help:"High DMA protected range limit."`
+	EntryPoint  uint32               `flag:"" optional:"" name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
+	IbbHash     []string             `flag:"" optional:"" name:"ibbhash" help:"IBB Hash Algorithm. Valid options: SHA256, SHA384, SM3"`
+	IbbSegFlag  uint16               `flag:"" optional:"" name:"ibbsegflag" help:"Reducted"`
 	// TXT args
-	SinitMin          uint8                       `flag optional name:"sinitmin" help:"OEM authorized SinitMinSvn value"`
-	TXTFlags          bootpolicy.TXTControlFlags  `flag optional name:"txtflags" help:"TXT Element control flags"`
-	PowerDownInterval bootpolicy.Duration16In5Sec `flag optional name:"powerdowninterval" help:"Duration of Power Down in 5 sec increments"`
-	ACPIBaseOffset    uint16                      `flag optional name:"acpibaseoffset" help:"ACPI IO offset."`
-	PowermBaseOffset  uint32                      `flag optional name:"powermbaseoffset" help:"ACPI MMIO offset."`
-	CMOSOff0          uint8                       `flag optional name:"cmosoff0" help:"CMOS byte in bank 0 to store platform wakeup time"`
-	CMOSOff1          uint8                       `flag optional name:"cmosoff1" help:"Second CMOS byte in bank 0 to store platform wakeup time"`
+	SinitMin          uint8                       `flag:"" optional:"" name:"sinitmin" help:"OEM authorized SinitMinSvn value"`
+	TXTFlags          bootpolicy.TXTControlFlags  `flag:"" optional:"" name:"txtflags" help:"TXT Element control flags"`
+	PowerDownInterval bootpolicy.Duration16In5Sec `flag:"" optional:"" name:"powerdowninterval" help:"Duration of Power Down in 5 sec increments"`
+	ACPIBaseOffset    uint16                      `flag:"" optional:"" name:"acpibaseoffset" help:"ACPI IO offset."`
+	PowermBaseOffset  uint32                      `flag:"" optional:"" name:"powermbaseoffset" help:"ACPI MMIO offset."`
+	CMOSOff0          uint8                       `flag:"" optional:"" name:"cmosoff0" help:"CMOS byte in bank 0 to store platform wakeup time"`
+	CMOSOff1          uint8                       `flag:"" optional:"" name:"cmosoff1" help:"Second CMOS byte in bank 0 to store platform wakeup time"`
 
-	Out string `flag optional name:"out" help:"Path to write applied config to"`
-	Cut bool   `flag optional name:"cut" help:"Cuts the signature before writing to binary."`
+	Out string `flag:"" optional:"" name:"out" help:"Path to write applied config to"`
+	Cut bool   `flag:"" optional:"" name:"cut" help:"Cuts the signature before writing to binary."`
 }
 
 type signKMCmd struct {
-	KmIn     string `arg required name:"kmin" help:"Path to the generated Key Manifest binary file." type:"path"`
-	KmOut    string `arg required name:"kmout" help:"Path to write the signed KM to"`
-	Key      string `arg required name:"km-keyfile" help:"Path to the encrypted PKCS8 private key file." type:"path"`
-	SignAlgo string `arg required name:"signalgo" help:"Signing algorithm for KM. E.g.: RSASSA, RSAPSS, SM2"`
-	Password string `arg required name:"password" help:"Password to decrypted PKCS8 private key file"`
+	KmIn     string `arg:"" required:"" name:"kmin" help:"Path to the generated Key Manifest binary file." type:"path"`
+	KmOut    string `arg:"" required:"" name:"kmout" help:"Path to write the signed KM to"`
+	Key      string `arg:"" required:"" name:"km-keyfile" help:"Path to the encrypted PKCS8 private key file." type:"path"`
+	SignAlgo string `arg:"" required:"" name:"signalgo" help:"Signing algorithm for KM. E.g.: RSASSA, RSAPSS, SM2"`
+	Password string `arg:"" required:"" name:"password" help:"Password to decrypted PKCS8 private key file"`
 }
 
 type signBPMCmd struct {
-	BpmIn    string `arg required name:"bpmin" help:"Path to the newly generated Boot Policy Manifest binary file." type:"path"`
-	BpmOut   string `arg required name."bpmout" help:"Path to write the signed BPM to"`
-	Key      string `arg required name:"bpm-keyfile" help:"Path to the encrypted PKCS8 private key file." type:"path"`
-	SignAlgo string `arg required name:"signalgo" help:"Signing algorithm for KM. E.g.: RSASSA, RSAPSS, SM2"`
-	Password string `arg required name:"password" help:"Password to decrypt PKCS8 private key file"`
+	BpmIn    string `arg:"" required:"" name:"bpmin" help:"Path to the newly generated Boot Policy Manifest binary file." type:"path"`
+	BpmOut   string `arg:"" required:"" name:"bpmout" help:"Path to write the signed BPM to"`
+	Key      string `arg:"" required:"" name:"bpm-keyfile" help:"Path to the encrypted PKCS8 private key file." type:"path"`
+	SignAlgo string `arg:"" required:"" name:"signalgo" help:"Signing algorithm for KM. E.g.: RSASSA, RSAPSS, SM2"`
+	Password string `arg:"" required:"" name:"password" help:"Password to decrypt PKCS8 private key file"`
 }
 
 type readConfigCmd struct {
-	Config string `arg required name:"config" help:"Path to the JSON config file." type:"path"`
-	BIOS   string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
+	Config string `arg:"" required:"" name:"config" help:"Path to the JSON config file." type:"path"`
+	BIOS   string `arg:"" required:"" name:"bios" help:"Path to the full BIOS binary file." type:"path"`
 }
 
 type stitchingKMCmd struct {
-	KM        string `arg required name:"km" help:"Path to the Key Manifest binary file." type:"path"`
-	Signature string `arg required name:"signature" help:"Path to the Key Manifest signature file." type:"path"`
-	PubKey    string `arg required name:"pubkey" help:"Path to the Key Manifest public key file." type:"path"`
-	Out       string `arg required name:"out" help:"Path to the newly stitched KM binary file." type:"path"`
+	KM        string `arg:"" required:"" name:"km" help:"Path to the Key Manifest binary file." type:"path"`
+	Signature string `arg:"" required:"" name:"signature" help:"Path to the Key Manifest signature file." type:"path"`
+	PubKey    string `arg:"" required:"" name:"pubkey" help:"Path to the Key Manifest public key file." type:"path"`
+	Out       string `arg:"" required:"" name:"out" help:"Path to the newly stitched KM binary file." type:"path"`
 }
 
 type stitchingBPMCmd struct {
-	BPM       string `arg required name:"bpm" help:"Path to the Boot Policy Manifest binary file." type:"path"`
-	Signature string `arg required name:"signature" help:"Path to the Boot Policy Manifest signature file." type:"path"`
-	PubKey    string `arg required name:"pubkey" help:"Path to the Boot Policy Manifest public key file." type:"path"`
-	Out       string `arg required name:"out" help:"Path to the newly stitched BPM binary file." type:"path"`
+	BPM       string `arg:"" required:"" name:"bpm" help:"Path to the Boot Policy Manifest binary file." type:"path"`
+	Signature string `arg:"" required:"" name:"signature" help:"Path to the Boot Policy Manifest signature file." type:"path"`
+	PubKey    string `arg:"" required:"" name:"pubkey" help:"Path to the Boot Policy Manifest public key file." type:"path"`
+	Out       string `arg:"" required:"" name:"out" help:"Path to the newly stitched BPM binary file." type:"path"`
 }
 
 type stitchingCmd struct {
-	BIOS string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
-	ACM  string `arg required name:"acm" help:"Path to the ACM binary file." type:"path"`
-	KM   string `arg required name:"km" help:"Path to the Key Manifest binary file." type:"path"`
-	BPM  string `arg required name:"bpm" help:"Path to the Boot Policy Manifest binary file." type:"path"`
-	ME   string `flag optional name:"me" help:"Path to the Management Engine binary file." type:"path"`
+	BIOS string `arg:"" required:"" name:"bios" help:"Path to the full BIOS binary file." type:"path"`
+	ACM  string `arg:"" required:"" name:"acm" help:"Path to the ACM binary file." type:"path"`
+	KM   string `arg:"" required:"" name:"km" help:"Path to the Key Manifest binary file." type:"path"`
+	BPM  string `arg:"" required:"" name:"bpm" help:"Path to the Boot Policy Manifest binary file." type:"path"`
+	ME   string `flag:"" optional:"" name:"me" help:"Path to the Management Engine binary file." type:"path"`
 }
 
 type keygenCmd struct {
-	Algo     string `arg require name:"algo" help:"Select crypto algorithm for key generation. Options: RSA2048. RSA3072, ECC224, ECC256"`
-	Password string `arg required name:"password" help:"Password for AES256 encryption of private keys"`
-	Path     string `flag optional name:"path" help:"Path to store keys. File names are 'yourname_bpm/yourname_bpm.pub' and 'yourname_km/yourname_km.pub' respectivly"`
+	Algo     string `arg:"" require:"" name:"algo" help:"Select crypto algorithm for key generation. Options: RSA2048. RSA3072, ECC224, ECC256"`
+	Password string `arg:"" required:"" name:"password" help:"Password for AES256 encryption of private keys"`
+	Path     string `flag:"" optional:"" name:"path" help:"Path to store keys. File names are 'yourname_bpm/yourname_bpm.pub' and 'yourname_km/yourname_km.pub' respectivly"`
 }
 
 type printFITCmd struct {
-	BIOS string `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
+	BIOS string `arg:"" required:"" name:"bios" help:"Path to the full BIOS binary file." type:"path"`
 }
 
 type verifyKMSigCmd struct {
-	KM string `arg required name:"km" help:"Path to the Key Manifest binary file." type:"path"`
+	KM string `arg:"" required:"" name:"km" help:"Path to the Key Manifest binary file." type:"path"`
 }
 type verifyBPMSigCmd struct {
-	BPM string `arg required name:"bpm" help:"Path to the Boot Policy Manifest binary file." type:"path"`
+	BPM string `arg:"" required:"" name:"bpm" help:"Path to the Boot Policy Manifest binary file." type:"path"`
 }
 
 func (v *versionCmd) Run(ctx *context) error {
@@ -1006,30 +1006,30 @@ var cli struct {
 	Debug                    bool `help:"Enable debug mode."`
 	ManifestStrictOrderCheck bool `help:"Enable checking of manifest elements order"`
 
-	KMShow   kmPrintCmd     `cmd help:"Prints Key Manifest binary in human-readable format"`
-	KMGen    generateKMCmd  `cmd help:"Generate KM file based von json configuration"`
-	KMSign   signKMCmd      `cmd help:"Sign key manifest with given key"`
-	KMVerify verifyKMSigCmd `cmd help:"Verify the signature of a given KM"`
-	KMStitch stitchingKMCmd `cmd help:"Stitches KM Signatue into unsigned KM"`
-	KMExport kmExportCmd    `cmd help:"Exports KM structures from BIOS image into file"`
+	KMShow   kmPrintCmd     `cmd:"" help:"Prints Key Manifest binary in human-readable format"`
+	KMGen    generateKMCmd  `cmd:"" help:"Generate KM file based von json configuration"`
+	KMSign   signKMCmd      `cmd:"" help:"Sign key manifest with given key"`
+	KMVerify verifyKMSigCmd `cmd:"" help:"Verify the signature of a given KM"`
+	KMStitch stitchingKMCmd `cmd:"" help:"Stitches KM Signatue into unsigned KM"`
+	KMExport kmExportCmd    `cmd:"" help:"Exports KM structures from BIOS image into file"`
 
-	BPMShow   bpmPrintCmd     `cmd help:"Prints Boot Policy Manifest binary in human-readable format"`
-	BPMGen    generateBPMCmd  `cmd help:"Generate BPM file based von json configuration"`
-	BPMSign   signBPMCmd      `cmd help:"Sign Boot Policy Manifest with given key"`
-	BPMVerify verifyBPMSigCmd `cmd help:"Verify the signature of a given KM"`
-	BPMStitch stitchingBPMCmd `cmd help:"Stitches BPM Signatue into unsigned BPM"`
-	BPMExport bpmExportCmd    `cmd help:"Exports BPM structures from BIOS image into file"`
+	BPMShow   bpmPrintCmd     `cmd:"" help:"Prints Boot Policy Manifest binary in human-readable format"`
+	BPMGen    generateBPMCmd  `cmd:"" help:"Generate BPM file based von json configuration"`
+	BPMSign   signBPMCmd      `cmd:"" help:"Sign Boot Policy Manifest with given key"`
+	BPMVerify verifyBPMSigCmd `cmd:"" help:"Verify the signature of a given KM"`
+	BPMStitch stitchingBPMCmd `cmd:"" help:"Stitches BPM Signatue into unsigned BPM"`
+	BPMExport bpmExportCmd    `cmd:"" help:"Exports BPM structures from BIOS image into file"`
 
-	ACMGen    generateACMCmd `cmd help:"Generate an ACM module (usable only for unit-tests)"`
-	ACMExport acmExportCmd   `cmd help:"Exports ACM structures from BIOS image into file"`
-	ACMShow   acmPrintCmd    `cmd help:"Prints ACM binary in human-readable format"`
+	ACMGen    generateACMCmd `cmd:"" help:"Generate an ACM module (usable only for unit-tests)"`
+	ACMExport acmExportCmd   `cmd:"" help:"Exports ACM structures from BIOS image into file"`
+	ACMShow   acmPrintCmd    `cmd:"" help:"Prints ACM binary in human-readable format"`
 
-	FITShow printFITCmd `cmd help:"Prints the FIT Table of given BIOS image file"`
+	FITShow printFITCmd `cmd:"" help:"Prints the FIT Table of given BIOS image file"`
 
-	ShowAll    biosPrintCmd  `cmd help:"Prints BPM, KM, FIT and ACM from BIOS binary in human-readable format"`
-	Stitch     stitchingCmd  `cmd help:"Stitches BPM, KM and ACM into given BIOS image file"`
-	KeyGen     keygenCmd     `cmd help:"Generates key for KM and BPM signing"`
-	Template   templateCmd   `cmd help:"Writes template JSON configuration into file"`
-	ReadConfig readConfigCmd `cmd help:"Reads config from existing BIOS file and translates it to a JSON configuration"`
-	Version    versionCmd    `cmd help:"Prints the version of the program"`
+	ShowAll    biosPrintCmd  `cmd:"" help:"Prints BPM, KM, FIT and ACM from BIOS binary in human-readable format"`
+	Stitch     stitchingCmd  `cmd:"" help:"Stitches BPM, KM and ACM into given BIOS image file"`
+	KeyGen     keygenCmd     `cmd:"" help:"Generates key for KM and BPM signing"`
+	Template   templateCmd   `cmd:"" help:"Writes template JSON configuration into file"`
+	ReadConfig readConfigCmd `cmd:"" help:"Reads config from existing BIOS file and translates it to a JSON configuration"`
+	Version    versionCmd    `cmd:"" help:"Prints the version of the program"`
 }
