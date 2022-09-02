@@ -20,8 +20,8 @@ type versionCmd struct {
 }
 
 type auxDeleteCmd struct {
-	Config string `arg required name:"config" default:"lcp.config" help:"Filename of LCP config file in JSON format"`
-	Out    string `flag optional name:"out" help:"Filename to write binary PS index LCP Policy into"`
+	Config string `arg:"" required:"" name:"config" default:"lcp.config" help:"Filename of LCP config file in JSON format"`
+	Out    string `flag:"" optional:"" name:"out" help:"Filename to write binary PS index LCP Policy into"`
 }
 
 type auxDefineCmd struct {
@@ -32,12 +32,12 @@ type psDeleteCmd struct {
 type psDefineCmd struct {
 }
 type psUpdateCmd struct {
-	Config string `arg required name:"config" default:"lcp.config" help:"Filename of LCP config file in JSON format" type:"path"`
-	Out    string `flag optional name:"output" help:"Filename to write binary PS index LCP Policy into" type:"path"`
+	Config string `arg:"" required:"" name:"config" default:"lcp.config" help:"Filename of LCP config file in JSON format" type:"path"`
+	Out    string `flag:"" optional:"" name:"output" help:"Filename to write binary PS index LCP Policy into" type:"path"`
 }
 type platProvCmd struct {
-	Config string `arg required name:"config" default:"lcp.config" help:"Filename of LCP config file in JSON format" type:"path"`
-	Out    string `flag optional name:"output" help:"Filename to write binary PS index LCP Policy into" type:"path"`
+	Config string `arg:"" required:"" name:"config" default:"lcp.config" help:"Filename of LCP config file in JSON format" type:"path"`
+	Out    string `flag:"" optional:"" name:"output" help:"Filename to write binary PS index LCP Policy into" type:"path"`
 }
 type showCmd struct {
 }
@@ -46,14 +46,14 @@ var cli struct {
 	Debug                    bool `help:"Enable debug mode"`
 	ManifestStrictOrderCheck bool `help:"Enable checking of manifest elements order"`
 
-	Version      versionCmd   `cmd help:"Prints the version of the program"`
-	AuxDelete    auxDeleteCmd `cmd help:"Delete AUX index if exists in TPM NVRAM"`
-	AuxDefine    auxDefineCmd `cmd help:"Define AUX index if not exists in TPM NVRAM"`
-	PsDelete     psDeleteCmd  `cmd help:"Delete PS index if exists in TPM NVRAM"`
-	PsDefine     psDefineCmd  `cmd help:"Define PS index if not exists in TPM NVRAM"`
-	PsUpdate     psUpdateCmd  `cmd help:"Update PS index content in TPM NVRAM"`
-	PlatformProv platProvCmd  `cmd help:"Provision PS & AUX index with LCP config"`
-	Show         showCmd      `cmd help:"Show current provisioned PS & AUX index in NVRAM on stdout"`
+	Version      versionCmd   `cmd:"" help:"Prints the version of the program"`
+	AuxDelete    auxDeleteCmd `cmd:"" help:"Delete AUX index if exists in TPM NVRAM"`
+	AuxDefine    auxDefineCmd `cmd:"" help:"Define AUX index if not exists in TPM NVRAM"`
+	PsDelete     psDeleteCmd  `cmd:"" help:"Delete PS index if exists in TPM NVRAM"`
+	PsDefine     psDefineCmd  `cmd:"" help:"Define PS index if not exists in TPM NVRAM"`
+	PsUpdate     psUpdateCmd  `cmd:"" help:"Update PS index content in TPM NVRAM"`
+	PlatformProv platProvCmd  `cmd:"" help:"Provision PS & AUX index with LCP config"`
+	Show         showCmd      `cmd:"" help:"Show current provisioned PS & AUX index in NVRAM on stdout"`
 }
 
 func (v *versionCmd) Run(ctx *context) error {
