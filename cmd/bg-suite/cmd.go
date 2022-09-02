@@ -27,13 +27,13 @@ type markdownCmd struct{}
 type versionCmd struct{}
 
 type execTestsCmd struct {
-	Set         string `required default:"all" help:"Select subset of tests. Options: all, single"`
-	Strict      bool   `required default:"false" short:"s" help:"Enable strict mode. This enables more tests and checks."`
-	Interactive bool   `optional short:"i" help:"Interactive mode. Errors will stop the testing."`
-	Config      string `optional short:"c" help:"Path/Filename to config file."`
-	Log         string `optional help:"Give a path/filename for test result output inJSON format. e.g.: /path/to/filename.json"`
-	Firmware    string `optional short:"f" help:"Path/Filename to firmware to test with."`
-	Number      int    `optional default:"-1" short:"n" help:"Test number to run."`
+	Set         string `required:"" default:"all" help:"Select subset of tests. Options: all, single"`
+	Strict      bool   `required:"" default:"false" short:"s" help:"Enable strict mode. This enables more tests and checks."`
+	Interactive bool   `optional:"" short:"i" help:"Interactive mode. Errors will stop the testing."`
+	Config      string `optional:"" short:"c" help:"Path/Filename to config file."`
+	Log         string `optional:"" help:"Give a path/filename for test result output inJSON format. e.g.: /path/to/filename.json"`
+	Firmware    string `optional:"" short:"f" help:"Path/Filename to firmware to test with."`
+	Number      int    `optional:"" default:"-1" short:"n" help:"Test number to run."`
 }
 
 var cli struct {
@@ -41,10 +41,10 @@ var cli struct {
 
 	FilePath string `short:"t" help:"Select firmware image filepath"`
 
-	ExecTests execTestsCmd `cmd help:"Executes tests given be TestNo or TestSet"`
-	List      listCmd      `cmd help:"Lists all tests"`
-	Markdown  markdownCmd  `cmd help:"Output test implementation state as Markdown"`
-	Version   versionCmd   `cmd help:"Prints the version of the program"`
+	ExecTests execTestsCmd `cmd:"" help:"Executes tests given be TestNo or TestSet"`
+	List      listCmd      `cmd:"" help:"Lists all tests"`
+	Markdown  markdownCmd  `cmd:"" help:"Output test implementation state as Markdown"`
+	Version   versionCmd   `cmd:"" help:"Prints the version of the program"`
 }
 
 func (e *execTestsCmd) Run(ctx *context) error {
