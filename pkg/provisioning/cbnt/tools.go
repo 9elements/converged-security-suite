@@ -8,10 +8,10 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi/consts"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/bootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/key"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/common/pretty"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/common/pretty"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
 
 	"github.com/linuxboot/fiano/pkg/cbfs"
 )

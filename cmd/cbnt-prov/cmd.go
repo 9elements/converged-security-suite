@@ -18,9 +18,9 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/provisioning/cbnt"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
+	manifest "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/bootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/key"
 )
 
 type context struct {

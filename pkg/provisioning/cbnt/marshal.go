@@ -7,9 +7,9 @@ import (
 	"encoding/pem"
 	"fmt"
 
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/bootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/key"
 )
 
 // WriteKM returns a key manifest as bytes in format defined in #575623.
@@ -45,7 +45,7 @@ func StitchBPM(bpm *bootpolicy.Manifest, pubKey crypto.PublicKey, signature []by
 	bpm.PMSE.StructInfo.ID = PMSEString
 	bpm.PMSE.StructInfo.Version = 0x20
 
-	if err := bpm.PMSE.KeySignature.FillSignature(0, pubKey, signature, manifest.AlgNull); err != nil {
+	if err := bpm.PMSE.KeySignature.FillSignature(0, pubKey, signature, cbnt.AlgNull); err != nil {
 		return nil, err
 	}
 

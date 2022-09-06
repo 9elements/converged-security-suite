@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/bootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/key"
 )
 
 // ParseBPM reads from a binary and parses into the boot policy manifest structure

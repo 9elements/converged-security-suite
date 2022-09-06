@@ -14,10 +14,10 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/creasty/defaults"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/bootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/key"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
 	"github.com/tidwall/pretty"
 	"github.com/tjfoc/gmsm/sm3"
 )
@@ -31,9 +31,9 @@ type IbbSegment struct {
 
 // KeyHash export for usage as cmd line argument type
 type KeyHash struct {
-	Usage     uint64             `json:"usage"`     //
-	Hash      string             `json:"hash"`      //
-	Algorithm manifest.Algorithm `json:"algorithm"` //
+	Usage     uint64         `json:"usage"`     //
+	Hash      string         `json:"hash"`      //
+	Algorithm cbnt.Algorithm `json:"algorithm"` //
 }
 
 // Options presents all available options for CBnT configuarion file.
@@ -96,20 +96,20 @@ func getIBBSegment(ibbs []bootpolicy.IBBSegment, image []byte) ([][]byte, error)
 	return ibbSegments, nil
 }
 
-func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo manifest.Algorithm) (hashout []byte, err error) {
+func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo cbnt.Algorithm) (hashout []byte, err error) {
 	var hashFunc hash.Hash
 	switch algo {
-	case manifest.AlgSHA1:
+	case cbnt.AlgSHA1:
 		hashFunc = sha1.New()
-	case manifest.AlgSHA256:
+	case cbnt.AlgSHA256:
 		hashFunc = sha256.New()
-	case manifest.AlgSHA384:
+	case cbnt.AlgSHA384:
 		hashFunc = sha512.New384()
-	case manifest.AlgSHA512:
+	case cbnt.AlgSHA512:
 		hashFunc = sha512.New512_256()
-	case manifest.AlgSM3:
+	case cbnt.AlgSM3:
 		hashFunc = sm3.New()
-	case manifest.AlgNull:
+	case cbnt.AlgNull:
 		return nil, nil
 	default:
 		return nil, fmt.Errorf("couldn't match requested hash algorithm: 0x%x", algo)
@@ -269,7 +269,7 @@ func ReadConfigFromBIOSImage(biosFilepath string, configFilepath *os.File) (*Opt
 
 // GetBPMPubHash takes the path to public BPM signing key and hash algorithm
 // and returns a hash with hashAlg of pub BPM singing key
-func GetBPMPubHash(path string, hashAlg manifest.Algorithm) ([]key.Hash, error) {
+func GetBPMPubHash(path string, hashAlg cbnt.Algorithm) ([]key.Hash, error) {
 	var data []byte
 	pubkey, err := ReadPubKey(path)
 	if err != nil {
@@ -279,7 +279,7 @@ func GetBPMPubHash(path string, hashAlg manifest.Algorithm) ([]key.Hash, error) 
 	if err != nil {
 		return nil, err
 	}
-	var kAs manifest.Key
+	var kAs cbnt.Key
 	if err := kAs.SetPubKey(pubkey); err != nil {
 		return nil, err
 	}
@@ -289,8 +289,8 @@ func GetBPMPubHash(path string, hashAlg manifest.Algorithm) ([]key.Hash, error) 
 	}
 	data = hash.Sum(nil)
 	var keyHashes []key.Hash
-	hStruc := &manifest.HashStructure{
-		HashAlg: manifest.Algorithm(hashAlg),
+	hStruc := &cbnt.HashStructure{
+		HashAlg: cbnt.Algorithm(hashAlg),
 	}
 	hStruc.HashBuffer = data
 
