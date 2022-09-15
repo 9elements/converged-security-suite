@@ -319,7 +319,11 @@ func (s Measurements) AddOffset(offset int64) {
 			if data.Range.Length == 0 {
 				continue
 			}
-			data.Range.Offset = uint64(int64(data.Range.Offset) + offset)
+			adjustedOffset := int64(data.Range.Offset) + offset
+			if adjustedOffset < 0 {
+				panic(fmt.Errorf("negative offset: %d + %d -> %d", int64(data.Range.Offset), offset, adjustedOffset))
+			}
+			data.Range.Offset = uint64(adjustedOffset)
 		}
 	}
 }
