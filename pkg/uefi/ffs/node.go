@@ -9,6 +9,12 @@ import (
 type Node struct {
 	fianoUEFI.Firmware
 	pkgbytes.Range
+
+	// AddOffset adds the value to all offsets.
+	// It, for example, affects GetByRange accordingly.
+	//
+	// It does effect only if a method of this node directly is used.
+	AddOffset int64
 }
 
 func (node Node) GUID() *fianoGUID.GUID {
