@@ -3,7 +3,7 @@ package dumpregisters
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
@@ -69,7 +69,7 @@ func (cmd Command) Execute(args []string) {
 		if err != nil {
 			panic(fmt.Sprintf("failed to marshal registers into json, err: %v", err))
 		}
-		err = ioutil.WriteFile(*cmd.outputFile, b, 0666)
+		err = os.WriteFile(*cmd.outputFile, b, 0666)
 		if err != nil {
 			panic(fmt.Sprintf("failed to write data to file %s, err: %v", *cmd.outputFile, err))
 		}

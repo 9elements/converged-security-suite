@@ -3,7 +3,6 @@ package cbnt
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
@@ -164,7 +163,7 @@ func CalculateNEMSize(image []byte, bpm *bootpolicy.Manifest, km *key.Manifest, 
 // StitchFITEntries takes a firmware filename, an acm, a boot policy manifest and a key manifest as byte slices
 // and writes the information into the Firmware Interface Table of the firmware image.
 func StitchFITEntries(biosFilename string, acm, bpm, km []byte) error {
-	image, err := ioutil.ReadFile(biosFilename)
+	image, err := os.ReadFile(biosFilename)
 	if err != nil {
 		return err
 	}
@@ -293,7 +292,7 @@ func FindAdditionalIBBs(imagepath string) ([]bootpolicy.IBBSegment, error) {
 	if err != nil {
 		// To be sure the image file is closed before reading from it again
 		image.Close()
-		img, err := ioutil.ReadFile(imagepath)
+		img, err := os.ReadFile(imagepath)
 		if err != nil {
 			return ibbs, err
 		}

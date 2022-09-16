@@ -3,7 +3,6 @@ package pcr
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	pcr "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
@@ -12,7 +11,7 @@ import (
 // Replay reproduces a PCR value given events, PCR index and hash algorithm.
 func Replay(eventLog *tpmeventlog.TPMEventLog, pcrIndex pcr.ID, hashAlgo tpmeventlog.TPMAlgorithm, logOut io.Writer) ([]byte, error) {
 	if logOut == nil {
-		logOut = ioutil.Discard
+		logOut = io.Discard
 	}
 	hash, err := hashAlgo.Hash()
 	if err != nil {

@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"hash"
 	"io"
-	"io/ioutil"
 	"os"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
@@ -46,7 +45,7 @@ type Options struct {
 // ParseConfig parses a boot guard option json file
 func ParseConfig(filepath string) (*Options, error) {
 	var cbnto Options
-	data, err := ioutil.ReadFile(filepath)
+	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +176,7 @@ func SetKM(cbnto *Options) (*key.Manifest, error) {
 // GenerateBPM generates a Boot Policy Manifest with the given config and firmware image
 func GenerateBPM(cbnto *Options, biosFilepath string) (*bootpolicy.Manifest, error) {
 	bpm := bootpolicy.NewManifest()
-	data, err := ioutil.ReadFile(biosFilepath)
+	data, err := os.ReadFile(biosFilepath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file '%s': %w", biosFilepath, err)
 	}
@@ -231,7 +230,7 @@ func ReadConfigFromBIOSImage(biosFilepath string, configFilepath *os.File) (*Opt
 	var cbnto Options
 	var bpm *bootpolicy.Manifest
 	var km *key.Manifest
-	bios, err := ioutil.ReadFile(biosFilepath)
+	bios, err := os.ReadFile(biosFilepath)
 	if err != nil {
 		return nil, err
 	}

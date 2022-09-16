@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/dmidecode"
@@ -54,7 +53,7 @@ func (cmd Command) Execute(args []string) {
 	}
 	imagePath := args[0]
 
-	imageBytes, err := ioutil.ReadFile(imagePath)
+	imageBytes, err := os.ReadFile(imagePath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "unable to read image '%s': %v", imagePath, err)
 		return
