@@ -686,7 +686,7 @@ func (cs *combinatorialSearch) Process(locality uint8, ms []*pcr.CachedMeasureme
 	}
 	start := ms[0].Data[0].ForceData
 
-	combination, err := bruteforcer.BruteForceBytes(start, uint64(cs.limit), initFunc, verifyFunc, 0)
+	combination, err := bruteforcer.BruteForce(start, 8, uint64(cs.limit), initFunc, verifyFunc, bruteforcer.ApplyBitFlipsBytes, 0)
 	if combination == nil || err != nil {
 		return nil, nil, err
 	}
@@ -696,7 +696,7 @@ func (cs *combinatorialSearch) Process(locality uint8, ms []*pcr.CachedMeasureme
 
 	var issue error
 	if len(combination) != 0 {
-		combination.ApplyBitFlips(ACMRegValue)
+		bruteforcer.ApplyBitFlipsBytes(combination, ACMRegValue)
 		issue = fmt.Errorf("changed ACM_POLICY_STATUS from %X to %X", start, ACMRegValue)
 	}
 

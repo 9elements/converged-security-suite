@@ -15,7 +15,7 @@ func TestBruteForce(t *testing.T) {
 	m := map[uint64]struct{}{}
 	maxDistance := 4
 	b := make([]byte, 4)
-	result, err := BruteForceBytes(b, uint64(maxDistance), nil, func(_ interface{}, data []byte) bool {
+	result, err := BruteForce(b, 8, uint64(maxDistance), nil, func(_ interface{}, data []byte) bool {
 		l.Lock()
 		defer l.Unlock()
 		buf := make([]byte, 8)
@@ -26,7 +26,7 @@ func TestBruteForce(t *testing.T) {
 		}
 		m[key] = struct{}{}
 		return false
-	}, 0)
+	}, ApplyBitFlipsBytes, 0)
 	require.Nil(t, result)
 	require.Nil(t, err)
 
@@ -36,7 +36,7 @@ func TestBruteForce(t *testing.T) {
 
 func BenchmarkBruteForce(b *testing.B) {
 	for _, checkFuncName := range []string{"noop", "sha1.Sum"} {
-		var checkFunc CheckFunc
+		var checkFunc CheckFunc[byte]
 		switch checkFuncName {
 		case "noop":
 			checkFunc = func(_ interface{}, data []byte) bool {
@@ -59,7 +59,7 @@ func BenchmarkBruteForce(b *testing.B) {
 							b.ReportAllocs()
 							b.ResetTimer()
 							for i := 0; i < b.N; i++ {
-								_, _ = BruteForceBytes(data, uint64(distance), nil, checkFunc, 0)
+								_, _ = BruteForce(data, 8, uint64(distance), nil, checkFunc, ApplyBitFlipsBytes, 0)
 							}
 						})
 					}

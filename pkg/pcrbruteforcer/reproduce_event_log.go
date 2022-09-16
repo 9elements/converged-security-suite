@@ -185,11 +185,11 @@ func bruteForceACMPolicyStatus(m pcr.Measurement, imageBytes []byte, expectedPCR
 		return bytes.Equal(hashValue, expectedPCR0DATASHA1Digest)
 	}
 
-	combination, err := bruteforcer.BruteForceBytes(acmPolicyStatus, uint64(maxDistance), newContextFunc, verifyACMPolicyStatusFunc, 0)
+	combination, err := bruteforcer.BruteForce(acmPolicyStatus, 8, uint64(maxDistance), newContextFunc, verifyACMPolicyStatusFunc, bruteforcer.ApplyBitFlipsBytes, 0)
 	if combination == nil {
 		return 0, fmt.Errorf("unable to brute force: %w", err)
 	}
 
-	combination.ApplyBitFlips(acmPolicyStatus)
+	bruteforcer.ApplyBitFlipsBytes(combination, acmPolicyStatus)
 	return registers.ParseACMPolicyStatusRegister(binary.LittleEndian.Uint64(acmPolicyStatus)), nil
 }

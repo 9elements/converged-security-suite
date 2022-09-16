@@ -42,15 +42,23 @@ func NewUniqueUnorderedCombination(amountOfIndexes uint64) UniqueUnorderedCombin
 	return s
 }
 
-// ApplyBitFlips changes bit combination located in combination UniqueUnorderedCombination
+// ApplyBitFlipsBools changes bit combination located in combination UniqueUnorderedCombination
+// of a []bool.
+func ApplyBitFlipsBools(s UniqueUnorderedCombination, v []bool) {
+	for _, idx := range s {
+		v[idx] = !v[idx]
+	}
+}
+
+// ApplyBitFlipsBytes changes bit combination located in combination UniqueUnorderedCombination
 // of a []byte.
-func (s UniqueUnorderedCombination) ApplyBitFlips(b []byte) {
+func ApplyBitFlipsBytes(s UniqueUnorderedCombination, v []byte) {
 	for _, idx := range s {
 		// major bits of "idx" are responsible for item index inside `b`
 		byteIdx := idx >> 3 // idx / 8
 		// minor bits of "idx" are responsible for bit-index inside `b[byteIndex]`
 		bitIdx := idx & 0x7 // idx mod 8
-		b[byteIdx] ^= 1 << bitIdx
+		v[byteIdx] ^= 1 << bitIdx
 	}
 }
 
@@ -319,11 +327,6 @@ func (iter *UniqueUnorderedCombinationIterator) GetCombination() UniqueUnordered
 // GetCombinationUnsafe is an unsafe (but fast) getter of the current combination.
 func (iter *UniqueUnorderedCombinationIterator) GetCombinationUnsafe() UniqueUnorderedCombination {
 	return iter.combination
-}
-
-// ApplyBitFlips flips bits of `b`, indexes of which are defined by current combination.
-func (iter *UniqueUnorderedCombinationIterator) ApplyBitFlips(b []byte) {
-	iter.combination.ApplyBitFlips(b)
 }
 
 // Copy returns a deep copy of the iterator.
