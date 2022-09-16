@@ -3,16 +3,28 @@ package pcrbruteforcer
 import (
 	"bytes"
 	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"hash"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/bruteforcer"
 	multierror "github.com/9elements/converged-security-suite/v2/pkg/errors"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 )
+
+// SettingsReproduceEventLog defines settings for internal bruteforce algorithms used in ReproduceEventLog
+type SettingsReproduceEventLog struct {
+	SettingsBruteforceACMPolicyStatus
+}
+
+// DefaultSettingsReproduceEventLog returns recommeneded default PCR0 settings
+func DefaultSettingsReproduceEventLog() SettingsReproduceEventLog {
+	return SettingsReproduceEventLog{
+		SettingsBruteforceACMPolicyStatus: DefaultSettingsBruteforceACMPolicyStatus(),
+	}
+}
 
 // ReproduceEventLog verifies measurements through TPM EventLog. If successful,
 // the first returned variable is true; in any case all problems
@@ -25,14 +37,16 @@ import (
 // Currently we focus only on SHA1 measurements to simplify the code.
 func ReproduceEventLog(
 	eventLog *tpmeventlog.TPMEventLog,
-	measurementsSHA1 pcr.Measurements,
+	hashAlgo tpmeventlog.TPMAlgorithm,
+	measurements pcr.Measurements,
 	imageBytes []byte,
+	settings SettingsReproduceEventLog,
 ) (bool, *registers.ACMPolicyStatus, error) {
 	if eventLog == nil {
 		return false, nil, fmt.Errorf("TPM EventLog is not provided")
 	}
 
-	events, err := eventLog.FilterEvents(0, tpmeventlog.TPMAlgorithmSHA1)
+	events, err := eventLog.FilterEvents(0, hashAlgo)
 	if err != nil {
 		return false, nil, fmt.Errorf("unable to filter events: %w", err)
 	}
@@ -40,7 +54,7 @@ func ReproduceEventLog(
 	mErr := &multierror.MultiError{}
 
 	var filteredMeasurements pcr.Measurements
-	for _, m := range measurementsSHA1 {
+	for _, m := range measurements {
 		if m.IsFake() && m.ID != pcr.MeasurementIDInit {
 			continue
 		}
@@ -83,7 +97,15 @@ func ReproduceEventLog(
 			continue
 		}
 
-		mHash := sha1.Sum(m.CompileMeasurableData(imageBytes))
+		hasherFactory, err := ev.Digest.HashAlgo.Hash()
+		if err != nil {
+			_ = mErr.Add(fmt.Errorf("invalid hash algo %d in measurement '%s' in EventLog (expected event types %v, but received %d on evIdx==%d)", ev.Digest.HashAlgo, m.ID, m.EventLogEventTypes(), ev.Type, evIdx))
+			continue
+		}
+		hasher := hasherFactory.New()
+		hasher.Write(m.CompileMeasurableData(imageBytes))
+		mHash := hasher.Sum(nil)
+		hasher.Reset()
 		if bytes.Equal(mHash[:], ev.Digest.Digest) {
 			// It matched, everything is OK, let's check next pair.
 			continue
@@ -99,7 +121,7 @@ func ReproduceEventLog(
 			// If this is the PCR0_DATA measurement then it could be just
 			// a corrupted ACM_POLICY_STATUS register value, let's try
 			// to restore it.
-			correctedACMPolicyStatus, err := bruteForceACMPolicyStatus(*m, imageBytes, ev.Digest.Digest)
+			correctedACMPolicyStatus, err := bruteForceACMPolicyStatus(*m, imageBytes, ev.Digest.Digest, settings.SettingsBruteforceACMPolicyStatus)
 			if err != nil {
 				_ = mErr.Add(fmt.Errorf("PCR0_DATA measurement does not match the digest reported in EventLog and unable to brute force a possible bitflip: %X != %X", mHash[:], ev.Digest.Digest))
 				result = false
@@ -132,12 +154,12 @@ func ReproduceEventLog(
 	return result, updatedACMPolicyStatusValue, mErr.ReturnValue()
 }
 
-type bruteForceACMPolicyStatusEventContext struct {
-	Hasher hash.Hash
-	Buf    []byte
-}
-
-func bruteForceACMPolicyStatus(m pcr.Measurement, imageBytes []byte, expectedPCR0DATASHA1Digest []byte) (registers.ACMPolicyStatus, error) {
+func bruteForceACMPolicyStatus(
+	m pcr.Measurement,
+	imageBytes []byte,
+	expectedPCR0DATADigest []byte,
+	settings SettingsBruteforceACMPolicyStatus,
+) (registers.ACMPolicyStatus, error) {
 	if len(m.Data) == 0 {
 		return 0, fmt.Errorf("no data in the measurement")
 	}
@@ -156,40 +178,55 @@ func bruteForceACMPolicyStatus(m pcr.Measurement, imageBytes []byte, expectedPCR
 
 	pcr0Data := m.CompileMeasurableData(imageBytes)
 
-	// maxDistance is the maximal hamming distance to brute force to, it is
-	// picked to 6, because it is maximal value for a reasonable brute-force
-	// time (about 1 second).
-	//
-	// For benchmark details see also README.md of package `bruteforcer`.
-	maxDistance := 6
+	var hashFuncFactory func() hash.Hash
+	switch len(expectedPCR0DATADigest) {
+	case sha1.Size:
+		hashFuncFactory = sha1.New
+	case sha256.Size:
+		hashFuncFactory = sha256.New
+	default:
+		return 0, fmt.Errorf("invalid len of the expected PCR0_DATA digest: %d", len(expectedPCR0DATADigest))
+	}
 
-	newContextFunc := func() (interface{}, error) {
+	type bruteForceACMPolicyStatusEventContext struct {
+		Hasher hash.Hash
+	}
+
+	init := func() ([]byte, any, error) {
 		buf := make([]byte, len(pcr0Data))
 		copy(buf, pcr0Data)
-		return &bruteForceACMPolicyStatusEventContext{
-			Hasher: sha1.New(),
-			Buf:    buf,
+		return buf, &bruteForceACMPolicyStatusEventContext{
+			Hasher: hashFuncFactory(),
 		}, nil
 	}
 
-	verifyACMPolicyStatusFunc := func(_ctx interface{}, acmPolicyStatus []byte) bool {
+	check := func(_ctx any, pcr0Data []byte) (bool, error) {
 		ctx := _ctx.(*bruteForceACMPolicyStatusEventContext)
-		pcr0Data := ctx.Buf
 		hasher := ctx.Hasher
-
-		// overwriting the beginning of pcr0Data with new value of acmPolicyStatus.
-		copy(pcr0Data, acmPolicyStatus)
 		hasher.Write(pcr0Data)
 		hashValue := hasher.Sum(nil)
 		hasher.Reset()
-		return bytes.Equal(hashValue, expectedPCR0DATASHA1Digest)
+		return bytes.Equal(hashValue, expectedPCR0DATADigest), nil
 	}
 
-	combination, err := bruteforcer.BruteForce(acmPolicyStatus, 8, uint64(maxDistance), newContextFunc, verifyACMPolicyStatusFunc, bruteforcer.ApplyBitFlipsBytes, 0)
-	if combination == nil {
-		return 0, fmt.Errorf("unable to brute force: %w", err)
+	// try these in series because each completely fills the cpu
+	strategies := []acmPolicyStatusBruteForceStrategy{
+		newLinearSearch(settings.MaxACMPolicyLinearDistance, imageBytes, expectedPCR0DATADigest),
 	}
 
-	bruteforcer.ApplyBitFlipsBytes(combination, acmPolicyStatus)
-	return registers.ParseACMPolicyStatusRegister(binary.LittleEndian.Uint64(acmPolicyStatus)), nil
+	if settings.EnableACMPolicyCombinatorialStrategy {
+		strategies = append(strategies, newCombinatorialSearch(settings.MaxACMPolicyCombinatorialDistance, imageBytes, expectedPCR0DATADigest))
+	}
+
+	for _, s := range strategies {
+		reg, err := s.Process(init, check)
+		if err != nil {
+			return 0, fmt.Errorf("unable execute strategy %T: %w", s, err)
+		}
+		if reg != nil {
+			return *reg, nil
+		}
+	}
+
+	return 0, fmt.Errorf("unable to find the value")
 }

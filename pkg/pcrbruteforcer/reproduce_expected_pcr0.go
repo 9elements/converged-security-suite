@@ -21,22 +21,56 @@ import (
 )
 
 const (
-	// the limit for the linear bruteforcer
-	maxACMPolicyLinearDistance = 128
-
-	// the limit for the combinatorial bruteforcer (expensive)
-	maxACMPolicyCombinatorialDistance = 2
-
 	// defines minimal "disabled measurements" combinations handled by one goroutine
 	minCombinationsPerRoutine = 1
+)
 
-	// enableCombinatorialStrategy enables a strategy to brute-force ACM Policy
+// ReproducePCR0Result represents the applied PCR bruteforce methods: check different localities, ACM_POLICY_STATUS, disabling measurements
+type ReproducePCR0Result struct {
+	Locality               uint8
+	CorrectACMPolicyStatus *registers.ACMPolicyStatus
+	DisabledMeasurements   pcr.Measurements
+}
+
+// SettingsBruteforceACMPolicyStatus defines settings of how to reproduce Intel ACM Policy Status.
+type SettingsBruteforceACMPolicyStatus struct {
+	// EnableACMPolicyCombinatorialStrategy enables a strategy to brute-force ACM Policy
 	// Status register by finding a combination of bits to flip. This was the
 	// initial approach before the nature of the corruptions was investaged,
-	// and it became clear that a more effective strategy is just linear
-	// decrement.
-	enableCombinatorialStrategy = false
-)
+	// and it became clear that a more effective strategy is just linear decrement.
+	EnableACMPolicyCombinatorialStrategy bool
+
+	// the limit for the combinatorial bruteforcer (expensive)
+	MaxACMPolicyCombinatorialDistance int
+
+	// MaxACMPolicyLinearDistance specifies a range of linear bruteforcer to try:
+	// [initial value of ACM_POLICY_STATUS - MaxACMPolicyLinearDistance : initial value of ACM_POLICY_STATUS + MaxACMPolicyLinearDistance]
+	MaxACMPolicyLinearDistance int
+}
+
+// DefaultSettingsBruteforceACMPolicyStatus returns recommended default settings to reproduce ACM Policy Status (given its digest and a close value).
+func DefaultSettingsBruteforceACMPolicyStatus() SettingsBruteforceACMPolicyStatus {
+	return SettingsBruteforceACMPolicyStatus{
+		EnableACMPolicyCombinatorialStrategy: false,
+		MaxACMPolicyCombinatorialDistance:    2,
+		MaxACMPolicyLinearDistance:           128,
+	}
+}
+
+// SettingsReproducePCR0 defines settings for internal bruteforce algorithms used in ReproduceExpectedPCR0
+type SettingsReproducePCR0 struct {
+	MaxDisabledMeasurements int
+
+	SettingsBruteforceACMPolicyStatus
+}
+
+// DefaultSettingsReproducePCR0 returns recommeneded default PCR0 settings
+func DefaultSettingsReproducePCR0() SettingsReproducePCR0 {
+	return SettingsReproducePCR0{
+		MaxDisabledMeasurements:           3,
+		SettingsBruteforceACMPolicyStatus: DefaultSettingsBruteforceACMPolicyStatus(),
+	}
+}
 
 // ReproduceExpectedPCR0 brute-forces measurements to achieve the expected PCR0
 // SHA1 or SHA256 value.
@@ -55,7 +89,8 @@ func ReproduceExpectedPCR0(
 	flow pcr.Flow,
 	measurements pcr.Measurements,
 	imageBytes []byte,
-) (isSuccess bool, locality uint8, updatedACMPolicyStatus *registers.ACMPolicyStatus, returnErr error) {
+	settings SettingsReproducePCR0,
+) (*ReproducePCR0Result, error) {
 	var realMeasurements pcr.Measurements
 	for _, ms := range measurements {
 		if ms.IsFake() {
@@ -69,9 +104,10 @@ func ReproduceExpectedPCR0(
 		flow,
 		realMeasurements,
 		imageBytes,
+		settings,
 	)
 	if err != nil {
-		return false, 0, nil, fmt.Errorf("unable to initialize a handler: %w", err)
+		return nil, fmt.Errorf("unable to initialize a handler: %w", err)
 	}
 	return handler.Execute(ctx)
 }
@@ -82,6 +118,7 @@ type reproduceExpectedPCR0Handler struct {
 	precalculatedMeasurements []*pcr.CachedMeasurement
 	imageBytes                []byte
 	hashFuncFactory           func() hash.Hash
+	settings                  SettingsReproducePCR0
 }
 
 func newReproduceExpectedPCR0Handler(
@@ -89,6 +126,7 @@ func newReproduceExpectedPCR0Handler(
 	flow pcr.Flow,
 	measurements pcr.Measurements,
 	imageBytes []byte,
+	settings SettingsReproducePCR0,
 ) (*reproduceExpectedPCR0Handler, error) {
 	var hashFuncFactory func() hash.Hash
 	switch len(expectedPCR0) {
@@ -111,30 +149,23 @@ func newReproduceExpectedPCR0Handler(
 		precalculatedMeasurements: precalculatedMeasurements,
 		imageBytes:                imageBytes,
 		hashFuncFactory:           hashFuncFactory,
+		settings:                  settings,
 	}, nil
 }
 
-func (h *reproduceExpectedPCR0Handler) Execute(
-	_ctx context.Context,
-) (
-	isSuccess bool,
-	locality uint8,
-	updatedACMPolicyStatus *registers.ACMPolicyStatus,
-	returnErr error,
-) {
-	ctx, ok := _ctx.(xcontext.Context)
-	if !ok {
-		ctx = xcontext.Extend(_ctx)
-	}
+func (h *reproduceExpectedPCR0Handler) Execute(ctx xcontext.Context) (*ReproducePCR0Result, error) {
 	// To speedup brute-force process we try the expected locality first,
 	// and only after that we try second expected locality.
 
 	defer ctx.Tracer().StartSpan("reproduceExpectedPCR0Handler").Finish()
 
 	// The expected locality.
-	isSuccess, locality, updatedACMPolicyStatus, returnErr = h.execute(ctx, []uint8{h.flow.TPMLocality()})
-	if isSuccess {
-		return
+	result, err := h.execute(ctx, []uint8{h.flow.TPMLocality()})
+	if err != nil {
+		return nil, err
+	}
+	if result != nil {
+		return result, nil
 	}
 
 	// The second expected locality (flipping 0 and 3).
@@ -158,22 +189,12 @@ func (h *reproduceExpectedPCR0Handler) Execute(
 	return h.execute(ctx, restLocalities)
 }
 
-func (h *reproduceExpectedPCR0Handler) execute(
-	ctx xcontext.Context,
-	localities []uint8,
-) (
-	isSuccess bool,
-	locality uint8,
-	updatedACMPolicyStatus *registers.ACMPolicyStatus,
-	returnErr error,
-) {
+func (h *reproduceExpectedPCR0Handler) execute(ctx xcontext.Context, localities []uint8) (*ReproducePCR0Result, error) {
 	ctx, cancelFunc := xcontext.WithCancel(ctx)
 
-	returnErr = fmt.Errorf("unable to reproduce the expected PCR0 value")
-
+	var result *ReproducePCR0Result
 	var returnCount uint64
 	var wg sync.WaitGroup
-	defer wg.Wait()
 	for _, tryLocality := range localities {
 		wg.Add(1)
 		go func(tryLocality uint8) {
@@ -181,11 +202,15 @@ func (h *reproduceExpectedPCR0Handler) execute(
 			ctx.Logger().Debugf("reproduce pcr0 starting bruteforce... (locality: %v)", tryLocality)
 
 			startTime := time.Now()
-			foundAnswer, v, err := h.newJob(tryLocality).Execute(ctx)
+			_result, err := h.newJob(tryLocality).Execute(ctx)
 			elapsed := time.Since(startTime)
 
-			if !foundAnswer && err == nil {
+			if _result == nil && err == nil {
 				ctx.Logger().Debugf("reproduce pcr0 did not find an answer (locality: %v, elapsed: %v)", tryLocality, elapsed)
+				return
+			}
+			if err != nil {
+				ctx.Errorf("Failed to bruteforce for locality: '%d': '%v'", tryLocality, err)
 				return
 			}
 			ctx.Logger().Debugf("reproduce pcr0 got an answer (locality: %v, elapsed: %v)", tryLocality, elapsed)
@@ -195,25 +220,14 @@ func (h *reproduceExpectedPCR0Handler) execute(
 				return
 			}
 
-			ctx.Logger().Debugf("received an answer (locality:%d, expectedLocality:%d): %v %v", tryLocality, h.flow.TPMLocality(), foundAnswer, err)
+			ctx.Logger().Debugf("received an answer (locality:%d, expectedLocality:%d): %v %v", tryLocality, h.flow.TPMLocality(), _result, err)
 			cancelFunc()
 
-			if foundAnswer && tryLocality != h.flow.TPMLocality() {
-				// Append current errors (even if there are none) with an additional one:
-				err = (&errors.MultiError{}).Add(
-					err,
-					fmt.Errorf("locality mismatch, expected:%d, reproduced:%d", h.flow.TPMLocality(), tryLocality),
-				).ReturnValue()
-			}
-
-			isSuccess = true
-			locality = tryLocality
-			updatedACMPolicyStatus = v
-			returnErr = err
+			result = _result
 		}(tryLocality)
 	}
-
-	return
+	wg.Wait()
+	return result, nil
 }
 
 func (h *reproduceExpectedPCR0Handler) newJob(
@@ -225,6 +239,7 @@ func (h *reproduceExpectedPCR0Handler) newJob(
 		hashFuncFactory:   h.hashFuncFactory,
 		expectedPCR0:      h.expectedPCR0,
 		locality:          locality,
+		settings:          h.settings,
 		registerHashCache: newRegisterHashCache(),
 	}
 }
@@ -236,22 +251,23 @@ type reproduceExpectedPCR0Job struct {
 	hashFuncFactory   func() hash.Hash
 	expectedPCR0      []byte
 	locality          uint8
+	settings          SettingsReproducePCR0
 	registerHashCache *registerHashCache
 }
 
 func (j *reproduceExpectedPCR0Job) Execute(
 	ctx xcontext.Context,
-) (isSuccess bool, actualACMPolicyStatus *registers.ACMPolicyStatus, retErr error) {
-	var mErr errors.MultiError
-	defer func() {
-		retErr = mErr.ReturnValue()
-	}()
-
+) (*ReproducePCR0Result, error) {
 	concurrencyFactor := runtime.GOMAXPROCS(0)
 
 	ctx, cancelFn := xcontext.WithCancel(ctx)
 
-	for disabledMeasurements := 0; disabledMeasurements < len(j.measurements); disabledMeasurements++ {
+	maxDisabledMeasurements := len(j.measurements)
+	if j.settings.MaxDisabledMeasurements < maxDisabledMeasurements {
+		maxDisabledMeasurements = j.settings.MaxDisabledMeasurements
+	}
+
+	for disabledMeasurements := 0; disabledMeasurements < maxDisabledMeasurements; disabledMeasurements++ {
 		disabledMeasurementsIterator := bruteforcer.NewUniqueUnorderedCombinationIterator(uint64(disabledMeasurements), int64(len(j.measurements)))
 
 		maxCombinationID := disabledMeasurementsIterator.AmountOfCombinations() - 1
@@ -262,6 +278,7 @@ func (j *reproduceExpectedPCR0Job) Execute(
 
 		type iterationResult struct {
 			isSuccess             bool
+			disabledMeasurements  pcr.Measurements
 			actualACMPolicyStatus *registers.ACMPolicyStatus
 			err                   error
 		}
@@ -284,10 +301,24 @@ func (j *reproduceExpectedPCR0Job) Execute(
 					if ctx.IsSignaledWith() {
 						return
 					}
-					_isSuccess, _actualACMPolicyStatus, _err := j.tryDisabledMeasurementsCombination(ctx, disabledMeasurementsIterator.GetCombinationUnsafe(), j.hashFuncFactory)
+					disabledMeasurementsComb := disabledMeasurementsIterator.GetCombinationUnsafe()
+					_isSuccess, _actualACMPolicyStatus, _err := j.tryDisabledMeasurementsCombination(ctx, disabledMeasurementsComb, j.hashFuncFactory)
 					if _isSuccess || _err != nil {
+						var disabledMeasurements pcr.Measurements
+						if _isSuccess {
+							for _, disabledMeasurementIdx := range disabledMeasurementsComb {
+								for idx := range j.measurements {
+									if int(disabledMeasurementIdx) == idx {
+										disabledMeasurements = append(disabledMeasurements, &j.measurements[idx].Measurement)
+										break
+									}
+								}
+							}
+						}
+
 						resultCh <- iterationResult{
 							isSuccess:             _isSuccess,
+							disabledMeasurements:  disabledMeasurements,
 							actualACMPolicyStatus: _actualACMPolicyStatus,
 							err:                   _err,
 						}
@@ -303,21 +334,36 @@ func (j *reproduceExpectedPCR0Job) Execute(
 		wg.Wait()
 		close(resultCh)
 
+		var (
+			isSuccess             bool
+			actualACMPolicyStatus *registers.ACMPolicyStatus
+			disabledMeasurements  pcr.Measurements
+			mErr                  errors.MultiError
+		)
 		for result := range resultCh {
 			if result.isSuccess && !isSuccess {
 				isSuccess = true
+				disabledMeasurements = result.disabledMeasurements
 				actualACMPolicyStatus = result.actualACMPolicyStatus
 			}
 			if result.err != nil {
 				_ = mErr.Add(result.err)
 			}
 		}
-		if isSuccess || mErr.Count() != 0 {
-			return
+
+		if isSuccess {
+			return &ReproducePCR0Result{
+				Locality:               j.locality,
+				CorrectACMPolicyStatus: actualACMPolicyStatus,
+				DisabledMeasurements:   disabledMeasurements,
+			}, nil
+		}
+
+		if err := mErr.ReturnValue(); err != nil {
+			return nil, err
 		}
 	}
-
-	return
+	return nil, nil
 }
 
 func (j *reproduceExpectedPCR0Job) tryDisabledMeasurementsCombination(
@@ -341,27 +387,7 @@ func (j *reproduceExpectedPCR0Job) tryDisabledMeasurementsCombination(
 		enabledMeasurements = append(enabledMeasurements, m)
 	}
 
-	isSuccess, actualACMPolicyStatus, err := j.measurementsVerify(j.expectedPCR0, enabledMeasurements, hashFuncFactory)
-	if !isSuccess {
-		return false, nil, err
-	}
-
-	mErr := (&errors.MultiError{}).Add(err)
-	for _, disabledMeasurementIdx := range disabledMeasurementsCombination {
-		var m pcr.MeasureEvent
-		for idx := range j.measurements {
-			if int(disabledMeasurementIdx) == idx {
-				m = j.measurements[idx]
-				break
-			}
-		}
-		if m == nil {
-			ctx.Errorf("unable to find a measurement with index: %d", disabledMeasurementIdx)
-			continue
-		}
-		_ = mErr.Add(fmt.Errorf("measurement '%s' was disabled to reproduce the hash", m.GetID()))
-	}
-	return true, actualACMPolicyStatus, mErr.ReturnValue()
+	return j.measurementsVerify(j.expectedPCR0, enabledMeasurements, hashFuncFactory)
 }
 
 func (j *reproduceExpectedPCR0Job) measurementsVerify(
@@ -371,10 +397,14 @@ func (j *reproduceExpectedPCR0Job) measurementsVerify(
 ) (bool, *registers.ACMPolicyStatus, error) {
 	switch {
 	case len(enabledMeasurements) > 0 && enabledMeasurements[0].ID == pcr.MeasurementIDPCR0DATA:
-		isSuccess, actualACMPolicyStatus, err := j.measurementsVerifyWithBruteForceACMPolicyStatus(expectedHashValue, enabledMeasurements, hasherFactory)
-		if isSuccess || err != nil {
-			return isSuccess, actualACMPolicyStatus, err
+		acmPolicyStatus, err := j.measurementsVerifyWithBruteForceACMPolicyStatus(expectedHashValue, enabledMeasurements, hasherFactory)
+		if err != nil {
+			return false, nil, err
 		}
+		if acmPolicyStatus == nil {
+			return false, nil, nil
+		}
+		return true, acmPolicyStatus, nil
 
 	default:
 		// just check that the measurements lead to the expected pcr0 value
@@ -390,7 +420,6 @@ func (j *reproduceExpectedPCR0Job) measurementsVerify(
 			return true, nil, nil
 		}
 	}
-
 	return false, nil, nil
 }
 
@@ -398,41 +427,69 @@ func (j *reproduceExpectedPCR0Job) measurementsVerifyWithBruteForceACMPolicyStat
 	expectedHashValue []byte,
 	enabledMeasurements []*pcr.CachedMeasurement,
 	hasherFactory func() hash.Hash,
-) (bool, *registers.ACMPolicyStatus, error) {
+) (*registers.ACMPolicyStatus, error) {
 	if len(enabledMeasurements) < 1 {
-		return false, nil, fmt.Errorf("empty measurements slice, cannot compute PCR0")
+		return nil, fmt.Errorf("empty measurements slice, cannot compute PCR0")
 	}
 
 	if enabledMeasurements[0].ID != pcr.MeasurementIDPCR0DATA {
-		return false, nil, fmt.Errorf("first measurement is not the ACM policy status register")
+		return nil, fmt.Errorf("first measurement is not the ACM policy status register")
 	}
 
 	acmPolicyStatus := enabledMeasurements[0].Data[0].ForceData
 	if len(acmPolicyStatus) != 8 {
-		return false, nil, fmt.Errorf("ACM POLICY STATUS register is expected to be 64bits, but it is %d bits", len(acmPolicyStatus)*8)
+		return nil, fmt.Errorf("ACM POLICY STATUS register is expected to be 64bits, but it is %d bits", len(acmPolicyStatus)*8)
+	}
+
+	type bruteForceContext struct {
+		Hash          hash.Hash
+		MeasureEvents []pcr.MeasureEvent
+	}
+
+	init := func() ([]byte, any, error) {
+		fastMS := prepareFastMeasurements(enabledMeasurements, j.imageBytes, j.registerHashCache)
+		acmPolicyStatusValue := fastMS[0].(*pcr0DataFastMeasurement).Data[:len(enabledMeasurements[0].Data[0].ForceData)]
+		return acmPolicyStatusValue,
+			&bruteForceContext{
+				Hash:          j.hashFuncFactory(),
+				MeasureEvents: fastMS,
+			}, nil
+	}
+
+	check := func(_ctx any, date []byte) (bool, error) {
+		ctx := _ctx.(*bruteForceContext)
+		// check if this series of measurements lead to the expected pcr0
+		pcr0HashValue, err := pcr.CalculatePCR(
+			j.imageBytes, j.locality, ctx.MeasureEvents,
+			ctx.Hash, nil,
+		)
+		if err != nil {
+			return false, err
+		}
+
+		return bytes.Equal(pcr0HashValue, j.expectedPCR0), nil
 	}
 
 	// try these in series because each completely fills the cpu
-	strategies := []bruteForceStrategy{
-		newLinearSearch(maxACMPolicyLinearDistance, j.imageBytes, expectedHashValue, hasherFactory, j.registerHashCache),
+	strategies := []acmPolicyStatusBruteForceStrategy{
+		newLinearSearch(j.settings.MaxACMPolicyLinearDistance, j.imageBytes, expectedHashValue),
 	}
 
-	if enableCombinatorialStrategy {
-		strategies = append(strategies, newCombinatorialSearch(maxACMPolicyCombinatorialDistance, j.imageBytes, expectedHashValue, hasherFactory, j.registerHashCache))
+	if j.settings.EnableACMPolicyCombinatorialStrategy {
+		strategies = append(strategies, newCombinatorialSearch(j.settings.MaxACMPolicyCombinatorialDistance, j.imageBytes, expectedHashValue))
 	}
 
 	for _, s := range strategies {
-		reg, issue, err := s.Process(j.locality, enabledMeasurements)
+		reg, err := s.Process(init, check)
 		if err != nil {
-			// TODO: this needs to get fixed; treating program errors and algo outcome issues the same way
-			return false, nil, err
+			return nil, err
 		}
 		if reg != nil {
-			return true, reg, issue
+			return reg, nil
 		}
 	}
 
-	return false, nil, nil
+	return nil, nil
 }
 
 //-----------------------------------------------------------------------------
@@ -440,10 +497,12 @@ func (j *reproduceExpectedPCR0Job) measurementsVerifyWithBruteForceACMPolicyStat
 //-----------------------------------------------------------------------------
 
 type hashFactory func() hash.Hash
-type issue error
 
-type bruteForceStrategy interface {
-	Process(locality uint8, ms []*pcr.CachedMeasurement) (*registers.ACMPolicyStatus, issue, error)
+type acmPolicyStatusBruteForceStrategy interface {
+	Process(
+		init func() ([]byte, any, error),
+		check func(ctx any, data []byte) (bool, error),
+	) (*registers.ACMPolicyStatus, error)
 }
 
 func cacheMeasurements(ms pcr.Measurements, image []byte, hashFactory hashFactory) ([]*pcr.CachedMeasurement, error) {
@@ -459,47 +518,20 @@ func cacheMeasurements(ms pcr.Measurements, image []byte, hashFactory hashFactor
 }
 
 type linearSearch struct {
-	limit             int
-	image             []byte
-	expected          []byte
-	hashFactory       hashFactory
-	registerHashCache *registerHashCache
+	limit    int
+	image    []byte
+	expected []byte
 }
 
-func newLinearSearch(limit int, image []byte, expected []byte, hashFactory hashFactory, registerHashCache *registerHashCache) *linearSearch {
-	return &linearSearch{limit, image, expected, hashFactory, registerHashCache}
+func newLinearSearch(limit int, image []byte, expected []byte) *linearSearch {
+	return &linearSearch{limit, image, expected}
 }
 
-func (ls *linearSearch) Process(locality uint8, ms []*pcr.CachedMeasurement) (*registers.ACMPolicyStatus, issue, error) {
-	type bruteForceContext struct {
-		Hash          hash.Hash
-		MeasureEvents []pcr.MeasureEvent
-		Buffer        []byte
-	}
-
-	init := func() (*bruteForceContext, error) {
-		fastMS := prepareFastMeasurements(ms, ls.image, ls.registerHashCache)
-		return &bruteForceContext{
-			Hash:          ls.hashFactory(),
-			MeasureEvents: fastMS,
-			Buffer:        fastMS[0].(*pcr0DataFastMeasurement).Data[:len(ms[0].Data[0].ForceData)],
-		}, nil
-	}
-
-	check := func(ctx *bruteForceContext) (bool, error) {
-		// check if this series of measurements lead to the expected pcr0
-		pcr0HashValue, err := pcr.CalculatePCR(
-			ls.image, locality, ctx.MeasureEvents,
-			ctx.Hash, nil,
-		)
-		if err != nil {
-			return false, err
-		}
-
-		return bytes.Equal(pcr0HashValue, ls.expected), nil
-	}
-	start := ms[0].Data[0].ForceData
-
+// locality uint8, ms []*pcr.CachedMeasurement
+func (ls *linearSearch) Process(
+	init func() ([]byte, any, error),
+	check func(ctx any, data []byte) (bool, error),
+) (*registers.ACMPolicyStatus, error) {
 	concurrencyFactor := runtime.GOMAXPROCS(0)
 	blockSize := ls.limit / concurrencyFactor
 	if blockSize < 1 {
@@ -524,7 +556,7 @@ func (ls *linearSearch) Process(locality uint8, ms []*pcr.CachedMeasurement) (*r
 		go func(blockStart, blockEnd int, resultChan chan<- []byte, errChan chan<- error) {
 			defer wg.Done()
 
-			sctx, err := init()
+			value, sctx, err := init()
 			if err != nil {
 				select {
 				case errChan <- err:
@@ -533,7 +565,7 @@ func (ls *linearSearch) Process(locality uint8, ms []*pcr.CachedMeasurement) (*r
 				return
 			}
 
-			blockValue := binary.LittleEndian.Uint64(start) - uint64(blockStart)
+			blockValue := binary.LittleEndian.Uint64(value) - uint64(blockStart)
 
 			for bi := blockStart; bi < blockEnd; bi++ {
 				select {
@@ -543,10 +575,10 @@ func (ls *linearSearch) Process(locality uint8, ms []*pcr.CachedMeasurement) (*r
 				}
 
 				// will possibly underflow, but that's ok
-				binary.LittleEndian.PutUint64(sctx.Buffer, blockValue)
+				binary.LittleEndian.PutUint64(value, blockValue)
 				blockValue--
 
-				ok, err := check(sctx)
+				ok, err := check(sctx, value)
 				if err != nil {
 					select {
 					case errChan <- err:
@@ -556,7 +588,7 @@ func (ls *linearSearch) Process(locality uint8, ms []*pcr.CachedMeasurement) (*r
 				}
 				if ok {
 					select {
-					case resultChan <- sctx.Buffer:
+					case resultChan <- value:
 					case <-ctx.Done():
 					}
 					return
@@ -574,32 +606,25 @@ func (ls *linearSearch) Process(locality uint8, ms []*pcr.CachedMeasurement) (*r
 	select {
 	case <-ctx.Done():
 		// no answers and no errors, wg was just done
-		return nil, nil, nil
+		return nil, nil
 
 	case err := <-errChan:
-		return nil, nil, err
+		return nil, err
 
 	case result := <-resultChan:
-		var issue issue
-		if !bytes.Equal(start, result) {
-			issue = fmt.Errorf("changed ACM_POLICY_STATUS from %X to %X", start, result)
-		}
-
 		correctACMReg := registers.ParseACMPolicyStatusRegister(binary.LittleEndian.Uint64(result))
-		return &correctACMReg, issue, nil
+		return &correctACMReg, nil
 	}
 }
 
 type combinatorialSearch struct {
-	limit             int
-	image             []byte
-	expected          []byte
-	hashFactory       hashFactory
-	registerHashCache *registerHashCache
+	limit    int
+	image    []byte
+	expected []byte
 }
 
-func newCombinatorialSearch(limit int, image []byte, expected []byte, hashFactory hashFactory, registerHashCache *registerHashCache) *combinatorialSearch {
-	return &combinatorialSearch{limit, image, expected, hashFactory, registerHashCache}
+func newCombinatorialSearch(limit int, image []byte, expected []byte) *combinatorialSearch {
+	return &combinatorialSearch{limit, image, expected}
 }
 
 type pcr0DataFastMeasurement struct {
@@ -655,51 +680,50 @@ func prepareFastMeasurements(ms []*pcr.CachedMeasurement, image []byte, cache *r
 	return copyMS
 }
 
-func (cs *combinatorialSearch) Process(locality uint8, ms []*pcr.CachedMeasurement) (*registers.ACMPolicyStatus, issue, error) {
+func (cs *combinatorialSearch) Process(
+	init func() ([]byte, any, error),
+	check func(ctx any, data []byte) (bool, error),
+) (*registers.ACMPolicyStatus, error) {
 	type bruteForceContext struct {
-		Hash          hash.Hash
-		MeasureEvents []pcr.MeasureEvent
+		BackendContext any
+		PCR0DATA       []byte
 	}
 
-	initFunc := func() (interface{}, error) {
+	startPCR0DATA, _, _ := init()
+	startACMPolicyStatus := startPCR0DATA[:8] // 8 is the size of registers.ACMPolicyStatus
+
+	initFunc := func() (any, error) {
+		buf, ctx, err := init()
 		return &bruteForceContext{
-			Hash:          cs.hashFactory(),
-			MeasureEvents: prepareFastMeasurements(ms, cs.image, cs.registerHashCache),
-		}, nil
+			BackendContext: ctx,
+			PCR0DATA:       buf,
+		}, err
 	}
 
-	verifyFunc := func(_ctx interface{}, data []byte) bool {
+	verifyFunc := func(_ctx any, acmPolicyStatus []byte) bool {
 		ctx := _ctx.(*bruteForceContext)
-		copy(ctx.MeasureEvents[0].(*pcr0DataFastMeasurement).Data, data)
-
-		// check if this series of measurements lead to the expected pcr0
-		pcr0HashValue, err := pcr.CalculatePCR(
-			cs.image, locality, ctx.MeasureEvents,
-			ctx.Hash, nil,
-		)
+		// overwriting the beginning of PCR0_DATA with new value of ACM Policy Status.
+		copy(ctx.PCR0DATA, acmPolicyStatus)
+		matched, err := check(ctx.BackendContext, ctx.PCR0DATA)
 		if err != nil {
-			// TODO: should prob return the error here instead of eating it
+			// TODO: process error
 			return false
 		}
-
-		return bytes.Equal(pcr0HashValue, cs.expected)
+		return matched
 	}
-	start := ms[0].Data[0].ForceData
 
-	combination, err := bruteforcer.BruteForce(start, 8, uint64(cs.limit), initFunc, verifyFunc, bruteforcer.ApplyBitFlipsBytes, 0)
+	combination, err := bruteforcer.BruteForce(startACMPolicyStatus, 8, uint64(cs.limit), initFunc, verifyFunc, bruteforcer.ApplyBitFlipsBytes, 0)
 	if combination == nil || err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	ACMRegValue := make([]byte, len(start))
-	copy(ACMRegValue, start)
+	acmPolicyStatus := make([]byte, len(startACMPolicyStatus))
+	copy(acmPolicyStatus, startACMPolicyStatus)
 
-	var issue error
 	if len(combination) != 0 {
-		bruteforcer.ApplyBitFlipsBytes(combination, ACMRegValue)
-		issue = fmt.Errorf("changed ACM_POLICY_STATUS from %X to %X", start, ACMRegValue)
+		bruteforcer.ApplyBitFlipsBytes(combination, acmPolicyStatus)
 	}
 
-	correctACMReg := registers.ParseACMPolicyStatusRegister(binary.LittleEndian.Uint64(ACMRegValue))
-	return &correctACMReg, issue, nil
+	correctACMReg := registers.ParseACMPolicyStatusRegister(binary.LittleEndian.Uint64(acmPolicyStatus))
+	return &correctACMReg, nil
 }

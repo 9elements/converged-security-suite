@@ -187,7 +187,7 @@ func run[E Item, T Slice[E]](b *bruteForcer[E, T], itemSize uint64, maxDistance 
 
 		var errors errors.MultiError
 		for err := range errChan {
-			errors.Add(err)
+			_ = errors.Add(err)
 		}
 
 		if len(errors) > 0 {
