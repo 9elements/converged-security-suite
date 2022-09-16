@@ -7,8 +7,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash"
+	"strings"
 
-	multierror "github.com/9elements/converged-security-suite/v2/pkg/errors"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
@@ -26,6 +26,17 @@ func DefaultSettingsReproduceEventLog() SettingsReproduceEventLog {
 	}
 }
 
+func eventTypesString(types []*tpmeventlog.EventType) string {
+	var result []string
+	for _, t := range types {
+		result = append(result, fmt.Sprintf("%d (0x%X)", uint32(*t), uint32(*t)))
+	}
+	return strings.Join(result, ", ")
+}
+
+// Issue is a non-critical problem
+type Issue error
+
 // ReproduceEventLog verifies measurements through TPM EventLog. If successful,
 // the first returned variable is true; in any case all problems
 // are reported through `error`; and if ACM_POLICY_STATUS should be amended,
@@ -41,17 +52,17 @@ func ReproduceEventLog(
 	measurements pcr.Measurements,
 	imageBytes []byte,
 	settings SettingsReproduceEventLog,
-) (bool, *registers.ACMPolicyStatus, error) {
+) (bool, *registers.ACMPolicyStatus, []Issue, error) {
+	var issues []Issue
+
 	if eventLog == nil {
-		return false, nil, fmt.Errorf("TPM EventLog is not provided")
+		return false, nil, nil, fmt.Errorf("TPM EventLog is not provided")
 	}
 
 	events, err := eventLog.FilterEvents(0, hashAlgo)
 	if err != nil {
-		return false, nil, fmt.Errorf("unable to filter events: %w", err)
+		return false, nil, nil, fmt.Errorf("unable to filter events: %w", err)
 	}
-
-	mErr := &multierror.MultiError{}
 
 	var filteredMeasurements pcr.Measurements
 	for _, m := range measurements {
@@ -59,7 +70,7 @@ func ReproduceEventLog(
 			continue
 		}
 		if len(m.EventLogEventTypes()) == 0 {
-			_ = mErr.Add(fmt.Errorf("the flow requires a measurement, which is not expected to be logged into EventLog"))
+			issues = append(issues, fmt.Errorf("the flow requires a measurement, which is not expected to be logged into EventLog"))
 			continue
 		}
 		filteredMeasurements = append(filteredMeasurements, m)
@@ -84,7 +95,7 @@ func ReproduceEventLog(
 		}
 
 		if !matched {
-			_ = mErr.Add(fmt.Errorf("missing measurement '%s' in EventLog (expected event types %v, but received %d on evIdx==%d)", m.ID, m.EventLogEventTypes(), ev.Type, evIdx))
+			issues = append(issues, fmt.Errorf("missing measurement '%s' in EventLog (expected event types [%s], but received %d (0x%X) on evIdx==%d)", m.ID, eventTypesString(m.EventLogEventTypes()), ev.Type, ev.Type, evIdx))
 			// We assume it happened because some measurements are missing
 			// in the eventlog, therefore we skip the measurements hoping
 			// that next measurement match with the EventLog entry.
@@ -99,7 +110,7 @@ func ReproduceEventLog(
 
 		hasherFactory, err := ev.Digest.HashAlgo.Hash()
 		if err != nil {
-			_ = mErr.Add(fmt.Errorf("invalid hash algo %d in measurement '%s' in EventLog (expected event types %v, but received %d on evIdx==%d)", ev.Digest.HashAlgo, m.ID, m.EventLogEventTypes(), ev.Type, evIdx))
+			issues = append(issues, fmt.Errorf("invalid hash algo %d in measurement '%s' in EventLog (expected event types %v, but received %d on evIdx==%d)", ev.Digest.HashAlgo, m.ID, m.EventLogEventTypes(), ev.Type, evIdx))
 			continue
 		}
 		hasher := hasherFactory.New()
@@ -123,17 +134,17 @@ func ReproduceEventLog(
 			// to restore it.
 			correctedACMPolicyStatus, err := bruteForceACMPolicyStatus(*m, imageBytes, ev.Digest.Digest, settings.SettingsBruteforceACMPolicyStatus)
 			if err != nil {
-				_ = mErr.Add(fmt.Errorf("PCR0_DATA measurement does not match the digest reported in EventLog and unable to brute force a possible bitflip: %X != %X", mHash[:], ev.Digest.Digest))
+				issues = append(issues, fmt.Errorf("PCR0_DATA measurement does not match the digest reported in EventLog and unable to brute force a possible bitflip: %X != %X", mHash[:], ev.Digest.Digest))
 				result = false
 				continue
 			}
 			var buf [8]byte
 			binary.LittleEndian.PutUint64(buf[:], uint64(correctedACMPolicyStatus))
-			_ = mErr.Add(fmt.Errorf("changed ACM_POLICY_STATUS from %X to %X", m.Data[0].ForceData, buf))
+			issues = append(issues, fmt.Errorf("changed ACM_POLICY_STATUS from %X to %X", m.Data[0].ForceData, buf))
 			updatedACMPolicyStatusValue = &correctedACMPolicyStatus
 		default:
 			// I do not know how to remediate this problem.
-			_ = mErr.Add(fmt.Errorf("measurement '%s' does not match the digest reported in EventLog: %X != %X", m.ID, mHash[:], ev.Digest.Digest))
+			issues = append(issues, fmt.Errorf("measurement '%s' does not match the digest reported in EventLog: %X != %X", m.ID, mHash[:], ev.Digest.Digest))
 			result = false
 		}
 	}
@@ -144,14 +155,14 @@ func ReproduceEventLog(
 
 	for ; mIdx < len(filteredMeasurements); mIdx++ {
 		m := filteredMeasurements[mIdx]
-		_ = mErr.Add(fmt.Errorf("missing measurement '%s' in EventLog", m.ID))
+		issues = append(issues, fmt.Errorf("missing measurement '%s' in EventLog", m.ID))
 	}
 	for ; evIdx < len(events); evIdx++ {
 		ev := events[evIdx]
-		_ = mErr.Add(fmt.Errorf("extra EventLog entry: evIdx == %d: type == %v", evIdx, ev.Type))
+		issues = append(issues, fmt.Errorf("extra EventLog entry: evIdx == %d: type == %v", evIdx, ev.Type))
 	}
 
-	return result, updatedACMPolicyStatusValue, mErr.ReturnValue()
+	return result, updatedACMPolicyStatusValue, issues, nil
 }
 
 func bruteForceACMPolicyStatus(

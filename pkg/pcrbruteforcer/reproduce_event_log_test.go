@@ -88,7 +88,7 @@ func TestReproduceEventLog(t *testing.T) {
 
 	eventLog := getTPMEventLog(t)
 
-	succeeded, acmPolicyStatus, _ := ReproduceEventLog(eventLog, tpmeventlog.TPMAlgorithmSHA1, measurements, firmwareImage, DefaultSettingsReproduceEventLog())
+	succeeded, acmPolicyStatus, _, _ := ReproduceEventLog(eventLog, tpmeventlog.TPMAlgorithmSHA1, measurements, firmwareImage, DefaultSettingsReproduceEventLog())
 	require.True(t, succeeded)
 	require.Equal(t, uint64(0x0000000200108681), acmPolicyStatus.Raw())
 }
@@ -109,7 +109,7 @@ func BenchmarkReproduceEventLog(b *testing.B) {
 	eventLog := getTPMEventLog(b)
 
 	for i := 0; i < b.N; i++ {
-		_, _, err := ReproduceEventLog(eventLog, tpmeventlog.TPMAlgorithmSHA1, measurements, firmware.Buf(), DefaultSettingsReproduceEventLog())
+		_, _, _, err := ReproduceEventLog(eventLog, tpmeventlog.TPMAlgorithmSHA1, measurements, firmware.Buf(), DefaultSettingsReproduceEventLog())
 		if err != nil {
 			panic(err)
 		}

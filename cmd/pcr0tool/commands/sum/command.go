@@ -172,8 +172,8 @@ func (cmd Command) Execute(args []string) {
 		assertNoError(err)
 		tpmEventLog, err := tpmeventlog.Parse(f)
 		assertNoError(err)
-		match, updatedACMPolicyStatus, err := pcrbruteforcer.ReproduceEventLog(tpmEventLog, tpmeventlog.TPMAlgorithmSHA1, measurements, firmware.Buf(), pcrbruteforcer.DefaultSettingsReproduceEventLog())
-		fmt.Printf("comparing with TPM EventLog result:\n\tmatch: %v\n\tupdated ACM Policy Status: %v\n\terr: %v\n",
-			match, updatedACMPolicyStatus, err)
+		match, updatedACMPolicyStatus, issues, err := pcrbruteforcer.ReproduceEventLog(tpmEventLog, tpmeventlog.TPMAlgorithmSHA1, measurements, firmware.Buf(), pcrbruteforcer.DefaultSettingsReproduceEventLog())
+		fmt.Printf("comparing with TPM EventLog result:\n\tmatch: %v\n\tupdated ACM Policy Status: %v\n\terr: %v\n\tissues: %v\n",
+			match, updatedACMPolicyStatus, err, issues)
 	}
 }
