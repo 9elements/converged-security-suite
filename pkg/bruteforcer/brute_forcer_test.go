@@ -15,7 +15,7 @@ func TestBruteForce(t *testing.T) {
 	m := map[uint64]struct{}{}
 	maxDistance := 4
 	b := make([]byte, 4)
-	result, err := BruteForce(b, 8, uint64(maxDistance), nil, func(_ interface{}, data []byte) bool {
+	result, err := BruteForce(b, 8, 0, uint64(maxDistance), nil, func(_ interface{}, data []byte) bool {
 		l.Lock()
 		defer l.Unlock()
 		buf := make([]byte, 8)
@@ -51,15 +51,19 @@ func BenchmarkBruteForce(b *testing.B) {
 			panic(checkFuncName)
 		}
 		b.Run(checkFuncName, func(b *testing.B) {
-			for distance := 1; distance <= 6; distance++ {
-				b.Run(fmt.Sprintf("distance_%d", distance), func(b *testing.B) {
-					for dataSize := 1; dataSize <= 8; dataSize++ {
-						b.Run(fmt.Sprintf("dataSize_%d", dataSize), func(b *testing.B) {
-							data := make([]byte, dataSize)
-							b.ReportAllocs()
-							b.ResetTimer()
-							for i := 0; i < b.N; i++ {
-								_, _ = BruteForce(data, 8, uint64(distance), nil, checkFunc, ApplyBitFlipsBytes, 0)
+			for minDistance := 1; minDistance <= 6; minDistance++ {
+				b.Run(fmt.Sprintf("minDistance_%d", minDistance), func(b *testing.B) {
+					for maxDistance := minDistance; maxDistance <= 6; maxDistance++ {
+						b.Run(fmt.Sprintf("maxDistance_%d", maxDistance), func(b *testing.B) {
+							for dataSize := 1; dataSize <= 8; dataSize++ {
+								b.Run(fmt.Sprintf("dataSize_%d", dataSize), func(b *testing.B) {
+									data := make([]byte, dataSize)
+									b.ReportAllocs()
+									b.ResetTimer()
+									for i := 0; i < b.N; i++ {
+										_, _ = BruteForce(data, 8, uint64(minDistance), uint64(maxDistance), nil, checkFunc, ApplyBitFlipsBytes, 0)
+									}
+								})
 							}
 						})
 					}

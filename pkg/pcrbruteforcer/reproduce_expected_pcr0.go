@@ -712,7 +712,7 @@ func (cs *combinatorialSearch) Process(
 		return matched
 	}
 
-	combination, err := bruteforcer.BruteForce(startACMPolicyStatus, 8, uint64(cs.limit), initFunc, verifyFunc, bruteforcer.ApplyBitFlipsBytes, 0)
+	combination, err := bruteforcer.BruteForce(startACMPolicyStatus, 8, 0, uint64(cs.limit), initFunc, verifyFunc, bruteforcer.ApplyBitFlipsBytes, 0)
 	if combination == nil || err != nil {
 		return nil, err
 	}

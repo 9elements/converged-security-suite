@@ -156,7 +156,10 @@ func (m Measurement) GetID() MeasurementID {
 }
 
 // IsFake forces to skip this measurement in real PCR value calculation
-func (m Measurement) IsFake() bool {
+func (m *Measurement) IsFake() bool {
+	if m == nil {
+		return true
+	}
 	return m.ID.IsFake()
 }
 

@@ -1,6 +1,7 @@
 package pcrbruteforcer
 
 import (
+	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"testing"
@@ -76,21 +77,83 @@ func TestReproduceEventLog(t *testing.T) {
 	firmware, err := uefi.ParseUEFIFirmwareBytes(firmwareImage)
 	require.NoError(t, err)
 
+	regs := registers.Registers{
+		registers.ParseACMPolicyStatusRegister(0x0000000200108681),
+	}
+
 	measureOptions := []pcr.MeasureOption{
 		pcr.SetFlow(pcr.FlowIntelCBnT0T),
 		pcr.SetIBBHashDigest(tpm2.AlgSHA1),
-		pcr.SetRegisters(registers.Registers{
-			registers.ParseACMPolicyStatusRegister(0x0000000200108682),
-		}),
+		pcr.SetRegisters(regs),
 	}
-	measurements, _, debugInfo, err := pcr.GetMeasurements(firmware, 0, measureOptions...)
-	require.NoError(t, err, fmt.Sprintf("debugInfo: '%v'", debugInfo))
 
-	eventLog := getTPMEventLog(t)
+	t.Run("simple", func(t *testing.T) {
+		measurements, _, debugInfo, err := pcr.GetMeasurements(firmware, 0, measureOptions...)
+		require.NoError(t, err, fmt.Sprintf("debugInfo: '%v'", debugInfo))
 
-	succeeded, acmPolicyStatus, _, _ := ReproduceEventLog(eventLog, tpmeventlog.TPMAlgorithmSHA1, measurements, firmwareImage, DefaultSettingsReproduceEventLog())
-	require.True(t, succeeded)
-	require.Equal(t, uint64(0x0000000200108681), acmPolicyStatus.Raw())
+		eventLog := getTPMEventLog(t)
+
+		succeeded, acmPolicyStatus, issues, err := ReproduceEventLog(eventLog, tpmeventlog.TPMAlgorithmSHA1, measurements, firmwareImage, DefaultSettingsReproduceEventLog())
+		require.NoError(t, err)
+		require.Len(t, issues, 0)
+		require.True(t, succeeded)
+		require.Nil(t, acmPolicyStatus)
+	})
+
+	t.Run("corrupted_ACM_POLICY_STATUS", func(t *testing.T) {
+		regs[0] = registers.ParseACMPolicyStatusRegister(0x0000000200108682)
+
+		measurements, _, debugInfo, err := pcr.GetMeasurements(firmware, 0, measureOptions...)
+		require.NoError(t, err, fmt.Sprintf("debugInfo: '%v'", debugInfo))
+
+		eventLog := getTPMEventLog(t)
+
+		succeeded, acmPolicyStatus, issues, err := ReproduceEventLog(eventLog, tpmeventlog.TPMAlgorithmSHA1, measurements, firmwareImage, DefaultSettingsReproduceEventLog())
+		require.NoError(t, err)
+		require.Len(t, issues, 1)
+		require.True(t, succeeded)
+		require.Equal(t, uint64(0x0000000200108681), acmPolicyStatus.Raw())
+
+		// cleanup:
+		regs[0] = registers.ParseACMPolicyStatusRegister(0x0000000200108681)
+	})
+
+	t.Run("extra_TPMEventLog_entries", func(t *testing.T) {
+		measurements, _, debugInfo, err := pcr.GetMeasurements(firmware, 0, measureOptions...)
+		require.NoError(t, err, fmt.Sprintf("debugInfo: '%v'", debugInfo))
+
+		eventLog := getTPMEventLog(t)
+		eventsOrig := eventLog.Events
+		eventLog.Events = make([]*tpmeventlog.Event, len(eventsOrig)+2)
+		eventLog.Events[0] = eventsOrig[0]
+		eventLog.Events[1] = &tpmeventlog.Event{
+			PCRIndex: 0,
+			Type:     tpmeventlog.EV_EFI_VARIABLE_AUTHORITY, // a non-expected type at all
+			Data:     []byte("injected"),
+			Digest: &tpmeventlog.Digest{
+				HashAlgo: 4,
+				Digest:   make([]byte, sha1.Size),
+			},
+		}
+		eventLog.Events[2] = &tpmeventlog.Event{
+			PCRIndex: 0,
+			Type:     tpmeventlog.EV_S_CRTM_CONTENTS, // same type as the next entry
+			Digest: &tpmeventlog.Digest{
+				HashAlgo: 4,
+				Digest:   make([]byte, sha1.Size), // but different digest
+			},
+		}
+		copy(eventLog.Events[3:], eventsOrig[1:])
+
+		succeeded, acmPolicyStatus, issues, err := ReproduceEventLog(eventLog, tpmeventlog.TPMAlgorithmSHA1, measurements, firmwareImage, DefaultSettingsReproduceEventLog())
+		require.NoError(t, err)
+		require.False(t, succeeded)
+		require.Equal(t, []Issue{
+			fmt.Errorf("extra entry in EventLog of type 2147483872 (0x800000E0) on evIdx==1"),
+			fmt.Errorf("extra entry in EventLog of type 7 (0x7) on evIdx==2"),
+		}, issues)
+		require.Nil(t, acmPolicyStatus)
+	})
 }
 
 func BenchmarkReproduceEventLog(b *testing.B) {
@@ -111,7 +174,7 @@ func BenchmarkReproduceEventLog(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, _, _, err := ReproduceEventLog(eventLog, tpmeventlog.TPMAlgorithmSHA1, measurements, firmware.Buf(), DefaultSettingsReproduceEventLog())
 		if err != nil {
-			panic(err)
+			b.Fatal(err)
 		}
 	}
 }

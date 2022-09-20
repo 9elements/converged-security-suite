@@ -26,11 +26,11 @@ type ApplyBitFlipsFunc[E Item] func(combination UniqueUnorderedCombination, data
 
 // CheckFunc is the function used if the sought value is found. Return true
 // if data is the sought value, and return false if it is not.
-type CheckFunc[E Item] func(ctx interface{}, data []E) bool
+type CheckFunc[E Item] func(ctx any, data []E) bool
 
 // InitFunc is the function executed for each goroutine before brute-forcing.
 // It returns a data, which will be passed as argument `ctx` to CheckFunc.
-type InitFunc func() (interface{}, error)
+type InitFunc func() (any, error)
 
 type bruteForcer[E Item, T Slice[E]] struct {
 	initialData       T
@@ -49,6 +49,7 @@ type bruteForcer[E Item, T Slice[E]] struct {
 func BruteForce[E Item, T Slice[E]](
 	initialData T,
 	itemSize uint64,
+	minDistance uint64,
 	maxDistance uint64,
 	initFunc InitFunc,
 	checkFunc CheckFunc[E],
@@ -58,6 +59,7 @@ func BruteForce[E Item, T Slice[E]](
 	return run(
 		newBruteForcer(initialData, initFunc, checkFunc, applyBitFlipsFunc),
 		itemSize,
+		minDistance,
 		maxDistance,
 		maxConcurrency,
 	)
@@ -70,7 +72,7 @@ func newBruteForcer[E Item, T Slice[E]](
 	applyBitFlipsFunc ApplyBitFlipsFunc[E],
 ) *bruteForcer[E, T] {
 	if initFunc == nil {
-		initFunc = func() (interface{}, error) { return nil, nil }
+		initFunc = func() (any, error) { return nil, nil }
 	}
 	return &bruteForcer[E, T]{
 		initialData:       initialData,
@@ -80,14 +82,28 @@ func newBruteForcer[E Item, T Slice[E]](
 	}
 }
 
-func run[E Item, T Slice[E]](b *bruteForcer[E, T], itemSize uint64, maxDistance uint64, maxConcurrency uint) (UniqueUnorderedCombination, error) {
-	ctx, err := b.initFunc()
-	if err != nil {
-		return nil, err
+func run[E Item, T Slice[E]](
+	b *bruteForcer[E, T],
+	itemSize uint64,
+	minDistance uint64,
+	maxDistance uint64,
+	maxConcurrency uint,
+) (UniqueUnorderedCombination, error) {
+	if minDistance > maxDistance {
+		return nil, fmt.Errorf("minimal distance (%d) is higher than maximal distance (%d)", minDistance, maxDistance)
 	}
 
-	if b.checkFunc(ctx, b.initialData) {
-		return NewUniqueUnorderedCombination(0), nil
+	if minDistance == 0 {
+		ctx, err := b.initFunc()
+		if err != nil {
+			return nil, err
+		}
+
+		if b.checkFunc(ctx, b.initialData) {
+			return NewUniqueUnorderedCombination(0), nil
+		}
+
+		minDistance++
 	}
 
 	totalBitLength := uint64(len(b.initialData)) * itemSize
@@ -95,7 +111,7 @@ func run[E Item, T Slice[E]](b *bruteForcer[E, T], itemSize uint64, maxDistance 
 		maxDistance = totalBitLength
 	}
 
-	for distance := uint64(1); distance <= maxDistance; distance++ {
+	for distance := minDistance; distance <= maxDistance; distance++ {
 		if totalBitLength < distance {
 			// no combinations possible
 			break
@@ -202,7 +218,7 @@ func run[E Item, T Slice[E]](b *bruteForcer[E, T], itemSize uint64, maxDistance 
 	return nil, nil
 }
 
-func try[E Item, T Slice[E]](b *bruteForcer[E, T], ctx interface{}, data T, iterator *UniqueUnorderedCombinationIterator) bool {
+func try[E Item, T Slice[E]](b *bruteForcer[E, T], ctx any, data T, iterator *UniqueUnorderedCombinationIterator) bool {
 	// flipping the bits
 	b.applyBitFlipsFunc(iterator.GetCombinationUnsafe(), data)
 

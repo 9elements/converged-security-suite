@@ -7,8 +7,11 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash"
+	"math"
 	"strings"
+	"sync"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/bruteforcer"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
@@ -38,8 +41,8 @@ func eventTypesString(types []*tpmeventlog.EventType) string {
 type Issue error
 
 // ReproduceEventLog verifies measurements through TPM EventLog. If successful,
-// the first returned variable is true; in any case all problems
-// are reported through `error`; and if ACM_POLICY_STATUS should be amended,
+// the first returned variable is true; all mismatches are reported
+// via `[]Issue`; and if ACM_POLICY_STATUS should be amended,
 // then the updated value is returned as the second variable.
 //
 // Current algorithm already supports disabling measurements, may be in future
@@ -49,75 +52,52 @@ type Issue error
 func ReproduceEventLog(
 	eventLog *tpmeventlog.TPMEventLog,
 	hashAlgo tpmeventlog.TPMAlgorithm,
-	measurements pcr.Measurements,
+	inMeasurements pcr.Measurements,
 	imageBytes []byte,
 	settings SettingsReproduceEventLog,
 ) (bool, *registers.ACMPolicyStatus, []Issue, error) {
 	var issues []Issue
 
 	if eventLog == nil {
-		return false, nil, nil, fmt.Errorf("TPM EventLog is not provided")
+		return false, nil, issues, fmt.Errorf("TPM EventLog is not provided")
 	}
 
-	events, err := eventLog.FilterEvents(0, hashAlgo)
+	events, measurements, measurementDigests, alignIssues, err := alignEventsAndMeasurements(eventLog, inMeasurements, imageBytes, hashAlgo)
+	issues = append(issues, alignIssues...)
 	if err != nil {
-		return false, nil, nil, fmt.Errorf("unable to filter events: %w", err)
+		return false, nil, issues, fmt.Errorf("unable to align Events and Measurements: %w", err)
 	}
 
-	var filteredMeasurements pcr.Measurements
-	for _, m := range measurements {
-		if m.IsFake() && m.ID != pcr.MeasurementIDInit {
-			continue
-		}
-		if len(m.EventLogEventTypes()) == 0 {
-			issues = append(issues, fmt.Errorf("the flow requires a measurement, which is not expected to be logged into EventLog"))
-			continue
-		}
-		filteredMeasurements = append(filteredMeasurements, m)
+	if len(events) != len(measurements) || len(measurements) != len(measurementDigests) {
+		return false, nil, issues, fmt.Errorf("internal error (should never happen): len(events) != len(measurements) || len(measurements) != len(measurementDigests): %d != %d || %d != %d", len(events), len(measurements), len(measurements), len(measurementDigests))
 	}
 
 	var updatedACMPolicyStatusValue *registers.ACMPolicyStatus
-	evIdx, mIdx := 0, 0
 
-	result := true
-	for evIdx < len(events) && mIdx < len(filteredMeasurements) {
-		m := filteredMeasurements[mIdx]
-		mIdx++
+	isEventLogMatchesMeasurements := true
+	for idx := 0; idx < len(measurements); idx++ {
+		m := measurements[idx]
+		mD := measurementDigests[idx]
+		ev := events[idx]
 
-		ev := eventLog.Events[evIdx]
-
-		matched := false
-
-		for _, eventType := range m.EventLogEventTypes() {
-			if *eventType == ev.Type {
-				matched = true
-			}
-		}
-
-		if !matched {
-			issues = append(issues, fmt.Errorf("missing measurement '%s' in EventLog (expected event types [%s], but received %d (0x%X) on evIdx==%d)", m.ID, eventTypesString(m.EventLogEventTypes()), ev.Type, ev.Type, evIdx))
-			// We assume it happened because some measurements are missing
-			// in the eventlog, therefore we skip the measurements hoping
-			// that next measurement match with the EventLog entry.
+		if m == nil {
+			issues = append(issues, fmt.Errorf("extra entry in EventLog of type %d (0x%X) on evIdx==%d", ev.Type, ev.Type, idx))
+			isEventLogMatchesMeasurements = false
 			continue
 		}
-		evIdx++
+
+		if ev == nil {
+			issues = append(issues, fmt.Errorf("missing entry (for measurement '%s') in EventLog (expected event types are: %s)", m.ID, eventTypesString(m.EventLogEventTypes())))
+			isEventLogMatchesMeasurements = false
+			continue
+		}
 
 		if m.ID == pcr.MeasurementIDInit {
 			// Nothing to compare
 			continue
 		}
 
-		hasherFactory, err := ev.Digest.HashAlgo.Hash()
-		if err != nil {
-			issues = append(issues, fmt.Errorf("invalid hash algo %d in measurement '%s' in EventLog (expected event types %v, but received %d on evIdx==%d)", ev.Digest.HashAlgo, m.ID, m.EventLogEventTypes(), ev.Type, evIdx))
-			continue
-		}
-		hasher := hasherFactory.New()
-		hasher.Write(m.CompileMeasurableData(imageBytes))
-		mHash := hasher.Sum(nil)
-		hasher.Reset()
-		if bytes.Equal(mHash[:], ev.Digest.Digest) {
+		if bytes.Equal(ev.Digest.Digest, mD) {
 			// It matched, everything is OK, let's check next pair.
 			continue
 		}
@@ -132,10 +112,11 @@ func ReproduceEventLog(
 			// If this is the PCR0_DATA measurement then it could be just
 			// a corrupted ACM_POLICY_STATUS register value, let's try
 			// to restore it.
+			//
 			correctedACMPolicyStatus, err := bruteForceACMPolicyStatus(*m, imageBytes, ev.Digest.Digest, settings.SettingsBruteforceACMPolicyStatus)
 			if err != nil {
-				issues = append(issues, fmt.Errorf("PCR0_DATA measurement does not match the digest reported in EventLog and unable to brute force a possible bitflip: %X != %X", mHash[:], ev.Digest.Digest))
-				result = false
+				issues = append(issues, fmt.Errorf("PCR0_DATA measurement does not match the digest reported in EventLog and unable to brute force a possible bitflip: %X != %X", mD, ev.Digest.Digest))
+				isEventLogMatchesMeasurements = false
 				continue
 			}
 			var buf [8]byte
@@ -144,25 +125,12 @@ func ReproduceEventLog(
 			updatedACMPolicyStatusValue = &correctedACMPolicyStatus
 		default:
 			// I do not know how to remediate this problem.
-			issues = append(issues, fmt.Errorf("measurement '%s' does not match the digest reported in EventLog: %X != %X", m.ID, mHash[:], ev.Digest.Digest))
-			result = false
+			issues = append(issues, fmt.Errorf("measurement '%s' does not match the digest reported in EventLog: %X != %X", m.ID, mD, ev.Digest.Digest))
+			isEventLogMatchesMeasurements = false
 		}
 	}
-	if evIdx == 0 {
-		// no-one EventLog entry matched, it could not be considered as "remediated"/"fixed".
-		result = false
-	}
 
-	for ; mIdx < len(filteredMeasurements); mIdx++ {
-		m := filteredMeasurements[mIdx]
-		issues = append(issues, fmt.Errorf("missing measurement '%s' in EventLog", m.ID))
-	}
-	for ; evIdx < len(events); evIdx++ {
-		ev := events[evIdx]
-		issues = append(issues, fmt.Errorf("extra EventLog entry: evIdx == %d: type == %v", evIdx, ev.Type))
-	}
-
-	return result, updatedACMPolicyStatusValue, issues, nil
+	return isEventLogMatchesMeasurements, updatedACMPolicyStatusValue, issues, nil
 }
 
 func bruteForceACMPolicyStatus(
@@ -240,4 +208,343 @@ func bruteForceACMPolicyStatus(
 	}
 
 	return 0, fmt.Errorf("unable to find the value")
+}
+
+func alignEventsAndMeasurements(
+	eventLog *tpmeventlog.TPMEventLog,
+	inMeasurements pcr.Measurements,
+	imageBytes []byte,
+	hashAlgo tpmeventlog.TPMAlgorithm,
+) (
+	events []*tpmeventlog.Event,
+	measurements pcr.Measurements,
+	measurementDigests [][]byte,
+	issues []Issue,
+	err error,
+) {
+	inEvents, err := eventLog.FilterEvents(0, hashAlgo)
+	if err != nil {
+		err = fmt.Errorf("unable to filter TPM EventLog events: %w", err)
+		return
+	}
+
+	var filteredMeasurements pcr.Measurements
+	for _, m := range inMeasurements {
+		if m.IsFake() && m.ID != pcr.MeasurementIDInit {
+			continue
+		}
+		if len(m.EventLogEventTypes()) == 0 {
+			issues = append(issues, fmt.Errorf("the flow requires a measurement, which is not expected to be logged into EventLog"))
+			continue
+		}
+		filteredMeasurements = append(filteredMeasurements, m)
+	}
+	inMeasurements = filteredMeasurements
+
+	hasherFactory, err := hashAlgo.Hash()
+	if err != nil {
+		err = fmt.Errorf("unable to initialize a hash function for algorithm %#v", hashAlgo)
+		return
+	}
+
+	inMeasurementDigests := make([][]byte, 0, len(inMeasurements))
+	for _, m := range inMeasurements {
+		var hash []byte
+		hash, err = m.Calculate(imageBytes, hasherFactory.New())
+		if err != nil {
+			err = fmt.Errorf("unable to cache measurement %#+v: %w", *m, err)
+			return
+		}
+		inMeasurementDigests = append(inMeasurementDigests, hash)
+	}
+
+	disabledEvents, disabledMeasurements, distance, err := bruteForceAlignedEventsAndMeasurements(inEvents, inMeasurements, inMeasurementDigests)
+	if distance == 0 {
+		measurements = inMeasurements
+		measurementDigests = inMeasurementDigests
+		events = inEvents
+		if len(measurements) != len(events) {
+			err = fmt.Errorf("internal error (should not happen): %d != %d; distance miscalculation?", len(measurements), len(events))
+		}
+		return
+	}
+
+	// a defensive check
+	disabledEventsCount := 0
+	for _, v := range disabledEvents {
+		if v {
+			disabledEventsCount++
+		}
+	}
+	disabledMeasurementsCount := 0
+	for _, v := range disabledMeasurements {
+		if v {
+			disabledMeasurementsCount++
+		}
+	}
+	if len(inEvents)-disabledEventsCount != len(inMeasurements)-disabledMeasurementsCount {
+		err = fmt.Errorf("internal error (should never happen): amounts of aligned events and measurements are not equal: %d != %d", len(inEvents)-disabledEventsCount, len(inMeasurements)-disabledMeasurementsCount)
+		return
+	}
+
+	// constructing the aligned slices
+	for evIdx, mIdx, outIdx := 0, 0, 0; evIdx < len(inEvents) || mIdx < len(inMeasurements); outIdx++ {
+		if evIdx < len(inEvents) && disabledEvents[evIdx] {
+			events = append(events, inEvents[evIdx])
+			measurementDigests = append(measurementDigests, nil)
+			measurements = append(measurements, nil)
+			evIdx++
+			continue
+		}
+		if mIdx < len(inMeasurements) && disabledMeasurements[mIdx] {
+			events = append(events, nil)
+			measurementDigests = append(measurementDigests, inMeasurementDigests[mIdx])
+			measurements = append(measurements, inMeasurements[mIdx])
+			mIdx++
+			continue
+		}
+		events = append(events, inEvents[evIdx])
+		measurementDigests = append(measurementDigests, inMeasurementDigests[mIdx])
+		measurements = append(measurements, inMeasurements[mIdx])
+		evIdx++
+		mIdx++
+	}
+
+	return
+}
+
+// bruteForceAlignedEventsAndMeasurements finds an optimal solution of
+// disabled events and measurements to get remaining events and measurements
+// aligned.
+//
+// An optimal follows these rules:
+// * We disable an event or a measurement only if it does not match by both: type and digest.
+// * Prefer digest match over type match.
+func bruteForceAlignedEventsAndMeasurements(
+	events []*tpmeventlog.Event,
+	measurements pcr.Measurements,
+	measurementDigests [][]byte,
+) (disabledEvents []bool, disabledMeasurements []bool, curDistance uint64, err error) {
+	curDistance = uint64(math.MaxUint64)
+	if len(measurements) != len(measurementDigests) {
+		err = fmt.Errorf("internal error: len(measurements) != len(measurementDigests): %d != %d", len(measurements), len(measurementDigests))
+		return
+	}
+
+	disabledItemIdx := make([]bool, len(events)+len(measurements))
+	disabledEvents = disabledItemIdx[:len(events)]
+	disabledMeasurements = disabledItemIdx[len(events):]
+
+	if len(events) == len(measurements) {
+		curDistance = eventAndMeasurementsDistance(events, disabledEvents, measurements, measurementDigests, disabledMeasurements)
+		if curDistance == 0 {
+			return
+		}
+	}
+
+	// Get prepared for bruteforcing.
+	//
+	// How to find the optimal solution?
+	// We just calculate a distance metric and look for its minimum.
+	// The distance metric is calculated in a way to satisfy the rules
+	// listed in the description of "bruteForceAlignedEventsAndMeasurements" above.
+	// See implementation of "eventAndMeasurementsDistance".
+
+	var m sync.Mutex
+	newDisabledMeasurements := make([]bool, len(disabledMeasurements))
+	newDisabledEvents := make([]bool, len(disabledEvents))
+	copy(newDisabledMeasurements, disabledMeasurements)
+	copy(newDisabledEvents, disabledEvents)
+
+	// First of all, align the amounts
+
+	amountDiff := len(events) - len(measurements)
+	switch {
+	case amountDiff == 0:
+		// do nothing
+	case amountDiff < 0:
+		_, _ = bruteforcer.BruteForce(
+			disabledMeasurements,
+			1,
+			uint64(-amountDiff),
+			uint64(-amountDiff),
+			nil,
+			func(ctx any, data []bool) bool {
+				distance := eventAndMeasurementsDistance(events, disabledEvents, measurements, measurementDigests, data)
+				m.Lock()
+				defer m.Unlock()
+				if distance < curDistance {
+					curDistance = distance
+					copy(newDisabledMeasurements, data)
+				}
+				return distance == 0
+			},
+			bruteforcer.ApplyBitFlipsBools,
+			0,
+		)
+		copy(disabledMeasurements, newDisabledMeasurements)
+	case amountDiff > 0:
+		_, _ = bruteforcer.BruteForce(
+			disabledEvents,
+			1,
+			uint64(amountDiff),
+			uint64(amountDiff),
+			nil,
+			func(ctx any, data []bool) bool {
+				distance := eventAndMeasurementsDistance(events, data, measurements, measurementDigests, disabledMeasurements)
+				m.Lock()
+				defer m.Unlock()
+				if distance < curDistance {
+					curDistance = distance
+					copy(newDisabledEvents, data)
+				}
+				return distance == 0
+			},
+			bruteforcer.ApplyBitFlipsBools,
+			0,
+		)
+		copy(disabledEvents, newDisabledEvents)
+	}
+
+	// Now, align the content.
+
+	type _context struct {
+		locker                  sync.Mutex
+		curDistance             uint64
+		newDisabledMeasurements []bool
+	}
+
+	var disabledMeasurementsCount int
+	for _, v := range disabledMeasurements {
+		if v {
+			disabledMeasurementsCount++
+		}
+	}
+	_, _ = bruteforcer.BruteForce(
+		disabledEvents,
+		1,
+		0,
+		5, // arbitrary value based on previous experience, hoping to handle within a second; TODO: add benchmarks
+		func() (any, error) {
+			_newDisabledMeasurements := make([]bool, len(disabledMeasurements))
+			copy(_newDisabledMeasurements, disabledMeasurements)
+			return &_context{
+				curDistance:             math.MaxUint64,
+				newDisabledMeasurements: _newDisabledMeasurements,
+			}, nil
+		},
+		func(_ctx any, _disabledEvents []bool) bool {
+			ctx := _ctx.(*_context)
+			var disabledEventsCount int
+			for _, v := range _disabledEvents {
+				if v {
+					disabledEventsCount++
+				}
+			}
+			boolDistance := (disabledEventsCount - disabledMeasurementsCount) - (len(events) - len(measurements))
+			if boolDistance < 0 {
+				return false
+			}
+			_, _ = bruteforcer.BruteForce(
+				disabledMeasurements,
+				1,
+				uint64(boolDistance),
+				uint64(boolDistance),
+				nil,
+				func(_ any, _disabledMeasurements []bool) bool {
+					var newDisabledMeasurementsCount int
+					for _, v := range _disabledMeasurements {
+						if v {
+							newDisabledMeasurementsCount++
+						}
+					}
+					if newDisabledMeasurementsCount != disabledEventsCount+boolDistance {
+						// sometimes BruteForce will flip from true to false (not only from false to true),
+						// we just skip these cases.
+						return false
+					}
+
+					distance := eventAndMeasurementsDistance(events, _disabledEvents, measurements, measurementDigests, _disabledMeasurements)
+					ctx.locker.Lock()
+					defer ctx.locker.Unlock()
+					if distance < ctx.curDistance {
+						ctx.curDistance = distance
+						copy(ctx.newDisabledMeasurements, _disabledMeasurements)
+					}
+					return distance == 0
+				},
+				bruteforcer.ApplyBitFlipsBools,
+				0,
+			)
+
+			m.Lock()
+			defer m.Unlock()
+			if ctx.curDistance < curDistance {
+				copy(newDisabledEvents, _disabledEvents)
+				copy(newDisabledMeasurements, ctx.newDisabledMeasurements)
+				curDistance = ctx.curDistance
+			}
+			return curDistance == 0
+		},
+		bruteforcer.ApplyBitFlipsBools,
+		0,
+	)
+	copy(disabledEvents, newDisabledEvents)
+	copy(disabledMeasurements, newDisabledMeasurements)
+
+	return
+}
+
+func eventAndMeasurementsDistance(
+	events []*tpmeventlog.Event,
+	evIsSkipped []bool,
+	measurements pcr.Measurements,
+	measurementDigests [][]byte,
+	mIsSkipped []bool,
+) uint64 {
+	distance := uint64(0)
+
+	bigN := uint64(math.MaxUint32) // big enough to be always higher than amount of events and measurements
+
+	for mIdx, evIdx := 0, 0; mIdx < len(measurements) || evIdx < len(events); {
+		if mIdx < len(measurements) && mIsSkipped[mIdx] {
+			distance += bigN
+			mIdx++
+			continue
+		}
+		if evIdx < len(events) && evIsSkipped[evIdx] {
+			distance += bigN
+			evIdx++
+			continue
+		}
+		if mIdx >= len(measurements) || evIdx >= len(events) {
+			panic(fmt.Errorf("should never happen, because the resulting (after skipping) amount of events and measurements should be the same: %d >= %d || %d >= %d", mIdx, len(measurements), evIdx, len(events)))
+		}
+		m := measurements[mIdx]
+		mD := measurementDigests[mIdx]
+		ev := events[evIdx]
+		mIdx++
+		evIdx++
+
+		matchedType := false
+		for _, eventType := range m.EventLogEventTypes() {
+			if *eventType == ev.Type {
+				matchedType = true
+			}
+		}
+
+		if !m.IsFake() && len(ev.Digest.Digest) != len(mD) {
+			panic(fmt.Errorf("should never happen, because the digest types guaranteed to be the same by the alignEventsAndMeasurementsByType implementation: len(ev.Digest.Digest) != len(mD): %d != %d", len(ev.Digest.Digest), len(mD)))
+		}
+		matchedDigest := bytes.Equal(ev.Digest.Digest, mD)
+
+		if !matchedDigest {
+			distance += 2*bigN - 1 // does not overweight a disabled event + disabled measurement
+		}
+		if !matchedType {
+			distance += 2 // together with matchedDigest does overweight a diabled event + disabled measurement
+		}
+	}
+
+	return distance
 }
