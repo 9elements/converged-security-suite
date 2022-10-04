@@ -32,16 +32,21 @@ func (node *Node) NameToRangesMap() map[string]pkgbytes.Ranges {
 		W: &tabwriter.Writer{},
 	}
 	*unsafetools.FieldByName(&table, `printRow`).(*func(v *visitors.Table, node, name, typez interface{}, offset, length uint64)) =
-		func(v *visitors.Table, node, name, typez interface{}, offset, length uint64) {
+		func(v *visitors.Table, _node, name, typez interface{}, offset, length uint64) {
 			nameString, _ := name.(string)
 			if nameString == `` {
-				nameString = "node/" + fmt.Sprint(node) // for BIOSRegion results into "node/BIOS"
+				nameString = "node/" + fmt.Sprint(_node) // for BIOSRegion results into "node/BIOS"
 			}
 			if nameString == `` {
 				return
 			}
+			adjustedOffset := int64(offset) + node.AddOffset
+			if adjustedOffset < 0 {
+				// TODO: add support of negative offsets (currently we do not support them, because we use an unsigned integer for an offset)
+				return
+			}
 			rangeMap[nameString] = append(rangeMap[nameString], pkgbytes.Range{
-				Offset: offset,
+				Offset: uint64(adjustedOffset),
 				Length: length,
 			})
 		}
@@ -62,8 +67,12 @@ type nodeVisitor struct {
 
 func (v *nodeVisitor) Run(f fianoUEFI.Firmware) error {
 	v.countMap = map[string]uint{}
-	v.rangeMap = (&Node{Firmware: f}).NameToRangesMap()
-	return f.Apply(v)
+	node, ok := f.(*Node)
+	if !ok {
+		node = &Node{Firmware: f}
+	}
+	v.rangeMap = node.NameToRangesMap()
+	return node.Apply(v)
 }
 
 func (v *nodeVisitor) Visit(f fianoUEFI.Firmware) error {
