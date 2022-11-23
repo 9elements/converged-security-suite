@@ -81,7 +81,7 @@ func ReproduceEventLog(
 		ev := events[idx]
 
 		if m == nil {
-			issues = append(issues, fmt.Errorf("extra entry in EventLog of type %d (0x%X) on evIdx==%d", ev.Type, ev.Type, idx))
+			issues = append(issues, fmt.Errorf("unexpected entry in EventLog of type %d (0x%X) on evIdx==%d", ev.Type, ev.Type, idx))
 			isEventLogMatchesMeasurements = false
 			continue
 		}
