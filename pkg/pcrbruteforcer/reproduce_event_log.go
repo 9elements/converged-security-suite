@@ -22,7 +22,7 @@ type SettingsReproduceEventLog struct {
 	SettingsBruteforceACMPolicyStatus
 }
 
-// DefaultSettingsReproduceEventLog returns recommeneded default PCR0 settings
+// DefaultSettingsReproduceEventLog returns recommended default PCR0 settings
 func DefaultSettingsReproduceEventLog() SettingsReproduceEventLog {
 	return SettingsReproduceEventLog{
 		SettingsBruteforceACMPolicyStatus: DefaultSettingsBruteforceACMPolicyStatus(),
@@ -542,7 +542,7 @@ func eventAndMeasurementsDistance(
 			distance += 2*bigN - 1 // does not overweight a disabled event + disabled measurement
 		}
 		if !matchedType {
-			distance += 2 // together with matchedDigest does overweight a diabled event + disabled measurement
+			distance += 2 // together with matchedDigest does overweight a disabled event + disabled measurement
 		}
 	}
 
