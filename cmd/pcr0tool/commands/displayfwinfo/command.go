@@ -2,10 +2,13 @@ package displayfwinfo
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	fianoUEFI "github.com/linuxboot/fiano/pkg/uefi"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/dmidecode"
 )
@@ -16,13 +19,7 @@ func usageAndExit() {
 }
 
 // Command is the implementation of `commands.Command`.
-type Command struct {
-	firmwareAnalysisAddress *string
-	firmwareVersion         *string
-	firmwareDate            *string
-	printReport             *bool
-	tags                    *string
-}
+type Command struct{}
 
 // Usage prints the syntax of arguments for this command
 func (cmd Command) Usage() string {
@@ -56,19 +53,23 @@ func (cmd Command) Execute(args []string) {
 
 	imageBytes, err := ioutil.ReadFile(imagePath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "unable to read image '%s': %v", imagePath, err)
+		fmt.Fprintf(os.Stderr, "unable to read image '%s': %v\n", imagePath, err)
 		return
 	}
 
 	dmiTable, err := dmidecode.DMITableFromFirmware(imageBytes)
+	if errors.As(err, &dmidecode.ErrFindSMBIOSInFirmware{}) {
+		fianoUEFI.DisableDecompression = false
+		dmiTable, err = dmidecode.DMITableFromFirmware(imageBytes)
+	}
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "unable to parse the image info: '%v'", err)
+		fmt.Fprintf(os.Stderr, "unable to parse the image info: '%v'\n", err)
 		return
 	}
 
 	b, err := json.Marshal(dmiTable.BIOSInfo())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "unable to serialize BIOSInfo: %v", err)
+		fmt.Fprintf(os.Stderr, "unable to serialize BIOSInfo: %v\n", err)
 		return
 	}
 	fmt.Printf("%s\n", b)
