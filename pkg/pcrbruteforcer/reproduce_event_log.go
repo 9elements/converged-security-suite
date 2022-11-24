@@ -81,7 +81,13 @@ func ReproduceEventLog(
 		ev := events[idx]
 
 		if m == nil {
-			issues = append(issues, fmt.Errorf("unexpected entry in EventLog of type %d (0x%X) on evIdx==%d", ev.Type, ev.Type, idx))
+			issues = append(
+				issues,
+				fmt.Errorf(
+					"unexpected entry in EventLog of type %s on evIdx==%d; log entry analysis: %s",
+					ev.Type, idx, explainLogEntry(nil, ev, imageBytes),
+				),
+			)
 			isEventLogMatchesMeasurements = false
 			continue
 		}
@@ -125,7 +131,13 @@ func ReproduceEventLog(
 			updatedACMPolicyStatusValue = &correctedACMPolicyStatus
 		default:
 			// I do not know how to remediate this problem.
-			issues = append(issues, fmt.Errorf("measurement '%s' does not match the digest reported in EventLog: %X != %X", m.ID, mD, ev.Digest.Digest))
+			issues = append(
+				issues,
+				fmt.Errorf(
+					"measurement '%s' does not match the digest reported in EventLog: %X != %X; log entry analysis: %s",
+					m.ID, mD, ev.Digest.Digest, explainLogEntry(m, ev, imageBytes),
+				),
+			)
 			isEventLogMatchesMeasurements = false
 		}
 	}
