@@ -470,7 +470,7 @@ func bruteForceAlignedEventsAndMeasurements(
 							newDisabledMeasurementsCount++
 						}
 					}
-					if newDisabledMeasurementsCount != disabledEventsCount+boolDistance {
+					if disabledEventsCount-newDisabledMeasurementsCount != len(events)-len(measurements) {
 						// sometimes BruteForce will flip from true to false (not only from false to true),
 						// we just skip these cases.
 						return false
