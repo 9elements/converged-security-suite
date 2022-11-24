@@ -3,7 +3,7 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 	"github.com/google/go-tpm/tpm2"
@@ -27,7 +27,7 @@ type jsonConfig struct {
 func ParseConfig(filepath string) (*Configuration, error) {
 	var jConfig jsonConfig
 	var config Configuration
-	data, err := ioutil.ReadFile(filepath)
+	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return nil, err
 	}

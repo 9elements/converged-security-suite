@@ -2,7 +2,7 @@ package ostools
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/edsrzf/mmap-go"
@@ -28,7 +28,7 @@ func FileToBytes(filePath string) ([]byte, error) {
 	}
 
 	// An error? OK, let's try the usual way to read data:
-	contents, err = ioutil.ReadAll(file)
+	contents, err = io.ReadAll(file)
 	if err != nil {
 		return nil, fmt.Errorf(`unable to access data of the image-file "%v": %w`,
 			filePath, err)

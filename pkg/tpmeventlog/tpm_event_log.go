@@ -2,7 +2,6 @@ package tpmeventlog
 
 import (
 	"io"
-	"io/ioutil"
 
 	"github.com/google/go-attestation/attest"
 	"github.com/google/go-tpm/tpm2"
@@ -44,7 +43,7 @@ const (
 
 // Parse parses a binary EventLog.
 func Parse(input io.Reader) (*TPMEventLog, error) {
-	b, err := ioutil.ReadAll(input)
+	b, err := io.ReadAll(input)
 	if err != nil {
 		return nil, ErrRead{Err: err}
 	}

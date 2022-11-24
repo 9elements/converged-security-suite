@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"sort"
 
@@ -188,7 +187,7 @@ func run(testGroup string, tests []*test.Test, config tools.Configuration, inter
 			}
 		}
 		data, _ := json.MarshalIndent(t, "", "")
-		ioutil.WriteFile(logfile, data, 0664)
+		os.WriteFile(logfile, data, 0664)
 	}
 
 	for index := range tests {

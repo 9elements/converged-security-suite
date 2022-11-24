@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 
@@ -33,7 +33,7 @@ func loadConfig(filename string) (*tools.LCPPolicy2, error) {
 	var ok bool
 	var b []byte
 	var config configJSON
-	b, err := ioutil.ReadFile(filename)
+	b, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}

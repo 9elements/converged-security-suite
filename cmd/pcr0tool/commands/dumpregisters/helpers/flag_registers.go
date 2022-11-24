@@ -3,7 +3,7 @@ package helpers
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"gopkg.in/yaml.v3"
@@ -36,7 +36,7 @@ func (f *FlagRegisters) Set(in string) error {
 		*f = FlagRegisters(regs)
 		return nil
 	default:
-		contents, err := ioutil.ReadFile(in)
+		contents, err := os.ReadFile(in)
 		if err != nil {
 			return fmt.Errorf("unable to parse file '%s': %w", in, err)
 		}

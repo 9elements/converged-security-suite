@@ -2,7 +2,7 @@ package helpers
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"runtime"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
@@ -77,7 +77,7 @@ func GetRegisters(options ...GetRegistersOption) (registers.Registers, error) {
 
 func getTXTConfig(cfg getRegistersConfig) (registers.TXTConfigSpace, error) {
 	if cfg.OverrideTXTPublic != "" {
-		b, err := ioutil.ReadFile(cfg.OverrideTXTPublic)
+		b, err := os.ReadFile(cfg.OverrideTXTPublic)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read TXT public space from '%s': %w", cfg.OverrideTXTPublic, err)
 		}
