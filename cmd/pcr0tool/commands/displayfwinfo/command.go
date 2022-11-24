@@ -42,7 +42,7 @@ func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
 // `args` are the arguments left unused by verb itself and options.
 func (cmd Command) Execute(args []string) {
 	if len(args) < 1 {
-		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "error: no path to the firmare was specified\n")
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "error: no path to the firmware was specified\n")
 		usageAndExit()
 	}
 	if len(args) > 1 {
