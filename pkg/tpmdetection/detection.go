@@ -3,7 +3,6 @@ package tpmdetection
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"runtime"
 	"strings"
@@ -78,7 +77,7 @@ func local(devicePath, capabilities string) (Type, error) {
 		return 0, fmt.Errorf("failed to check existance of %s, err: %w", devicePath, err)
 	}
 
-	caps, err := ioutil.ReadFile(capabilities)
+	caps, err := os.ReadFile(capabilities)
 	if err != nil {
 		// This file may not exist for TPM2.0
 		if os.IsNotExist(err) {

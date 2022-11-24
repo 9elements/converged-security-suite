@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	fianoUEFI "github.com/linuxboot/fiano/pkg/uefi"
@@ -51,7 +50,7 @@ func (cmd Command) Execute(args []string) {
 	}
 	imagePath := args[0]
 
-	imageBytes, err := ioutil.ReadFile(imagePath)
+	imageBytes, err := os.ReadFile(imagePath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "unable to read image '%s': %v\n", imagePath, err)
 		return

@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
@@ -229,7 +228,7 @@ func (v *versionCmd) Run(ctx *context) error {
 }
 
 func (kmp *kmPrintCmd) Run(ctx *context) error {
-	data, err := ioutil.ReadFile(kmp.Path)
+	data, err := os.ReadFile(kmp.Path)
 	if err != nil {
 		return err
 	}
@@ -257,7 +256,7 @@ func (kmp *kmPrintCmd) Run(ctx *context) error {
 }
 
 func (bpmp *bpmPrintCmd) Run(ctx *context) error {
-	data, err := ioutil.ReadFile(bpmp.Path)
+	data, err := os.ReadFile(bpmp.Path)
 	if err != nil {
 		return err
 	}
@@ -285,7 +284,7 @@ func (bpmp *bpmPrintCmd) Run(ctx *context) error {
 }
 
 func (acmp *acmPrintCmd) Run(ctx *context) error {
-	data, err := ioutil.ReadFile(acmp.Path)
+	data, err := os.ReadFile(acmp.Path)
 	if err != nil {
 		return err
 	}
@@ -308,7 +307,7 @@ func (acmp *acmPrintCmd) Run(ctx *context) error {
 }
 
 func (biosp *biosPrintCmd) Run(ctx *context) error {
-	data, err := ioutil.ReadFile(biosp.Path)
+	data, err := os.ReadFile(biosp.Path)
 	if err != nil {
 		return err
 	}
@@ -325,7 +324,7 @@ func (biosp *biosPrintCmd) Run(ctx *context) error {
 }
 
 func (acme *acmExportCmd) Run(ctx *context) error {
-	data, err := ioutil.ReadFile(acme.BIOS)
+	data, err := os.ReadFile(acme.BIOS)
 	if err != nil {
 		return err
 	}
@@ -341,7 +340,7 @@ func (acme *acmExportCmd) Run(ctx *context) error {
 }
 
 func (kme *kmExportCmd) Run(ctx *context) error {
-	data, err := ioutil.ReadFile(kme.BIOS)
+	data, err := os.ReadFile(kme.BIOS)
 	if err != nil {
 		return err
 	}
@@ -357,7 +356,7 @@ func (kme *kmExportCmd) Run(ctx *context) error {
 }
 
 func (bpme *bpmExportCmd) Run(ctx *context) error {
-	data, err := ioutil.ReadFile(bpme.BIOS)
+	data, err := os.ReadFile(bpme.BIOS)
 	if err != nil {
 		return err
 	}
@@ -444,7 +443,7 @@ func (g *generateKMCmd) Run(ctx *context) error {
 		//Cut signature from binary
 		bKM = bKM[:int(options.KeyManifest.KeyManifestSignatureOffset)]
 	}
-	if err = ioutil.WriteFile(g.KM, bKM, 0600); err != nil {
+	if err = os.WriteFile(g.KM, bKM, 0600); err != nil {
 		return fmt.Errorf("unable to write KM to file: %w", err)
 	}
 	return nil
@@ -544,7 +543,7 @@ func (g *generateBPMCmd) Run(ctx *context) error {
 	if g.Cut {
 		bBPM = bBPM[:bpm.KeySignatureOffset]
 	}
-	if err = ioutil.WriteFile(g.BPM, bBPM, 0600); err != nil {
+	if err = os.WriteFile(g.BPM, bBPM, 0600); err != nil {
 		return fmt.Errorf("unable to write BPM to file: %w", err)
 	}
 	return nil
@@ -603,7 +602,7 @@ func (g *generateACMCmd) Run(ctx *context) error {
 		EntrySACMDataInterface: config.ACMHeaders,
 	}
 	if g.BodyPath != "" {
-		bodyData, err := ioutil.ReadFile(g.BodyPath)
+		bodyData, err := os.ReadFile(g.BodyPath)
 		if err != nil {
 			return fmt.Errorf("unable to read the ACM body file '%s': %w", g.BodyPath, err)
 		}
@@ -620,14 +619,14 @@ func (g *generateACMCmd) Run(ctx *context) error {
 		return fmt.Errorf("unable to compile the ACM module: %w", err)
 	}
 
-	if err = ioutil.WriteFile(g.ACMOut, acmBytes.Bytes(), 0600); err != nil {
+	if err = os.WriteFile(g.ACMOut, acmBytes.Bytes(), 0600); err != nil {
 		return fmt.Errorf("unable to write KM to file: %w", err)
 	}
 	return nil
 }
 
 func (s *signKMCmd) Run(ctx *context) error {
-	encKey, err := ioutil.ReadFile(s.Key)
+	encKey, err := os.ReadFile(s.Key)
 	if err != nil {
 		return err
 	}
@@ -635,7 +634,7 @@ func (s *signKMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	kmRaw, err := ioutil.ReadFile(s.KmIn)
+	kmRaw, err := os.ReadFile(s.KmIn)
 	if err != nil {
 		return err
 	}
@@ -658,14 +657,14 @@ func (s *signKMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(s.KmOut, bKMSigned, 0600); err != nil {
+	if err := os.WriteFile(s.KmOut, bKMSigned, 0600); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (s *signBPMCmd) Run(ctx *context) error {
-	encKey, err := ioutil.ReadFile(s.Key)
+	encKey, err := os.ReadFile(s.Key)
 	if err != nil {
 		return err
 	}
@@ -673,7 +672,7 @@ func (s *signBPMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	bpmRaw, err := ioutil.ReadFile(s.BpmIn)
+	bpmRaw, err := os.ReadFile(s.BpmIn)
 	if err != nil {
 		return err
 	}
@@ -712,7 +711,7 @@ func (s *signBPMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	if err = ioutil.WriteFile(s.BpmOut, bBPMSigned, 0600); err != nil {
+	if err = os.WriteFile(s.BpmOut, bBPMSigned, 0600); err != nil {
 		return fmt.Errorf("unable to write BPM to file: %w", err)
 	}
 	return nil
@@ -789,11 +788,11 @@ func (rc *readConfigCmd) Run(ctx *context) error {
 }
 
 func (s *stitchingKMCmd) Run(ctx *context) error {
-	kmData, err := ioutil.ReadFile(s.KM)
+	kmData, err := os.ReadFile(s.KM)
 	if err != nil {
 		return err
 	}
-	sig, err := ioutil.ReadFile(s.Signature)
+	sig, err := os.ReadFile(s.Signature)
 	if err != nil {
 		return err
 	}
@@ -813,18 +812,18 @@ func (s *stitchingKMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(s.Out, kmRaw, 0644); err != nil {
+	if err := os.WriteFile(s.Out, kmRaw, 0644); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (s *stitchingBPMCmd) Run(ctx *context) error {
-	bpmData, err := ioutil.ReadFile(s.BPM)
+	bpmData, err := os.ReadFile(s.BPM)
 	if err != nil {
 		return err
 	}
-	sig, err := ioutil.ReadFile(s.Signature)
+	sig, err := os.ReadFile(s.Signature)
 	if err != nil {
 		return err
 	}
@@ -844,7 +843,7 @@ func (s *stitchingBPMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(s.Out, bpmRaw, 0644); err != nil {
+	if err := os.WriteFile(s.Out, bpmRaw, 0644); err != nil {
 		return err
 	}
 	return nil
@@ -854,22 +853,22 @@ func (s *stitchingCmd) Run(ctx *context) error {
 	var err error
 	var bpm, km, acm, me []byte
 	if s.BPM != "" {
-		if bpm, err = ioutil.ReadFile(s.BPM); err != nil {
+		if bpm, err = os.ReadFile(s.BPM); err != nil {
 			return err
 		}
 	}
 	if s.KM != "" {
-		if km, err = ioutil.ReadFile(s.KM); err != nil {
+		if km, err = os.ReadFile(s.KM); err != nil {
 			return err
 		}
 	}
 	if s.ACM != "" {
-		if acm, err = ioutil.ReadFile(s.ACM); err != nil {
+		if acm, err = os.ReadFile(s.ACM); err != nil {
 			return err
 		}
 	}
 	if s.ME != "" {
-		if me, err = ioutil.ReadFile(s.ME); err != nil {
+		if me, err = os.ReadFile(s.ME); err != nil {
 			return err
 		}
 	}
@@ -880,7 +879,7 @@ func (s *stitchingCmd) Run(ctx *context) error {
 		return err
 	}
 	if len(me) != 0 {
-		image, err := ioutil.ReadFile(s.BIOS)
+		image, err := os.ReadFile(s.BIOS)
 		if err != nil {
 			return err
 		}
@@ -954,7 +953,7 @@ func (k *keygenCmd) Run(ctx *context) error {
 }
 
 func (p printFITCmd) Run(ctx *context) error {
-	img, err := ioutil.ReadFile(p.BIOS)
+	img, err := os.ReadFile(p.BIOS)
 	if err != nil {
 		return err
 	}
@@ -967,7 +966,7 @@ func (p printFITCmd) Run(ctx *context) error {
 }
 
 func (v *verifyKMSigCmd) Run(ctx *context) error {
-	kmRaw, err := ioutil.ReadFile(v.KM)
+	kmRaw, err := os.ReadFile(v.KM)
 	if err != nil {
 		return err
 	}
@@ -985,7 +984,7 @@ func (v *verifyKMSigCmd) Run(ctx *context) error {
 }
 
 func (b *verifyBPMSigCmd) Run(ctx *context) error {
-	bpmraw, err := ioutil.ReadFile(b.BPM)
+	bpmraw, err := os.ReadFile(b.BPM)
 	if err != nil {
 		return err
 	}

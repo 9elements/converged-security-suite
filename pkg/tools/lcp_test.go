@@ -2,12 +2,12 @@ package tools
 
 import (
 	"crypto"
-	"io/ioutil"
+	"os"
 	"testing"
 )
 
 func TestLCPParser(t *testing.T) {
-	file, err := ioutil.ReadFile("./tests/pol.bin")
+	file, err := os.ReadFile("./tests/pol.bin")
 	if err != nil {
 		t.Errorf("LCPParser() read failed: %v", err)
 	}
@@ -19,7 +19,7 @@ func TestLCPParser(t *testing.T) {
 }
 
 func TestLCPParser2(t *testing.T) {
-	file, err := ioutil.ReadFile("./tests/pol2.bin")
+	file, err := os.ReadFile("./tests/pol2.bin")
 	if err != nil {
 		t.Errorf("LCPParser() read failed: %v", err)
 	}
@@ -32,7 +32,7 @@ func TestLCPParser2(t *testing.T) {
 
 func TestLCPParser3(t *testing.T) {
 	var lcp2 *LCPPolicy2
-	file, err := ioutil.ReadFile("./tests/pol3.bin")
+	file, err := os.ReadFile("./tests/pol3.bin")
 	if err != nil {
 		t.Errorf("LCPDataParser() failed: %v", err)
 	}
@@ -45,7 +45,7 @@ func TestLCPParser3(t *testing.T) {
 }
 
 func TestLCPDataParser(t *testing.T) {
-	file, err := ioutil.ReadFile("./tests/poldata.bin")
+	file, err := os.ReadFile("./tests/poldata.bin")
 	if err != nil {
 		t.Errorf("LCPDataParser() failed: %v", err)
 	}
@@ -59,7 +59,7 @@ func TestLCPDataParser(t *testing.T) {
 }
 
 func TestLCPDataParser2(t *testing.T) {
-	file, err := ioutil.ReadFile("./tests/poldata2.bin")
+	file, err := os.ReadFile("./tests/poldata2.bin")
 	if err != nil {
 		t.Errorf("LCPDataParser() failed: %v", err)
 	}

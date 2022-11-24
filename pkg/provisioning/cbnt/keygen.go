@@ -11,7 +11,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -205,7 +204,7 @@ func DecryptPrivKey(data []byte, password string) (crypto.PrivateKey, error) {
 
 // ReadPubKey ready a pem encoded RSA/ECC public key file
 func ReadPubKey(path string) (crypto.PublicKey, error) {
-	raw, err := ioutil.ReadFile(path)
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

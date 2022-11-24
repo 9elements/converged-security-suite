@@ -2,7 +2,7 @@ package tpm
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
 	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
@@ -21,7 +21,7 @@ func ReadPCRFromTPM(pcrIndex pcrtypes.ID, alg tpm2.Algorithm) ([]byte, error) {
 	var mErr errors.MultiError
 
 	// Try to read PCR values from sysfs
-	if pcrsData, err := ioutil.ReadFile(tpm12PCRsPath); err == nil {
+	if pcrsData, err := os.ReadFile(tpm12PCRsPath); err == nil {
 		if pcrs, err := parseSysfsPCRs(pcrsData); err == nil {
 			return pcrs[pcrIndex], nil
 		}

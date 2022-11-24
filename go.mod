@@ -1,9 +1,8 @@
 module github.com/9elements/converged-security-suite/v2
 
-go 1.13
+go 1.18
 
 require (
-	github.com/9elements/converged-security-suite/v2/testdata/firmware v0.0.0-00010101000000-000000000000
 	github.com/9elements/go-linux-lowlevel-hw v0.0.0-20211215141225-8375dd201aae
 	github.com/alecthomas/kong v0.2.11
 	github.com/creasty/defaults v1.5.1
@@ -16,7 +15,6 @@ require (
 	github.com/google/go-tpm v0.3.3-0.20210120190357-1ff48daca32f
 	github.com/google/uuid v1.3.0
 	github.com/klauspost/cpuid/v2 v2.0.9
-	github.com/kr/pretty v0.2.1 // indirect
 	github.com/linuxboot/contest v0.0.0-20220404120719-d952dfa563c4
 	github.com/linuxboot/fiano v1.1.1-0.20220414102525-737513644344
 	github.com/logrusorgru/aurora v2.0.3+incompatible
@@ -33,4 +31,28 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
-replace github.com/9elements/converged-security-suite/v2/testdata/firmware => ./testdata/firmware
+require (
+	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/godbus/dbus/v5 v5.0.4 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/google/certificate-transparency-go v1.1.1 // indirect
+	github.com/google/go-tspi v0.2.1-0.20190423175329-115dea689aad // indirect
+	github.com/hashicorp/errwrap v1.0.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/intel-go/cpuid v0.0.0-20200819041909-2aa72927c3e2 // indirect
+	github.com/kr/pretty v0.2.1 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/prometheus/client_golang v1.11.0 // indirect
+	github.com/prometheus/client_model v0.2.0 // indirect
+	github.com/prometheus/common v0.32.1 // indirect
+	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/sirupsen/logrus v1.8.1 // indirect
+	golang.org/x/sys v0.0.0-20211031064116-611d5d643895 // indirect
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
+	golang.org/x/text v0.3.6 // indirect
+	google.golang.org/protobuf v1.27.1 // indirect
+)

@@ -2,7 +2,6 @@ package tpmdetection
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -10,7 +9,7 @@ import (
 
 func TestTPMDetection(t *testing.T) {
 	t.Run("no_tpm_device", func(t *testing.T) {
-		d, err := ioutil.TempDir("", "tpm_detection")
+		d, err := os.MkdirTemp("", "tpm_detection")
 		if err != nil {
 			t.Errorf("failed to create temp director: %vy", err)
 			t.Skip()
@@ -28,7 +27,7 @@ func TestTPMDetection(t *testing.T) {
 		}
 	})
 
-	d, err := ioutil.TempDir("", "tpm_detection")
+	d, err := os.MkdirTemp("", "tpm_detection")
 	if err != nil {
 		t.Errorf("failed to create temp director: %vy", err)
 		t.Skip()

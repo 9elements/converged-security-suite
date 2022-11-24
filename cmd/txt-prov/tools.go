@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
@@ -37,7 +37,7 @@ func writePSPolicy2file(policy *tools.LCPPolicy2, filename string) error {
 	if err != nil {
 		return err
 	}
-	if err = ioutil.WriteFile(filename, buf.Bytes(), 0600); err != nil {
+	if err = os.WriteFile(filename, buf.Bytes(), 0600); err != nil {
 		return err
 	}
 	return nil
