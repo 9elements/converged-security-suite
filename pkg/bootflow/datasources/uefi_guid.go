@@ -14,6 +14,8 @@ import (
 
 type UEFIGUIDFirst []guid.GUID
 
+var _ types.DataSource = (UEFIGUIDFirst)(nil)
+
 func (ds UEFIGUIDFirst) Data(state *types.State) (*types.Data, error) {
 	var data *types.Data
 	err := biosfirmware.FromState(state, func(fwRaw *biosfirmware.BIOSFirmware) error {

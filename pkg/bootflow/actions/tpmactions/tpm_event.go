@@ -3,14 +3,13 @@ package tpmactions
 import (
 	"fmt"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/datasources"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
 )
 
 type TPMEvent struct {
-	DataSource datasources.DataSource
+	DataSource types.DataSource
 	PCRIndex   pcrtypes.ID
 	EventData  []byte
 }
@@ -19,7 +18,7 @@ var _ types.Action = (*TPMEvent)(nil)
 
 func NewTPMEvent(
 	pcrIndex pcrtypes.ID,
-	dataSource datasources.DataSource,
+	dataSource types.DataSource,
 	eventData []byte,
 ) TPMEvent {
 	return TPMEvent{

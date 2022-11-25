@@ -3,7 +3,6 @@ package tpmactions
 import (
 	"fmt"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/datasources"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
@@ -11,7 +10,7 @@ import (
 )
 
 type TPMExtend struct {
-	DataSource datasources.DataSource
+	DataSource types.DataSource
 	PCRIndex   pcrtypes.ID
 	HashAlgo   tpm2.Algorithm
 }
@@ -20,7 +19,7 @@ var _ types.Action = (*TPMExtend)(nil)
 
 func NewTPMExtend(
 	pcrIndex pcrtypes.ID,
-	dataSource datasources.DataSource,
+	dataSource types.DataSource,
 	hashAlgo tpm2.Algorithm,
 ) TPMExtend {
 	return TPMExtend{
