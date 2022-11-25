@@ -15,7 +15,7 @@ type State struct {
 	TrustChains     TrustChains
 	CurrentFlow     Flow
 	CurrentStepIdx  uint
-	VerifiedData    []VerifiedData
+	MeasuredData    []MeasuredData
 }
 
 func typeMapKey(i interface{}) reflect.Type {
@@ -105,8 +105,8 @@ func (state *State) IncludeSystemArtifact(systemArtifact SystemArtifact) {
 	state.SystemArtifacts[k] = systemArtifact
 }
 
-func (state *State) AddVerifiedData(trustChain TrustChain, data Data) {
-	state.VerifiedData = append(state.VerifiedData, VerifiedData{
+func (state *State) AddMeasuredData(trustChain TrustChain, data Data) {
+	state.MeasuredData = append(state.MeasuredData, MeasuredData{
 		Data:       data,
 		TrustChain: trustChain,
 	})
@@ -124,18 +124,18 @@ func (state *State) GoString() string {
 		fmt.Fprintf(&result, "CurrentFlow:\n\t%s\n", nestedGoStringOf(state.CurrentFlow))
 		fmt.Fprintf(&result, "CurrentStepIndex: %d\n", state.CurrentStepIdx)
 	}
-	if len(state.VerifiedData) > 0 {
-		fmt.Fprintf(&result, "VerifiedData:\n\t%s\n", nestedGoStringOf(state.VerifiedData))
+	if len(state.MeasuredData) > 0 {
+		fmt.Fprintf(&result, "MeasuredData:\n\t%s\n", nestedGoStringOf(state.MeasuredData))
 	}
 	return result.String()
 }
 
-func (state *State) GetVerifiedDataBy(trustChainSample TrustChain) []VerifiedData {
-	var result []VerifiedData
+func (state *State) GetMeasuredDataBy(trustChainSample TrustChain) []MeasuredData {
+	var result []MeasuredData
 	cmpKey := typeMapKey(trustChainSample)
-	for _, verifiedData := range state.VerifiedData {
-		if typeMapKey(verifiedData.TrustChain) == cmpKey {
-			result = append(result, verifiedData)
+	for _, measuredData := range state.MeasuredData {
+		if typeMapKey(measuredData.TrustChain) == cmpKey {
+			result = append(result, measuredData)
 		}
 	}
 	return result

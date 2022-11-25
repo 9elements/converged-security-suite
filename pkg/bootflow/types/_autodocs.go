@@ -9,7 +9,7 @@ type State struct {
 	SystemArtifacts
 	TrustChains
 	Flow
-	VerifiedData
+	MeasuredData
 }
 
 type Data struct {
@@ -21,7 +21,7 @@ type Reference struct {
 	types.SystemArtifact
 }
 
-type VerifiedData struct {
+type MeasuredData struct {
 	Data Data
 	TrustChain
 }

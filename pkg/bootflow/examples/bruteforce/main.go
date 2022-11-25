@@ -57,7 +57,7 @@ func main() {
 	// == now let's bruteforce the first measurement ==
 
 	// first find the original (UNHASHED) data of the first measurement
-	tpmMeasurements := process.Log.GetDataVerifiedBy(tpmInstance)
+	tpmMeasurements := process.Log.GetDataMeasuredWith(tpmInstance)
 
 	// now let's gather the rest chain (TPM init and the rest TPM Extend-s)
 	var (

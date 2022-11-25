@@ -84,11 +84,17 @@ func (chain *TPM) TPMInit(locality uint8) error {
 	return nil
 }
 
-func (chain *TPM) TPMExtend(pcrIndex PCRID, hashAlgo tpm2.Algorithm, digest []byte) error {
+func (chain *TPM) TPMExtend(
+	pcrIndex PCRID,
+	hashAlgo tpm2.Algorithm,
+	digest []byte,
+	causeAction types.Action,
+) error {
 	chain.CommandLog = append(chain.CommandLog, CommandLogEntryExtend{
-		PCRIndex: pcrIndex,
-		HashAlgo: hashAlgo,
-		Digest:   digest,
+		PCRIndex:    pcrIndex,
+		HashAlgo:    hashAlgo,
+		Digest:      digest,
+		CauseAction: causeAction,
 	})
 
 	h, err := hashAlgo.Hash()

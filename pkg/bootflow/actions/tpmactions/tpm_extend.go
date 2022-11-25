@@ -40,11 +40,11 @@ func (ext TPMExtend) Apply(state *types.State) error {
 	if err != nil {
 		return err
 	}
-	err = t.TPMExtend(ext.PCRIndex, ext.HashAlgo, data.Bytes())
+	err = t.TPMExtend(ext.PCRIndex, ext.HashAlgo, data.Bytes(), ext)
 	if err != nil {
 		return fmt.Errorf("unable to extend: %w", err)
 	}
 
-	state.AddVerifiedData(t, *data)
+	state.AddMeasuredData(t, *data)
 	return nil
 }

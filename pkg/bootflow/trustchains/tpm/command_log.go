@@ -3,6 +3,7 @@ package tpm
 import (
 	"fmt"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/google/go-tpm/tpm2"
 )
 
@@ -28,6 +29,10 @@ type CommandLogEntryExtend struct {
 	PCRIndex PCRID
 	HashAlgo tpm2.Algorithm
 	Digest   Digest
+
+	// CauseAction holds the original action, which triggered this TPMExtend. The original
+	// data contributed to `Digest` should be accessible through this CauseAction.
+	CauseAction types.Action
 }
 
 func (entry CommandLogEntryExtend) LogString() string {

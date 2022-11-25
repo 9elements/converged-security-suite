@@ -44,7 +44,7 @@ func stateNextStep(state *types.State) (types.Step, types.Actions, StepIssues, b
 }
 
 func (process *BootProcess) NextStep() bool {
-	oldVerifiedData := process.CurrentState.VerifiedData
+	oldMeasuredData := process.CurrentState.MeasuredData
 	stepBackend, actions, stepIssues, ok := stateNextStep(process.CurrentState)
 	if !ok {
 		return false
@@ -52,8 +52,8 @@ func (process *BootProcess) NextStep() bool {
 	step := Step{Step: stepBackend, Actions: actions}
 	step.Issues = stepIssues
 
-	if len(process.CurrentState.VerifiedData) > len(oldVerifiedData) {
-		step.VerifiedData = process.CurrentState.VerifiedData[len(oldVerifiedData):]
+	if len(process.CurrentState.MeasuredData) > len(oldMeasuredData) {
+		step.MeasuredData = process.CurrentState.MeasuredData[len(oldMeasuredData):]
 	}
 
 	process.Log = append(process.Log, step)

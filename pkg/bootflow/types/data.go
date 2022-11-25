@@ -72,11 +72,11 @@ func (ref *Reference) Bytes() []byte {
 	return result
 }
 
-type VerifiedData struct {
+type MeasuredData struct {
 	Data
 	TrustChain TrustChain
 }
 
-func (d VerifiedData) GoString() string {
+func (d MeasuredData) GoString() string {
 	return fmt.Sprintf("%s: %#v", typeMapKey(d.TrustChain).Name(), d.Data)
 }

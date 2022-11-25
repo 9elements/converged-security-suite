@@ -10,7 +10,7 @@ import (
 type Step struct {
 	Step         types.Step
 	Actions      types.Actions
-	VerifiedData []types.VerifiedData
+	MeasuredData []types.MeasuredData
 	Issues       StepIssues
 }
 
@@ -20,10 +20,10 @@ func (log Log) GoString() string {
 	var result strings.Builder
 	for idx, step := range log {
 		fmt.Fprintf(&result, "%d. %#v:\n", idx, step.Step)
-		if len(step.VerifiedData) > 0 {
-			fmt.Fprintf(&result, "\tVerifiedData:\n")
-			for idx, verifiedData := range step.VerifiedData {
-				fmt.Fprintf(&result, "\t\t%d. %s\n", idx, nestedGoStringOf(verifiedData))
+		if len(step.MeasuredData) > 0 {
+			fmt.Fprintf(&result, "\tMeasuredData:\n")
+			for idx, measuredData := range step.MeasuredData {
+				fmt.Fprintf(&result, "\t\t%d. %s\n", idx, nestedGoStringOf(measuredData))
 			}
 		}
 		if _, ok := step.Step.(types.StaticStep); !ok && len(step.Actions) > 0 {
@@ -42,15 +42,15 @@ func (log Log) GoString() string {
 	return result.String()
 }
 
-func (log Log) GetDataVerifiedBy(trustChain types.TrustChain) []types.VerifiedData {
-	var result []types.VerifiedData
+func (log Log) GetDataMeasuredWith(trustChain types.TrustChain) []types.MeasuredData {
+	var result []types.MeasuredData
 	for _, step := range log {
-		if len(step.VerifiedData) == 0 {
+		if len(step.MeasuredData) == 0 {
 			continue
 		}
-		for _, verifiedData := range step.VerifiedData {
-			if verifiedData.TrustChain == trustChain {
-				result = append(result, verifiedData)
+		for _, measuredData := range step.MeasuredData {
+			if measuredData.TrustChain == trustChain {
+				result = append(result, measuredData)
 			}
 		}
 	}

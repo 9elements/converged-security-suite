@@ -50,7 +50,7 @@ func (ev TPMEvent) Apply(state *types.State) error {
 		}
 		digest := hasher.Sum(nil)
 
-		if err := t.TPMExtend(ev.PCRIndex, hashAlgo, digest); err != nil {
+		if err := t.TPMExtend(ev.PCRIndex, hashAlgo, digest, ev); err != nil {
 			return fmt.Errorf("unable to extend: %w", err)
 		}
 
@@ -59,7 +59,7 @@ func (ev TPMEvent) Apply(state *types.State) error {
 		}
 	}
 
-	state.AddVerifiedData(t, *data)
+	state.AddMeasuredData(t, *data)
 	return nil
 }
 
