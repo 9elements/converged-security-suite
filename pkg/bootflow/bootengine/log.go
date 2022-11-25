@@ -2,7 +2,6 @@ package bootengine
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
@@ -43,27 +42,18 @@ func (log Log) GoString() string {
 	return result.String()
 }
 
-func (log Log) GetVerifiedDataByTrustChainType(trustChainSample types.TrustChain) []types.VerifiedData {
+func (log Log) GetDataVerifiedBy(trustChain types.TrustChain) []types.VerifiedData {
 	var result []types.VerifiedData
-	cmpType := reducedType(trustChainSample)
 	for _, step := range log {
 		if len(step.VerifiedData) == 0 {
 			continue
 		}
 		for _, verifiedData := range step.VerifiedData {
-			if reducedType(verifiedData.TrustChain) == cmpType {
+			if verifiedData.TrustChain == trustChain {
 				result = append(result, verifiedData)
 			}
 		}
 	}
 
 	return result
-}
-
-func reducedType(i interface{}) reflect.Type {
-	k := reflect.TypeOf(i)
-	for k.Kind() == reflect.Ptr {
-		k = k.Elem()
-	}
-	return k
 }

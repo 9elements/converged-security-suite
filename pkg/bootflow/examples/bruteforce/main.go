@@ -49,20 +49,21 @@ func main() {
 	// just some debugging
 	fmt.Printf("Log:\n%#v\n", process.Log)
 
+	tpmInstance, err := tpm.GetFrom(state)
+	if err != nil {
+		panic(err)
+	}
+
 	// == now let's bruteforce the first measurement ==
 
 	// first find the original (UNHASHED) data of the first measurement
-	tpmMeasurements := process.Log.GetVerifiedDataByTrustChainType((*tpm.TPM)(nil))
+	tpmMeasurements := process.Log.GetDataVerifiedBy(tpmInstance)
 
 	// now let's gather the rest chain (TPM init and the rest TPM Extend-s)
 	var (
 		tpmLocality *uint8
 		tpmExtends  []tpm.CommandLogEntryExtend
 	)
-	tpmInstance, err := tpm.GetFrom(state)
-	if err != nil {
-		panic(err)
-	}
 	for _, entry := range tpmInstance.CommandLog {
 		switch entry := entry.(type) {
 		case tpm.CommandLogEntryInit:
