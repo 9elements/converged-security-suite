@@ -13,6 +13,7 @@ type State struct {
 
 	SystemArtifacts SystemArtifacts
 	TrustChains     TrustChains
+	CurrentActor    Actor
 	CurrentFlow     Flow
 	CurrentStepIdx  uint
 	MeasuredData    []MeasuredData
@@ -38,15 +39,14 @@ func (state *State) SetFlow(flow Flow, stepIdx uint) {
 	state.CurrentStepIdx = stepIdx
 }
 
-// GetTrustChainByTypeFromState extracts a specific TrustChain given its type
-// (through the sample).
+// GetTrustChainByTypeFromState extracts a specific TrustChain given its type.
 //
 // This was supposed to be a method of `*State`, but Go does not support generic
 // methods, so it is a free function.
 func GetTrustChainByTypeFromState[T TrustChain](
 	state *State,
-	sample T,
 ) (T, error) {
+	var sample T
 	key := typeMapKey(sample)
 	value, ok := state.TrustChains[key].(T)
 	if !ok {
@@ -55,16 +55,18 @@ func GetTrustChainByTypeFromState[T TrustChain](
 	return value, nil
 }
 
-func (state *State) TrustChainExec(
-	trustChainSample TrustChain,
-	callback func(trustChain TrustChain) error,
+// WithTrustChain extracts a specific TrustChain given its type.
+//
+// This was supposed to be a method of `*State`, but Go does not support generic
+// methods, so it is a free function.
+func WithTrustChain[TC TrustChain](
+	state *State,
+	callback func(trustChain TC) error,
 ) error {
-	key := typeMapKey(trustChainSample)
-	trustChain := state.TrustChains[key]
-	if trustChain == nil {
-		return ErrNoTrustChain{TrustChainKey: key}
+	trustChain, err := GetTrustChainByTypeFromState[TC](state)
+	if err != nil {
+		return err
 	}
-
 	return callback(trustChain)
 }
 
@@ -80,16 +82,35 @@ func (state *State) IncludeTrustChain(trustChain TrustChain) {
 	state.TrustChains[k] = trustChain
 }
 
-func (state *State) SystemArtifactExec(
-	systemArtifactSample SystemArtifact,
-	callback func(systemArtifact SystemArtifact) error,
-) error {
-	key := typeMapKey(systemArtifactSample)
-	systemArtifact := state.SystemArtifacts[key]
-	if systemArtifact == nil {
-		return ErrNoSystemArtifact{SystemArtifactKey: key}
+// SystemArtifactExec extracts a specific SystemArtifact given its type.
+//
+// This was supposed to be a method of `*State`, but Go does not support generic
+// methods, so it is a free function.
+func GetSystemArtifactByTypeFromState[SA SystemArtifact](
+	state *State,
+) (SA, error) {
+	var sample SA
+	key := typeMapKey(sample)
+	systemArtifact, ok := state.SystemArtifacts[key].(SA)
+	if !ok {
+		return systemArtifact, ErrNoSystemArtifact{SystemArtifactKey: key}
 	}
 
+	return systemArtifact, nil
+}
+
+// WithSystemArtifact extracts a specific SystemArtifact given its type.
+//
+// This was supposed to be a method of `*State`, but Go does not support generic
+// methods, so it is a free function.
+func WithSystemArtifact[SA SystemArtifact](
+	state *State,
+	callback func(trustChain SA) error,
+) error {
+	systemArtifact, err := GetSystemArtifactByTypeFromState[SA](state)
+	if err != nil {
+		return err
+	}
 	return callback(systemArtifact)
 }
 
@@ -108,6 +129,7 @@ func (state *State) IncludeSystemArtifact(systemArtifact SystemArtifact) {
 func (state *State) AddMeasuredData(trustChain TrustChain, data Data) {
 	state.MeasuredData = append(state.MeasuredData, MeasuredData{
 		Data:       data,
+		Actor:      state.CurrentActor,
 		TrustChain: trustChain,
 	})
 }

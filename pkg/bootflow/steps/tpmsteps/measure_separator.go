@@ -9,6 +9,6 @@ import (
 
 func MeasureSeparator(pcrID pcrtypes.ID) types.Step {
 	return types.StaticStep{
-		tpmactions.NewTPMEvent(0, datasources.StaticData{0, 0, 0, 0}, nil),
+		tpmactions.NewTPMEvent(0, datasources.Bytes{0, 0, 0, 0}, nil),
 	}
 }

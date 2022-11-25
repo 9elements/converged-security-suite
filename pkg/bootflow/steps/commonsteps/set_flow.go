@@ -6,13 +6,22 @@ import (
 )
 
 type setFlow struct {
-	nextFlowFunc   func() types.Flow
+	nextFlowFunc   func(state *types.State) types.Flow
 	startStepIndex uint
 }
 
-func SetFlow(flowFunc func() types.Flow, stepIndex uint) types.Step {
+func SetFlow(flowFunc func(state *types.State) types.Flow, stepIndex uint) types.Step {
 	return &setFlow{
 		nextFlowFunc:   flowFunc,
+		startStepIndex: stepIndex,
+	}
+}
+
+func SetFlowPredefined(flow types.Flow, stepIndex uint) types.Step {
+	return &setFlow{
+		nextFlowFunc: func(state *types.State) types.Flow {
+			return flow
+		},
 		startStepIndex: stepIndex,
 	}
 }

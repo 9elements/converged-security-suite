@@ -18,7 +18,7 @@ type Data struct {
 }
 
 type Reference struct {
-	types.SystemArtifact
+	SystemArtifact
 }
 
 type MeasuredData struct {

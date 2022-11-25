@@ -5,11 +5,13 @@ import (
 )
 
 type setFlow struct {
-	nextFlowFunc   func() types.Flow
+	nextFlowFunc   func(state *types.State) types.Flow
 	startStepIndex uint
 }
 
-func SetFlow(flowFunc func() types.Flow, stepIndex uint) types.Action {
+var _ types.Action = (*setFlow)(nil)
+
+func SetFlow(flowFunc func(state *types.State) types.Flow, stepIndex uint) types.Action {
 	return &setFlow{
 		nextFlowFunc:   flowFunc,
 		startStepIndex: stepIndex,
@@ -17,7 +19,7 @@ func SetFlow(flowFunc func() types.Flow, stepIndex uint) types.Action {
 }
 
 func (step *setFlow) Apply(state *types.State) error {
-	state.CurrentFlow = step.nextFlowFunc()
+	state.CurrentFlow = step.nextFlowFunc(state)
 	state.CurrentStepIdx = step.startStepIndex
 	return nil
 }

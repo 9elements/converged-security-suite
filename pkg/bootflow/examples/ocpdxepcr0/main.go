@@ -7,7 +7,7 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/flows"
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosfirmware"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/google/go-tpm/tpm2"
@@ -25,7 +25,7 @@ func main() {
 	// the main part
 	state := types.NewState()
 	state.IncludeTrustChain(tpm.NewTPM())
-	state.IncludeSystemArtifact(biosfirmware.NewBIOSFirmware(biosFirmware))
+	state.IncludeSystemArtifact(biosimage.New(biosFirmware))
 	state.SetFlow(flows.OCPDXE(), 0)
 	process := bootengine.NewBootProcess(state)
 	process.Finish()
@@ -54,5 +54,9 @@ func main() {
 			}
 		}
 		fmt.Printf("\t%d: %#v\n", idx, entry)
+	}
+	fmt.Printf("Measured Data log:\n")
+	for idx, measuredData := range state.MeasuredData {
+		fmt.Printf("\t%d: %#v\n", idx, measuredData)
 	}
 }

@@ -45,7 +45,7 @@ func init() {
 }
 
 func GetFrom(state *types.State) (*TPM, error) {
-	return types.GetTrustChainByTypeFromState(state, (*TPM)(nil))
+	return types.GetTrustChainByTypeFromState[*TPM](state)
 }
 
 func (chain *TPM) IsInitialized() bool {

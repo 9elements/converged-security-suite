@@ -11,7 +11,9 @@ type TPMInit struct {
 	Locality uint8
 }
 
-func NewTPMInit(locality uint8) TPMInit {
+func NewTPMInit(
+	locality uint8,
+) TPMInit {
 	return TPMInit{
 		Locality: locality,
 	}
@@ -33,7 +35,9 @@ type TPMInitLazy struct {
 	TPMInit
 }
 
-func NewTPMInitLazy(locality uint8) TPMInitLazy {
+func NewTPMInitLazy(
+	locality uint8,
+) TPMInitLazy {
 	return TPMInitLazy{TPMInit: NewTPMInit(locality)}
 }
 

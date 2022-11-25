@@ -18,12 +18,3 @@ type StaticStep Actions
 func (step StaticStep) Actions(*State) Actions {
 	return Actions(step)
 }
-
-type Actions []Action
-
-// Describes a single event happening during some boot step.
-//
-// An example: measure a specific section in an AMD Manifest
-type Action interface {
-	Apply(*State) error
-}
