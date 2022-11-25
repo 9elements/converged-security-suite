@@ -35,30 +35,32 @@ func (ev TPMEvent) Apply(state *types.State) error {
 		return fmt.Errorf("unable to extract the data: %w", err)
 	}
 
-	return tpm.StateExec(state, func(t *tpm.TPM) error {
-		for _, hashAlgo := range tpm.SupportedHashAlgos() {
-			h, err := hashAlgo.Hash()
-			if err != nil {
-				return fmt.Errorf("unable to get hasher factory for algo %#v: %w", hashAlgo, err)
-			}
-			hasher := h.New()
-			if _, err := hasher.Write(data.Bytes()); err != nil {
-				return fmt.Errorf("unable to hash data with %T: %w", hasher, err)
-			}
-			digest := hasher.Sum(nil)
+	t, err := tpm.GetFrom(state)
+	if err != nil {
+		return err
+	}
+	for _, hashAlgo := range tpm.SupportedHashAlgos() {
+		h, err := hashAlgo.Hash()
+		if err != nil {
+			return fmt.Errorf("unable to get hasher factory for algo %#v: %w", hashAlgo, err)
+		}
+		hasher := h.New()
+		if _, err := hasher.Write(data.Bytes()); err != nil {
+			return fmt.Errorf("unable to hash data with %T: %w", hasher, err)
+		}
+		digest := hasher.Sum(nil)
 
-			if err := t.TPMExtend(ev.PCRIndex, hashAlgo, digest); err != nil {
-				return fmt.Errorf("unable to extend: %w", err)
-			}
-
-			if err := t.TPMEventLogAdd(ev.PCRIndex, hashAlgo, digest, ev.EventData); err != nil {
-				return fmt.Errorf("unable to add an entry to TPM EventLog: %w", err)
-			}
+		if err := t.TPMExtend(ev.PCRIndex, hashAlgo, digest); err != nil {
+			return fmt.Errorf("unable to extend: %w", err)
 		}
 
-		state.AddVerifiedData(t, *data)
-		return nil
-	})
+		if err := t.TPMEventLogAdd(ev.PCRIndex, hashAlgo, digest, ev.EventData); err != nil {
+			return fmt.Errorf("unable to add an entry to TPM EventLog: %w", err)
+		}
+	}
+
+	state.AddVerifiedData(t, *data)
+	return nil
 }
 
 func (ev TPMEvent) GoString() string {

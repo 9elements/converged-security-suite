@@ -18,9 +18,11 @@ func NewTPMInit(locality uint8) TPMInit {
 }
 
 func (init TPMInit) Apply(state *types.State) error {
-	return tpm.StateExec(state, func(t *tpm.TPM) error {
-		return t.TPMInit(init.Locality)
-	})
+	t, err := tpm.GetFrom(state)
+	if err != nil {
+		return err
+	}
+	return t.TPMInit(init.Locality)
 }
 
 func (init TPMInit) GoString() string {
@@ -36,12 +38,14 @@ func NewTPMInitLazy(locality uint8) TPMInitLazy {
 }
 
 func (init TPMInitLazy) Apply(state *types.State) error {
-	return tpm.StateExec(state, func(t *tpm.TPM) error {
-		if t.IsInitialized() {
-			return nil
-		}
-		return init.TPMInit.Apply(state)
-	})
+	t, err := tpm.GetFrom(state)
+	if err != nil {
+		return err
+	}
+	if t.IsInitialized() {
+		return nil
+	}
+	return init.TPMInit.Apply(state)
 }
 
 func (init TPMInitLazy) GoString() string {

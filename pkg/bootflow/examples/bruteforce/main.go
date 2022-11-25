@@ -42,7 +42,7 @@ func main() {
 	// executing the flow (with two simple "\x00\x00\x00\x00" measurements)
 	state := types.NewState()
 	state.SetFlow(myFlow, 0)
-	state.EnableTrustChain(tpm.NewTPM())
+	state.IncludeTrustChain(tpm.NewTPM())
 	process := bootengine.NewBootProcess(state)
 	process.Finish()
 
@@ -59,20 +59,21 @@ func main() {
 		tpmLocality *uint8
 		tpmExtends  []tpm.CommandLogEntryExtend
 	)
-	tpm.StateExec(state, func(t *tpm.TPM) error {
-		for _, entry := range t.CommandLog {
-			switch entry := entry.(type) {
-			case tpm.CommandLogEntryInit:
-				tpmLocality = &[]uint8{entry.Locality}[0]
-			case tpm.CommandLogEntryExtend:
-				if entry.HashAlgo != tpm2.AlgSHA1 {
-					continue
-				}
-				tpmExtends = append(tpmExtends, entry)
+	tpmInstance, err := tpm.GetFrom(state)
+	if err != nil {
+		panic(err)
+	}
+	for _, entry := range tpmInstance.CommandLog {
+		switch entry := entry.(type) {
+		case tpm.CommandLogEntryInit:
+			tpmLocality = &[]uint8{entry.Locality}[0]
+		case tpm.CommandLogEntryExtend:
+			if entry.HashAlgo != tpm2.AlgSHA1 {
+				continue
 			}
+			tpmExtends = append(tpmExtends, entry)
 		}
-		return nil
-	})
+	}
 	if tpmLocality == nil {
 		panic("the TPMInit command wasn't found")
 	}
@@ -82,15 +83,17 @@ func main() {
 	type context struct {
 		sha1Hasher hash.Hash
 	}
-	combination, err := bruteforcer.BruteForceBytes(
-		tpmMeasurements[0].Data.ForceBytes,
-		2,
-		func() (interface{}, error) {
+	combination, err := bruteforcer.BruteForce(
+		tpmMeasurements[0].Data.ForceBytes, // initialData
+		8,                                  // itemSize
+		0,                                  // minDistance
+		2,                                  // maxDistance
+		func() (interface{}, error) { // initFunc
 			return &context{
 				sha1Hasher: sha1.New(),
 			}, nil
 		},
-		func(_ctx interface{}, data []byte) bool {
+		func(_ctx interface{}, data []byte) bool { // checkFunc
 			ctx := _ctx.(*context)
 			h := ctx.sha1Hasher
 
@@ -114,6 +117,7 @@ func main() {
 			// is it OK?
 			return bytes.Equal(pcrValue, expectedHash)
 		},
+		bruteforcer.ApplyBitFlipsBytes, // applyBitFlipsFunc
 		0,
 	)
 	if err != nil {
@@ -122,7 +126,7 @@ func main() {
 
 	// printing the result
 	result := []byte("\x00\x00\x00\x00")
-	combination.ApplyBitFlips(result)
+	bruteforcer.ApplyBitFlipsBytes(combination, result)
 	fmt.Printf("COMBINATION: %#v\n", combination)
 	fmt.Printf("RESULT: 0x%X\n", result)
 

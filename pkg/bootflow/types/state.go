@@ -8,7 +8,7 @@ import (
 
 // State describes a virtual state of a machine being booted
 type State struct {
-	// Do not mutate these values from the outside, the mutability
+	// Do not mutate these fields from the outside, the mutability
 	// is owned by State itself.
 
 	SystemArtifacts SystemArtifacts
@@ -38,6 +38,23 @@ func (state *State) SetFlow(flow Flow, stepIdx uint) {
 	state.CurrentStepIdx = stepIdx
 }
 
+// GetTrustChainByTypeFromState extracts a specific TrustChain given its type
+// (through the sample).
+//
+// This was supposed to be a method of `*State`, but Go does not support generic
+// methods, so it is a free function.
+func GetTrustChainByTypeFromState[T TrustChain](
+	state *State,
+	sample T,
+) (T, error) {
+	key := typeMapKey(sample)
+	value, ok := state.TrustChains[key].(T)
+	if !ok {
+		return value, ErrNoTrustChain{TrustChainKey: key}
+	}
+	return value, nil
+}
+
 func (state *State) TrustChainExec(
 	trustChainSample TrustChain,
 	callback func(trustChain TrustChain) error,
@@ -51,7 +68,7 @@ func (state *State) TrustChainExec(
 	return callback(trustChain)
 }
 
-func (state *State) EnableTrustChain(trustChain TrustChain) {
+func (state *State) IncludeTrustChain(trustChain TrustChain) {
 	if reflect.TypeOf(trustChain).Kind() != reflect.Ptr {
 		panic(fmt.Sprintf("%T is not a modifiable type", trustChain))
 	}
@@ -76,7 +93,7 @@ func (state *State) SystemArtifactExec(
 	return callback(systemArtifact)
 }
 
-func (state *State) EnableSystemArtifact(systemArtifact SystemArtifact) {
+func (state *State) IncludeSystemArtifact(systemArtifact SystemArtifact) {
 	if reflect.TypeOf(systemArtifact).Kind() != reflect.Ptr {
 		panic(fmt.Sprintf("%T is not a modifiable type", systemArtifact))
 	}

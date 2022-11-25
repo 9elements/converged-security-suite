@@ -44,10 +44,8 @@ func init() {
 	}
 }
 
-func StateExec(state *types.State, fn func(tpm *TPM) error) error {
-	return state.TrustChainExec((*TPM)(nil), func(trustChain types.TrustChain) error {
-		return fn(trustChain.(*TPM))
-	})
+func GetFrom(state *types.State) (*TPM, error) {
+	return types.GetTrustChainByTypeFromState(state, (*TPM)(nil))
 }
 
 func (chain *TPM) IsInitialized() bool {

@@ -24,34 +24,35 @@ func main() {
 
 	// the main part
 	state := types.NewState()
+	state.IncludeTrustChain(tpm.NewTPM())
+	state.IncludeSystemArtifact(biosfirmware.NewBIOSFirmware(biosFirmware))
 	state.SetFlow(flows.OCPDXE(), 0)
-	state.EnableTrustChain(tpm.NewTPM())
-	state.EnableSystemArtifact(biosfirmware.NewBIOSFirmware(biosFirmware))
 	process := bootengine.NewBootProcess(state)
 	process.Finish()
 
 	// printing results
-	tpm.StateExec(state, func(t *tpm.TPM) error {
-		fmt.Printf("PCR values:\n")
-		for pcrID, values := range t.PCRValues {
-			fmt.Printf("\tPCR[%d]: SHA1:%X\n", pcrID, values[tpm2.AlgSHA1])
+	tpmInstance, err := tpm.GetFrom(state)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("PCR values:\n")
+	for pcrID, values := range tpmInstance.PCRValues {
+		fmt.Printf("\tPCR[%d]: SHA1:%X\n", pcrID, values[tpm2.AlgSHA1])
+	}
+	fmt.Printf("TPM EventLog:\n")
+	for idx, entry := range tpmInstance.EventLog {
+		if entry.HashAlgo != tpm2.AlgSHA1 {
+			continue
 		}
-		fmt.Printf("TPM EventLog:\n")
-		for idx, entry := range t.EventLog {
+		fmt.Printf("\t%d: %#v\n", idx, entry)
+	}
+	fmt.Printf("TPM commands log:\n")
+	for idx, entry := range tpmInstance.CommandLog {
+		if entry, ok := entry.(tpm.CommandLogEntryExtend); ok {
 			if entry.HashAlgo != tpm2.AlgSHA1 {
 				continue
 			}
-			fmt.Printf("\t%d: %#v\n", idx, entry)
 		}
-		fmt.Printf("TPM commands log:\n")
-		for idx, entry := range t.CommandLog {
-			if entry, ok := entry.(tpm.CommandLogEntryExtend); ok {
-				if entry.HashAlgo != tpm2.AlgSHA1 {
-					continue
-				}
-			}
-			fmt.Printf("\t%d: %#v\n", idx, entry)
-		}
-		return nil
-	})
+		fmt.Printf("\t%d: %#v\n", idx, entry)
+	}
 }

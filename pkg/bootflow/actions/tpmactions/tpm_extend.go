@@ -36,13 +36,15 @@ func (ext TPMExtend) Apply(state *types.State) error {
 		return fmt.Errorf("unable to extract the data: %w", err)
 	}
 
-	return tpm.StateExec(state, func(t *tpm.TPM) error {
-		err := t.TPMExtend(ext.PCRIndex, ext.HashAlgo, data.Bytes())
-		if err != nil {
-			return fmt.Errorf("unable to extend: %w", err)
-		}
+	t, err := tpm.GetFrom(state)
+	if err != nil {
+		return err
+	}
+	err = t.TPMExtend(ext.PCRIndex, ext.HashAlgo, data.Bytes())
+	if err != nil {
+		return fmt.Errorf("unable to extend: %w", err)
+	}
 
-		state.AddVerifiedData(t, *data)
-		return nil
-	})
+	state.AddVerifiedData(t, *data)
+	return nil
 }
