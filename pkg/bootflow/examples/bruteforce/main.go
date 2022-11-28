@@ -62,13 +62,13 @@ func main() {
 	// now let's gather the rest chain (TPM init and the rest TPM Extend-s)
 	var (
 		tpmLocality *uint8
-		tpmExtends  []tpm.CommandLogEntryExtend
+		tpmExtends  []tpm.CommandExtend
 	)
 	for _, entry := range tpmInstance.CommandLog {
-		switch entry := entry.(type) {
-		case tpm.CommandLogEntryInit:
+		switch entry := entry.Command.(type) {
+		case tpm.CommandInit:
 			tpmLocality = &[]uint8{entry.Locality}[0]
-		case tpm.CommandLogEntryExtend:
+		case tpm.CommandExtend:
 			if entry.HashAlgo != tpm2.AlgSHA1 {
 				continue
 			}

@@ -1,10 +1,7 @@
 package tpm
 
 import (
-	"fmt"
-
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
-	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
 	"github.com/google/go-tpm/tpm2"
 )
 
@@ -48,110 +45,47 @@ func GetFrom(state *types.State) (*TPM, error) {
 	return types.GetTrustChainByTypeFromState[*TPM](state)
 }
 
-func (chain *TPM) IsInitialized() bool {
-	return len(chain.PCRValues) > 0
+func (tpm *TPM) IsInitialized() bool {
+	return len(tpm.PCRValues) > 0
 }
 
-func (chain *TPM) TPMInit(locality uint8) error {
-	chain.CommandLog = append(chain.CommandLog, CommandLogEntryInit{
-		Locality: locality,
-	})
-
-	chain.PCRValues = make(PCRValues, PCRRegistersAmount)
-
-	supportedAlgos := SupportedHashAlgos()
-	for _, hashAlgo := range supportedAlgos {
-		h, err := hashAlgo.Hash()
-		if err != nil {
-			return fmt.Errorf("unable to initialize a hasher factory for hash algo %v", hashAlgo)
-		}
-		hasher := h.New()
-		for pcrID := PCRID(0); pcrID < PCRRegistersAmount; pcrID++ {
-			if chain.PCRValues[pcrID] == nil {
-				chain.PCRValues[pcrID] = make([][]byte, tpmMaxHashAlgo+1)
-			}
-			chain.PCRValues[pcrID][hashAlgo] = make([]byte, hasher.Size())
-			pcrValue := chain.PCRValues[pcrID][hashAlgo]
-			switch pcrID {
-			case 0:
-				pcrValue[len(pcrValue)-1] = locality
-			case 1:
-			default:
-				return fmt.Errorf("unexpected PCR ID: %d", pcrID)
-			}
-		}
-	}
-	return nil
+func (tpm *TPM) TPMExecute(cmd Command, causeAction types.Action) error {
+	tpm.CommandLog = append(tpm.CommandLog, newCommandLogEntry(cmd, causeAction))
+	return cmd.apply(tpm)
 }
 
-func (chain *TPM) TPMExtend(
+func (tpm *TPM) TPMInit(locality uint8, causeAction types.Action) error {
+	return tpm.TPMExecute(NewCommandInit(
+		locality,
+	), causeAction)
+}
+
+func (tpm *TPM) TPMExtend(
 	pcrIndex PCRID,
 	hashAlgo tpm2.Algorithm,
 	digest []byte,
 	causeAction types.Action,
 ) error {
-	chain.CommandLog = append(chain.CommandLog, CommandLogEntryExtend{
-		PCRIndex:    pcrIndex,
-		HashAlgo:    hashAlgo,
-		Digest:      digest,
-		CauseAction: causeAction,
-	})
-
-	h, err := hashAlgo.Hash()
-	if err != nil {
-		return fmt.Errorf("invalid hash algo: %w", err)
-	}
-	hasher := h.New()
-
-	oldValue, err := chain.PCRValues.Get(pcrIndex, hashAlgo)
-	if err != nil {
-		return fmt.Errorf("unable to get the PCR value: %w", err)
-	}
-	if _, err := hasher.Write(oldValue); err != nil {
-		return fmt.Errorf("unable to write into hasher %T the original value: %w", hasher, err)
-	}
-	if _, err := hasher.Write(digest); err != nil {
-		return fmt.Errorf("unable to write into hasher %T the given value: %w", hasher, err)
-	}
-	newValue := hasher.Sum(nil)
-	if err := chain.PCRValues.Set(pcrIndex, hashAlgo, newValue); err != nil {
-		return fmt.Errorf("unable to update the PCR value: %w", err)
-	}
-	return nil
+	return tpm.TPMExecute(NewCommandExtend(
+		pcrIndex,
+		hashAlgo,
+		digest,
+	), causeAction)
 }
 
-func (chain *TPM) TPMEventLogAdd(pcrIndex PCRID, hashAlgo tpm2.Algorithm, digest, data []byte) error {
-	chain.EventLog.Add(pcrIndex, hashAlgo, digest, data)
-	return nil
-}
-
-type PCRValues [][][]byte
-
-type PCRID = pcrtypes.ID
-
-func (s PCRValues) Get(pcrID PCRID, hashAlg tpm2.Algorithm) ([]byte, error) {
-	if len(s) <= int(pcrID) {
-		return nil, fmt.Errorf("PCR %d is not initialized", pcrID)
-	}
-	if len(s[pcrID]) <= int(hashAlg) {
-		return nil, fmt.Errorf("PCR %d:%s is not initialized", pcrID, hashAlg)
-	}
-	return s[pcrID][hashAlg], nil
-}
-
-func (s PCRValues) Set(pcrID PCRID, hashAlg tpm2.Algorithm, value []byte) error {
-	if hashAlg > tpmMaxHashAlgo {
-		panic(fmt.Errorf("too high value of hash algo: %d > %d", hashAlg, tpm2.AlgSHA3_512))
-	}
-
-	if len(s) <= int(pcrID) {
-		return fmt.Errorf("PCR %d is not initialized", pcrID)
-	}
-
-	if len(s[pcrID]) <= int(hashAlg) {
-		return fmt.Errorf("PCR %d:%s is not initialized", pcrID, hashAlg)
-	}
-
-	s[pcrID][hashAlg] = value
-	return nil
+func (tpm *TPM) TPMEventLogAdd(
+	pcrIndex PCRID,
+	hashAlgo tpm2.Algorithm,
+	digest Digest,
+	data []byte,
+	causeAction types.Action,
+) error {
+	return tpm.TPMExecute(NewCommandEventLogAdd(
+		NewCommandExtend(
+			pcrIndex,
+			hashAlgo,
+			digest,
+		),
+		data,
+	), causeAction)
 }

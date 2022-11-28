@@ -13,18 +13,18 @@ type TPMInit struct {
 
 func NewTPMInit(
 	locality uint8,
-) TPMInit {
-	return TPMInit{
+) *TPMInit {
+	return &TPMInit{
 		Locality: locality,
 	}
 }
 
-func (init TPMInit) Apply(state *types.State) error {
+func (init *TPMInit) Apply(state *types.State) error {
 	t, err := tpm.GetFrom(state)
 	if err != nil {
 		return err
 	}
-	return t.TPMInit(init.Locality)
+	return t.TPMInit(init.Locality, init)
 }
 
 func (init TPMInit) GoString() string {
@@ -32,16 +32,16 @@ func (init TPMInit) GoString() string {
 }
 
 type TPMInitLazy struct {
-	TPMInit
+	Locality uint8
 }
 
 func NewTPMInitLazy(
 	locality uint8,
-) TPMInitLazy {
-	return TPMInitLazy{TPMInit: NewTPMInit(locality)}
+) *TPMInitLazy {
+	return &TPMInitLazy{Locality: locality}
 }
 
-func (init TPMInitLazy) Apply(state *types.State) error {
+func (init *TPMInitLazy) Apply(state *types.State) error {
 	t, err := tpm.GetFrom(state)
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func (init TPMInitLazy) Apply(state *types.State) error {
 	if t.IsInitialized() {
 		return nil
 	}
-	return init.TPMInit.Apply(state)
+	return t.TPMInit(init.Locality, init)
 }
 
 func (init TPMInitLazy) GoString() string {

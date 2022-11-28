@@ -21,15 +21,15 @@ func NewTPMExtend(
 	pcrIndex pcrtypes.ID,
 	dataSource types.DataSource,
 	hashAlgo tpm2.Algorithm,
-) TPMExtend {
-	return TPMExtend{
+) *TPMExtend {
+	return &TPMExtend{
 		DataSource: dataSource,
 		PCRIndex:   pcrIndex,
 		HashAlgo:   hashAlgo,
 	}
 }
 
-func (ext TPMExtend) Apply(state *types.State) error {
+func (ext *TPMExtend) Apply(state *types.State) error {
 	data, err := ext.DataSource.Data(state)
 	if err != nil {
 		return fmt.Errorf("unable to extract the data: %w", err)

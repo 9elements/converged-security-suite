@@ -20,15 +20,15 @@ func NewTPMEvent(
 	pcrIndex pcrtypes.ID,
 	dataSource types.DataSource,
 	eventData []byte,
-) TPMEvent {
-	return TPMEvent{
+) *TPMEvent {
+	return &TPMEvent{
 		DataSource: dataSource,
 		PCRIndex:   pcrIndex,
 		EventData:  eventData,
 	}
 }
 
-func (ev TPMEvent) Apply(state *types.State) error {
+func (ev *TPMEvent) Apply(state *types.State) error {
 	data, err := ev.DataSource.Data(state)
 	if err != nil {
 		return fmt.Errorf("unable to extract the data: %w", err)
@@ -53,7 +53,7 @@ func (ev TPMEvent) Apply(state *types.State) error {
 			return fmt.Errorf("unable to extend: %w", err)
 		}
 
-		if err := t.TPMEventLogAdd(ev.PCRIndex, hashAlgo, digest, ev.EventData); err != nil {
+		if err := t.TPMEventLogAdd(ev.PCRIndex, hashAlgo, digest, ev.EventData, ev); err != nil {
 			return fmt.Errorf("unable to add an entry to TPM EventLog: %w", err)
 		}
 	}

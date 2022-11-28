@@ -2,17 +2,13 @@ package tpm
 
 import (
 	"fmt"
-
-	"github.com/google/go-tpm/tpm2"
 )
 
 type EventLog []EventLogEntry
 
 type EventLogEntry struct {
-	PCRIndex PCRID
-	HashAlgo tpm2.Algorithm
-	Digest   Digest
-	Data     []byte
+	CommandExtend
+	Data []byte
 }
 
 func (entry EventLogEntry) GoString() string {
@@ -28,11 +24,9 @@ func (entry EventLogEntry) GoString() string {
 	)
 }
 
-func (log *EventLog) Add(pcrIndex PCRID, hashAlgo tpm2.Algorithm, digest, data []byte) {
+func (log *EventLog) Add(extend CommandExtend, data []byte) {
 	*log = append(*log, EventLogEntry{
-		PCRIndex: pcrIndex,
-		HashAlgo: hashAlgo,
-		Digest:   digest,
-		Data:     data,
+		CommandExtend: extend,
+		Data:          data,
 	})
 }

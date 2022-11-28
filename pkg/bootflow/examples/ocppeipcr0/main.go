@@ -48,7 +48,7 @@ func main() {
 	}
 	fmt.Printf("TPM commands log:\n")
 	for idx, entry := range tpmInstance.CommandLog {
-		if entry, ok := entry.(tpm.CommandLogEntryExtend); ok {
+		if entry, ok := entry.Command.(tpm.CommandExtend); ok {
 			if entry.HashAlgo != tpm2.AlgSHA1 {
 				continue
 			}
