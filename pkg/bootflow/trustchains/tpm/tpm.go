@@ -1,6 +1,8 @@
 package tpm
 
 import (
+	"context"
+
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/google/go-tpm/tpm2"
 )
@@ -22,7 +24,11 @@ func NewTPM() *TPM {
 	return &TPM{}
 }
 
-type LogInfoProvider interface {
+func (tpm *TPM) Reset() {
+	*tpm = *NewTPM()
+}
+
+type CommandLogInfoProvider interface {
 	CauseCoordinates() types.ActionCoordinates
 }
 
@@ -53,30 +59,35 @@ func (tpm *TPM) IsInitialized() bool {
 	return len(tpm.PCRValues) > 0
 }
 
-func (tpm *TPM) TPMExecute(cmd Command, logInfo LogInfoProvider) error {
+func (tpm *TPM) TPMExecute(ctx context.Context, cmd Command, logInfo CommandLogInfoProvider) error {
+	var causeCoords CauseCoordinates
+	if logInfo != nil {
+		causeCoords = logInfo.CauseCoordinates()
+	}
 	tpm.CommandLog = append(
 		tpm.CommandLog,
 		newCommandLogEntry(
 			cmd,
-			logInfo.CauseCoordinates(),
+			causeCoords,
 		),
 	)
-	return cmd.apply(tpm)
+	return cmd.apply(ctx, tpm)
 }
 
-func (tpm *TPM) TPMInit(locality uint8, info LogInfoProvider) error {
-	return tpm.TPMExecute(NewCommandInit(
+func (tpm *TPM) TPMInit(ctx context.Context, locality uint8, info CommandLogInfoProvider) error {
+	return tpm.TPMExecute(ctx, NewCommandInit(
 		locality,
 	), info)
 }
 
 func (tpm *TPM) TPMExtend(
+	ctx context.Context,
 	pcrIndex PCRID,
 	hashAlgo tpm2.Algorithm,
 	digest []byte,
-	info LogInfoProvider,
+	info CommandLogInfoProvider,
 ) error {
-	return tpm.TPMExecute(NewCommandExtend(
+	return tpm.TPMExecute(ctx, NewCommandExtend(
 		pcrIndex,
 		hashAlgo,
 		digest,
@@ -84,14 +95,15 @@ func (tpm *TPM) TPMExtend(
 }
 
 func (tpm *TPM) TPMEventLogAdd(
+	ctx context.Context,
 	pcrIndex PCRID,
 	hashAlgo tpm2.Algorithm,
 	digest Digest,
 	data []byte,
-	info LogInfoProvider,
+	info CommandLogInfoProvider,
 ) error {
-	return tpm.TPMExecute(NewCommandEventLogAdd(
-		NewCommandExtend(
+	return tpm.TPMExecute(ctx, NewCommandEventLogAdd(
+		*NewCommandExtend(
 			pcrIndex,
 			hashAlgo,
 			digest,

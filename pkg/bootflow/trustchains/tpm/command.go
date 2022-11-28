@@ -1,6 +1,7 @@
 package tpm
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -8,15 +9,15 @@ import (
 )
 
 type Command interface {
-	apply(*TPM) error
+	apply(context.Context, *TPM) error
 	LogString() string
 }
 
 type Commands []Command
 
-func (s Commands) apply(tpm *TPM) error {
+func (s Commands) apply(ctx context.Context, tpm *TPM) error {
 	for idx, cmd := range s {
-		if err := cmd.apply(tpm); err != nil {
+		if err := cmd.apply(ctx, tpm); err != nil {
 			return fmt.Errorf("unable to apply command #%d '%T': %w", idx, cmd, err)
 		}
 	}
@@ -31,9 +32,11 @@ func (s Commands) LogString() string {
 	return strings.Join(result, ", ")
 }
 
+type CauseCoordinates = types.ActionCoordinates
+
 type CommandLogEntry struct {
-	Command          Command
-	CauseCoordinates types.ActionCoordinates
+	Command
+	CauseCoordinates
 }
 
 func newCommandLogEntry(

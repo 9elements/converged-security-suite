@@ -79,5 +79,8 @@ type MeasuredData struct {
 }
 
 func (d MeasuredData) GoString() string {
+	if d.Actor == nil {
+		return fmt.Sprintf("%s: %#v", typeMapKey(d.TrustChain).Name(), d.Data)
+	}
 	return fmt.Sprintf("%s: %#v (%T)", typeMapKey(d.TrustChain).Name(), d.Data, d.Actor)
 }

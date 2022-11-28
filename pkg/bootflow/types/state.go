@@ -11,12 +11,11 @@ type State struct {
 	// Do not mutate these fields from the outside, the mutability
 	// is owned by State itself.
 
-	SystemArtifacts SystemArtifacts
-	TrustChains     TrustChains
-	CurrentActor    Actor
-	CurrentFlow     Flow
-	CurrentStepIdx  uint
-	MeasuredData    []MeasuredData
+	SystemArtifacts          SystemArtifacts
+	TrustChains              TrustChains
+	CurrentActor             Actor
+	CurrentActionCoordinates ActionCoordinates
+	MeasuredData             []MeasuredData
 }
 
 func typeMapKey(i interface{}) reflect.Type {
@@ -35,8 +34,13 @@ func NewState() *State {
 }
 
 func (state *State) SetFlow(flow Flow, stepIdx uint) {
-	state.CurrentFlow = flow
-	state.CurrentStepIdx = stepIdx
+	state.CurrentActionCoordinates.Flow = flow
+	state.CurrentActionCoordinates.StepIndex = stepIdx
+	state.CurrentActionCoordinates.ActionIndex = 0
+}
+
+func (state *State) GetCurrentActionCoordinates() ActionCoordinates {
+	return state.CurrentActionCoordinates
 }
 
 // GetTrustChainByTypeFromState extracts a specific TrustChain given its type.
@@ -142,9 +146,9 @@ func (state *State) GoString() string {
 	if len(state.TrustChains) > 0 {
 		fmt.Fprintf(&result, "TrustChains:\n\t%s\n", nestedGoStringOf(state.TrustChains))
 	}
-	if len(state.CurrentFlow) > 0 {
-		fmt.Fprintf(&result, "CurrentFlow:\n\t%s\n", nestedGoStringOf(state.CurrentFlow))
-		fmt.Fprintf(&result, "CurrentStepIndex: %d\n", state.CurrentStepIdx)
+	if len(state.CurrentActionCoordinates.Flow) > 0 {
+		fmt.Fprintf(&result, "CurrentFlow:\n\t%s\n", nestedGoStringOf(state.CurrentActionCoordinates.Flow))
+		fmt.Fprintf(&result, "CurrentStepIndex: %d\n", state.CurrentActionCoordinates.StepIndex)
 	}
 	if len(state.MeasuredData) > 0 {
 		fmt.Fprintf(&result, "MeasuredData:\n\t%s\n", nestedGoStringOf(state.MeasuredData))

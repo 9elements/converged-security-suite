@@ -1,6 +1,8 @@
 package commonactions
 
 import (
+	"context"
+
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
@@ -18,8 +20,7 @@ func SetFlow(flowFunc func(state *types.State) types.Flow, stepIndex uint) types
 	}
 }
 
-func (step *setFlow) Apply(state *types.State) error {
-	state.CurrentFlow = step.nextFlowFunc(state)
-	state.CurrentStepIdx = step.startStepIndex
+func (step *setFlow) Apply(_ context.Context, state *types.State) error {
+	state.SetFlow(step.nextFlowFunc(state), step.startStepIndex)
 	return nil
 }

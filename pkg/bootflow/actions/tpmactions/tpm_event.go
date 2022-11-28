@@ -1,6 +1,7 @@
 package tpmactions
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/trustchains/tpm"
@@ -28,7 +29,7 @@ func NewTPMEvent(
 	}
 }
 
-func (ev *TPMEvent) Apply(state *types.State) error {
+func (ev *TPMEvent) Apply(ctx context.Context, state *types.State) error {
 	data, err := ev.DataSource.Data(state)
 	if err != nil {
 		return fmt.Errorf("unable to extract the data: %w", err)
@@ -49,11 +50,11 @@ func (ev *TPMEvent) Apply(state *types.State) error {
 		}
 		digest := hasher.Sum(nil)
 
-		if err := t.TPMExtend(ev.PCRIndex, hashAlgo, digest, ev); err != nil {
+		if err := t.TPMExtend(ctx, ev.PCRIndex, hashAlgo, digest, NewLogInfoProvider(state)); err != nil {
 			return fmt.Errorf("unable to extend: %w", err)
 		}
 
-		if err := t.TPMEventLogAdd(ev.PCRIndex, hashAlgo, digest, ev.EventData, ev); err != nil {
+		if err := t.TPMEventLogAdd(ctx, ev.PCRIndex, hashAlgo, digest, ev.EventData, NewLogInfoProvider(state)); err != nil {
 			return fmt.Errorf("unable to add an entry to TPM EventLog: %w", err)
 		}
 	}

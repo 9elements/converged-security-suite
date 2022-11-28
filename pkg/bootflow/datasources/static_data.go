@@ -6,14 +6,12 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
-type StaticData struct {
-	DataValue types.Data
+type StaticData types.Data
+
+func (d *StaticData) Data(*types.State) (*types.Data, error) {
+	return (*types.Data)(d), nil
 }
 
-func (d StaticData) Data(*types.State) (*types.Data, error) {
-	return &d.DataValue, nil
-}
-
-func (d StaticData) GoString() string {
-	return fmt.Sprintf("StaticData{%#+v}", d.DataValue)
+func (d *StaticData) GoString() string {
+	return fmt.Sprintf("StaticData{%#+v}", (*types.Data)(d))
 }

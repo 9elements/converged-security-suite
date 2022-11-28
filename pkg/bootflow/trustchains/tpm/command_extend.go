@@ -1,6 +1,7 @@
 package tpm
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/google/go-tpm/tpm2"
@@ -18,23 +19,23 @@ func NewCommandExtend(
 	pcrIdx PCRID,
 	hashAlgo tpm2.Algorithm,
 	digest Digest,
-) CommandExtend {
-	return CommandExtend{
+) *CommandExtend {
+	return &CommandExtend{
 		PCRIndex: pcrIdx,
 		HashAlgo: hashAlgo,
 		Digest:   digest,
 	}
 }
 
-func (cmd CommandExtend) LogString() string {
+func (cmd *CommandExtend) LogString() string {
 	return fmt.Sprintf("TPMExtend(%d, %s, %X)", cmd.PCRIndex, cmd.HashAlgo, cmd.Digest)
 }
 
-func (cmd CommandExtend) GoString() string {
+func (cmd *CommandExtend) GoString() string {
 	return cmd.LogString()
 }
 
-func (cmd CommandExtend) apply(tpm *TPM) error {
+func (cmd *CommandExtend) apply(_ context.Context, tpm *TPM) error {
 	h, err := cmd.HashAlgo.Hash()
 	if err != nil {
 		return fmt.Errorf("invalid hash algo: %w", err)

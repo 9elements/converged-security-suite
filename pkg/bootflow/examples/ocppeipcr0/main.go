@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -28,7 +29,7 @@ func main() {
 	state.IncludeSystemArtifact(biosimage.New(biosFirmware))
 	state.SetFlow(flows.OCPPEI(), 0)
 	process := bootengine.NewBootProcess(state)
-	process.Finish()
+	process.Finish(context.Background())
 
 	// printing results
 	tpmInstance, err := tpm.GetFrom(state)
@@ -48,7 +49,7 @@ func main() {
 	}
 	fmt.Printf("TPM commands log:\n")
 	for idx, entry := range tpmInstance.CommandLog {
-		if entry, ok := entry.Command.(tpm.CommandExtend); ok {
+		if entry, ok := entry.Command.(*tpm.CommandExtend); ok {
 			if entry.HashAlgo != tpm2.AlgSHA1 {
 				continue
 			}

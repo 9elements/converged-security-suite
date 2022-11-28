@@ -1,6 +1,7 @@
 package tpmactions
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/trustchains/tpm"
@@ -19,12 +20,12 @@ func NewTPMInit(
 	}
 }
 
-func (init *TPMInit) Apply(state *types.State) error {
+func (init *TPMInit) Apply(ctx context.Context, state *types.State) error {
 	t, err := tpm.GetFrom(state)
 	if err != nil {
 		return err
 	}
-	return t.TPMInit(init.Locality, init)
+	return t.TPMInit(ctx, init.Locality, NewLogInfoProvider(state))
 }
 
 func (init TPMInit) GoString() string {
@@ -41,7 +42,7 @@ func NewTPMInitLazy(
 	return &TPMInitLazy{Locality: locality}
 }
 
-func (init *TPMInitLazy) Apply(state *types.State) error {
+func (init *TPMInitLazy) Apply(ctx context.Context, state *types.State) error {
 	t, err := tpm.GetFrom(state)
 	if err != nil {
 		return err
@@ -49,7 +50,7 @@ func (init *TPMInitLazy) Apply(state *types.State) error {
 	if t.IsInitialized() {
 		return nil
 	}
-	return t.TPMInit(init.Locality, init)
+	return t.TPMInit(ctx, init.Locality, NewLogInfoProvider(state))
 }
 
 func (init TPMInitLazy) GoString() string {

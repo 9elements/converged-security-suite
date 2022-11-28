@@ -1,6 +1,7 @@
 package bootengine
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -20,32 +21,34 @@ func NewBootProcess(state *types.State) *BootProcess {
 	}
 }
 
-func stateNextStep(state *types.State) (types.Step, types.Actions, StepIssues, bool) {
-	if state.CurrentFlow == nil {
+func stateNextStep(ctx context.Context, state *types.State) (types.Step, types.Actions, StepIssues, bool) {
+	actCoords := &state.CurrentActionCoordinates
+	if actCoords.Flow == nil {
 		return nil, nil, nil, false
 	}
 
-	if state.CurrentStepIdx >= uint(len(state.CurrentFlow)) {
+	if actCoords.StepIndex >= uint(len(actCoords.Flow)) {
 		return nil, nil, nil, false
 	}
 
-	step := state.CurrentFlow[state.CurrentStepIdx]
+	step := actCoords.Flow[actCoords.StepIndex]
 	actions := step.Actions(state)
 	var stepIssues StepIssues
 	for idx, action := range actions {
-		issue := action.Apply(state)
+		actCoords.ActionIndex = uint(idx)
+		issue := action.Apply(ctx, state)
 		if issue != nil {
 			stepIssues = append(stepIssues, StepIssue{ActionIndex: uint(idx), Issue: issue})
 		}
 	}
 
-	state.CurrentStepIdx++
+	actCoords.StepIndex++
 	return step, actions, stepIssues, true
 }
 
-func (process *BootProcess) NextStep() bool {
+func (process *BootProcess) NextStep(ctx context.Context) bool {
 	oldMeasuredData := process.CurrentState.MeasuredData
-	stepBackend, actions, stepIssues, ok := stateNextStep(process.CurrentState)
+	stepBackend, actions, stepIssues, ok := stateNextStep(ctx, process.CurrentState)
 	if !ok {
 		return false
 	}
@@ -60,8 +63,8 @@ func (process *BootProcess) NextStep() bool {
 	return true
 }
 
-func (process *BootProcess) Finish() {
-	for process.NextStep() {
+func (process *BootProcess) Finish(ctx context.Context) {
+	for process.NextStep(ctx) {
 	}
 }
 

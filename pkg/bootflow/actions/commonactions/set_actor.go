@@ -1,6 +1,8 @@
 package commonactions
 
 import (
+	"context"
+
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
@@ -16,7 +18,7 @@ func SetActor(nextActorFunc func(state *types.State) types.Actor) types.Action {
 	}
 }
 
-func (step *setActor) Apply(state *types.State) error {
+func (step *setActor) Apply(_ context.Context, state *types.State) error {
 	state.CurrentActor = step.nextActorFunc(state)
 	return nil
 }

@@ -2,11 +2,14 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha1"
 	"fmt"
 	"hash"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/tpmactions"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/datasources"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/tpmsteps"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
@@ -27,24 +30,12 @@ func main() {
 		tpmsteps.MeasureSeparator(0),
 	}
 
-	// the expected final hash (after bruteforcing)
-	expectedHash := make([]byte, sha1.Size)
-	extend := func(h hash.Hash, a, b []byte) []byte {
-		defer h.Reset()
-		h.Write(a)
-		h.Write(b)
-		return h.Sum(nil)
-	}
-	sep0, sep1 := sha1.Sum([]byte("\x01\x00\x00\x01")), sha1.Sum([]byte("\x00\x00\x00\x00"))
-	expectedHash = extend(sha1.New(), expectedHash, sep0[:])
-	expectedHash = extend(sha1.New(), expectedHash, sep1[:])
-
 	// executing the flow (with two simple "\x00\x00\x00\x00" measurements)
 	state := types.NewState()
 	state.SetFlow(myFlow, 0)
 	state.IncludeTrustChain(tpm.NewTPM())
 	process := bootengine.NewBootProcess(state)
-	process.Finish()
+	process.Finish(context.Background())
 
 	// just some debugging
 	fmt.Printf("Log:\n%#v\n", process.Log)
@@ -56,67 +47,65 @@ func main() {
 
 	// == now let's bruteforce the first measurement ==
 
-	// first find the original (UNHASHED) data of the first measurement
-	tpmMeasurements := process.Log.GetDataMeasuredWith(tpmInstance)
+	// find the first measurement:
 
-	// now let's gather the rest chain (TPM init and the rest TPM Extend-s)
 	var (
-		tpmLocality *uint8
-		tpmExtends  []tpm.CommandExtend
+		firstMeasurementData []byte
+		commandIdx           int
 	)
-	for _, entry := range tpmInstance.CommandLog {
-		switch entry := entry.Command.(type) {
-		case tpm.CommandInit:
-			tpmLocality = &[]uint8{entry.Locality}[0]
-		case tpm.CommandExtend:
-			if entry.HashAlgo != tpm2.AlgSHA1 {
-				continue
-			}
-			tpmExtends = append(tpmExtends, entry)
+	for idx, entry := range tpmInstance.CommandLog {
+		cmd, ok := entry.Command.(*tpm.CommandExtend)
+		if !ok {
+			continue
 		}
+		if cmd.HashAlgo != tpm2.AlgSHA1 {
+			continue
+		}
+		step := entry.Step().(types.StaticStep)
+		if len(step) != 1 {
+			panic(fmt.Errorf("unexpected length: %d (expected: 1)", len(step)))
+		}
+		firstMeasurementData = step[0].(*tpmactions.TPMEvent).DataSource.(datasources.Bytes)
+		commandIdx = idx
+		break
 	}
-	if tpmLocality == nil {
-		panic("the TPMInit command wasn't found")
+	if firstMeasurementData == nil {
+		panic("the measurement data was not found")
 	}
 
-	// brute force:
-
-	type context struct {
-		sha1Hasher hash.Hash
+	// brute force it:
+	expectedHash := getExpectedHash()
+	type contextT struct {
+		sha1Hasher  hash.Hash
+		tpm         *tpm.TPM
+		tpmCommands tpm.Commands
 	}
 	combination, err := bruteforcer.BruteForce(
-		tpmMeasurements[0].Data.ForceBytes, // initialData
-		8,                                  // itemSize
-		0,                                  // minDistance
-		2,                                  // maxDistance
+		firstMeasurementData, // initialData
+		8,                    // itemSize
+		0,                    // minDistance
+		2,                    // maxDistance
 		func() (interface{}, error) { // initFunc
-			return &context{
-				sha1Hasher: sha1.New(),
+			return &contextT{
+				sha1Hasher:  sha1.New(),
+				tpm:         tpm.NewTPM(),
+				tpmCommands: tpmInstance.CommandLog.Commands(),
 			}, nil
 		},
 		func(_ctx interface{}, data []byte) bool { // checkFunc
-			ctx := _ctx.(*context)
-			h := ctx.sha1Hasher
+			ctx := _ctx.(*contextT)
 
-			// starting a PCR value from scratch:
-			pcrValue := make([]byte, sha1.Size)
-			pcrValue[len(pcrValue)-1] = *tpmLocality
+			ctx.sha1Hasher.Reset()
+			ctx.sha1Hasher.Write(data)
+			newDigest := ctx.sha1Hasher.Sum(nil)
 
-			// hashing the bruteforced value before extending
-			h.Write(data)
-			dataHashed := h.Sum(nil)
-			h.Reset()
+			ctx.tpmCommands[commandIdx].(*tpm.CommandExtend).Digest = newDigest[:]
 
-			// extending it
-			pcrValue = extend(h, pcrValue, dataHashed)
-
-			// extending the rest of the measurements (they are already pre-hashed)
-			for _, tpmExtend := range tpmExtends[1:] {
-				pcrValue = extend(h, pcrValue, tpmExtend.Digest)
-			}
+			ctx.tpm.Reset()
+			ctx.tpm.TPMExecute(context.Background(), ctx.tpmCommands, nil)
 
 			// is it OK?
-			return bytes.Equal(pcrValue, expectedHash)
+			return bytes.Equal(ctx.tpm.PCRValues[0][tpm2.AlgSHA1], expectedHash)
 		},
 		bruteforcer.ApplyBitFlipsBytes, // applyBitFlipsFunc
 		0,
@@ -131,6 +120,22 @@ func main() {
 	fmt.Printf("COMBINATION: %#v\n", combination)
 	fmt.Printf("RESULT: 0x%X\n", result)
 
-	tpmMeasurements[0].Data.ForceBytes = result
+	tpmMeasurements := process.Log.GetDataMeasuredWith(tpmInstance)
+	bruteforcer.ApplyBitFlipsBytes(combination, tpmMeasurements[0].Data.ForceBytes)
 	fmt.Printf("resulting measurements: %#v\n", tpmMeasurements)
+}
+
+// getExpectedHash returns the expected final hash (after bruteforcing)
+func getExpectedHash() []byte {
+	expectedHash := make([]byte, sha1.Size)
+	extend := func(h hash.Hash, a, b []byte) []byte {
+		defer h.Reset()
+		h.Write(a)
+		h.Write(b)
+		return h.Sum(nil)
+	}
+	sep0, sep1 := sha1.Sum([]byte("\x01\x00\x00\x01")), sha1.Sum([]byte("\x00\x00\x00\x00"))
+	expectedHash = extend(sha1.New(), expectedHash, sep0[:])
+	expectedHash = extend(sha1.New(), expectedHash, sep1[:])
+	return expectedHash
 }

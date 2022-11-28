@@ -1,6 +1,7 @@
 package tpm
 
 import (
+	"context"
 	"fmt"
 )
 
@@ -10,21 +11,21 @@ type CommandInit struct {
 
 var _ Command = (*CommandInit)(nil)
 
-func NewCommandInit(locality uint8) CommandInit {
-	return CommandInit{
+func NewCommandInit(locality uint8) *CommandInit {
+	return &CommandInit{
 		Locality: locality,
 	}
 }
 
-func (cmd CommandInit) LogString() string {
+func (cmd *CommandInit) LogString() string {
 	return fmt.Sprintf("TPMInit(%d)", cmd.Locality)
 }
 
-func (cmd CommandInit) GoString() string {
+func (cmd *CommandInit) GoString() string {
 	return cmd.LogString()
 }
 
-func (cmd CommandInit) apply(tpm *TPM) error {
+func (cmd *CommandInit) apply(_ context.Context, tpm *TPM) error {
 	tpm.PCRValues = make(PCRValues, PCRRegistersAmount)
 
 	supportedAlgos := SupportedHashAlgos()
