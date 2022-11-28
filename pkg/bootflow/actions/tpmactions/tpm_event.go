@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/trustchains/tpm"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
 )
@@ -62,10 +62,11 @@ func (ev *TPMEvent) Apply(ctx context.Context, state *types.State) error {
 		}
 	}
 
-	state.AddMeasuredData(t, *data)
+	state.AddMeasuredData(t, *data, ev.DataSource)
 	return nil
 }
 
+// String implements fmt.Stringer.
 func (ev TPMEvent) String() string {
 	if len(ev.EventData) == 0 {
 		return fmt.Sprintf("TPMEvent(PCR: %d, DataSource: %v)", ev.PCRIndex, ev.DataSource)

@@ -1,21 +1,8 @@
 package types
 
-import (
-	"fmt"
-	"reflect"
-	"strings"
-)
-
-type TrustChains map[reflect.Type]TrustChain
-
+// TrustChain is a SubSystem responsible for maintaining a chain of trust.
+//
+// Examples: TPM-backed measured boot, DICE-backed measured boot, Signatures-backed verified boot, etc.
 type TrustChain interface {
-	IsInitialized() bool
-}
-
-func (m TrustChains) String() string {
-	var result strings.Builder
-	for k, artifact := range m {
-		fmt.Fprintf(&result, "%s:\n\t%s\n", k.Name(), nestedStringOf(artifact))
-	}
-	return result.String()
+	SubSystem
 }

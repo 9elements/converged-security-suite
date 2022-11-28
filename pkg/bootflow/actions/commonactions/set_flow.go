@@ -19,6 +19,7 @@ func SetFlowFunc(flowFunc func(state *types.State) types.Flow) types.Action {
 	}
 }
 
+// Apply implements types.Action.
 func (step *setFlowFunc) Apply(_ context.Context, state *types.State) error {
 	state.SetFlow(step.nextFlowFunc(state))
 	return nil
@@ -37,6 +38,7 @@ func SetFlow(flow types.Flow) types.Action {
 	}
 }
 
+// Apply implements types.Action.
 func (step *setFlow) Apply(_ context.Context, state *types.State) error {
 	state.SetFlow(step.nextFlow)
 	return nil

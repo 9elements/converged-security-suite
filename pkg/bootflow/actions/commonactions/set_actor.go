@@ -38,6 +38,7 @@ func SetActor(nextActor types.Actor) types.Action {
 	}
 }
 
+// Apply implements types.Action.
 func (step *setActor) Apply(_ context.Context, state *types.State) error {
 	state.CurrentActor = step.nextActor
 	return nil

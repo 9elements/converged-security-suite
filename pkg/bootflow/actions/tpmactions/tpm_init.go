@@ -4,14 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/trustchains/tpm"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
+// TPMInit forcefully inits TPM (returns an error, if TPM is already initialized).
 type TPMInit struct {
 	Locality uint8
 }
 
+var _ types.Action = (*TPMInit)(nil)
+
+// NewTPMInit returns a new instance of TPMInit.
 func NewTPMInit(
 	locality uint8,
 ) *TPMInit {
@@ -20,6 +24,7 @@ func NewTPMInit(
 	}
 }
 
+// Apply implements types.Action.
 func (init *TPMInit) Apply(ctx context.Context, state *types.State) error {
 	t, err := tpm.GetFrom(state)
 	if err != nil {
@@ -28,20 +33,24 @@ func (init *TPMInit) Apply(ctx context.Context, state *types.State) error {
 	return t.TPMInit(ctx, init.Locality, NewLogInfoProvider(state))
 }
 
+// String implements fmt.Stringer.
 func (init TPMInit) String() string {
 	return fmt.Sprintf("TPMInit(%d)", init.Locality)
 }
 
+// TPMInitLazy initializes the TPM and does nothing if it is already initialized.
 type TPMInitLazy struct {
 	Locality uint8
 }
 
+// NewTPMInitLazy returns a new instance of TPMInitLazy
 func NewTPMInitLazy(
 	locality uint8,
 ) *TPMInitLazy {
 	return &TPMInitLazy{Locality: locality}
 }
 
+// Apply implements types.Action.
 func (init *TPMInitLazy) Apply(ctx context.Context, state *types.State) error {
 	t, err := tpm.GetFrom(state)
 	if err != nil {
@@ -53,6 +62,7 @@ func (init *TPMInitLazy) Apply(ctx context.Context, state *types.State) error {
 	return t.TPMInit(ctx, init.Locality, NewLogInfoProvider(state))
 }
 
+// String implements fmt.Stringer.
 func (init TPMInitLazy) String() string {
 	return fmt.Sprintf("TPMInitLazy(%d)", init.Locality)
 }

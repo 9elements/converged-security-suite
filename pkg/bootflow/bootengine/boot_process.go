@@ -8,6 +8,9 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
+// BootProcess represents an imaginary/virtual process of booting
+// a machine. Given a flow it will replay all the expected actions,
+// and it will be possible to analyze what happened in result.
 type BootProcess struct {
 	// Do not mutate these values from the outside, the mutability
 	// is owned by BootProcess itself.
@@ -15,6 +18,7 @@ type BootProcess struct {
 	Log          Log
 }
 
+// NewBootProcess returns a new instance of BootProcess.
 func NewBootProcess(state *types.State) *BootProcess {
 	return &BootProcess{
 		CurrentState: state,
@@ -46,13 +50,14 @@ func stateNextStep(ctx context.Context, state *types.State) (types.Step, types.A
 	return step, actions, stepIssues, true
 }
 
+// BootProcess executes the current step and switches to pointer to the next step.
 func (process *BootProcess) NextStep(ctx context.Context) bool {
 	oldMeasuredData := process.CurrentState.MeasuredData
 	stepBackend, actions, stepIssues, ok := stateNextStep(ctx, process.CurrentState)
 	if !ok {
 		return false
 	}
-	step := Step{Step: stepBackend, Actions: actions}
+	step := StepResult{Step: stepBackend, Actions: actions}
 	step.Issues = stepIssues
 
 	if len(process.CurrentState.MeasuredData) > len(oldMeasuredData) {
@@ -63,11 +68,13 @@ func (process *BootProcess) NextStep(ctx context.Context) bool {
 	return true
 }
 
+// Finish executes all the rest steps.
 func (process *BootProcess) Finish(ctx context.Context) {
 	for process.NextStep(ctx) {
 	}
 }
 
+// String implements fmt.Stringer.
 func (process *BootProcess) String() string {
 	var result strings.Builder
 	fmt.Fprintf(&result, "Current state:\n\t%s\n", nestedStringOf(process.CurrentState))

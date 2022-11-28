@@ -7,7 +7,7 @@ package types
 
 type State struct {
 	SystemArtifacts
-	TrustChains
+	SubSystems
 	Flow
 	MeasuredData
 }
@@ -23,5 +23,5 @@ type Reference struct {
 
 type MeasuredData struct {
 	Data Data
-	TrustChain
+	SubSystem
 }

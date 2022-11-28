@@ -6,8 +6,14 @@ import (
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
+// IntelACM is Intel Authenticated Code Module.
+// It could be used to verify/measure IBB (Initial Boot Block), which
+// in some flows includes PEI.
 type IntelACM struct{}
 
-func (intelACM IntelACM) ResponsibleCode() types.DataSource {
+var _ types.Actor = (*IntelACM)(nil)
+
+// ResponsibleCode implements types.Actor.
+func (intelACM *IntelACM) ResponsibleCode() types.DataSource {
 	return datasources.IntelFITFirst(fit.EntryTypeStartupACModuleEntry)
 }

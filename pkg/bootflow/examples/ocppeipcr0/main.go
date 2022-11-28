@@ -8,8 +8,8 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/flows"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/google/go-tpm/tpm2"
 )
@@ -25,7 +25,7 @@ func main() {
 
 	// the main part
 	state := types.NewState()
-	state.IncludeTrustChain(tpm.NewTPM())
+	state.IncludeSubSystem(tpm.NewTPM())
 	state.IncludeSystemArtifact(biosimage.New(biosFirmware))
 	state.SetFlow(flows.OCPPEI())
 	process := bootengine.NewBootProcess(state)

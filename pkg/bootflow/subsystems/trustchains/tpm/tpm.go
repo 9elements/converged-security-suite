@@ -12,26 +12,33 @@ const (
 	PCRRegistersAmount = 2
 )
 
-var _ types.TrustChain = (*TPM)(nil)
+var _ types.SubSystem = (*TPM)(nil)
 
+// TPM is a TrustChain implementation which represents
+// measured boot backed by a Trusted Platform Module (TPM).
 type TPM struct {
 	PCRValues  PCRValues
 	CommandLog CommandLog
 	EventLog   EventLog
 }
 
+// NewTPM returns a new instance of TPM.
 func NewTPM() *TPM {
 	return &TPM{}
 }
 
+// Reset cleans up the state of TPM as it never received any commands.
 func (tpm *TPM) Reset() {
 	*tpm = *NewTPM()
 }
 
+// CommandLogInfoProvider is an abstract provider of additional/optional information
+// to be added to the CommandLog.
 type CommandLogInfoProvider interface {
 	CauseCoordinates() types.ActionCoordinates
 }
 
+// SupportedHashAlgos the list of currently supported hashing algorithms.
 func SupportedHashAlgos() []tpm2.Algorithm {
 	return []tpm2.Algorithm{
 		tpm2.AlgSHA1,
@@ -51,14 +58,17 @@ func init() {
 	}
 }
 
+// GetFrom returns a TPM given a State.
 func GetFrom(state *types.State) (*TPM, error) {
-	return types.GetTrustChainByTypeFromState[*TPM](state)
+	return types.GetSubSystemByTypeFromState[*TPM](state)
 }
 
+// IsInitialized returns if CommandInit was ever executed.
 func (tpm *TPM) IsInitialized() bool {
 	return len(tpm.PCRValues) > 0
 }
 
+// TPMExecute executes an abstract command.
 func (tpm *TPM) TPMExecute(ctx context.Context, cmd Command, logInfo CommandLogInfoProvider) error {
 	var causeCoords CauseCoordinates
 	if logInfo != nil {
@@ -74,12 +84,14 @@ func (tpm *TPM) TPMExecute(ctx context.Context, cmd Command, logInfo CommandLogI
 	return cmd.apply(ctx, tpm)
 }
 
+// TPMInit is just a wrapper which creates a CommandInit and executes it.
 func (tpm *TPM) TPMInit(ctx context.Context, locality uint8, info CommandLogInfoProvider) error {
 	return tpm.TPMExecute(ctx, NewCommandInit(
 		locality,
 	), info)
 }
 
+// TPMExtend is just a wrapper which creates CommandExtend and executes it.
 func (tpm *TPM) TPMExtend(
 	ctx context.Context,
 	pcrIndex PCRID,
@@ -94,6 +106,7 @@ func (tpm *TPM) TPMExtend(
 	), info)
 }
 
+// TPMEventLogAdd is just a wrapper which creates CommandEventLogAdd and executes it.
 func (tpm *TPM) TPMEventLogAdd(
 	ctx context.Context,
 	pcrIndex PCRID,

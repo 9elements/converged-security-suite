@@ -5,26 +5,31 @@ import (
 	"fmt"
 )
 
+// CommandInit represents _TPM_init + TPM2_Startup(CLEAR).
 type CommandInit struct {
 	Locality uint8
 }
 
 var _ Command = (*CommandInit)(nil)
 
+// NewCommandInit returns a new instance of CommandInit.
 func NewCommandInit(locality uint8) *CommandInit {
 	return &CommandInit{
 		Locality: locality,
 	}
 }
 
+// LogString implements Command.
 func (cmd *CommandInit) LogString() string {
 	return fmt.Sprintf("TPMInit(%d)", cmd.Locality)
 }
 
+// String implements fmt.Stringer.
 func (cmd *CommandInit) String() string {
 	return cmd.LogString()
 }
 
+// apply implements Command.
 func (cmd *CommandInit) apply(_ context.Context, tpm *TPM) error {
 	tpm.PCRValues = make(PCRValues, PCRRegistersAmount)
 

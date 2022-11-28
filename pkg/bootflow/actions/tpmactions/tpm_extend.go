@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/trustchains/tpm"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
 	"github.com/google/go-tpm/tpm2"
 )
 
+// TPMEvent is a representation of `TPM2_PCR_Extend`.
 type TPMExtend struct {
 	DataSource types.DataSource
 	PCRIndex   pcrtypes.ID
@@ -18,6 +19,7 @@ type TPMExtend struct {
 
 var _ types.Action = (*TPMExtend)(nil)
 
+// NewTPMExtend returns a new instance of TPMEvent.
 func NewTPMExtend(
 	pcrIndex pcrtypes.ID,
 	dataSource types.DataSource,
@@ -30,6 +32,7 @@ func NewTPMExtend(
 	}
 }
 
+// Apply implements types.Action.
 func (ext *TPMExtend) Apply(ctx context.Context, state *types.State) error {
 	data, err := ext.DataSource.Data(state)
 	if err != nil {
@@ -45,6 +48,6 @@ func (ext *TPMExtend) Apply(ctx context.Context, state *types.State) error {
 		return fmt.Errorf("unable to extend: %w", err)
 	}
 
-	state.AddMeasuredData(t, *data)
+	state.AddMeasuredData(t, *data, ext.DataSource)
 	return nil
 }

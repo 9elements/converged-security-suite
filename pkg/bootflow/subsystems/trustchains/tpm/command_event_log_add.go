@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// CommandEventLogAdd is a Command which adds an entry to TPM Event Log.
 type CommandEventLogAdd struct {
 	CommandExtend
 	Data []byte
@@ -13,6 +14,7 @@ type CommandEventLogAdd struct {
 
 var _ Command = (*CommandEventLogAdd)(nil)
 
+// NewCommandEventLogAdd returns a new instance of CommandEventLogAdd
 func NewCommandEventLogAdd(
 	cmdExtend CommandExtend,
 	data []byte,
@@ -23,6 +25,7 @@ func NewCommandEventLogAdd(
 	}
 }
 
+// LogString formats the entry for CommandLog.
 func (cmd *CommandEventLogAdd) LogString() string {
 	extendData := strings.Trim(strings.ReplaceAll(cmd.CommandExtend.String(), "TPMExtend", ""), "()")
 	if cmd.Data != nil {
@@ -31,10 +34,12 @@ func (cmd *CommandEventLogAdd) LogString() string {
 	return fmt.Sprintf("TPMEventLogAdd(%s)", extendData)
 }
 
+// String implements fmt.Stringer.
 func (cmd *CommandEventLogAdd) String() string {
 	return cmd.LogString()
 }
 
+// apply implements Command.
 func (cmd *CommandEventLogAdd) apply(_ context.Context, tpm *TPM) error {
 	tpm.EventLog.Add(cmd.CommandExtend, cmd.Data)
 	return nil

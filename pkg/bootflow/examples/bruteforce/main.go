@@ -11,7 +11,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/datasources"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/tpmsteps"
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/trustchains/tpm"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/bruteforcer"
 	"github.com/google/go-tpm/tpm2"
@@ -33,7 +33,7 @@ func main() {
 	// executing the flow (with two simple "\x00\x00\x00\x00" measurements)
 	state := types.NewState()
 	state.SetFlow(myFlow)
-	state.IncludeTrustChain(tpm.NewTPM())
+	state.IncludeSubSystem(tpm.NewTPM())
 	process := bootengine.NewBootProcess(state)
 	process.Finish(context.Background())
 

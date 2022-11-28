@@ -7,6 +7,9 @@ import (
 	"github.com/google/go-tpm/tpm2"
 )
 
+// CommandExtend implements Command to represent TPM2_PCR_Extend
+//
+// Is also used (together with CommandEventLogAdd) to implement a TPM2_PCR_Event Action.
 type CommandExtend struct {
 	PCRIndex PCRID
 	HashAlgo tpm2.Algorithm
@@ -15,6 +18,7 @@ type CommandExtend struct {
 
 var _ Command = (*CommandExtend)(nil)
 
+// NewCommandExtend returns a new instance of CommandExtend.
 func NewCommandExtend(
 	pcrIdx PCRID,
 	hashAlgo tpm2.Algorithm,
@@ -27,14 +31,17 @@ func NewCommandExtend(
 	}
 }
 
+// LogString implements Command.
 func (cmd CommandExtend) LogString() string {
 	return fmt.Sprintf("TPMExtend(%d, %s, %s)", cmd.PCRIndex, cmd.HashAlgo, cmd.Digest)
 }
 
+// String implements fmt.Stringer.
 func (cmd CommandExtend) String() string {
 	return cmd.LogString()
 }
 
+// apply implements Command.
 func (cmd *CommandExtend) apply(_ context.Context, tpm *TPM) error {
 	h, err := cmd.HashAlgo.Hash()
 	if err != nil {

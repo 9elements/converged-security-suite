@@ -9,10 +9,13 @@ import (
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
+// IntelFITFirst implements DataSource by referencing to the data defined
+// by the first FIT entry of the specified type.
 type IntelFITFirst fit.EntryType
 
 var _ types.DataSource = (IntelFITFirst)(0)
 
+// Data implements types.DataSource.
 func (d IntelFITFirst) Data(state *types.State) (*types.Data, error) {
 	biosFW, err := biosimage.Get(state)
 	if err != nil {
@@ -43,6 +46,7 @@ func (d IntelFITFirst) Data(state *types.State) (*types.Data, error) {
 	return nil, fmt.Errorf("unable to find FIT entry of type %s", fit.EntryType(d))
 }
 
+// String implements fmt.Stringer.
 func (d IntelFITFirst) String() string {
 	return fmt.Sprintf("IntelFITFirst(%s)", fit.EntryType(d))
 }

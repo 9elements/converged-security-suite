@@ -12,10 +12,10 @@ type State struct {
 	// is owned by State itself.
 
 	SystemArtifacts          SystemArtifacts
-	TrustChains              TrustChains
+	SubSystems               SubSystems
 	CurrentActor             Actor
 	CurrentActionCoordinates ActionCoordinates
-	MeasuredData             []MeasuredData
+	MeasuredData             MeasuredDataSlice
 }
 
 func typeMapKey(i interface{}) reflect.Type {
@@ -29,7 +29,7 @@ func typeMapKey(i interface{}) reflect.Type {
 func NewState() *State {
 	return &State{
 		SystemArtifacts: map[reflect.Type]SystemArtifact{},
-		TrustChains:     map[reflect.Type]TrustChain{},
+		SubSystems:      map[reflect.Type]SubSystem{},
 	}
 }
 
@@ -44,47 +44,47 @@ func (state *State) GetCurrentActionCoordinates() ActionCoordinates {
 	return state.CurrentActionCoordinates
 }
 
-// GetTrustChainByTypeFromState extracts a specific TrustChain given its type.
+// GetSubSystemByTypeFromState extracts a specific SubSystem given its type.
 //
 // This was supposed to be a method of `*State`, but Go does not support generic
 // methods, so it is a free function.
-func GetTrustChainByTypeFromState[T TrustChain](
+func GetSubSystemByTypeFromState[SS SubSystem](
 	state *State,
-) (T, error) {
-	var sample T
+) (SS, error) {
+	var sample SS
 	key := typeMapKey(sample)
-	value, ok := state.TrustChains[key].(T)
+	value, ok := state.SubSystems[key].(SS)
 	if !ok {
-		return value, ErrNoTrustChain{TrustChainKey: key}
+		return value, ErrNoSubSystem{SubSystemKey: key}
 	}
 	return value, nil
 }
 
-// WithTrustChain extracts a specific TrustChain given its type.
+// WithSubSystem extracts a specific SubSystem given its type.
 //
 // This was supposed to be a method of `*State`, but Go does not support generic
 // methods, so it is a free function.
-func WithTrustChain[TC TrustChain](
+func WithSubSystem[SS SubSystem](
 	state *State,
-	callback func(trustChain TC) error,
+	callback func(subSystem SS) error,
 ) error {
-	trustChain, err := GetTrustChainByTypeFromState[TC](state)
+	subSystem, err := GetSubSystemByTypeFromState[SS](state)
 	if err != nil {
 		return err
 	}
-	return callback(trustChain)
+	return callback(subSystem)
 }
 
-func (state *State) IncludeTrustChain(trustChain TrustChain) {
-	if reflect.TypeOf(trustChain).Kind() != reflect.Ptr {
-		panic(fmt.Sprintf("%T is not a modifiable type", trustChain))
+func (state *State) IncludeSubSystem(subSystem SubSystem) {
+	if reflect.TypeOf(subSystem).Kind() != reflect.Ptr {
+		panic(fmt.Sprintf("%T is not a modifiable type", subSystem))
 	}
 
-	k := typeMapKey(trustChain)
-	if _, ok := state.TrustChains[k]; ok {
+	k := typeMapKey(subSystem)
+	if _, ok := state.SubSystems[k]; ok {
 		panic(fmt.Sprintf("double-setting of the same trust chain type: %s", k))
 	}
-	state.TrustChains[k] = trustChain
+	state.SubSystems[k] = subSystem
 }
 
 // SystemArtifactExec extracts a specific SystemArtifact given its type.
@@ -110,7 +110,7 @@ func GetSystemArtifactByTypeFromState[SA SystemArtifact](
 // methods, so it is a free function.
 func WithSystemArtifact[SA SystemArtifact](
 	state *State,
-	callback func(trustChain SA) error,
+	callback func(systemArtifact SA) error,
 ) error {
 	systemArtifact, err := GetSystemArtifactByTypeFromState[SA](state)
 	if err != nil {
@@ -131,9 +131,10 @@ func (state *State) IncludeSystemArtifact(systemArtifact SystemArtifact) {
 	state.SystemArtifacts[k] = systemArtifact
 }
 
-func (state *State) AddMeasuredData(trustChain TrustChain, data Data) {
+func (state *State) AddMeasuredData(trustChain TrustChain, data Data, dataSource DataSource) {
 	state.MeasuredData = append(state.MeasuredData, MeasuredData{
 		Data:       data,
+		DataSource: dataSource,
 		Actor:      state.CurrentActor,
 		TrustChain: trustChain,
 	})
@@ -144,8 +145,8 @@ func (state *State) String() string {
 	if len(state.SystemArtifacts) > 0 {
 		fmt.Fprintf(&result, "SystemArtifacts:\n\t%s\n", nestedStringOf(state.SystemArtifacts))
 	}
-	if len(state.TrustChains) > 0 {
-		fmt.Fprintf(&result, "TrustChains:\n\t%s\n", nestedStringOf(state.TrustChains))
+	if len(state.SubSystems) > 0 {
+		fmt.Fprintf(&result, "SubSystems:\n\t%s\n", nestedStringOf(state.SubSystems))
 	}
 	if len(state.CurrentActionCoordinates.Flow) > 0 {
 		fmt.Fprintf(&result, "CurrentFlow:\n\t%s\n", nestedStringOf(state.CurrentActionCoordinates.Flow))
@@ -157,7 +158,7 @@ func (state *State) String() string {
 	return result.String()
 }
 
-func (state *State) GetMeasuredDataBy(trustChainSample TrustChain) []MeasuredData {
+func (state *State) GetMeasuredDataBy(trustChainSample SubSystem) []MeasuredData {
 	var result []MeasuredData
 	cmpKey := typeMapKey(trustChainSample)
 	for _, measuredData := range state.MeasuredData {

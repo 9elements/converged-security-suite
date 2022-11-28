@@ -8,11 +8,13 @@ import (
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
+// Data is byte-data (given directly or by a reference to a SystemArtifact).
 type Data struct {
 	ForceBytes []byte
 	References References
 }
 
+// String implements fmt.Stringer.
 func (d Data) String() string {
 	if d.ForceBytes != nil {
 		return fmt.Sprintf("{ForceBytes: %X}", d.ForceBytes)
@@ -20,6 +22,7 @@ func (d Data) String() string {
 	return fmt.Sprintf("{Refs: %v}", d.References)
 }
 
+// Bytes returns the bytes defined by Data.
 func (d *Data) Bytes() []byte {
 	if d.ForceBytes != nil && d.References != nil {
 		panic("Data is supposed to be used as union")
@@ -30,8 +33,10 @@ func (d *Data) Bytes() []byte {
 	return d.References.Bytes()
 }
 
+// References is a a slice of Reference-s.
 type References []Reference
 
+// Bytes returns a concatenation of data of all the referenced byte ranges.
 func (s References) Bytes() []byte {
 	var buf bytes.Buffer
 	for _, ref := range s {
@@ -42,11 +47,13 @@ func (s References) Bytes() []byte {
 	return buf.Bytes()
 }
 
+// Reference is a reference to a bytes data in a SystemArtifact.
 type Reference struct {
 	Artifact SystemArtifact
 	Ranges   pkgbytes.Ranges
 }
 
+// String implements fmt.Stringer()
 func (ref Reference) String() string {
 	artifactType := fmt.Sprintf("%T", ref.Artifact)
 	if idx := strings.Index(artifactType, "."); idx >= 0 {
@@ -55,6 +62,7 @@ func (ref Reference) String() string {
 	return fmt.Sprintf("%s:%v", artifactType, ref.Ranges)
 }
 
+// Bytes returns the bytes data referenced by the Reference.
 func (ref *Reference) Bytes() []byte {
 	totalLength := uint64(0)
 	ranges := ref.Ranges
@@ -77,21 +85,31 @@ func (ref *Reference) Bytes() []byte {
 	return result
 }
 
+// MeasuredData is a piece of Data which was measured by any of TrustChain-s.
 type MeasuredData struct {
 	Data
+	DataSource DataSource
 	Actor      Actor
 	TrustChain TrustChain
 }
 
+// String implements fmt.Stringer.
 func (d MeasuredData) String() string {
-	if d.Actor == nil {
-		return fmt.Sprintf("%s <- %v", typeMapKey(d.TrustChain).Name(), d.Data)
+	var result strings.Builder
+	result.WriteString(fmt.Sprintf("%s <- %v", typeMapKey(d.TrustChain).Name(), d.Data))
+	if d.DataSource != nil {
+		result.WriteString(fmt.Sprintf(" (%v)", d.DataSource))
 	}
-	return fmt.Sprintf("%s <- %v (%T)", typeMapKey(d.TrustChain).Name(), d.Data, d.Actor)
+	if d.Actor != nil {
+		result.WriteString(fmt.Sprintf(" [%T]", d.Actor))
+	}
+	return result.String()
 }
 
+// MeasuredDataSlice is a slice of MeasuredData-s.
 type MeasuredDataSlice []MeasuredData
 
+// String implements fmt.Stringer.
 func (s MeasuredDataSlice) String() string {
 	var result strings.Builder
 	for idx, data := range s {

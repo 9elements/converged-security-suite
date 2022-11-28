@@ -8,6 +8,8 @@ import (
 	ffsConsts "github.com/9elements/converged-security-suite/v2/pkg/uefi/ffs/consts"
 )
 
+// OCPPEI represents the steps of the OCP (Open Compute Project) implementation
+// of PEI (Pre-EFI Initialization of BIOS).
 func OCPPEI() types.Flow {
 	return types.Flow{
 		commonsteps.SetActor(actors.OCPPEI{}),

@@ -3,6 +3,7 @@ package datasources
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
@@ -12,10 +13,15 @@ import (
 	"github.com/linuxboot/fiano/pkg/guid"
 )
 
+// IntelFITFirst implements types.DataSource by referencing to the data defined
+// by the UEFI objects of the specified set of GUID. If multiple GUIDs
+// are provided, then they are being tried in the given order until
+// the first non-empty or erroneous result.
 type UEFIGUIDFirst []guid.GUID
 
 var _ types.DataSource = (UEFIGUIDFirst)(nil)
 
+// Data implements types.DataSource.
 func (ds UEFIGUIDFirst) Data(state *types.State) (*types.Data, error) {
 	var data *types.Data
 	imgRaw, err := biosimage.Get(state)
@@ -65,4 +71,13 @@ func (ds UEFIGUIDFirst) Data(state *types.State) (*types.Data, error) {
 		}},
 	}
 	return data, nil
+}
+
+// String implements fmt.Stringer.
+func (ds UEFIGUIDFirst) String() string {
+	var result []string
+	for _, guid := range ds {
+		result = append(result, guid.String())
+	}
+	return fmt.Sprintf("UEFIGUIDFirst(%s)", strings.Join(result, ", "))
 }

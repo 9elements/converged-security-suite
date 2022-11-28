@@ -1,7 +1,7 @@
 package tpmactions
 
 import (
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/trustchains/tpm"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 

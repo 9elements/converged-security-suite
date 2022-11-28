@@ -7,15 +7,18 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
-type Step struct {
+// StepResult is the outcome of a single Step execution.
+type StepResult struct {
 	Step         types.Step
 	Actions      types.Actions
 	MeasuredData []types.MeasuredData
 	Issues       StepIssues
 }
 
-type Log []Step
+// Log is a slice of StepResult.
+type Log []StepResult
 
+// String implements fmt.Stringer.
 func (log Log) String() string {
 	var result strings.Builder
 	for idx, step := range log {
@@ -42,6 +45,7 @@ func (log Log) String() string {
 	return result.String()
 }
 
+// GetDataMeasuredWith returns all the data which was measured.
 func (log Log) GetDataMeasuredWith(trustChain types.TrustChain) types.MeasuredDataSlice {
 	var result types.MeasuredDataSlice
 	for _, step := range log {

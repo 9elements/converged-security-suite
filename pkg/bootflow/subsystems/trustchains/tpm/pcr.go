@@ -7,10 +7,13 @@ import (
 	"github.com/google/go-tpm/tpm2"
 )
 
+// PCRValues is a complete set of initialized PCR values of a TPM.
 type PCRValues [][][]byte
 
+// PCRID is a PCR index.
 type PCRID = pcrtypes.ID
 
+// Get returns a PCR value given its index and hash algorithm.
 func (s PCRValues) Get(pcrID PCRID, hashAlg tpm2.Algorithm) ([]byte, error) {
 	if len(s) <= int(pcrID) {
 		return nil, fmt.Errorf("PCR %d is not initialized", pcrID)
@@ -21,6 +24,7 @@ func (s PCRValues) Get(pcrID PCRID, hashAlg tpm2.Algorithm) ([]byte, error) {
 	return s[pcrID][hashAlg], nil
 }
 
+// Set overrides a PCR value given its index and hash algorithm.
 func (s PCRValues) Set(pcrID PCRID, hashAlg tpm2.Algorithm, value []byte) error {
 	if hashAlg > tpmMaxHashAlgo {
 		panic(fmt.Errorf("too high value of hash algo: %d > %d", hashAlg, tpm2.AlgSHA3_512))

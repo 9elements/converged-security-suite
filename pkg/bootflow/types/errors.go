@@ -5,20 +5,20 @@ import (
 	"reflect"
 )
 
-type ErrNoTrustChain struct {
-	TrustChainKey reflect.Type
+type ErrNoSubSystem struct {
+	SubSystemKey reflect.Type
 }
 
-func (err ErrNoTrustChain) Error() string {
-	return fmt.Sprintf("no trust chain of type %T found", err.TrustChainKey)
+func (err ErrNoSubSystem) Error() string {
+	return fmt.Sprintf("no subsystem of type %T found", err.SubSystemKey)
 }
 
-func (err ErrNoTrustChain) TrustChainTypeIs(sample TrustChain) bool {
-	return err.TrustChainKey == typeMapKey(sample)
+func (err ErrNoSubSystem) SubSystemTypeIs(sample SubSystem) bool {
+	return err.SubSystemKey == typeMapKey(sample)
 }
 
-func (err ErrNoTrustChain) String() string {
-	return fmt.Sprintf("ErrNoTrustChain{%s}", err.TrustChainKey.Name())
+func (err ErrNoSubSystem) String() string {
+	return fmt.Sprintf("ErrNoSubSystem{%s}", err.SubSystemKey.Name())
 }
 
 type ErrNoSystemArtifact struct {
