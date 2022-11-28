@@ -15,3 +15,18 @@ type ActionMeasure interface {
 	Action
 	MeasuredData() MeasuredData
 }
+
+type ActionCoordinates struct {
+	Flow        Flow
+	StepIndex   uint
+	ActionIndex uint
+}
+
+func (coords *ActionCoordinates) Step() Step {
+	return coords.Flow[coords.StepIndex]
+}
+
+func (coords *ActionCoordinates) Action(state *State) Action {
+	step := coords.Step()
+	return step.Actions(state)[coords.ActionIndex]
+}

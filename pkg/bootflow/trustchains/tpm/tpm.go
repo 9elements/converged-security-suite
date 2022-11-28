@@ -22,6 +22,10 @@ func NewTPM() *TPM {
 	return &TPM{}
 }
 
+type LogInfoProvider interface {
+	CauseCoordinates() types.ActionCoordinates
+}
+
 func SupportedHashAlgos() []tpm2.Algorithm {
 	return []tpm2.Algorithm{
 		tpm2.AlgSHA1,
@@ -49,28 +53,34 @@ func (tpm *TPM) IsInitialized() bool {
 	return len(tpm.PCRValues) > 0
 }
 
-func (tpm *TPM) TPMExecute(cmd Command, causeAction types.Action) error {
-	tpm.CommandLog = append(tpm.CommandLog, newCommandLogEntry(cmd, causeAction))
+func (tpm *TPM) TPMExecute(cmd Command, logInfo LogInfoProvider) error {
+	tpm.CommandLog = append(
+		tpm.CommandLog,
+		newCommandLogEntry(
+			cmd,
+			logInfo.CauseCoordinates(),
+		),
+	)
 	return cmd.apply(tpm)
 }
 
-func (tpm *TPM) TPMInit(locality uint8, causeAction types.Action) error {
+func (tpm *TPM) TPMInit(locality uint8, info LogInfoProvider) error {
 	return tpm.TPMExecute(NewCommandInit(
 		locality,
-	), causeAction)
+	), info)
 }
 
 func (tpm *TPM) TPMExtend(
 	pcrIndex PCRID,
 	hashAlgo tpm2.Algorithm,
 	digest []byte,
-	causeAction types.Action,
+	info LogInfoProvider,
 ) error {
 	return tpm.TPMExecute(NewCommandExtend(
 		pcrIndex,
 		hashAlgo,
 		digest,
-	), causeAction)
+	), info)
 }
 
 func (tpm *TPM) TPMEventLogAdd(
@@ -78,7 +88,7 @@ func (tpm *TPM) TPMEventLogAdd(
 	hashAlgo tpm2.Algorithm,
 	digest Digest,
 	data []byte,
-	causeAction types.Action,
+	info LogInfoProvider,
 ) error {
 	return tpm.TPMExecute(NewCommandEventLogAdd(
 		NewCommandExtend(
@@ -87,5 +97,5 @@ func (tpm *TPM) TPMEventLogAdd(
 			digest,
 		),
 		data,
-	), causeAction)
+	), info)
 }
