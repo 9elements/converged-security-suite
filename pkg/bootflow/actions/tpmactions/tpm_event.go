@@ -9,6 +9,7 @@ import (
 	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
 )
 
+// TPMEvent is a representation of `TPM2_PCR_Event`.
 type TPMEvent struct {
 	DataSource types.DataSource
 	PCRIndex   pcrtypes.ID
@@ -17,6 +18,7 @@ type TPMEvent struct {
 
 var _ types.Action = (*TPMEvent)(nil)
 
+// NewTPMEvent returns a new instance of TPMEvent
 func NewTPMEvent(
 	pcrIndex pcrtypes.ID,
 	dataSource types.DataSource,
@@ -29,6 +31,7 @@ func NewTPMEvent(
 	}
 }
 
+// Apply implements types.Action.
 func (ev *TPMEvent) Apply(ctx context.Context, state *types.State) error {
 	data, err := ev.DataSource.Data(state)
 	if err != nil {
@@ -42,7 +45,7 @@ func (ev *TPMEvent) Apply(ctx context.Context, state *types.State) error {
 	for _, hashAlgo := range tpm.SupportedHashAlgos() {
 		h, err := hashAlgo.Hash()
 		if err != nil {
-			return fmt.Errorf("unable to get hasher factory for algo %#v: %w", hashAlgo, err)
+			return fmt.Errorf("unable to get hasher factory for algo %v: %w", hashAlgo, err)
 		}
 		hasher := h.New()
 		if _, err := hasher.Write(data.Bytes()); err != nil {
@@ -63,9 +66,9 @@ func (ev *TPMEvent) Apply(ctx context.Context, state *types.State) error {
 	return nil
 }
 
-func (ev TPMEvent) GoString() string {
+func (ev TPMEvent) String() string {
 	if len(ev.EventData) == 0 {
-		return fmt.Sprintf("TPMEvent(PCR: %d, DataSource: %#v)", ev.PCRIndex, ev.DataSource)
+		return fmt.Sprintf("TPMEvent(PCR: %d, DataSource: %v)", ev.PCRIndex, ev.DataSource)
 	}
-	return fmt.Sprintf("TPMEvent(PCR: %d, DataSource: %#v, EventData: %X)", ev.PCRIndex, ev.DataSource, ev.EventData)
+	return fmt.Sprintf("TPMEvent(PCR: %d, DataSource: %v, EventData: %X)", ev.PCRIndex, ev.DataSource, ev.EventData)
 }

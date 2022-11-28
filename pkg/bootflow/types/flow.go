@@ -1,11 +1,16 @@
 package types
 
+import (
+	"fmt"
+	"strings"
+)
+
 // Flow describes steps of the boot process.
 //
 // A flow is static (never change).
 type Flow []Step
 
-// Stop describes a single step of a boot process, essential for the measurements.
+// Step describes a single step of a boot process, essential for the measurements.
 // Steps of a flow may vary depending on a State.
 //
 // An example: measure specific sections in an AMD Manifest
@@ -17,4 +22,12 @@ type StaticStep Actions
 
 func (step StaticStep) Actions(*State) Actions {
 	return Actions(step)
+}
+
+func (step StaticStep) String() string {
+	var result []string
+	for _, action := range step {
+		result = append(result, fmt.Sprintf("%v", action))
+	}
+	return fmt.Sprintf("StaticStep{%s}", strings.Join(result, ", "))
 }

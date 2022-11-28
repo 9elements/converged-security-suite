@@ -6,19 +6,39 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
-type setActor struct {
+type setActorFunc struct {
 	nextActorFunc func(state *types.State) types.Actor
 }
 
-var _ types.Action = (*setActor)(nil)
+var _ types.Action = (*setActorFunc)(nil)
 
-func SetActor(nextActorFunc func(state *types.State) types.Actor) types.Action {
-	return &setActor{
+// SetActorFunc sets the Actor (of the further actions) given a function,
+// which returns an actor expected for a specific State.
+func SetActorFunc(nextActorFunc func(state *types.State) types.Actor) types.Action {
+	return &setActorFunc{
 		nextActorFunc: nextActorFunc,
 	}
 }
 
-func (step *setActor) Apply(_ context.Context, state *types.State) error {
+func (step *setActorFunc) Apply(_ context.Context, state *types.State) error {
 	state.CurrentActor = step.nextActorFunc(state)
+	return nil
+}
+
+type setActor struct {
+	nextActor types.Actor
+}
+
+var _ types.Action = (*setActorFunc)(nil)
+
+// SetActor sets the Actor (of the further actions).
+func SetActor(nextActor types.Actor) types.Action {
+	return &setActor{
+		nextActor: nextActor,
+	}
+}
+
+func (step *setActor) Apply(_ context.Context, state *types.State) error {
+	state.CurrentActor = step.nextActor
 	return nil
 }

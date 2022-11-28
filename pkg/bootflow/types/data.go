@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
@@ -12,11 +13,11 @@ type Data struct {
 	References References
 }
 
-func (d Data) GoString() string {
+func (d Data) String() string {
 	if d.ForceBytes != nil {
 		return fmt.Sprintf("{ForceBytes: %X}", d.ForceBytes)
 	}
-	return fmt.Sprintf("{Refs: %#v}", d.References)
+	return fmt.Sprintf("{Refs: %v}", d.References)
 }
 
 func (d *Data) Bytes() []byte {
@@ -46,8 +47,12 @@ type Reference struct {
 	Ranges   pkgbytes.Ranges
 }
 
-func (ref Reference) GoString() string {
-	return fmt.Sprintf("%T:%#v", ref.Artifact, ref.Ranges)
+func (ref Reference) String() string {
+	artifactType := fmt.Sprintf("%T", ref.Artifact)
+	if idx := strings.Index(artifactType, "."); idx >= 0 {
+		artifactType = artifactType[idx+1:]
+	}
+	return fmt.Sprintf("%s:%v", artifactType, ref.Ranges)
 }
 
 func (ref *Reference) Bytes() []byte {
@@ -78,9 +83,19 @@ type MeasuredData struct {
 	TrustChain TrustChain
 }
 
-func (d MeasuredData) GoString() string {
+func (d MeasuredData) String() string {
 	if d.Actor == nil {
-		return fmt.Sprintf("%s: %#v", typeMapKey(d.TrustChain).Name(), d.Data)
+		return fmt.Sprintf("%s <- %v", typeMapKey(d.TrustChain).Name(), d.Data)
 	}
-	return fmt.Sprintf("%s: %#v (%T)", typeMapKey(d.TrustChain).Name(), d.Data, d.Actor)
+	return fmt.Sprintf("%s <- %v (%T)", typeMapKey(d.TrustChain).Name(), d.Data, d.Actor)
+}
+
+type MeasuredDataSlice []MeasuredData
+
+func (s MeasuredDataSlice) String() string {
+	var result strings.Builder
+	for idx, data := range s {
+		fmt.Fprintf(&result, "%d. %s\n", idx, data.String())
+	}
+	return result.String()
 }

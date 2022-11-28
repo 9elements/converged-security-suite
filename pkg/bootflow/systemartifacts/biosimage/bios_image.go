@@ -44,6 +44,6 @@ func (fw *BIOSImage) Parse() (*uefi.UEFI, error) {
 	return fw.CacheParsed, fw.CacheParseError
 }
 
-func (img *BIOSImage) GoString() string {
+func (img *BIOSImage) String() string {
 	return fmt.Sprintf("[%d]byte{}", len(img.Content))
 }

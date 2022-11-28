@@ -14,6 +14,6 @@ func (d Bytes) Data(*types.State) (*types.Data, error) {
 	return &types.Data{ForceBytes: d}, nil
 }
 
-func (d Bytes) GoString() string {
+func (d Bytes) String() string {
 	return fmt.Sprintf("Bytes{%X}", []byte(d))
 }

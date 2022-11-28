@@ -68,14 +68,14 @@ func (process *BootProcess) Finish(ctx context.Context) {
 	}
 }
 
-func (process *BootProcess) GoString() string {
+func (process *BootProcess) String() string {
 	var result strings.Builder
-	fmt.Fprintf(&result, "Current state:\n\t%s\n", nestedGoStringOf(process.CurrentState))
-	fmt.Fprintf(&result, "Resulting steps:\n\t%s\n", nestedGoStringOf(process.Log))
+	fmt.Fprintf(&result, "Current state:\n\t%s\n", nestedStringOf(process.CurrentState))
+	fmt.Fprintf(&result, "Resulting steps:\n\t%s\n", nestedStringOf(process.Log))
 	return result.String()
 }
 
-func nestedGoStringOf(i interface{}) string {
-	v := fmt.Sprintf("%#v", i)
+func nestedStringOf(i interface{}) string {
+	v := fmt.Sprintf("%v", i)
 	return strings.ReplaceAll(strings.Trim(v, "\n"), "\n", "\n\t")
 }

@@ -12,6 +12,7 @@ type setFlowFunc struct {
 
 var _ types.Action = (*setFlowFunc)(nil)
 
+// SetFlowFunc sets the Flow given a function, which returns a Flow expected for a specific State.
 func SetFlowFunc(flowFunc func(state *types.State) types.Flow) types.Action {
 	return &setFlowFunc{
 		nextFlowFunc: flowFunc,
@@ -29,6 +30,7 @@ type setFlow struct {
 
 var _ types.Action = (*setFlowFunc)(nil)
 
+// SetFlow sets the Flow.
 func SetFlow(flow types.Flow) types.Action {
 	return &setFlow{
 		nextFlow: flow,

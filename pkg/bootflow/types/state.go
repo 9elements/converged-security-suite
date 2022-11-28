@@ -139,20 +139,20 @@ func (state *State) AddMeasuredData(trustChain TrustChain, data Data) {
 	})
 }
 
-func (state *State) GoString() string {
+func (state *State) String() string {
 	var result strings.Builder
 	if len(state.SystemArtifacts) > 0 {
-		fmt.Fprintf(&result, "SystemArtifacts:\n\t%s\n", nestedGoStringOf(state.SystemArtifacts))
+		fmt.Fprintf(&result, "SystemArtifacts:\n\t%s\n", nestedStringOf(state.SystemArtifacts))
 	}
 	if len(state.TrustChains) > 0 {
-		fmt.Fprintf(&result, "TrustChains:\n\t%s\n", nestedGoStringOf(state.TrustChains))
+		fmt.Fprintf(&result, "TrustChains:\n\t%s\n", nestedStringOf(state.TrustChains))
 	}
 	if len(state.CurrentActionCoordinates.Flow) > 0 {
-		fmt.Fprintf(&result, "CurrentFlow:\n\t%s\n", nestedGoStringOf(state.CurrentActionCoordinates.Flow))
+		fmt.Fprintf(&result, "CurrentFlow:\n\t%s\n", nestedStringOf(state.CurrentActionCoordinates.Flow))
 		fmt.Fprintf(&result, "CurrentStepIndex: %d\n", state.CurrentActionCoordinates.StepIndex)
 	}
 	if len(state.MeasuredData) > 0 {
-		fmt.Fprintf(&result, "MeasuredData:\n\t%s\n", nestedGoStringOf(state.MeasuredData))
+		fmt.Fprintf(&result, "MeasuredData:\n\t%s\n", nestedStringOf(state.MeasuredData))
 	}
 	return result.String()
 }

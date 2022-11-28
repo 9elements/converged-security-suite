@@ -43,6 +43,6 @@ func (d IntelFITFirst) Data(state *types.State) (*types.Data, error) {
 	return nil, fmt.Errorf("unable to find FIT entry of type %s", fit.EntryType(d))
 }
 
-func (d IntelFITFirst) GoString() string {
+func (d IntelFITFirst) String() string {
 	return fmt.Sprintf("IntelFITFirst(%s)", fit.EntryType(d))
 }

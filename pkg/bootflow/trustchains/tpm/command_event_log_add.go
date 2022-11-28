@@ -3,6 +3,7 @@ package tpm
 import (
 	"context"
 	"fmt"
+	"strings"
 )
 
 type CommandEventLogAdd struct {
@@ -23,10 +24,14 @@ func NewCommandEventLogAdd(
 }
 
 func (cmd *CommandEventLogAdd) LogString() string {
-	return fmt.Sprintf("TPMEventLogAdd(Extend: %#+v, Data: 0x%X)", cmd.CommandExtend, cmd.Data)
+	extendData := strings.Trim(strings.ReplaceAll(cmd.CommandExtend.String(), "TPMExtend", ""), "()")
+	if cmd.Data != nil {
+		return fmt.Sprintf("TPMEventLogAdd(%v, Data: 0x%X)", extendData, cmd.Data)
+	}
+	return fmt.Sprintf("TPMEventLogAdd(%s)", extendData)
 }
 
-func (cmd *CommandEventLogAdd) GoString() string {
+func (cmd *CommandEventLogAdd) String() string {
 	return cmd.LogString()
 }
 

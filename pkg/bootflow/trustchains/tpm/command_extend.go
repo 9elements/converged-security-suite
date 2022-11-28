@@ -27,11 +27,11 @@ func NewCommandExtend(
 	}
 }
 
-func (cmd *CommandExtend) LogString() string {
-	return fmt.Sprintf("TPMExtend(%d, %s, %X)", cmd.PCRIndex, cmd.HashAlgo, cmd.Digest)
+func (cmd CommandExtend) LogString() string {
+	return fmt.Sprintf("TPMExtend(%d, %s, %s)", cmd.PCRIndex, cmd.HashAlgo, cmd.Digest)
 }
 
-func (cmd *CommandExtend) GoString() string {
+func (cmd CommandExtend) String() string {
 	return cmd.LogString()
 }
 

@@ -28,7 +28,7 @@ func (init *TPMInit) Apply(ctx context.Context, state *types.State) error {
 	return t.TPMInit(ctx, init.Locality, NewLogInfoProvider(state))
 }
 
-func (init TPMInit) GoString() string {
+func (init TPMInit) String() string {
 	return fmt.Sprintf("TPMInit(%d)", init.Locality)
 }
 
@@ -53,6 +53,6 @@ func (init *TPMInitLazy) Apply(ctx context.Context, state *types.State) error {
 	return t.TPMInit(ctx, init.Locality, NewLogInfoProvider(state))
 }
 
-func (init TPMInitLazy) GoString() string {
+func (init TPMInitLazy) String() string {
 	return fmt.Sprintf("TPMInitLazy(%d)", init.Locality)
 }

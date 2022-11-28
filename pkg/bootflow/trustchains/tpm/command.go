@@ -39,6 +39,10 @@ type CommandLogEntry struct {
 	CauseCoordinates
 }
 
+func (entry CommandLogEntry) String() string {
+	return entry.Command.LogString()
+}
+
 func newCommandLogEntry(
 	cmd Command,
 	causeCoords types.ActionCoordinates,

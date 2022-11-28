@@ -25,6 +25,6 @@ func SetActor(actor types.Actor) types.Step {
 
 func (step *setActor) Actions(state *types.State) types.Actions {
 	return types.Actions{
-		commonactions.SetActor(step.nextActorFunc),
+		commonactions.SetActorFunc(step.nextActorFunc),
 	}
 }

@@ -21,7 +21,7 @@ func (cmd *CommandInit) LogString() string {
 	return fmt.Sprintf("TPMInit(%d)", cmd.Locality)
 }
 
-func (cmd *CommandInit) GoString() string {
+func (cmd *CommandInit) String() string {
 	return cmd.LogString()
 }
 

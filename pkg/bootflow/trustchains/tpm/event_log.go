@@ -11,15 +11,15 @@ type EventLogEntry struct {
 	Data []byte
 }
 
-func (entry EventLogEntry) GoString() string {
+func (entry EventLogEntry) String() string {
 	if len(entry.Data) == 0 {
 		return fmt.Sprintf(
-			"{PCR: %d, Alg: %s, Digest: %#v}",
+			"{PCR: %d, Alg: %s, Digest: %v}",
 			entry.PCRIndex, entry.HashAlgo, entry.Digest,
 		)
 	}
 	return fmt.Sprintf(
-		"{PCR: %d, Alg: %s, Digest: %#v, Data: 0x%X}",
+		"{PCR: %d, Alg: %s, Digest: %v, Data: 0x%X}",
 		entry.PCRIndex, entry.HashAlgo, entry.Digest, entry.Data,
 	)
 }

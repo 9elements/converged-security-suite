@@ -36,28 +36,20 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("PCR values:\n")
+	fmt.Printf("Executed TPM commands log:\n")
+	for idx, entry := range tpmInstance.CommandLog {
+		fmt.Printf("\t%d: %v\n", idx, entry)
+	}
+	fmt.Printf("Final PCR values:\n")
 	for pcrID, values := range tpmInstance.PCRValues {
 		fmt.Printf("\tPCR[%d]: SHA1:%X\n", pcrID, values[tpm2.AlgSHA1])
 	}
 	fmt.Printf("TPM EventLog:\n")
 	for idx, entry := range tpmInstance.EventLog {
-		if entry.HashAlgo != tpm2.AlgSHA1 {
-			continue
-		}
-		fmt.Printf("\t%d: %#v\n", idx, entry)
+		fmt.Printf("\t%d: %v\n", idx, entry)
 	}
-	fmt.Printf("TPM commands log:\n")
-	for idx, entry := range tpmInstance.CommandLog {
-		if entry, ok := entry.Command.(*tpm.CommandExtend); ok {
-			if entry.HashAlgo != tpm2.AlgSHA1 {
-				continue
-			}
-		}
-		fmt.Printf("\t%d: %#v\n", idx, entry)
-	}
-	fmt.Printf("Measured Data log:\n")
+	fmt.Printf("Measured/protected data log:\n")
 	for idx, measuredData := range state.MeasuredData {
-		fmt.Printf("\t%d: %#v\n", idx, measuredData)
+		fmt.Printf("\t%d: %v\n", idx, measuredData)
 	}
 }

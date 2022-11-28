@@ -38,7 +38,7 @@ func main() {
 	process.Finish(context.Background())
 
 	// just some debugging
-	fmt.Printf("Log:\n%#v\n", process.Log)
+	fmt.Printf("Log:\n%v", process.Log)
 
 	tpmInstance, err := tpm.GetFrom(state)
 	if err != nil {
@@ -117,12 +117,12 @@ func main() {
 	// printing the result
 	result := []byte("\x00\x00\x00\x00")
 	bruteforcer.ApplyBitFlipsBytes(combination, result)
-	fmt.Printf("COMBINATION: %#v\n", combination)
+	fmt.Printf("COMBINATION: %v\n", combination)
 	fmt.Printf("RESULT: 0x%X\n", result)
 
 	tpmMeasurements := process.Log.GetDataMeasuredWith(tpmInstance)
 	bruteforcer.ApplyBitFlipsBytes(combination, tpmMeasurements[0].Data.ForceBytes)
-	fmt.Printf("resulting measurements: %#v\n", tpmMeasurements)
+	fmt.Printf("resulting measurements:\n%v", tpmMeasurements)
 }
 
 // getExpectedHash returns the expected final hash (after bruteforcing)
