@@ -33,10 +33,11 @@ func NewState() *State {
 	}
 }
 
-func (state *State) SetFlow(flow Flow, stepIdx uint) {
-	state.CurrentActionCoordinates.Flow = flow
-	state.CurrentActionCoordinates.StepIndex = stepIdx
-	state.CurrentActionCoordinates.ActionIndex = 0
+func (state *State) SetFlow(flow Flow) {
+	coords := &state.CurrentActionCoordinates
+	coords.Flow = flow
+	coords.StepIndex = 0
+	coords.ActionIndex = 0
 }
 
 func (state *State) GetCurrentActionCoordinates() ActionCoordinates {

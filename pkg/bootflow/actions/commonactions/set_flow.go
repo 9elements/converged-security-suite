@@ -6,21 +6,36 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
-type setFlow struct {
-	nextFlowFunc   func(state *types.State) types.Flow
-	startStepIndex uint
+type setFlowFunc struct {
+	nextFlowFunc func(state *types.State) types.Flow
 }
 
-var _ types.Action = (*setFlow)(nil)
+var _ types.Action = (*setFlowFunc)(nil)
 
-func SetFlow(flowFunc func(state *types.State) types.Flow, stepIndex uint) types.Action {
+func SetFlowFunc(flowFunc func(state *types.State) types.Flow) types.Action {
+	return &setFlowFunc{
+		nextFlowFunc: flowFunc,
+	}
+}
+
+func (step *setFlowFunc) Apply(_ context.Context, state *types.State) error {
+	state.SetFlow(step.nextFlowFunc(state))
+	return nil
+}
+
+type setFlow struct {
+	nextFlow types.Flow
+}
+
+var _ types.Action = (*setFlowFunc)(nil)
+
+func SetFlow(flow types.Flow) types.Action {
 	return &setFlow{
-		nextFlowFunc:   flowFunc,
-		startStepIndex: stepIndex,
+		nextFlow: flow,
 	}
 }
 
 func (step *setFlow) Apply(_ context.Context, state *types.State) error {
-	state.SetFlow(step.nextFlowFunc(state), step.startStepIndex)
+	state.SetFlow(step.nextFlow)
 	return nil
 }

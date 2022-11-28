@@ -32,7 +32,7 @@ func main() {
 
 	// executing the flow (with two simple "\x00\x00\x00\x00" measurements)
 	state := types.NewState()
-	state.SetFlow(myFlow, 0)
+	state.SetFlow(myFlow)
 	state.IncludeTrustChain(tpm.NewTPM())
 	process := bootengine.NewBootProcess(state)
 	process.Finish(context.Background())
