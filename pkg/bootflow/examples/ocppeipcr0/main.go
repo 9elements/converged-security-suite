@@ -26,7 +26,7 @@ func main() {
 	state := types.NewState()
 	state.IncludeTrustChain(tpm.NewTPM())
 	state.IncludeSystemArtifact(biosimage.New(biosFirmware))
-	state.SetFlow(flows.OCPDXE(), 0)
+	state.SetFlow(flows.OCPPEI(), 0)
 	process := bootengine.NewBootProcess(state)
 	process.Finish()
 

@@ -10,8 +10,8 @@ import (
 
 // This files is used only to provide hints to the "goplantuml" tool
 
-type OCPDXE struct {
-	commonsteps.SetActorPredefined
+type OCPPEI struct {
+	commonsteps.SetActor
 	tpmsteps.InitTPMLazy
 	tpmsteps.MeasurePCD
 	tpmsteps.MeasureUEFIGUIDFirst

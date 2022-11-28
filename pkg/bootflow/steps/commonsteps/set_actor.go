@@ -9,13 +9,13 @@ type setActor struct {
 	nextActorFunc func(state *types.State) types.Actor
 }
 
-func SetActor(actorFunc func(state *types.State) types.Actor) types.Step {
+func SetActorFromFunc(actorFunc func(state *types.State) types.Actor) types.Step {
 	return &setActor{
 		nextActorFunc: actorFunc,
 	}
 }
 
-func SetActorPredefined(actor types.Actor) types.Step {
+func SetActor(actor types.Actor) types.Step {
 	return &setActor{
 		nextActorFunc: func(state *types.State) types.Actor {
 			return actor

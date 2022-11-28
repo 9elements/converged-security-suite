@@ -8,13 +8,12 @@ import (
 	ffsConsts "github.com/9elements/converged-security-suite/v2/pkg/uefi/ffs/consts"
 )
 
-func OCPDXE() types.Flow {
+func OCPPEI() types.Flow {
 	return types.Flow{
-		commonsteps.SetActorPredefined(actors.OCPPEI{}),
+		commonsteps.SetActor(actors.OCPPEI{}),
 		tpmsteps.InitTPMLazy(0),
 		tpmsteps.MeasurePCDVariable(0, "FirmwareVendorVersion"),
 		tpmsteps.MeasureUEFIGUIDFirst(0, ffsConsts.GUIDDXE, ffsConsts.GUIDDXEContainer),
-		commonsteps.SetActorPredefined(actors.OCPDXE{}),
 		tpmsteps.MeasureSeparator(0),
 	}
 }

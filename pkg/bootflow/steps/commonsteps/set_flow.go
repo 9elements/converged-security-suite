@@ -10,14 +10,14 @@ type setFlow struct {
 	startStepIndex uint
 }
 
-func SetFlow(flowFunc func(state *types.State) types.Flow, stepIndex uint) types.Step {
+func SetFlowFromFunc(flowFunc func(state *types.State) types.Flow, stepIndex uint) types.Step {
 	return &setFlow{
 		nextFlowFunc:   flowFunc,
 		startStepIndex: stepIndex,
 	}
 }
 
-func SetFlowPredefined(flow types.Flow, stepIndex uint) types.Step {
+func SetFlow(flow types.Flow, stepIndex uint) types.Step {
 	return &setFlow{
 		nextFlowFunc: func(state *types.State) types.Flow {
 			return flow
