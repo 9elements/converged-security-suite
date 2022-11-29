@@ -26,6 +26,7 @@ func typeMapKey(i interface{}) reflect.Type {
 	return k
 }
 
+// NewState returns a new instance of State.
 func NewState() *State {
 	return &State{
 		SystemArtifacts: map[reflect.Type]SystemArtifact{},
@@ -33,6 +34,7 @@ func NewState() *State {
 	}
 }
 
+// SetFlow sets the Flow and resets the execution carriage (resets to the first Step).
 func (state *State) SetFlow(flow Flow) {
 	coords := &state.CurrentActionCoordinates
 	coords.Flow = flow
@@ -40,6 +42,7 @@ func (state *State) SetFlow(flow Flow) {
 	coords.ActionIndex = 0
 }
 
+// GetCurrentActionCoordinates returns the Action is being performed.
 func (state *State) GetCurrentActionCoordinates() ActionCoordinates {
 	return state.CurrentActionCoordinates
 }
@@ -75,6 +78,8 @@ func WithSubSystem[SS SubSystem](
 	return callback(subSystem)
 }
 
+// IncludeSubSystem adds and enables a SubSystem, but each SubSystem type could
+// be added only once.
 func (state *State) IncludeSubSystem(subSystem SubSystem) {
 	if reflect.TypeOf(subSystem).Kind() != reflect.Ptr {
 		panic(fmt.Sprintf("%T is not a modifiable type", subSystem))
@@ -119,6 +124,8 @@ func WithSystemArtifact[SA SystemArtifact](
 	return callback(systemArtifact)
 }
 
+// IncludeSystemArtifact adds and enables a SystemArtifact, but each SystemArtifact type could
+// be added only once.
 func (state *State) IncludeSystemArtifact(systemArtifact SystemArtifact) {
 	if reflect.TypeOf(systemArtifact).Kind() != reflect.Ptr {
 		panic(fmt.Sprintf("%T is not a modifiable type", systemArtifact))
@@ -131,7 +138,15 @@ func (state *State) IncludeSystemArtifact(systemArtifact SystemArtifact) {
 	state.SystemArtifacts[k] = systemArtifact
 }
 
-func (state *State) AddMeasuredData(trustChain TrustChain, data Data, dataSource DataSource) {
+// AddMeasuredData marks given data as protected/measured.
+//
+// TrustChain defines within which TrustChain this measurement was performed (should not be nil).
+// DataSource defines how the data source was defined in the flow, which made the measurement (should not be nil).
+func (state *State) AddMeasuredData(
+	data Data,
+	trustChain TrustChain,
+	dataSource DataSource,
+) {
 	state.MeasuredData = append(state.MeasuredData, MeasuredData{
 		Data:       data,
 		DataSource: dataSource,
@@ -140,6 +155,7 @@ func (state *State) AddMeasuredData(trustChain TrustChain, data Data, dataSource
 	})
 }
 
+// String implements fmt.Stringer.
 func (state *State) String() string {
 	var result strings.Builder
 	if len(state.SystemArtifacts) > 0 {
@@ -158,11 +174,13 @@ func (state *State) String() string {
 	return result.String()
 }
 
-func (state *State) GetMeasuredDataBy(trustChainSample SubSystem) []MeasuredData {
+// GetDataMeasuredBy returns MeasuredData which was measured within the specified TrustChain.
+//
+// See also (*State).AddMeasuredData().
+func (state *State) GetDataMeasuredBy(trustChain TrustChain) []MeasuredData {
 	var result []MeasuredData
-	cmpKey := typeMapKey(trustChainSample)
 	for _, measuredData := range state.MeasuredData {
-		if typeMapKey(measuredData.TrustChain) == cmpKey {
+		if measuredData.TrustChain == trustChain {
 			result = append(result, measuredData)
 		}
 	}

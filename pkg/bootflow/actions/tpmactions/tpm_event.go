@@ -62,7 +62,7 @@ func (ev *TPMEvent) Apply(ctx context.Context, state *types.State) error {
 		}
 	}
 
-	state.AddMeasuredData(t, *data, ev.DataSource)
+	state.AddMeasuredData(*data, t, ev.DataSource)
 	return nil
 }
 

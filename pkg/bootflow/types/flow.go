@@ -18,12 +18,15 @@ type Step interface {
 	Actions(*State) Actions
 }
 
+// StaticStep is a Step which has a predefined static list of Actions.
 type StaticStep Actions
 
+// Actions implements interface Step.
 func (step StaticStep) Actions(*State) Actions {
 	return Actions(step)
 }
 
+// String implements fmt.Stringer.
 func (step StaticStep) String() string {
 	var result []string
 	for _, action := range step {

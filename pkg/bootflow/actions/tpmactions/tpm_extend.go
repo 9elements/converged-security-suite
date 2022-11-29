@@ -48,6 +48,6 @@ func (ext *TPMExtend) Apply(ctx context.Context, state *types.State) error {
 		return fmt.Errorf("unable to extend: %w", err)
 	}
 
-	state.AddMeasuredData(t, *data, ext.DataSource)
+	state.AddMeasuredData(*data, t, ext.DataSource)
 	return nil
 }
