@@ -17,7 +17,8 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
-	"github.com/linuxboot/contest/pkg/xcontext"
+	"github.com/facebookincubator/go-belt/tool/experimental/tracer"
+	"github.com/facebookincubator/go-belt/tool/logger"
 )
 
 const (
@@ -84,7 +85,7 @@ func DefaultSettingsReproducePCR0() SettingsReproducePCR0 {
 // Current algorithm already supports disabling measurements, may be in future
 // we will return the rest amended measurements as well.
 func ReproduceExpectedPCR0(
-	ctx xcontext.Context,
+	ctx context.Context,
 	expectedPCR0 []byte,
 	flow pcr.Flow,
 	measurements pcr.Measurements,
@@ -153,11 +154,12 @@ func newReproduceExpectedPCR0Handler(
 	}, nil
 }
 
-func (h *reproduceExpectedPCR0Handler) Execute(ctx xcontext.Context) (*ReproducePCR0Result, error) {
+func (h *reproduceExpectedPCR0Handler) Execute(ctx context.Context) (*ReproducePCR0Result, error) {
 	// To speedup brute-force process we try the expected locality first,
 	// and only after that we try second expected locality.
 
-	defer ctx.Tracer().StartSpan("reproduceExpectedPCR0Handler").Finish()
+	span, ctx := tracer.StartChildSpanFromCtx(ctx, "reproduceExpectedPCR0Handler")
+	defer span.Finish()
 
 	// The expected locality.
 	result, err := h.execute(ctx, []uint8{h.flow.TPMLocality()})
@@ -189,8 +191,9 @@ func (h *reproduceExpectedPCR0Handler) Execute(ctx xcontext.Context) (*Reproduce
 	return h.execute(ctx, restLocalities)
 }
 
-func (h *reproduceExpectedPCR0Handler) execute(ctx xcontext.Context, localities []uint8) (*ReproducePCR0Result, error) {
-	ctx, cancelFunc := xcontext.WithCancel(ctx)
+func (h *reproduceExpectedPCR0Handler) execute(ctx context.Context, localities []uint8) (*ReproducePCR0Result, error) {
+	ctx, cancelFunc := context.WithCancel(ctx)
+	defer cancelFunc()
 
 	var result *ReproducePCR0Result
 	var returnCount uint64
@@ -199,28 +202,28 @@ func (h *reproduceExpectedPCR0Handler) execute(ctx xcontext.Context, localities 
 		wg.Add(1)
 		go func(tryLocality uint8) {
 			defer wg.Done()
-			ctx.Logger().Debugf("reproduce pcr0 starting bruteforce... (locality: %v)", tryLocality)
+			logger.FromCtx(ctx).Debugf("reproduce pcr0 starting bruteforce... (locality: %v)", tryLocality)
 
 			startTime := time.Now()
 			_result, err := h.newJob(tryLocality).Execute(ctx)
 			elapsed := time.Since(startTime)
 
 			if _result == nil && err == nil {
-				ctx.Logger().Debugf("reproduce pcr0 did not find an answer (locality: %v, elapsed: %v)", tryLocality, elapsed)
+				logger.FromCtx(ctx).Debugf("reproduce pcr0 did not find an answer (locality: %v, elapsed: %v)", tryLocality, elapsed)
 				return
 			}
 			if err != nil {
-				ctx.Errorf("Failed to bruteforce for locality: '%d': '%v'", tryLocality, err)
+				logger.FromCtx(ctx).Errorf("Failed to bruteforce for locality: '%d': '%v'", tryLocality, err)
 				return
 			}
-			ctx.Logger().Debugf("reproduce pcr0 got an answer (locality: %v, elapsed: %v)", tryLocality, elapsed)
+			logger.FromCtx(ctx).Debugf("reproduce pcr0 got an answer (locality: %v, elapsed: %v)", tryLocality, elapsed)
 
 			if c := atomic.AddUint64(&returnCount, 1); c != 1 {
-				ctx.Logger().Errorf("received a final answer with different localities")
+				logger.FromCtx(ctx).Errorf("received a final answer with different localities")
 				return
 			}
 
-			ctx.Logger().Debugf("received an answer (locality:%d, expectedLocality:%d): %v %v", tryLocality, h.flow.TPMLocality(), _result, err)
+			logger.FromCtx(ctx).Debugf("received an answer (locality:%d, expectedLocality:%d): %v %v", tryLocality, h.flow.TPMLocality(), _result, err)
 			cancelFunc()
 
 			result = _result
@@ -255,12 +258,22 @@ type reproduceExpectedPCR0Job struct {
 	registerHashCache *registerHashCache
 }
 
+func isDone(ctx context.Context) bool {
+	select {
+	case <-ctx.Done():
+		return true
+	default:
+		return false
+	}
+}
+
 func (j *reproduceExpectedPCR0Job) Execute(
-	ctx xcontext.Context,
+	ctx context.Context,
 ) (*ReproducePCR0Result, error) {
 	concurrencyFactor := runtime.GOMAXPROCS(0)
 
-	ctx, cancelFn := xcontext.WithCancel(ctx)
+	ctx, cancelFn := context.WithCancel(ctx)
+	defer cancelFn()
 
 	maxDisabledMeasurements := len(j.measurements)
 	if j.settings.MaxDisabledMeasurements < maxDisabledMeasurements {
@@ -298,7 +311,7 @@ func (j *reproduceExpectedPCR0Job) Execute(
 				}
 
 				for combinationID := startCombinationID; combinationID < endCombinationID; combinationID++ {
-					if ctx.IsSignaledWith() {
+					if isDone(ctx) {
 						return
 					}
 					disabledMeasurementsComb := disabledMeasurementsIterator.GetCombinationUnsafe()
@@ -367,7 +380,7 @@ func (j *reproduceExpectedPCR0Job) Execute(
 }
 
 func (j *reproduceExpectedPCR0Job) tryDisabledMeasurementsCombination(
-	ctx xcontext.Context,
+	ctx context.Context,
 	disabledMeasurementsCombination bruteforcer.UniqueUnorderedCombination,
 	hashFuncFactory func() hash.Hash,
 ) (bool, *registers.ACMPolicyStatus, error) {
