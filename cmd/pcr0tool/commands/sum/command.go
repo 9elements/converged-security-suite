@@ -178,13 +178,13 @@ func (cmd Command) Execute(args []string) {
 	}
 }
 
-func formatIssues(issues []pcrbruteforcer.Issue, intend string) string {
+func formatIssues(issues []pcrbruteforcer.Issue, indent string) string {
 	if len(issues) == 0 {
-		return intend + "NONE"
+		return indent + "NONE"
 	}
 	var result strings.Builder
 	for _, issue := range issues {
-		result.WriteString(fmt.Sprintf("%s* %s\n", intend, issue.Error()))
+		result.WriteString(fmt.Sprintf("%s* %s\n", indent, issue.Error()))
 	}
 	return result.String()
 }
