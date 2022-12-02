@@ -180,7 +180,7 @@ func (cmd Command) Execute(args []string) {
 
 func formatIssues(issues []pcrbruteforcer.Issue, intend string) string {
 	if len(issues) == 0 {
-		return "NONE"
+		return intend + "NONE"
 	}
 	var result strings.Builder
 	for _, issue := range issues {
