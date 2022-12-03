@@ -96,7 +96,7 @@ func getMeasurements(
 type measurementsCollector struct {
 	firmware         Firmware
 	fitEntriesResult *[]fit.Entry
-	pcdDataResult    *pcd.ParsedFirmware
+	pcdDataResult    pcd.ParsedFirmware
 	amdFirmware      *amd.AMDFirmware
 	errors           errors.MultiError
 	warnings         errors.MultiError
@@ -127,14 +127,18 @@ func (c *measurementsCollector) FITEntries() []fit.Entry {
 
 func (c *measurementsCollector) PCDData() pcd.ParsedFirmware {
 	if c.pcdDataResult != nil {
-		return *c.pcdDataResult
+		return c.pcdDataResult
 	}
 
 	pcdData, err := pcd.ParseFirmware(c.firmware)
 	if err != nil {
-		_ = c.errors.Add(err)
+		if pcdData == nil {
+			_ = c.warnings.Add(err)
+		} else {
+			_ = c.errors.Add(err)
+		}
 	}
-	c.pcdDataResult = &pcdData
+	c.pcdDataResult = pcdData
 	return pcdData
 }
 
