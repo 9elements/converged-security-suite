@@ -72,6 +72,7 @@ const (
 	MeasurementIDPMUFirmwareData
 	MeasurementIDMicrocodePatch
 	MeasurementIDVideoImageInterpreter
+	MeasurementIDUnknown
 	EndOfMeasurementID
 )
 
@@ -736,6 +737,7 @@ const (
 	DataChunkIDKeyManifestSignature
 	DataChunkIDBootPolicyManifestSignature
 	DataChunkIDIBBDigest
+	DataChunkIDUnknown
 	EndOfDataChunkID
 )
 
