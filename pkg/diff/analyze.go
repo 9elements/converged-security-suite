@@ -55,6 +55,7 @@ type NodeInfo struct {
 
 var emptyUUID uuid.UUID
 
+// String implements fmt.Stringer
 func (nodeInfo NodeInfo) String() string {
 	if nodeInfo.Description == "" && bytes.Equal(nodeInfo.UUID[:], emptyUUID[:]) {
 		return "unknown"
@@ -63,6 +64,18 @@ func (nodeInfo NodeInfo) String() string {
 		return nodeInfo.Description
 	}
 	return nodeInfo.UUID.String()
+}
+
+// NodeInfos is a slice of NodeInfo-s
+type NodeInfos []NodeInfo
+
+// String implements fmt.Stringer
+func (s NodeInfos) String() string {
+	var result []string
+	for _, node := range s {
+		result = append(result, node.String())
+	}
+	return strings.Join(result, ", ")
 }
 
 // RelatedMeasurement contains the related measurement and the data chunks
@@ -76,6 +89,7 @@ type RelatedMeasurement struct {
 type RelatedMeasurementsLaconic []RelatedMeasurement
 
 // String implements fmt.Stringer
+//
 //nolint:typecheck
 func (s RelatedMeasurementsLaconic) String() string {
 	var ids []string
@@ -250,7 +264,7 @@ func Analyze(
 				})
 			}
 		} else {
-			analysisEntry.Nodes = nodesInfo(overlappedNodes)
+			analysisEntry.Nodes = GetNodesInfo(overlappedNodes)
 		}
 
 		// Filling report
@@ -340,6 +354,7 @@ func (t *intervalTree) FindOverlapping(r pkgbytes.Range) []interface{} {
 }
 
 // AddOffset just adds the offset to all offsets of the report
+//
 //nolint:typecheck
 func (report *AnalysisReport) AddOffset(offset int64) {
 	if report == nil {
@@ -362,8 +377,11 @@ func (report *AnalysisReport) AddOffset(offset int64) {
 	}
 }
 
-func nodesInfo(nodes []*ffs.Node) []NodeInfo {
-	var result []NodeInfo
+// GetNodesInfo converts nodes to structures ready for human-readable printing.
+//
+// TODO: move this to a "format" package
+func GetNodesInfo(nodes []*ffs.Node) NodeInfos {
+	var result NodeInfos
 	for _, node := range nodes {
 
 		// Gathering information

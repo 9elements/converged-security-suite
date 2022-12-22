@@ -169,7 +169,7 @@ func (m Measurement) NoHash() bool {
 }
 
 // EventLogEventTypes returns multiple potential values of
-//"Type" field of the EventLog entry associated with the measurement.
+// "Type" field of the EventLog entry associated with the measurement.
 func (m Measurement) EventLogEventTypes() []*tpmeventlog.EventType {
 	return m.ID.EventLogEventTypes()
 }
@@ -216,10 +216,29 @@ func (m Measurement) Ranges() bytes.Ranges {
 	return m.Data.Ranges()
 }
 
+// Validate validates if this measurement could be safely applied to a given image.
+func (m *Measurement) Validate(image []byte) error {
+	imgRange := bytes.Range{Offset: 0, Length: uint64(len(image))}
+	for _, r := range m.Ranges() {
+		outsideOfImageRange := r.Exclude(imgRange)
+		for _, r := range outsideOfImageRange { // TODO: fix in fiano to do not return empty ranges by Exclude
+			if r.Length > 0 {
+				return fmt.Errorf("ranges %#+v are outside of the provided image of size 0x%X", outsideOfImageRange, len(image))
+			}
+		}
+	}
+
+	return nil
+}
+
 // Calculate returns the hash from the gathered blocks from image
 func (m *Measurement) Calculate(image []byte, hashFunc hash.Hash) ([]byte, error) {
 	if m.IsFake() {
 		return nil, nil
+	}
+
+	if err := m.Validate(image); err != nil {
+		return nil, fmt.Errorf("measurement %#+v is invalid: %w", *m, err)
 	}
 
 	data := m.CompileMeasurableData(image)
@@ -286,12 +305,12 @@ type CachedMeasurement struct {
 }
 
 func (m Measurement) Cache(image []byte, hasher hash.Hash) (*CachedMeasurement, error) {
-	data := m.CompileMeasurableData(image)
 	hash, err := m.Calculate(image, hasher)
 	if err != nil {
 		return nil, err
 	}
 
+	data := m.CompileMeasurableData(image)
 	return &CachedMeasurement{m, data, hash}, nil
 }
 

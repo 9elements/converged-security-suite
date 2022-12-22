@@ -22,7 +22,7 @@ type SettingsReproduceEventLog struct {
 	SettingsBruteforceACMPolicyStatus
 }
 
-// DefaultSettingsReproduceEventLog returns recommeneded default PCR0 settings
+// DefaultSettingsReproduceEventLog returns recommended default PCR0 settings
 func DefaultSettingsReproduceEventLog() SettingsReproduceEventLog {
 	return SettingsReproduceEventLog{
 		SettingsBruteforceACMPolicyStatus: DefaultSettingsBruteforceACMPolicyStatus(),
@@ -81,7 +81,13 @@ func ReproduceEventLog(
 		ev := events[idx]
 
 		if m == nil {
-			issues = append(issues, fmt.Errorf("extra entry in EventLog of type %d (0x%X) on evIdx==%d", ev.Type, ev.Type, idx))
+			issues = append(
+				issues,
+				fmt.Errorf(
+					"unexpected entry in EventLog of type %s on evIdx==%d; log entry analysis: %s",
+					ev.Type, idx, explainLogEntry(nil, ev, imageBytes),
+				),
+			)
 			isEventLogMatchesMeasurements = false
 			continue
 		}
@@ -125,7 +131,13 @@ func ReproduceEventLog(
 			updatedACMPolicyStatusValue = &correctedACMPolicyStatus
 		default:
 			// I do not know how to remediate this problem.
-			issues = append(issues, fmt.Errorf("measurement '%s' does not match the digest reported in EventLog: %X != %X", m.ID, mD, ev.Digest.Digest))
+			issues = append(
+				issues,
+				fmt.Errorf(
+					"measurement '%s' does not match the digest reported in EventLog: %X != %X; log entry analysis: %s",
+					m.ID, mD, ev.Digest.Digest, explainLogEntry(m, ev, imageBytes),
+				),
+			)
 			isEventLogMatchesMeasurements = false
 		}
 	}
@@ -458,7 +470,7 @@ func bruteForceAlignedEventsAndMeasurements(
 							newDisabledMeasurementsCount++
 						}
 					}
-					if newDisabledMeasurementsCount != disabledEventsCount+boolDistance {
+					if disabledEventsCount-newDisabledMeasurementsCount != len(events)-len(measurements) {
 						// sometimes BruteForce will flip from true to false (not only from false to true),
 						// we just skip these cases.
 						return false
@@ -542,7 +554,7 @@ func eventAndMeasurementsDistance(
 			distance += 2*bigN - 1 // does not overweight a disabled event + disabled measurement
 		}
 		if !matchedType {
-			distance += 2 // together with matchedDigest does overweight a diabled event + disabled measurement
+			distance += 2 // together with matchedDigest does overweight a disabled event + disabled measurement
 		}
 	}
 
