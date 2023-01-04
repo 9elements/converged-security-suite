@@ -183,7 +183,7 @@ rm -f "$DUMMYACMPATH"
 # Create a KM.
 #
 # KM uses an OEM key to authorize an ODM key to issue a signed BPM. So `km-gen` will calculate
-# a hash of the ODM (BPM) pubkey and store it inside KM, in turn KM is signed by the OEM (KM) key.
+# a hash of the ODM (BPM) pubkey and store it inside KM, in turn KM is signed by the OEM (KM) cbntkey.
 #
 # Algorithm "SHA256" was picked arbitrary. One may use another algorithm.
 KMPATH="$(mktemp)"

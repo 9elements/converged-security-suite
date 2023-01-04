@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntbootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntkey"
 )
 
 // ParseBPM reads from a binary and parses into the boot policy manifest structure
-func ParseBPM(reader io.Reader) (*bootpolicy.Manifest, error) {
-	bpm := &bootpolicy.Manifest{}
+func ParseBPM(reader io.Reader) (*cbntbootpolicy.Manifest, error) {
+	bpm := &cbntbootpolicy.Manifest{}
 	_, err := bpm.ReadFrom(reader)
 	if err != nil && !errors.Is(err, io.EOF) {
 		return nil, err
@@ -22,7 +22,7 @@ func ParseBPM(reader io.Reader) (*bootpolicy.Manifest, error) {
 // ValidateBPM reads from a binary, parses into the boot policy manifest structure
 // and validates the structure
 func ValidateBPM(reader io.Reader) error {
-	bpm := &bootpolicy.Manifest{}
+	bpm := &cbntbootpolicy.Manifest{}
 	_, err := bpm.ReadFrom(reader)
 	if err != nil && !errors.Is(err, io.EOF) {
 		return err
@@ -31,8 +31,8 @@ func ValidateBPM(reader io.Reader) error {
 }
 
 // ParseKM reads from a binary source and parses into the key manifest structure
-func ParseKM(reader io.Reader) (*key.Manifest, error) {
-	km := &key.Manifest{}
+func ParseKM(reader io.Reader) (*cbntkey.Manifest, error) {
+	km := &cbntkey.Manifest{}
 	_, err := km.ReadFrom(reader)
 	if err != nil && !errors.Is(err, io.EOF) {
 		return nil, err
@@ -43,7 +43,7 @@ func ParseKM(reader io.Reader) (*key.Manifest, error) {
 // ValidateKM reads from a binary source, parses into the key manifest structure
 // and validates the structure
 func ValidateKM(reader io.Reader) error {
-	km := &key.Manifest{}
+	km := &cbntkey.Manifest{}
 	_, err := km.ReadFrom(reader)
 	if err != nil && !errors.Is(err, io.EOF) {
 		return err

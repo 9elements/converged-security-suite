@@ -3,7 +3,7 @@ package pcr
 import (
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 )
 
 // MeasurementConfig is the structure used to store different gates about
@@ -25,7 +25,7 @@ type MeasurementConfig struct {
 
 	// PCR0DataIbbDigestHashAlgorithm defines hash algorithm that should be used for pcr0Data.ibbDigest
 	// TPM_ALG_ERROR will use the first element (by default)
-	PCR0DataIbbDigestHashAlgorithm manifest.Algorithm
+	PCR0DataIbbDigestHashAlgorithm cbnt.Algorithm
 
 	// TPMDevice defines a TPM device version that performed the measurements.
 	// Value TypeNoTPM means undefined

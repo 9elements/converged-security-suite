@@ -13,10 +13,10 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/creasty/defaults"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntbootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntkey"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
 	"github.com/tidwall/pretty"
 	"github.com/tjfoc/gmsm/sm3"
 )
@@ -30,15 +30,15 @@ type IbbSegment struct {
 
 // KeyHash export for usage as cmd line argument type
 type KeyHash struct {
-	Usage     uint64             `json:"usage"`     //
-	Hash      string             `json:"hash"`      //
-	Algorithm manifest.Algorithm `json:"algorithm"` //
+	Usage     uint64         `json:"usage"`     //
+	Hash      string         `json:"hash"`      //
+	Algorithm cbnt.Algorithm `json:"algorithm"` //
 }
 
 // Options presents all available options for CBnT configuarion file.
 type Options struct {
-	BootPolicyManifest *bootpolicy.Manifest
-	KeyManifest        *key.Manifest
+	BootPolicyManifest *cbntbootpolicy.Manifest
+	KeyManifest        *cbntkey.Manifest
 	ACMHeaders         *fit.EntrySACMData3
 }
 
@@ -55,8 +55,8 @@ func ParseConfig(filepath string) (*Options, error) {
 	return &cbnto, nil
 }
 
-func setBPMHeader(cbnto *Options, bpm *bootpolicy.Manifest) (*bootpolicy.BPMH, error) {
-	header := bootpolicy.NewBPMH()
+func setBPMHeader(cbnto *Options, bpm *cbntbootpolicy.Manifest) (*cbntbootpolicy.BPMH, error) {
+	header := cbntbootpolicy.NewBPMH()
 	if err := defaults.Set(header); err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func setBPMHeader(cbnto *Options, bpm *bootpolicy.Manifest) (*bootpolicy.BPMH, e
 	return header, nil
 }
 
-func getIBBSegment(ibbs []bootpolicy.IBBSegment, image []byte) ([][]byte, error) {
+func getIBBSegment(ibbs []cbntbootpolicy.IBBSegment, image []byte) ([][]byte, error) {
 	reader := bytes.NewReader(image)
 	ibbSegments := make([][]byte, len(ibbs))
 	for idx, ibb := range ibbs {
@@ -95,20 +95,20 @@ func getIBBSegment(ibbs []bootpolicy.IBBSegment, image []byte) ([][]byte, error)
 	return ibbSegments, nil
 }
 
-func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo manifest.Algorithm) (hashout []byte, err error) {
+func getIBBsDigest(ibbs []cbntbootpolicy.IBBSegment, image []byte, algo cbnt.Algorithm) (hashout []byte, err error) {
 	var hashFunc hash.Hash
 	switch algo {
-	case manifest.AlgSHA1:
+	case cbnt.AlgSHA1:
 		hashFunc = sha1.New()
-	case manifest.AlgSHA256:
+	case cbnt.AlgSHA256:
 		hashFunc = sha256.New()
-	case manifest.AlgSHA384:
+	case cbnt.AlgSHA384:
 		hashFunc = sha512.New384()
-	case manifest.AlgSHA512:
+	case cbnt.AlgSHA512:
 		hashFunc = sha512.New512_256()
-	case manifest.AlgSM3:
+	case cbnt.AlgSM3:
 		hashFunc = sm3.New()
-	case manifest.AlgNull:
+	case cbnt.AlgNull:
 		return nil, nil
 	default:
 		return nil, fmt.Errorf("couldn't match requested hash algorithm: 0x%x", algo)
@@ -128,7 +128,7 @@ func getIBBsDigest(ibbs []bootpolicy.IBBSegment, image []byte, algo manifest.Alg
 	return hashout, nil
 }
 
-func setIBBSegment(cbnto *Options, image []byte) (*bootpolicy.SE, error) {
+func setIBBSegment(cbnto *Options, image []byte) (*cbntbootpolicy.SE, error) {
 	for iterator, item := range cbnto.BootPolicyManifest.SE[0].DigestList.List {
 		d, err := getIBBsDigest(cbnto.BootPolicyManifest.SE[0].IBBSegments, image, item.HashAlg)
 		if err != nil {
@@ -141,12 +141,12 @@ func setIBBSegment(cbnto *Options, image []byte) (*bootpolicy.SE, error) {
 	return &cbnto.BootPolicyManifest.SE[0], nil
 }
 
-func setTXTElement(cbnto *Options) (*bootpolicy.TXT, error) {
+func setTXTElement(cbnto *Options) (*cbntbootpolicy.TXT, error) {
 	return cbnto.BootPolicyManifest.TXTE, nil
 }
 
-func setPCDElement(cbnto *Options) (*bootpolicy.PCD, error) {
-	pcde := bootpolicy.NewPCD()
+func setPCDElement(cbnto *Options) (*cbntbootpolicy.PCD, error) {
+	pcde := cbntbootpolicy.NewPCD()
 	if cbnto.BootPolicyManifest.PCDE == nil {
 		return nil, nil
 	}
@@ -154,8 +154,8 @@ func setPCDElement(cbnto *Options) (*bootpolicy.PCD, error) {
 	return pcde, nil
 }
 
-func setPMElement(cbnto *Options) (*bootpolicy.PM, error) {
-	pme := bootpolicy.NewPM()
+func setPMElement(cbnto *Options) (*cbntbootpolicy.PM, error) {
+	pme := cbntbootpolicy.NewPM()
 	if cbnto.BootPolicyManifest.PME == nil {
 		return nil, nil
 	}
@@ -163,19 +163,19 @@ func setPMElement(cbnto *Options) (*bootpolicy.PM, error) {
 	return pme, nil
 }
 
-func setPMSElement(cbnto *Options, bpm *bootpolicy.Manifest) (*bootpolicy.Signature, error) {
-	psme := bootpolicy.NewSignature()
+func setPMSElement(cbnto *Options, bpm *cbntbootpolicy.Manifest) (*cbntbootpolicy.Signature, error) {
+	psme := cbntbootpolicy.NewSignature()
 	return psme, nil
 }
 
 // SetKM takes Options struct and initializes a new KM with the given configuration.
-func SetKM(cbnto *Options) (*key.Manifest, error) {
+func SetKM(cbnto *Options) (*cbntkey.Manifest, error) {
 	return cbnto.KeyManifest, nil
 }
 
 // GenerateBPM generates a Boot Policy Manifest with the given config and firmware image
-func GenerateBPM(cbnto *Options, biosFilepath string) (*bootpolicy.Manifest, error) {
-	bpm := bootpolicy.NewManifest()
+func GenerateBPM(cbnto *Options, biosFilepath string) (*cbntbootpolicy.Manifest, error) {
+	bpm := cbntbootpolicy.NewManifest()
 	data, err := os.ReadFile(biosFilepath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file '%s': %w", biosFilepath, err)
@@ -228,8 +228,8 @@ func WriteConfig(f *os.File, cbnto *Options) error {
 // and writes that to a given file in json format
 func ReadConfigFromBIOSImage(biosFilepath string, configFilepath *os.File) (*Options, error) {
 	var cbnto Options
-	var bpm *bootpolicy.Manifest
-	var km *key.Manifest
+	var bpm *cbntbootpolicy.Manifest
+	var km *cbntkey.Manifest
 	bios, err := os.ReadFile(biosFilepath)
 	if err != nil {
 		return nil, err
@@ -268,7 +268,7 @@ func ReadConfigFromBIOSImage(biosFilepath string, configFilepath *os.File) (*Opt
 
 // GetBPMPubHash takes the path to public BPM signing key and hash algorithm
 // and returns a hash with hashAlg of pub BPM singing key
-func GetBPMPubHash(path string, hashAlg manifest.Algorithm) ([]key.Hash, error) {
+func GetBPMPubHash(path string, hashAlg cbnt.Algorithm) ([]cbntkey.Hash, error) {
 	var data []byte
 	pubkey, err := ReadPubKey(path)
 	if err != nil {
@@ -278,7 +278,7 @@ func GetBPMPubHash(path string, hashAlg manifest.Algorithm) ([]key.Hash, error) 
 	if err != nil {
 		return nil, err
 	}
-	var kAs manifest.Key
+	var kAs cbnt.Key
 	if err := kAs.SetPubKey(pubkey); err != nil {
 		return nil, err
 	}
@@ -287,14 +287,14 @@ func GetBPMPubHash(path string, hashAlg manifest.Algorithm) ([]key.Hash, error) 
 		return nil, err
 	}
 	data = hash.Sum(nil)
-	var keyHashes []key.Hash
-	hStruc := &manifest.HashStructure{
-		HashAlg: manifest.Algorithm(hashAlg),
+	var keyHashes []cbntkey.Hash
+	hStruc := &cbnt.HashStructure{
+		HashAlg: cbnt.Algorithm(hashAlg),
 	}
 	hStruc.HashBuffer = data
 
-	kH := key.Hash{
-		Usage:  key.UsageBPMSigningPKD,
+	kH := cbntkey.Hash{
+		Usage:  cbntkey.UsageBPMSigningPKD,
 		Digest: *hStruc,
 	}
 	keyHashes = append(keyHashes, kH)

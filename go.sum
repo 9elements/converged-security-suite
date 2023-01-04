@@ -395,8 +395,8 @@ github.com/letsencrypt/pkcs11key/v4 v4.0.0/go.mod h1:EFUvBDay26dErnNb70Nd0/VW3tJ
 github.com/lib/pq v1.8.0/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
 github.com/linuxboot/contest v1.0.1 h1:uZXIojtS+4WcEBqHqNatMAfN7+VW57f1Qu+wjQCo2hU=
 github.com/linuxboot/contest v1.0.1/go.mod h1:VbZjvYll1WLVl7un8N26DDs5TtC4WVhpcsFw7SR9KaU=
-github.com/linuxboot/fiano v1.1.3 h1:/EFBlsC+896J0YbU0CHi7lSm5dOcE08vE0ro9jBAl50=
-github.com/linuxboot/fiano v1.1.3/go.mod h1:1FwHUkd0fdHTvACyx6IdVn1GBAiS5mG2CM5b0nLMLxo=
+github.com/linuxboot/fiano v1.1.4-0.20230104202748-2e7c17328522 h1:lbFCrD5mKLQ51gsO91/mGvMbeSRVw+zfwkCU85Tm8wI=
+github.com/linuxboot/fiano v1.1.4-0.20230104202748-2e7c17328522/go.mod h1:1FwHUkd0fdHTvACyx6IdVn1GBAiS5mG2CM5b0nLMLxo=
 github.com/logrusorgru/aurora v2.0.3+incompatible h1:tOpm7WcpBTn4fjmVfgpQq0EfczGlG91VSDkswnjF5A8=
 github.com/logrusorgru/aurora v2.0.3+incompatible/go.mod h1:7rIyQOR62GCctdiQpZ/zOJlFyk6y+94wXzv6RNZgaR4=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=

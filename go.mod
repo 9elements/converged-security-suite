@@ -16,7 +16,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/klauspost/cpuid/v2 v2.2.3
 	github.com/linuxboot/contest v1.0.1
-	github.com/linuxboot/fiano v1.1.3
+	github.com/linuxboot/fiano v1.1.4-0.20230104202748-2e7c17328522
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/marcoguerri/go-tpm-tcti v0.0.0-20210425104733-8e8c8fe68e60
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3

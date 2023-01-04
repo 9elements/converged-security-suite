@@ -7,10 +7,10 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi/consts"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntbootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntkey"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/common/pretty"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/common/pretty"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
 
 	"github.com/linuxboot/fiano/pkg/cbfs"
 )
@@ -109,7 +109,7 @@ func ParseFITEntries(image []byte) (bpm *fit.EntryBootPolicyManifestRecord, km *
 }
 
 // CalculateNEMSize calculates No Eviction Memory and returns it as count of 4K pages.
-func CalculateNEMSize(image []byte, bpm *bootpolicy.Manifest, km *key.Manifest, acm *tools.ACM) (bootpolicy.Size4K, error) {
+func CalculateNEMSize(image []byte, bpm *cbntbootpolicy.Manifest, km *cbntkey.Manifest, acm *tools.ACM) (cbntbootpolicy.Size4K, error) {
 	var totalSize uint32
 	if bpm == nil || km == nil || acm == nil {
 		return 0, fmt.Errorf("BPM, KM or ACM are nil")
@@ -131,7 +131,7 @@ func CalculateNEMSize(image []byte, bpm *bootpolicy.Manifest, km *key.Manifest, 
 	totalSize += uint32(hdr.GetEntryBase().Headers.Size.Uint32() << 4)
 	totalSize += uint32(2048)
 	totalSize += keySignatureElementMaxSize
-	totalSize += uint32((&bootpolicy.BPMH{}).TotalSize())
+	totalSize += uint32((&cbntbootpolicy.BPMH{}).TotalSize())
 	for _, se := range bpm.SE {
 		totalSize += uint32(se.ElementSize)
 		for _, ibb := range se.IBBSegments {
@@ -157,7 +157,7 @@ func CalculateNEMSize(image []byte, bpm *bootpolicy.Manifest, km *key.Manifest, 
 	if (totalSize % 4096) != 0 {
 		totalSize += 4096 - (totalSize % 4096)
 	}
-	return bootpolicy.NewSize4K(totalSize), nil
+	return cbntbootpolicy.NewSize4K(totalSize), nil
 }
 
 // StitchFITEntries takes a firmware filename, an acm, a boot policy manifest and a key manifest as byte slices
@@ -274,8 +274,8 @@ func StitchFITEntries(biosFilename string, acm, bpm, km []byte) error {
 
 // FindAdditionalIBBs takes a coreboot image, searches cbfs files for
 // additional IBBSegment.
-func FindAdditionalIBBs(imagepath string) ([]bootpolicy.IBBSegment, error) {
-	ibbs := make([]bootpolicy.IBBSegment, 0)
+func FindAdditionalIBBs(imagepath string) ([]cbntbootpolicy.IBBSegment, error) {
+	ibbs := make([]cbntbootpolicy.IBBSegment, 0)
 	image, err := os.Open(imagepath)
 	if err != nil {
 		return nil, err
@@ -302,7 +302,7 @@ func FindAdditionalIBBs(imagepath string) ([]bootpolicy.IBBSegment, error) {
 		}
 		for _, entry := range fitentries {
 			if entry.GetEntryBase().Headers.Type() == fit.EntryTypeBIOSStartupModuleEntry {
-				ibb := bootpolicy.NewIBBSegment()
+				ibb := cbntbootpolicy.NewIBBSegment()
 				ibb.Base = uint32(entry.GetEntryBase().Headers.Address.Pointer())
 				ibb.Size = entry.GetEntryBase().Headers.Size.Uint32() << 4
 				ibbs = append(ibbs, *ibb)
@@ -320,7 +320,7 @@ func FindAdditionalIBBs(imagepath string) ([]bootpolicy.IBBSegment, error) {
 			"fallback/verstage",
 			"bootblock":
 
-			ibb := bootpolicy.NewIBBSegment()
+			ibb := cbntbootpolicy.NewIBBSegment()
 			ibb.Base = uint32(flashBase) + cbfsbaseaddr + seg.GetFile().RecordStart + seg.GetFile().SubHeaderOffset
 			ibb.Size = seg.GetFile().Size
 			ibb.Flags = 0

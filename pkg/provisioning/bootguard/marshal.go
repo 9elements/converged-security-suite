@@ -7,27 +7,27 @@ import (
 	"encoding/pem"
 	"fmt"
 
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntbootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntkey"
 )
 
 // WriteKM returns a key manifest as bytes in format defined in #575623.
-func WriteKM(km *key.Manifest) ([]byte, error) {
+func WriteKM(km *cbntkey.Manifest) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	_, err := km.WriteTo(buf)
 	return buf.Bytes(), err
 }
 
 // WriteBPM returns a boot policy manifest as byte slice
-func WriteBPM(bpm *bootpolicy.Manifest) ([]byte, error) {
+func WriteBPM(bpm *cbntbootpolicy.Manifest) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	_, err := bpm.WriteTo(buf)
 	return buf.Bytes(), err
 }
 
 // StitchKM returns a key manifest manifest as byte slice
-func StitchKM(km *key.Manifest, pubKey crypto.PublicKey, signature []byte) ([]byte, error) {
+func StitchKM(km *cbntkey.Manifest, pubKey crypto.PublicKey, signature []byte) ([]byte, error) {
 	if err := km.KeyAndSignature.FillSignature(0, pubKey, signature, km.PubKeyHashAlg); err != nil {
 		return nil, err
 	}
@@ -39,13 +39,13 @@ func StitchKM(km *key.Manifest, pubKey crypto.PublicKey, signature []byte) ([]by
 }
 
 // StitchBPM returns a boot policy manifest as byte slice
-func StitchBPM(bpm *bootpolicy.Manifest, pubKey crypto.PublicKey, signature []byte) ([]byte, error) {
+func StitchBPM(bpm *cbntbootpolicy.Manifest, pubKey crypto.PublicKey, signature []byte) ([]byte, error) {
 	PMSEString := [8]byte{0x5f, 0x5f, 0x50, 0x4d, 0x53, 0x47, 0x5f, 0x5f}
-	bpm.PMSE.StructInfo = bootpolicy.StructInfo{}
+	bpm.PMSE.StructInfo = cbntbootpolicy.StructInfo{}
 	bpm.PMSE.StructInfo.ID = PMSEString
 	bpm.PMSE.StructInfo.Version = 0x20
 
-	if err := bpm.PMSE.KeySignature.FillSignature(0, pubKey, signature, manifest.AlgNull); err != nil {
+	if err := bpm.PMSE.KeySignature.FillSignature(0, pubKey, signature, cbnt.AlgNull); err != nil {
 		return nil, err
 	}
 
