@@ -59,7 +59,7 @@ func TestReproduceExpectedPCR0(t *testing.T) {
 		measurements, _, debugInfo, err := pcr.GetMeasurements(firmware, 0, measureOptions...)
 		require.NoError(t, err, fmt.Sprintf("debugInfo: '%v'", debugInfo))
 
-		ctx := logrusctx.NewContext(logger.LevelDebug)
+		ctx, _ := logrusctx.NewContext(logger.LevelDebug)
 
 		settings := DefaultSettingsReproducePCR0()
 		settings.EnableACMPolicyCombinatorialStrategy = true
