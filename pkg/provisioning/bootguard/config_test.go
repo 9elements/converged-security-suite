@@ -1,4 +1,4 @@
-package cbnt
+package bootguard
 
 import "testing"
 

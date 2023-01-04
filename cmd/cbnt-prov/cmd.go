@@ -15,7 +15,7 @@ import (
 
 	"github.com/linuxboot/fiano/pkg/uefi"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/provisioning/cbnt"
+	"github.com/9elements/converged-security-suite/v2/pkg/provisioning/bootguard"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
@@ -233,10 +233,10 @@ func (kmp *kmPrintCmd) Run(ctx *context) error {
 		return err
 	}
 	var km *key.Manifest
-	_, kmEntry, _, err := cbnt.ParseFITEntries(data)
+	_, kmEntry, _, err := bootguard.ParseFITEntries(data)
 	if err != nil {
 		reader := bytes.NewReader(data)
-		km, err = cbnt.ParseKM(reader)
+		km, err = bootguard.ParseKM(reader)
 		if err != nil {
 			return err
 		}
@@ -261,10 +261,10 @@ func (bpmp *bpmPrintCmd) Run(ctx *context) error {
 		return err
 	}
 	var bpm *bootpolicy.Manifest
-	bpmEntry, _, _, err := cbnt.ParseFITEntries(data)
+	bpmEntry, _, _, err := bootguard.ParseFITEntries(data)
 	if err != nil {
 		reader := bytes.NewReader(data)
-		bpm, err = cbnt.ParseBPM(reader)
+		bpm, err = bootguard.ParseBPM(reader)
 		if err != nil {
 			return err
 		}
@@ -288,7 +288,7 @@ func (acmp *acmPrintCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	_, _, acmEntry, err := cbnt.ParseFITEntries(data)
+	_, _, acmEntry, err := bootguard.ParseFITEntries(data)
 	if err == nil {
 		data = acmEntry.DataSegmentBytes
 	}
@@ -316,7 +316,7 @@ func (biosp *biosPrintCmd) Run(ctx *context) error {
 		return err
 	}
 	fmt.Printf("%s", table.String())
-	err = cbnt.PrintCBnTStructures(data)
+	err = bootguard.PrintCBnTStructures(data)
 	if err != nil {
 		return err
 	}
@@ -332,7 +332,7 @@ func (acme *acmExportCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	err = cbnt.WriteCBnTStructures(data, nil, nil, acmfile)
+	err = bootguard.WriteCBnTStructures(data, nil, nil, acmfile)
 	if err != nil {
 		return err
 	}
@@ -348,7 +348,7 @@ func (kme *kmExportCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	err = cbnt.WriteCBnTStructures(data, nil, kmfile, nil)
+	err = bootguard.WriteCBnTStructures(data, nil, kmfile, nil)
 	if err != nil {
 		return err
 	}
@@ -364,7 +364,7 @@ func (bpme *bpmExportCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	err = cbnt.WriteCBnTStructures(data, bpmfile, nil, nil)
+	err = bootguard.WriteCBnTStructures(data, bpmfile, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -372,16 +372,16 @@ func (bpme *bpmExportCmd) Run(ctx *context) error {
 }
 
 func (g *generateKMCmd) Run(ctx *context) error {
-	var options *cbnt.Options
+	var options *bootguard.Options
 	if g.Config != "" {
-		cbnto, err := cbnt.ParseConfig(g.Config)
+		cbnto, err := bootguard.ParseConfig(g.Config)
 		if err != nil {
 			return err
 		}
 		options = cbnto
 	} else {
 		var err error
-		var cbnto cbnt.Options
+		var cbnto bootguard.Options
 		tmpKM := key.NewManifest()
 		tmpKM.Revision = g.Revision
 		tmpKM.KMSVN = g.SVN
@@ -398,7 +398,7 @@ func (g *generateKMCmd) Run(ctx *context) error {
 			if err != nil {
 				return err
 			}
-			kh, err := cbnt.GetBPMPubHash(g.BpmPubkey, bpmha)
+			kh, err := bootguard.GetBPMPubHash(g.BpmPubkey, bpmha)
 			if err != nil {
 				return err
 			}
@@ -410,7 +410,7 @@ func (g *generateKMCmd) Run(ctx *context) error {
 		options = &cbnto
 	}
 
-	key, err := cbnt.ReadPubKey(g.Key)
+	key, err := bootguard.ReadPubKey(g.Key)
 	if err != nil {
 		return err
 	}
@@ -425,7 +425,7 @@ func (g *generateKMCmd) Run(ctx *context) error {
 			}
 		}
 	}
-	bKM, err := cbnt.WriteKM(options.KeyManifest)
+	bKM, err := bootguard.WriteKM(options.KeyManifest)
 	if err != nil {
 		return err
 	}
@@ -434,7 +434,7 @@ func (g *generateKMCmd) Run(ctx *context) error {
 		if err != nil {
 			return err
 		}
-		if err := cbnt.WriteConfig(out, options); err != nil {
+		if err := bootguard.WriteConfig(out, options); err != nil {
 			return err
 		}
 	}
@@ -450,15 +450,15 @@ func (g *generateKMCmd) Run(ctx *context) error {
 }
 
 func (g *generateBPMCmd) Run(ctx *context) error {
-	var options *cbnt.Options
+	var options *bootguard.Options
 	if g.Config != "" {
-		cbnto, err := cbnt.ParseConfig(g.Config)
+		cbnto, err := bootguard.ParseConfig(g.Config)
 		if err != nil {
 			return err
 		}
 		options = cbnto
 	} else {
-		var cbnto cbnt.Options
+		var cbnto bootguard.Options
 		cbnto.BootPolicyManifest = bootpolicy.NewManifest()
 		cbnto.KeyManifest = key.NewManifest()
 		cbnto.BootPolicyManifest.BPMH.BPMRevision = g.Revision
@@ -493,7 +493,7 @@ func (g *generateBPMCmd) Run(ctx *context) error {
 			se.DigestList.List[iterator].HashAlg = ibbhashalgs[iterator]
 		}
 
-		ibbs, err := cbnt.FindAdditionalIBBs(g.BIOS)
+		ibbs, err := bootguard.FindAdditionalIBBs(g.BIOS)
 		if err != nil {
 			return fmt.Errorf("FindAdditionalIBBs: %w", err)
 		}
@@ -518,7 +518,7 @@ func (g *generateBPMCmd) Run(ctx *context) error {
 		options = &cbnto
 	}
 
-	bpm, err := cbnt.GenerateBPM(options, g.BIOS)
+	bpm, err := bootguard.GenerateBPM(options, g.BIOS)
 	if err != nil {
 		return fmt.Errorf("GenerateBPM: %w", err)
 	}
@@ -532,11 +532,11 @@ func (g *generateBPMCmd) Run(ctx *context) error {
 		if err != nil {
 			return err
 		}
-		if err := cbnt.WriteConfig(out, options); err != nil {
+		if err := bootguard.WriteConfig(out, options); err != nil {
 			return err
 		}
 	}
-	bBPM, err := cbnt.WriteBPM(bpm)
+	bBPM, err := bootguard.WriteBPM(bpm)
 	if err != nil {
 		return err
 	}
@@ -549,9 +549,9 @@ func (g *generateBPMCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (g *generateACMCmd) config() (*cbnt.Options, error) {
+func (g *generateACMCmd) config() (*bootguard.Options, error) {
 	if g.ConfigIn != "" {
-		config, err := cbnt.ParseConfig(g.ConfigIn)
+		config, err := bootguard.ParseConfig(g.ConfigIn)
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse config file '%s': %w", g.ConfigIn, err)
 		}
@@ -577,7 +577,7 @@ func (g *generateACMCmd) config() (*cbnt.Options, error) {
 	acmHeaders.SegSel = g.SegSel
 	acmHeaders.EntryPoint = g.EntryPoint
 	acmHeaders.KeySize.SetSize(384)
-	return &cbnt.Options{
+	return &bootguard.Options{
 		ACMHeaders: &acmHeaders,
 	}, nil
 }
@@ -593,7 +593,7 @@ func (g *generateACMCmd) Run(ctx *context) error {
 		if err != nil {
 			return err
 		}
-		if err := cbnt.WriteConfig(out, config); err != nil {
+		if err := bootguard.WriteConfig(out, config); err != nil {
 			return err
 		}
 	}
@@ -630,7 +630,7 @@ func (s *signKMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	privkey, err := cbnt.DecryptPrivKey(encKey, s.Password)
+	privkey, err := bootguard.DecryptPrivKey(encKey, s.Password)
 	if err != nil {
 		return err
 	}
@@ -653,7 +653,7 @@ func (s *signKMCmd) Run(ctx *context) error {
 	if err = km.SetSignature(signAlgo, km.PubKeyHashAlg, privkey.(crypto.Signer), unsignedKM); err != nil {
 		return err
 	}
-	bKMSigned, err := cbnt.WriteKM(&km)
+	bKMSigned, err := bootguard.WriteKM(&km)
 	if err != nil {
 		return err
 	}
@@ -668,7 +668,7 @@ func (s *signBPMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	key, err := cbnt.DecryptPrivKey(encKey, s.Password)
+	key, err := bootguard.DecryptPrivKey(encKey, s.Password)
 	if err != nil {
 		return err
 	}
@@ -696,7 +696,7 @@ func (s *signBPMCmd) Run(ctx *context) error {
 		return fmt.Errorf("invalid key type")
 	}
 	bpm.PMSE = *kAs
-	bpmRaw, err = cbnt.WriteBPM(&bpm)
+	bpmRaw, err = bootguard.WriteBPM(&bpm)
 	if err != nil {
 		return err
 	}
@@ -707,7 +707,7 @@ func (s *signBPMCmd) Run(ctx *context) error {
 	if err != nil {
 		return fmt.Errorf("unable to make a signature: %w", err)
 	}
-	bBPMSigned, err := cbnt.WriteBPM(&bpm)
+	bBPMSigned, err := bootguard.WriteBPM(&bpm)
 	if err != nil {
 		return err
 	}
@@ -718,7 +718,7 @@ func (s *signBPMCmd) Run(ctx *context) error {
 }
 
 func (t *templateCmd) Run(ctx *context) error {
-	var cbnto cbnt.Options
+	var cbnto bootguard.Options
 	cbnto.BootPolicyManifest = bootpolicy.NewManifest()
 	cbnto.KeyManifest = key.NewManifest()
 
@@ -769,7 +769,7 @@ func (t *templateCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	if err := cbnt.WriteConfig(out, &cbnto); err != nil {
+	if err := bootguard.WriteConfig(out, &cbnto); err != nil {
 		return err
 	}
 	return nil
@@ -780,7 +780,7 @@ func (rc *readConfigCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	_, err = cbnt.ReadConfigFromBIOSImage(rc.BIOS, f)
+	_, err = bootguard.ReadConfigFromBIOSImage(rc.BIOS, f)
 	if err != nil {
 		return err
 	}
@@ -796,7 +796,7 @@ func (s *stitchingKMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	pub, err := cbnt.ReadPubKey(s.PubKey)
+	pub, err := bootguard.ReadPubKey(s.PubKey)
 	if err != nil {
 		return err
 	}
@@ -804,11 +804,11 @@ func (s *stitchingKMCmd) Run(ctx *context) error {
 		return fmt.Errorf("loaded files are empty")
 	}
 	reader := bytes.NewReader(kmData)
-	km, err := cbnt.ParseKM(reader)
+	km, err := bootguard.ParseKM(reader)
 	if err != nil {
 		return err
 	}
-	kmRaw, err := cbnt.StitchKM(km, pub, sig)
+	kmRaw, err := bootguard.StitchKM(km, pub, sig)
 	if err != nil {
 		return err
 	}
@@ -827,7 +827,7 @@ func (s *stitchingBPMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	pub, err := cbnt.ReadPubKey(s.PubKey)
+	pub, err := bootguard.ReadPubKey(s.PubKey)
 	if err != nil {
 		return err
 	}
@@ -835,11 +835,11 @@ func (s *stitchingBPMCmd) Run(ctx *context) error {
 		return fmt.Errorf("loaded files are empty")
 	}
 	reader := bytes.NewReader(bpmData)
-	bpm, err := cbnt.ParseBPM(reader)
+	bpm, err := bootguard.ParseBPM(reader)
 	if err != nil {
 		return err
 	}
-	bpmRaw, err := cbnt.StitchBPM(bpm, pub, sig)
+	bpmRaw, err := bootguard.StitchBPM(bpm, pub, sig)
 	if err != nil {
 		return err
 	}
@@ -875,7 +875,7 @@ func (s *stitchingCmd) Run(ctx *context) error {
 	if len(acm) == 0 && len(km) == 0 && len(bpm) == 0 && len(me) == 0 {
 		return fmt.Errorf("at least one optional parameter required")
 	}
-	if err := cbnt.StitchFITEntries(s.BIOS, acm, bpm, km); err != nil {
+	if err := bootguard.StitchFITEntries(s.BIOS, acm, bpm, km); err != nil {
 		return err
 	}
 	if len(me) != 0 {
@@ -926,22 +926,22 @@ func (k *keygenCmd) Run(ctx *context) error {
 
 	switch k.Algo {
 	case "RSA2048":
-		err := cbnt.GenRSAKey(2048, k.Password, kmPubFile, kmPrivFile, bpmPubFile, bpmPrivFile)
+		err := bootguard.GenRSAKey(2048, k.Password, kmPubFile, kmPrivFile, bpmPubFile, bpmPrivFile)
 		if err != nil {
 			return err
 		}
 	case "RSA3072":
-		err := cbnt.GenRSAKey(3072, k.Password, kmPubFile, kmPrivFile, bpmPubFile, bpmPrivFile)
+		err := bootguard.GenRSAKey(3072, k.Password, kmPubFile, kmPrivFile, bpmPubFile, bpmPrivFile)
 		if err != nil {
 			return err
 		}
 	case "ECC224":
-		err := cbnt.GenECCKey(224, k.Password, kmPubFile, kmPrivFile, bpmPubFile, bpmPrivFile)
+		err := bootguard.GenECCKey(224, k.Password, kmPubFile, kmPrivFile, bpmPubFile, bpmPrivFile)
 		if err != nil {
 			return err
 		}
 	case "ECC256":
-		err := cbnt.GenECCKey(256, k.Password, kmPubFile, kmPrivFile, bpmPubFile, bpmPrivFile)
+		err := bootguard.GenECCKey(256, k.Password, kmPubFile, kmPrivFile, bpmPubFile, bpmPrivFile)
 		if err != nil {
 			return err
 		}

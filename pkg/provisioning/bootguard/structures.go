@@ -1,4 +1,4 @@
-package cbnt
+package bootguard
 
 // CMOSIoAddress holds information about the location of on-demand power down requests in CMOS.
 // The structure is a substructure used in PowerDownRequest structure.
