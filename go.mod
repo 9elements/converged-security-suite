@@ -16,7 +16,6 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/klauspost/cpuid/v2 v2.2.3
 	github.com/linuxboot/contest v1.0.1
-	github.com/linuxboot/fiano v1.1.4-0.20230104202748-2e7c17328522
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/marcoguerri/go-tpm-tcti v0.0.0-20210425104733-8e8c8fe68e60
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3
@@ -50,6 +49,7 @@ require (
 	github.com/intel-go/cpuid v0.0.0-20220614022739-219e067757cb // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/linuxboot/fiano v1.1.4-0.20230112160421-8a127a636eef // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
