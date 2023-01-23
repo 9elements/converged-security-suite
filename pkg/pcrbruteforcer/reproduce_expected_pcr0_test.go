@@ -54,7 +54,7 @@ func TestReproduceExpectedPCR0(t *testing.T) {
 				registers.ParseACMPolicyStatusRegister(acmReg),
 			}),
 		}
-		measurements, _, debugInfo, err := pcr.GetMeasurements(firmware, 0, measureOptions...)
+		measurements, _, debugInfo, err := pcr.GetMeasurements(ctx, firmware, 0, measureOptions...)
 		require.NoError(t, err, fmt.Sprintf("debugInfo: '%v'", debugInfo))
 
 		ctx := context.Background()
@@ -123,7 +123,7 @@ func BenchmarkReproduceExpectedPCR0(b *testing.B) {
 					registers.ParseACMPolicyStatusRegister(correctACMRegValue + acmCorruption),
 				}),
 			}
-			measurements, _, _, err := pcr.GetMeasurements(firmware, 0, measureOptions...)
+			measurements, _, _, err := pcr.GetMeasurements(ctx, firmware, 0, measureOptions...)
 			if err != nil {
 				b.Fatal(err)
 			}

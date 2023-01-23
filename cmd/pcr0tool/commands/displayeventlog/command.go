@@ -1,6 +1,7 @@
 package displayeventlog
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -48,7 +49,7 @@ func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
 // start the execution of the command.
 //
 // `args` are the arguments left unused by verb itself and options.
-func (cmd Command) Execute(args []string) {
+func (cmd Command) Execute(ctx context.Context, args []string) {
 	if len(args) > 0 {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "error: too many parameters\n")
 		usageAndExit()

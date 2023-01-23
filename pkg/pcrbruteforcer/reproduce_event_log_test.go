@@ -1,6 +1,7 @@
 package pcrbruteforcer
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
@@ -11,9 +12,13 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
 	"github.com/9elements/converged-security-suite/v2/testdata/firmware"
+	"github.com/facebookincubator/go-belt/tool/logger"
+	"github.com/facebookincubator/go-belt/tool/logger/implementation/logrus"
 	"github.com/google/go-tpm/tpm2"
 	"github.com/stretchr/testify/require"
 )
+
+var ctx = logger.CtxWithLogger(context.Background(), logrus.Default().WithLevel(logger.LevelTrace))
 
 func unhex(fataler fataler, h string) []byte {
 	b, err := hex.DecodeString(h)
@@ -88,7 +93,7 @@ func TestReproduceEventLog(t *testing.T) {
 	}
 
 	t.Run("simple", func(t *testing.T) {
-		measurements, _, debugInfo, err := pcr.GetMeasurements(firmware, 0, measureOptions...)
+		measurements, _, debugInfo, err := pcr.GetMeasurements(ctx, firmware, 0, measureOptions...)
 		require.NoError(t, err, fmt.Sprintf("debugInfo: '%v'", debugInfo))
 
 		eventLog := getTPMEventLog(t)
@@ -103,7 +108,7 @@ func TestReproduceEventLog(t *testing.T) {
 	t.Run("corrupted_ACM_POLICY_STATUS", func(t *testing.T) {
 		regs[0] = registers.ParseACMPolicyStatusRegister(0x0000000200108682)
 
-		measurements, _, debugInfo, err := pcr.GetMeasurements(firmware, 0, measureOptions...)
+		measurements, _, debugInfo, err := pcr.GetMeasurements(ctx, firmware, 0, measureOptions...)
 		require.NoError(t, err, fmt.Sprintf("debugInfo: '%v'", debugInfo))
 
 		eventLog := getTPMEventLog(t)
@@ -119,7 +124,7 @@ func TestReproduceEventLog(t *testing.T) {
 	})
 
 	t.Run("extra_TPMEventLog_entries", func(t *testing.T) {
-		measurements, _, debugInfo, err := pcr.GetMeasurements(firmware, 0, measureOptions...)
+		measurements, _, debugInfo, err := pcr.GetMeasurements(ctx, firmware, 0, measureOptions...)
 		require.NoError(t, err, fmt.Sprintf("debugInfo: '%v'", debugInfo))
 
 		eventLog := getTPMEventLog(t)
@@ -166,7 +171,7 @@ func BenchmarkReproduceEventLog(b *testing.B) {
 			registers.ParseACMPolicyStatusRegister(0x000000020010868A),
 		}),
 	}
-	measurements, _, debugInfo, err := pcr.GetMeasurements(firmware, 0, measureOptions...)
+	measurements, _, debugInfo, err := pcr.GetMeasurements(ctx, firmware, 0, measureOptions...)
 	require.NoError(b, err, fmt.Sprintf("debugInfo: '%v'", debugInfo))
 
 	eventLog := getTPMEventLog(b)

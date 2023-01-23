@@ -8,7 +8,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e
 	github.com/edsrzf/mmap-go v1.1.0
-	github.com/facebookincubator/go-belt v0.0.0-20221130102226-a78fd808461b
+	github.com/facebookincubator/go-belt v0.0.0-20230119144706-62080641a285
 	github.com/fearful-symmetry/gomsr v0.0.1
 	github.com/golang-collections/go-datastructures v0.0.0-20150211160725-59788d5eb259
 	github.com/google/go-attestation v0.4.3
@@ -30,7 +30,6 @@ require (
 )
 
 require (
-	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/go-ng/slices v0.0.0-20220616195238-b8d239c57d65 // indirect
 	github.com/go-ng/sort v0.0.0-20220617173827-2cc7cd04f7c7 // indirect
 	github.com/go-ng/xsort v0.0.0-20220617174223-1d146907bccc // indirect
@@ -42,7 +41,12 @@ require (
 	github.com/intel-go/cpuid v0.0.0-20220614022739-219e067757cb // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
+	github.com/sirupsen/logrus v1.9.0 // indirect
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d // indirect
+)
+
+require (
+	github.com/dustin/go-humanize v1.0.0 // indirect
 	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/term v0.4.0 // indirect
 	golang.org/x/text v0.6.0 // indirect

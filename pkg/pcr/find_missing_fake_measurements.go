@@ -2,6 +2,7 @@ package pcr
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha1"
 	"hash"
 	"runtime"
@@ -18,6 +19,7 @@ import (
 //
 // See also `pcr.SetFindMissingFakeMeasurements`.
 func findMissingFakeMeasurements(
+	ctx context.Context,
 	firmware Firmware,
 	pcrID ID,
 	measurements Measurements,
@@ -52,11 +54,12 @@ func findMissingFakeMeasurements(
 	// * "Job" is an executed solver to get results for a problem.
 	// * "Task" is a single check of one byte range.
 
-	job := runFindMissingFakeMeasurementsJob(firmware, pcrID, measurements, measureOpts...)
+	job := runFindMissingFakeMeasurementsJob(ctx, firmware, pcrID, measurements, measureOpts...)
 	return job.Result()
 }
 
 type findMissingFakeMeasurementsJob struct {
+	ctx              context.Context
 	firmware         Firmware
 	pcrID            ID
 	measureOpts      []MeasureOption
@@ -78,6 +81,7 @@ func (task *findMissingFakeMeasurementsTask) RangeLength() uint64 {
 }
 
 func runFindMissingFakeMeasurementsJob(
+	ctx context.Context,
 	firmware Firmware,
 	pcrID ID,
 	measurements Measurements,
@@ -119,6 +123,7 @@ func runFindMissingFakeMeasurementsJob(
 	// Constructing the job:
 
 	job := &findMissingFakeMeasurementsJob{
+		ctx:              ctx,
 		firmware:         firmware,
 		pcrID:            pcrID,
 		measureOpts:      measureOpts,
@@ -283,7 +288,7 @@ func (job *findMissingFakeMeasurementsJob) processTask(
 
 	var measurementsDamaged Measurements
 	if firmwareDamaged != nil {
-		measurementsDamaged, _, _, _ = GetMeasurements(firmwareDamaged, job.pcrID, job.measureOpts...)
+		measurementsDamaged, _, _, _ = GetMeasurements(job.ctx, firmwareDamaged, job.pcrID, job.measureOpts...)
 	}
 
 	// Checking the result.
