@@ -20,12 +20,14 @@ import (
 // SettingsReproduceEventLog defines settings for internal bruteforce algorithms used in ReproduceEventLog
 type SettingsReproduceEventLog struct {
 	SettingsBruteforceACMPolicyStatus
+	DisabledEventsMaxDistance uint64
 }
 
 // DefaultSettingsReproduceEventLog returns recommended default PCR0 settings
 func DefaultSettingsReproduceEventLog() SettingsReproduceEventLog {
 	return SettingsReproduceEventLog{
 		SettingsBruteforceACMPolicyStatus: DefaultSettingsBruteforceACMPolicyStatus(),
+		DisabledEventsMaxDistance:         2, // arbitrary value based on previous experience, hoping to handle within a second; TODO: add benchmarks
 	}
 }
 
@@ -62,7 +64,13 @@ func ReproduceEventLog(
 		return false, nil, issues, fmt.Errorf("TPM EventLog is not provided")
 	}
 
-	events, measurements, measurementDigests, alignIssues, err := alignEventsAndMeasurements(eventLog, inMeasurements, imageBytes, hashAlgo)
+	events, measurements, measurementDigests, alignIssues, err := alignEventsAndMeasurements(
+		&settings,
+		eventLog,
+		inMeasurements,
+		imageBytes,
+		hashAlgo,
+	)
 	issues = append(issues, alignIssues...)
 	if err != nil {
 		return false, nil, issues, fmt.Errorf("unable to align Events and Measurements: %w", err)
@@ -223,6 +231,7 @@ func bruteForceACMPolicyStatus(
 }
 
 func alignEventsAndMeasurements(
+	settings *SettingsReproduceEventLog,
 	eventLog *tpmeventlog.TPMEventLog,
 	inMeasurements pcr.Measurements,
 	imageBytes []byte,
@@ -270,7 +279,12 @@ func alignEventsAndMeasurements(
 		inMeasurementDigests = append(inMeasurementDigests, hash)
 	}
 
-	disabledEvents, disabledMeasurements, distance, err := bruteForceAlignedEventsAndMeasurements(inEvents, inMeasurements, inMeasurementDigests)
+	disabledEvents, disabledMeasurements, distance, err := bruteForceAlignedEventsAndMeasurements(
+		settings,
+		inEvents,
+		inMeasurements,
+		inMeasurementDigests,
+	)
 	if distance == 0 {
 		measurements = inMeasurements
 		measurementDigests = inMeasurementDigests
@@ -333,6 +347,7 @@ func alignEventsAndMeasurements(
 // * We disable an event or a measurement only if it does not match by both: type and digest.
 // * Prefer digest match over type match.
 func bruteForceAlignedEventsAndMeasurements(
+	settings *SettingsReproduceEventLog,
 	events []*tpmeventlog.Event,
 	measurements pcr.Measurements,
 	measurementDigests [][]byte,
@@ -436,7 +451,7 @@ func bruteForceAlignedEventsAndMeasurements(
 		disabledEvents,
 		1,
 		0,
-		5, // arbitrary value based on previous experience, hoping to handle within a second; TODO: add benchmarks
+		settings.DisabledEventsMaxDistance,
 		func() (any, error) {
 			_newDisabledMeasurements := make([]bool, len(disabledMeasurements))
 			copy(_newDisabledMeasurements, disabledMeasurements)
