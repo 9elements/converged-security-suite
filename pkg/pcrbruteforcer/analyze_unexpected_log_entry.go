@@ -21,6 +21,7 @@ type logEntryExplanation struct {
 	Measurement     *pcr.Measurement
 	RelatedNodes    []diff.NodeInfo
 	EventDataParsed *tpmeventlog.EventDataParsed
+	DigestGuesses   [][]byte
 }
 
 func formatMeasurement(m pcr.Measurement) string {
@@ -53,6 +54,9 @@ func (e logEntryExplanation) String() string {
 	if len(e.RelatedNodes) != 0 {
 		details = append(details, fmt.Sprintf("related UEFI nodes: %s", e.RelatedNodes))
 	}
+	for _, digest := range e.DigestGuesses {
+		details = append(details, fmt.Sprintf("possible digest: %X", digest))
+	}
 
 	if len(details) == 0 {
 		return "<unable to get any info>"
@@ -65,28 +69,39 @@ func (e logEntryExplanation) guessMeasurement(
 	expectedMeasurement *pcr.Measurement,
 	ev *tpmeventlog.Event,
 	image []byte,
-) *pcr.Measurement {
+) (m *pcr.Measurement, digests [][]byte) {
+	var digest []byte
+
 	if e.EventDataParsed != nil {
-		m := e.guessMeasurementFromEventRanges(
+		m, digest = e.guessMeasurementFromEventRanges(
 			expectedMeasurement,
 			ev,
 			image,
 		)
+		if digest != nil {
+			digests = append(digests, digest)
+		}
 		if m != nil {
-			return m
+			return
 		}
 	}
 
-	return e.guessMeasurementFromEventRawData(
+	m, digest = e.guessMeasurementFromEventRawData(
 		expectedMeasurement,
 		ev,
 	)
+	if m != nil {
+		// RawData is a pretty wild guess and more likely to mislead rather
+		// than to give a hint so do not include the digest unless it matches.
+		digests = append(digests, digest)
+	}
+	return
 }
 
 func (e logEntryExplanation) guessMeasurementFromEventRawData(
 	expectedMeasurement *pcr.Measurement,
 	ev *tpmeventlog.Event,
-) *pcr.Measurement {
+) (*pcr.Measurement, []byte) {
 	return tryMeasurement(expectedMeasurement, ev, nil, pcr.DataChunks{{ID: pcr.DataChunkIDUnknown, ForceData: ev.Data}})
 }
 
@@ -94,7 +109,7 @@ func (e logEntryExplanation) guessMeasurementFromEventRanges(
 	expectedMeasurement *pcr.Measurement,
 	ev *tpmeventlog.Event,
 	image []byte,
-) *pcr.Measurement {
+) (*pcr.Measurement, []byte) {
 	var chunks pcr.DataChunks
 	for _, r := range e.EventDataParsed.Ranges {
 		if isPhysAddr(r.Offset, uint64(len(image))) {
@@ -120,7 +135,7 @@ func tryMeasurement(
 	ev *tpmeventlog.Event,
 	image []byte,
 	chunks pcr.DataChunks,
-) *pcr.Measurement {
+) (*pcr.Measurement, []byte) {
 	measurementID := pcr.MeasurementIDUnknown
 	if expectedMeasurement != nil {
 		measurementID = expectedMeasurement.ID
@@ -138,9 +153,9 @@ func tryMeasurement(
 		panic(err) // should never happen
 	}
 	if !bytes.Equal(ev.Digest.Digest, digest) {
-		return nil
+		return nil, digest
 	}
-	return measurement
+	return measurement, digest
 }
 
 func isPhysAddr(addr, imageSize uint64) bool {
@@ -204,7 +219,7 @@ func explainLogEntry(
 	//if err != nil {
 	//	TODO: print the error
 	//}
-	result.Measurement = result.guessMeasurement(expectedMeasurement, ev, image)
+	result.Measurement, result.DigestGuesses = result.guessMeasurement(expectedMeasurement, ev, image)
 
 	result.calculateRelatedNodes(image)
 	return result
