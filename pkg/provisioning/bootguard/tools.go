@@ -1,6 +1,7 @@
 package bootguard
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -40,10 +41,7 @@ func WriteCBnTStructures(image []byte, bpmFile, kmFile, acmFile *os.File) error 
 // PrintStructures takes a firmware image and prints boot policy manifest, key manifest, ACM, chipset, processor and tpm information if available.
 func PrintStructures(image []byte) error {
 	var acm *tools.ACM
-	var chipsets *tools.Chipsets
-	var processors *tools.Processors
-	var tpms *tools.TPMs
-	var err, err2 error
+	var err error
 	bpmEntry, kmEntry, acmEntry, err := ParseFITEntries(image)
 	if err != nil {
 		return err
@@ -59,19 +57,14 @@ func PrintStructures(image []byte) error {
 		return fmt.Errorf("unable to parse KM: %w", err)
 	}
 
-	acm, chipsets, processors, tpms, err, err2 = tools.ParseACM(acmEntry.DataSegmentBytes)
-	if err != nil || err2 != nil {
+	acm, err = tools.ParseACM(bytes.NewReader(acmEntry.DataSegmentBytes))
+	if err != nil {
 		return err
 	}
-
 	km.PrintKM()
 	bpm.PrintBPM()
-
 	if acm != nil {
 		acm.PrettyPrint()
-		chipsets.PrettyPrint()
-		processors.PrettyPrint()
-		tpms.PrettyPrint()
 	}
 	return nil
 }

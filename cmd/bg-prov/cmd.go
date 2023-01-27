@@ -12,11 +12,11 @@ import (
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntbootpolicy"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntkey"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/common/bgheader"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 
 	"github.com/linuxboot/fiano/pkg/uefi"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/provisioning/acm"
 	"github.com/9elements/converged-security-suite/v2/pkg/provisioning/bootguard"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 )
@@ -105,7 +105,31 @@ type bpmExportCmd struct {
 	Out  string `arg required name:"out" help:"Path to the newly generated BPM binary file." type:"path"`
 }
 
-type generateACMCmd struct {
+type generateACMCmdv3 struct {
+	ACMOut           string `arg required name:"acm" help:"Path to the newly generated ACM headers binary file." type:"path"`
+	ConfigIn         string `flag optional name:"config" help:"Path to the JSON config file." type:"path"`
+	ConfigOut        string `flag optional name:"out" help:"Path to write applied config to" type:"path"`
+	BodyPath         string `flag optional name:"bodypath" help:"Path to the ACM body" type:"path"`
+	RSAPrivateKeyPEM string `flag optional name:"rsaprivkeypem" help:"RSA key used to sign the ACM" type:"path"`
+
+	ModuleType      fit.ACModuleType    `flag optional name:"moduletype"`
+	ModuleSubType   fit.ACModuleSubType `flag optional name:"modulesubtype"`
+	ChipsetID       fit.ACChipsetID     `flag optional name:"chipsetid"`
+	Flags           fit.ACFlags         `flag optional name:"flags"`
+	ModuleVendor    fit.ACModuleVendor  `flag optional name:"modulevendor"`
+	Date            fit.BCDDate         `flag optional name:"date"`
+	Size            uint64              `flag optional name:"size"`
+	TXTSVN          fit.TXTSVN          `flag optional name:"txtsvn"`
+	SESVN           fit.SESVN           `flag optional name:"sesvn"`
+	CodeControl     fit.CodeControl     `flag optional name:"codecontrol"`
+	ErrorEntryPoint fit.ErrorEntryPoint `flag optional name:"errorentrypoint"`
+	GDTLimit        fit.GDTLimit        `flag optional name:"gdtlimit"`
+	GDTBasePtr      fit.GDTBasePtr      `flag optional name:"gdtbaseptr"`
+	SegSel          fit.SegSel          `flag optional name:"segsel"`
+	EntryPoint      fit.EntryPoint      `flag optional name:"entrypoint"`
+}
+
+type generateACMCmdv0 struct {
 	ACMOut           string `arg required name:"acm" help:"Path to the newly generated ACM headers binary file." type:"path"`
 	ConfigIn         string `flag optional name:"config" help:"Path to the JSON config file." type:"path"`
 	ConfigOut        string `flag optional name:"out" help:"Path to write applied config to" type:"path"`
@@ -284,69 +308,45 @@ func (v *versionCmd) Run(ctx *context) error {
 }
 
 func (kmp *kmPrintCmd) Run(ctx *context) error {
-	data, err := os.ReadFile(kmp.Path)
+	file, err := os.Open(kmp.Path)
 	if err != nil {
 		return err
 	}
-	var bg *bootguard.BootGuard
-	_, kmEntry, _, err := bootguard.ParseFITEntries(data)
+	defer file.Close()
+	bg, err := bootguard.NewKM(file)
 	if err != nil {
-		bg, err = bootguard.NewKM(bytes.NewReader(data))
-		if err != nil {
-			return err
-		}
-	} else {
-		bg, err = bootguard.NewKM(kmEntry.Reader())
-		if err != nil {
-			return err
-		}
+		return err
+
 	}
 	bg.PrintKM()
 	return nil
 }
 
 func (bpmp *bpmPrintCmd) Run(ctx *context) error {
-	data, err := os.ReadFile(bpmp.Path)
+	file, err := os.Open(bpmp.Path)
 	if err != nil {
 		return err
 	}
-	bpmEntry, _, _, err := bootguard.ParseFITEntries(data)
-	var bg *bootguard.BootGuard
+	defer file.Close()
+	bg, err := bootguard.NewBPM(file)
 	if err != nil {
-		bg, err = bootguard.NewBPM(bytes.NewReader(data))
-		if err != nil {
-			return err
-		}
-	} else {
-		bg, err = bootguard.NewBPM(bpmEntry.Reader())
-		if err != nil {
-			return err
-		}
+		return err
 	}
 	bg.PrintBPM()
 	return nil
 }
 
 func (acmp *acmPrintCmd) Run(ctx *context) error {
-	data, err := os.ReadFile(acmp.Path)
+	file, err := os.Open(acmp.Path)
 	if err != nil {
 		return err
 	}
-	_, _, acmEntry, err := bootguard.ParseFITEntries(data)
-	if err == nil {
-		data = acmEntry.DataSegmentBytes
-	}
-	acm, chipsets, processors, tpms, err, err2 := tools.ParseACM(data)
+	defer file.Close()
+	acm, err := tools.ParseACM(file)
 	if err != nil {
 		return err
-	}
-	if err2 != nil {
-		return err2
 	}
 	acm.PrettyPrint()
-	chipsets.PrettyPrint()
-	processors.PrettyPrint()
-	tpms.PrettyPrint()
 	return nil
 }
 
@@ -417,6 +417,7 @@ func (bpme *bpmExportCmd) Run(ctx *context) error {
 
 func (g *generateKMCmdv1) Run(ctx *context) error {
 	var b bootguard.BootGuard
+	b.Version = bgheader.Version10
 	if g.Config != "" {
 		err := b.ReadJSON(g.Config)
 		if err != nil {
@@ -480,6 +481,7 @@ func (g *generateKMCmdv1) Run(ctx *context) error {
 
 func (g *generateKMCmdv2) Run(ctx *context) error {
 	var b bootguard.BootGuard
+	b.Version = bgheader.Version20
 	if g.Config != "" {
 		err := b.ReadJSON(g.Config)
 		if err != nil {
@@ -639,49 +641,56 @@ func (g *generateBPMCmdv2) Run(ctx *context) error {
 	return nil
 }
 
-func (g *generateACMCmd) newACM() (*fit.EntrySACMData3, error) {
+func (g *generateACMCmdv3) Run(ctx *context) error {
+	var sACM fit.EntrySACM
+	var sACMData *fit.EntrySACMData
 	if g.ConfigIn != "" {
-		return acm.ReadACM(g.ConfigIn)
-	}
-	var acmHeaders fit.EntrySACMData3
-	acmHeaders.HeaderVersion = fit.ACHeaderVersion3
-	acmHeaders.HeaderLen.SetSize(uint64(binary.Size(acmHeaders)))
-	acmHeaders.ModuleType = g.ModuleType
-	acmHeaders.ModuleSubType = g.ModuleSubType
-	acmHeaders.ChipsetID = g.ChipsetID
-	acmHeaders.Flags = g.Flags
-	acmHeaders.ModuleVendor = g.ModuleVendor
-	acmHeaders.Date = g.Date
-	acmHeaders.Size.SetSize(g.Size)
-	acmHeaders.TXTSVN = g.TXTSVN
-	acmHeaders.SESVN = g.SESVN
-	acmHeaders.CodeControl = g.CodeControl
-	acmHeaders.ErrorEntryPoint = g.ErrorEntryPoint
-	acmHeaders.GDTLimit = g.GDTLimit
-	acmHeaders.GDTBasePtr = g.GDTBasePtr
-	acmHeaders.SegSel = g.SegSel
-	acmHeaders.EntryPoint = g.EntryPoint
-	acmHeaders.KeySize.SetSize(384)
-	return &acmHeaders, nil
-}
-
-func (g *generateACMCmd) Run(ctx *context) error {
-	config, err := g.newACM()
-	if err != nil {
-		return fmt.Errorf("unable to construct basic ACM headers from the provided config: %w", err)
-	}
-	if g.ConfigOut != "" {
-		out, err := os.Create(g.ConfigOut)
+		data, err := os.ReadFile(g.ConfigIn)
 		if err != nil {
 			return err
 		}
-		if err := acm.WriteACM(out, config); err != nil {
+		if err := sACM.UnmarshalJSON(data); err != nil {
 			return err
 		}
+		sACMData, err = sACM.ParseData()
+		if err != nil {
+			return err
+		}
+	} else {
+		var acmHeaders fit.EntrySACMData3
+		acmHeaders.HeaderVersion = fit.ACHeaderVersion3
+		acmHeaders.HeaderLen.SetSize(uint64(binary.Size(acmHeaders)))
+		acmHeaders.ModuleType = g.ModuleType
+		acmHeaders.ModuleSubType = g.ModuleSubType
+		acmHeaders.ChipsetID = g.ChipsetID
+		acmHeaders.Flags = g.Flags
+		acmHeaders.ModuleVendor = g.ModuleVendor
+		acmHeaders.Date = g.Date
+		acmHeaders.Size.SetSize(g.Size)
+		acmHeaders.TXTSVN = g.TXTSVN
+		acmHeaders.SESVN = g.SESVN
+		acmHeaders.CodeControl = g.CodeControl
+		acmHeaders.ErrorEntryPoint = g.ErrorEntryPoint
+		acmHeaders.GDTLimit = g.GDTLimit
+		acmHeaders.GDTBasePtr = g.GDTBasePtr
+		acmHeaders.SegSel = g.SegSel
+		acmHeaders.EntryPoint = g.EntryPoint
+		acmHeaders.KeySize.SetSize(384)
+		sACMData.EntrySACMDataInterface = &acmHeaders
 	}
-
-	acm := fit.EntrySACMData{
-		EntrySACMDataInterface: config,
+	if g.ConfigOut != "" {
+		buf := new(bytes.Buffer)
+		_, err := sACMData.Write(buf.Bytes())
+		if err != nil {
+			return err
+		}
+		json, err := sACM.MarshalJSON()
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(g.ConfigOut, json, 0700); err != nil {
+			return err
+		}
 	}
 	if g.BodyPath != "" {
 		bodyData, err := os.ReadFile(g.BodyPath)
@@ -689,7 +698,7 @@ func (g *generateACMCmd) Run(ctx *context) error {
 			return fmt.Errorf("unable to read the ACM body file '%s': %w", g.BodyPath, err)
 		}
 
-		acm.UserArea = bodyData
+		sACMData.UserArea = bodyData
 	}
 
 	if g.RSAPrivateKeyPEM != "" {
@@ -697,11 +706,11 @@ func (g *generateACMCmd) Run(ctx *context) error {
 	}
 
 	var acmBytes bytes.Buffer
-	if _, err := acm.WriteTo(&acmBytes); err != nil {
+	if _, err := sACMData.WriteTo(&acmBytes); err != nil {
 		return fmt.Errorf("unable to compile the ACM module: %w", err)
 	}
 
-	if err = os.WriteFile(g.ACMOut, acmBytes.Bytes(), 0600); err != nil {
+	if err := os.WriteFile(g.ACMOut, acmBytes.Bytes(), 0600); err != nil {
 		return fmt.Errorf("unable to write KM to file: %w", err)
 	}
 	return nil
@@ -716,11 +725,12 @@ func (s *signKMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	kmRaw, err := os.ReadFile(s.KmIn)
+	file, err := os.Open(s.KmIn)
 	if err != nil {
 		return err
 	}
-	bg, err := bootguard.NewKM(bytes.NewReader(kmRaw))
+	defer file.Close()
+	bg, err := bootguard.NewKM(file)
 	if err != nil {
 		return err
 	}
@@ -743,11 +753,12 @@ func (s *signBPMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	bpmRaw, err := os.ReadFile(s.BpmIn)
+	file, err := os.Open(s.BpmIn)
 	if err != nil {
 		return err
 	}
-	bg, err := bootguard.NewBPM(bytes.NewReader(bpmRaw))
+	defer file.Close()
+	bg, err := bootguard.NewBPM(file)
 	if err != nil {
 		return err
 	}
@@ -875,10 +886,11 @@ func (rc *readConfigCmd) Run(ctx *context) error {
 }
 
 func (s *stitchingKMCmd) Run(ctx *context) error {
-	kmData, err := os.ReadFile(s.KM)
+	file, err := os.Open(s.KM)
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 	sig, err := os.ReadFile(s.Signature)
 	if err != nil {
 		return err
@@ -887,10 +899,10 @@ func (s *stitchingKMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	if len(kmData) < 1 || len(sig) < 1 {
+	if len(sig) < 1 {
 		return fmt.Errorf("loaded files are empty")
 	}
-	bg, err := bootguard.NewKM(bytes.NewReader(kmData))
+	bg, err := bootguard.NewKM(file)
 	if err != nil {
 		return err
 	}
@@ -905,10 +917,11 @@ func (s *stitchingKMCmd) Run(ctx *context) error {
 }
 
 func (s *stitchingBPMCmd) Run(ctx *context) error {
-	bpmData, err := os.ReadFile(s.BPM)
+	file, err := os.Open(s.BPM)
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 	sig, err := os.ReadFile(s.Signature)
 	if err != nil {
 		return err
@@ -917,10 +930,10 @@ func (s *stitchingBPMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	if len(bpmData) < 1 || len(sig) < 1 {
+	if len(sig) < 1 {
 		return fmt.Errorf("loaded files are empty")
 	}
-	bg, err := bootguard.NewBPM(bytes.NewReader(bpmData))
+	bg, err := bootguard.NewBPM(file)
 	if err != nil {
 		return err
 	}
@@ -1051,12 +1064,12 @@ func (p printFITCmd) Run(ctx *context) error {
 }
 
 func (v *verifyKMSigCmd) Run(ctx *context) error {
-	kmRaw, err := os.ReadFile(v.KM)
+	file, err := os.Open(v.KM)
 	if err != nil {
 		return err
 	}
-	r := bytes.NewReader(kmRaw)
-	bg, err := bootguard.NewKM(r)
+	defer file.Close()
+	bg, err := bootguard.NewKM(file)
 	if err != nil {
 		return err
 	}
@@ -1064,12 +1077,12 @@ func (v *verifyKMSigCmd) Run(ctx *context) error {
 }
 
 func (b *verifyBPMSigCmd) Run(ctx *context) error {
-	bpmraw, err := os.ReadFile(b.BPM)
+	file, err := os.Open(b.BPM)
 	if err != nil {
 		return err
 	}
-	r := bytes.NewReader(bpmraw)
-	bg, err := bootguard.NewBPM(r)
+	defer file.Close()
+	bg, err := bootguard.NewBPM(file)
 	if err != nil {
 		return err
 	}
@@ -1096,9 +1109,10 @@ var cli struct {
 	BPMStitch stitchingBPMCmd  `cmd help:"Stitches BPM Signatue into unsigned BPM"`
 	BPMExport bpmExportCmd     `cmd help:"Exports BPM structures from BIOS image into file"`
 
-	ACMGen    generateACMCmd `cmd help:"Generate an ACM module (usable only for unit-tests)"`
-	ACMExport acmExportCmd   `cmd help:"Exports ACM structures from BIOS image into file"`
-	ACMShow   acmPrintCmd    `cmd help:"Prints ACM binary in human-readable format"`
+	ACMGenV0  generateACMCmdv0 `cmd help:"Generate an ACM v0 module (usable only for unit-tests)"`
+	ACMGenV3  generateACMCmdv3 `cmd help:"Generate an ACM v3 module (usable only for unit-tests)"`
+	ACMExport acmExportCmd     `cmd help:"Exports ACM structures from BIOS image into file"`
+	ACMShow   acmPrintCmd      `cmd help:"Prints ACM binary in human-readable format"`
 
 	FITShow printFITCmd `cmd help:"Prints the FIT Table of given BIOS image file"`
 

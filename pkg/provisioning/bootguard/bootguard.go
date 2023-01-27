@@ -89,7 +89,7 @@ func NewVData(vdata VersionedData) (*BootGuard, error) {
 		b.Version, _ = bgheader.DetectBGV(manifest)
 	}
 	if b.Version == 0 {
-		return nil, fmt.Errorf("can't identify bootguard header")
+		return nil, fmt.Errorf("NewVData: can't identify bootguard header")
 	}
 	b.VData = vdata
 	return &b, nil
@@ -120,7 +120,7 @@ func NewBPM(bpm io.ReadSeeker) (*BootGuard, error) {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("can't identify bootguard header")
+		return nil, fmt.Errorf("NewBPM: can't identify bootguard header")
 	}
 	return &b, nil
 }
@@ -150,7 +150,7 @@ func NewKM(km io.ReadSeeker) (*BootGuard, error) {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("can't identify bootguard header")
+		return nil, fmt.Errorf("NewKM: can't identify bootguard header")
 	}
 	return &b, nil
 }
@@ -198,7 +198,7 @@ func NewBPMAndKM(bpm io.ReadSeeker, km io.ReadSeeker) (*BootGuard, error) {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("can't identify bootguard header")
+		return nil, fmt.Errorf("NewBPMAndKM: can't identify bootguard header")
 	}
 	return &b, nil
 }
@@ -241,7 +241,7 @@ func NewBPMAndKMFromBIOS(biosFilepath string, jsonFilepath *os.File) (*BootGuard
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("can't identify bootguard header")
+		return nil, fmt.Errorf("NewBPMAndKMFromBIOS: can't identify bootguard header")
 	}
 	data, err := json.Marshal(b.VData)
 	if err != nil {
@@ -263,7 +263,7 @@ func (b *BootGuard) ValidateBPM() error {
 	case bgheader.Version20:
 		return b.VData.CBNTbpm.Validate()
 	default:
-		return fmt.Errorf("can't identify bootguard header")
+		return fmt.Errorf("ValidateBPM: can't identify bootguard header")
 	}
 }
 
@@ -276,7 +276,7 @@ func (b *BootGuard) ValidateKM() error {
 	case bgheader.Version20:
 		return b.VData.CBNTkm.Validate()
 	default:
-		return fmt.Errorf("can't identify bootguard header")
+		return fmt.Errorf("ValidateKM: can't identify bootguard header")
 	}
 }
 
@@ -288,7 +288,7 @@ func (b *BootGuard) PrintBPM() {
 	case bgheader.Version20:
 		b.VData.CBNTbpm.Print()
 	default:
-		fmt.Println("can't identify bootguard header")
+		fmt.Println("PrintBPM: can't identify bootguard header")
 	}
 }
 
@@ -300,7 +300,7 @@ func (b *BootGuard) PrintKM() {
 	case bgheader.Version20:
 		b.VData.CBNTkm.Print()
 	default:
-		fmt.Println("can't identify bootguard header")
+		fmt.Println("PrintKM: can't identify bootguard header")
 	}
 }
 
@@ -314,7 +314,7 @@ func (b *BootGuard) WriteKM() ([]byte, error) {
 	case bgheader.Version20:
 		_, err = b.VData.CBNTkm.WriteTo(buf)
 	default:
-		fmt.Println("can't identify bootguard header")
+		fmt.Println("WriteKM: can't identify bootguard header")
 	}
 	return buf.Bytes(), err
 }
@@ -329,7 +329,7 @@ func (b *BootGuard) WriteBPM() ([]byte, error) {
 	case bgheader.Version20:
 		_, err = b.VData.BGbpm.WriteTo(buf)
 	default:
-		fmt.Println("can't identify bootguard header")
+		fmt.Println("WriteBPM: can't identify bootguard header")
 	}
 	return buf.Bytes(), err
 }
@@ -379,7 +379,7 @@ func (b *BootGuard) StitchKM(pubKey crypto.PublicKey, signature []byte) ([]byte,
 			return nil, err
 		}
 	default:
-		fmt.Println("can't identify bootguard header")
+		fmt.Println("StitchKM: can't identify bootguard header")
 	}
 	return b.WriteKM()
 }
@@ -408,7 +408,7 @@ func (b *BootGuard) StitchBPM(pubKey crypto.PublicKey, signature []byte) ([]byte
 			return nil, err
 		}
 	default:
-		fmt.Println("can't identify bootguard header")
+		fmt.Println("StitchBPM: can't identify bootguard header")
 	}
 	return b.WriteBPM()
 }
@@ -440,7 +440,7 @@ func (b *BootGuard) SignKM(signAlgo string, privkey crypto.PrivateKey) ([]byte, 
 			return nil, err
 		}
 	default:
-		fmt.Println("can't identify bootguard header")
+		fmt.Println("SignKM: can't identify bootguard header")
 	}
 	return b.WriteKM()
 }
@@ -474,7 +474,7 @@ func (b *BootGuard) SignBPM(signAlgo string, privkey crypto.PrivateKey) ([]byte,
 			return nil, err
 		}
 	default:
-		fmt.Println("can't identify bootguard header")
+		fmt.Println("SignBPM: can't identify bootguard header")
 	}
 	return b.WriteKM()
 }
@@ -494,7 +494,7 @@ func (b *BootGuard) VerifyKM() error {
 			return err
 		}
 	default:
-		fmt.Println("can't identify bootguard header")
+		fmt.Println("VerifyKM: can't identify bootguard header")
 	}
 	return nil
 }
@@ -505,16 +505,16 @@ func (b *BootGuard) VerifyBPM() error {
 	switch b.Version {
 	case bgheader.Version10:
 		b.VData.BGbpm.WriteTo(buf)
-		if err := b.VData.BGbpm.PMSE.Verify(buf.Bytes()[:b.VData.BGbpm.PMSE.KeySignatureOffset()]); err != nil {
+		if err := b.VData.BGbpm.PMSE.Verify(buf.Bytes()[:b.VData.BGbpm.PMSEOffset()]); err != nil {
 			return err
 		}
 	case bgheader.Version20:
 		b.VData.CBNTbpm.WriteTo(buf)
-		if err := b.VData.CBNTbpm.PMSE.Verify(buf.Bytes()[:b.VData.CBNTbpm.PMSE.KeySignatureOffset()]); err != nil {
+		if err := b.VData.CBNTbpm.PMSE.Verify(buf.Bytes()[:b.VData.CBNTbpm.KeySignatureOffset]); err != nil {
 			return err
 		}
 	default:
-		fmt.Println("can't identify bootguard header")
+		fmt.Println("VerifyBPM: can't identify bootguard header")
 	}
 	return nil
 }
@@ -541,7 +541,7 @@ func (b *BootGuard) CalculateNEMSize(image []byte, acm *tools.ACM) (uint16, erro
 	totalSize += uint32(hdr.GetEntryBase().Headers.Size.Uint32() << 4)
 	totalSize += uint32(2048)
 	totalSize += keySignatureElementMaxSize
-	totalSize += acm.Header.Size
+	totalSize += uint32(acm.Header.GetSize())
 	totalSize += defaultStackAndDataSize
 	switch b.Version {
 	case bgheader.Version10:
@@ -590,7 +590,7 @@ func (b *BootGuard) CalculateNEMSize(image []byte, acm *tools.ACM) (uint16, erro
 		}
 		return uint16(cbntbootpolicy.NewSize4K(totalSize)), nil
 	default:
-		return 0, fmt.Errorf("can't identify bootguard header")
+		return 0, fmt.Errorf("CalculateNEMSize: can't identify bootguard header")
 	}
 }
 
