@@ -15,7 +15,7 @@ type SystemArtifacts map[reflect.Type]SystemArtifact
 // Examples: BIOS firmware image, TXT status registers, MSR registers, PRoT firmware image.
 type SystemArtifact interface {
 	io.ReaderAt // should never return an error
-	Size() uint
+	Size() uint64
 }
 
 // String implements fmt.Stringer.

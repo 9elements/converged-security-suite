@@ -47,10 +47,17 @@ func (s References) Bytes() []byte {
 	return buf.Bytes()
 }
 
+// AddressMapper maps an address. If is an untyped nil then address should be mapped to itself
+// by the consumer of this interface.
+type AddressMapper interface {
+	Resolve(SystemArtifact, pkgbytes.Range) (pkgbytes.Ranges, error)
+}
+
 // Reference is a reference to a bytes data in a SystemArtifact.
 type Reference struct {
-	Artifact SystemArtifact
-	Ranges   pkgbytes.Ranges
+	Artifact      SystemArtifact
+	AddressMapper AddressMapper
+	Ranges        pkgbytes.Ranges
 }
 
 // String implements fmt.Stringer()
@@ -74,12 +81,23 @@ func (ref *Reference) Bytes() []byte {
 	result := make([]byte, totalLength)
 	curPos := uint64(0)
 	for _, r := range ranges {
-		n, err := ref.Artifact.ReadAt(result[curPos:curPos+r.Length], int64(r.Offset))
-		if err != nil {
-			panic(err)
+		mappedRanges := pkgbytes.Ranges{r}
+		if ref.AddressMapper != nil {
+			var err error
+			mappedRanges, err = ref.AddressMapper.Resolve(ref.Artifact, r)
+			if err != nil {
+				panic(err)
+			}
 		}
-		if n != int(r.Length) {
-			panic(fmt.Errorf("unexpected read size: expected:%d actual:%d", r.Length, n))
+		for _, r := range mappedRanges {
+			n, err := ref.Artifact.ReadAt(result[curPos:curPos+r.Length], int64(r.Offset))
+			if err != nil {
+				panic(err)
+			}
+			curPos += r.Length
+			if n != int(r.Length) {
+				panic(fmt.Errorf("unexpected read size: expected:%d actual:%d", r.Length, n))
+			}
 		}
 	}
 	return result

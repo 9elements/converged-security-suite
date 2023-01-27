@@ -33,8 +33,8 @@ func With(state *types.State, callback func(*BIOSImage) error) error {
 }
 
 // Size implements types.SystemArtifact.
-func (img *BIOSImage) Size() uint {
-	return uint(len(img.Content))
+func (img *BIOSImage) Size() uint64 {
+	return uint64(len(img.Content))
 }
 
 // ReadAt implements types.SystemArtifact.
