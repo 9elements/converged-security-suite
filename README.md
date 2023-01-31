@@ -5,10 +5,10 @@ The Converged Security Suite implements all necessary tools for Intel platform s
 
 | Technology | Testsuite | Provisioning |
 | --- | --- | --- |
-| Intel Trusted Execution Technology Legacy | Supported | Supported |
-| Intel Trusted Execution Technology CBnT | Supported | Supported |
-| Intel Boot Guard | WIP | Supported |
-| Intel Platform Firmware Resilience | On Hold | Partly Supported |
+| Intel Trusted Execution Technology Legacy/CBnT | Supported | Supported |
+| Intel Boot Guard 1.0 | WIP | Supported |
+| Intel Boot Guard 2.0 | WIP | Supported |
+| Intel Platform Firmware Resilience | N/A | Partly Supported |
 
 Build Status
 ------------

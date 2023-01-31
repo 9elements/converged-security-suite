@@ -419,7 +419,10 @@ func (b *BootGuard) SignKM(signAlgo string, privkey crypto.PrivateKey) ([]byte, 
 			return nil, err
 		}
 		b.VData.BGkm.RehashRecursive()
-		b.VData.BGkm.WriteTo(buf)
+		_, err = b.VData.BGkm.WriteTo(buf)
+		if err != nil {
+			return nil, err
+		}
 		unsignedKM := buf.Bytes()[:b.VData.BGkm.KeyAndSignatureOffset()]
 		if err := b.VData.BGkm.SetSignature(signAlgo, privkey.(crypto.Signer), unsignedKM); err != nil {
 			return nil, err
@@ -430,7 +433,10 @@ func (b *BootGuard) SignKM(signAlgo string, privkey crypto.PrivateKey) ([]byte, 
 			return nil, err
 		}
 		b.VData.CBNTkm.RehashRecursive()
-		b.VData.CBNTkm.WriteTo(buf)
+		_, err = b.VData.CBNTkm.WriteTo(buf)
+		if err != nil {
+			return nil, err
+		}
 		unsignedKM := buf.Bytes()[:b.VData.CBNTkm.KeyAndSignatureOffset()]
 		if err = b.VData.CBNTkm.SetSignature(signAlgo, b.VData.CBNTkm.PubKeyHashAlg, privkey.(crypto.Signer), unsignedKM); err != nil {
 			return nil, err
@@ -452,7 +458,10 @@ func (b *BootGuard) SignBPM(signAlgo string, privkey crypto.PrivateKey) ([]byte,
 		}
 		b.VData.BGbpm.PMSE = *bgbootpolicy.NewSignature()
 		b.VData.BGbpm.RehashRecursive()
-		b.VData.BGbpm.WriteTo(buf)
+		_, err = b.VData.BGbpm.WriteTo(buf)
+		if err != nil {
+			return nil, err
+		}
 		unsignedBPM := buf.Bytes()[:b.VData.BGbpm.PMSE.KeySignatureOffset()]
 		if err := b.VData.BGbpm.PMSE.SetSignature(signAlgo, privkey.(crypto.Signer), unsignedBPM); err != nil {
 			return nil, err
@@ -464,7 +473,10 @@ func (b *BootGuard) SignBPM(signAlgo string, privkey crypto.PrivateKey) ([]byte,
 		}
 		b.VData.CBNTbpm.PMSE = *cbntbootpolicy.NewSignature()
 		b.VData.CBNTbpm.RehashRecursive()
-		b.VData.CBNTbpm.WriteTo(buf)
+		_, err = b.VData.CBNTbpm.WriteTo(buf)
+		if err != nil {
+			return nil, err
+		}
 		unsignedBPM := buf.Bytes()[:b.VData.CBNTbpm.PMSE.KeySignatureOffset()]
 		if err = b.VData.CBNTbpm.PMSE.SetSignature(signAlgo, b.VData.CBNTbpm.PMSE.Key.KeyAlg, privkey.(crypto.Signer), unsignedBPM); err != nil {
 			return nil, err
@@ -480,12 +492,18 @@ func (b *BootGuard) VerifyKM() error {
 	buf := new(bytes.Buffer)
 	switch b.Version {
 	case bgheader.Version10:
-		b.VData.BGkm.WriteTo(buf)
+		_, err := b.VData.BGkm.WriteTo(buf)
+		if err != nil {
+			return err
+		}
 		if err := b.VData.BGkm.KeyAndSignature.Verify(buf.Bytes()[:b.VData.BGkm.KeyAndSignatureOffset()]); err != nil {
 			return err
 		}
 	case bgheader.Version20:
-		b.VData.CBNTkm.WriteTo(buf)
+		_, err := b.VData.CBNTkm.WriteTo(buf)
+		if err != nil {
+			return err
+		}
 		if err := b.VData.CBNTkm.KeyAndSignature.Verify(buf.Bytes()[:b.VData.CBNTkm.KeyAndSignatureOffset()]); err != nil {
 			return err
 		}
@@ -500,12 +518,18 @@ func (b *BootGuard) VerifyBPM() error {
 	buf := new(bytes.Buffer)
 	switch b.Version {
 	case bgheader.Version10:
-		b.VData.BGbpm.WriteTo(buf)
+		_, err := b.VData.BGbpm.WriteTo(buf)
+		if err != nil {
+			return err
+		}
 		if err := b.VData.BGbpm.PMSE.Verify(buf.Bytes()[:b.VData.BGbpm.PMSEOffset()]); err != nil {
 			return err
 		}
 	case bgheader.Version20:
-		b.VData.CBNTbpm.WriteTo(buf)
+		_, err := b.VData.CBNTbpm.WriteTo(buf)
+		if err != nil {
+			return err
+		}
 		if err := b.VData.CBNTbpm.PMSE.Verify(buf.Bytes()[:b.VData.CBNTbpm.KeySignatureOffset]); err != nil {
 			return err
 		}
