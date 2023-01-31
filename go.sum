@@ -399,6 +399,8 @@ github.com/linuxboot/fiano v1.1.4-0.20230112151028-8e9c749e2563 h1:BLjv+K5+CjjLp
 github.com/linuxboot/fiano v1.1.4-0.20230112151028-8e9c749e2563/go.mod h1:1FwHUkd0fdHTvACyx6IdVn1GBAiS5mG2CM5b0nLMLxo=
 github.com/linuxboot/fiano v1.1.4-0.20230112160421-8a127a636eef h1:s8pxYsJ/RLXhAJ9GmGgPt1p4YTJHcnT3sH9vo4Frml4=
 github.com/linuxboot/fiano v1.1.4-0.20230112160421-8a127a636eef/go.mod h1:1FwHUkd0fdHTvACyx6IdVn1GBAiS5mG2CM5b0nLMLxo=
+github.com/linuxboot/fiano v1.1.4-0.20230131115913-85ddba13ba44 h1:Hp7L8kitx3x2MEXmL5NqVLD2/lzGtjYJnNEmjWv1ado=
+github.com/linuxboot/fiano v1.1.4-0.20230131115913-85ddba13ba44/go.mod h1:1FwHUkd0fdHTvACyx6IdVn1GBAiS5mG2CM5b0nLMLxo=
 github.com/logrusorgru/aurora v2.0.3+incompatible h1:tOpm7WcpBTn4fjmVfgpQq0EfczGlG91VSDkswnjF5A8=
 github.com/logrusorgru/aurora v2.0.3+incompatible/go.mod h1:7rIyQOR62GCctdiQpZ/zOJlFyk6y+94wXzv6RNZgaR4=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=

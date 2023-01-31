@@ -506,22 +506,19 @@ func PolicyAllowsTXT(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Conf
 
 // BIOSACMValid checks if BIOS ACM is valid
 func BIOSACMValid(txtAPI hwapi.LowLevelHardwareInterfaces, _ *tools.Configuration) (bool, error, error) {
-	acm, _, _, _, err, internalerr := biosACM(txtAPI, fitHeaders)
+	acm, err := biosACM(txtAPI, fitHeaders)
 
-	return acm != nil, err, internalerr
+	return acm != nil, err, nil
 }
 
 // BIOSACMSizeCorrect checks if BIOS ACM size is correct
 func BIOSACMSizeCorrect(txtAPI hwapi.LowLevelHardwareInterfaces, _ *tools.Configuration) (bool, error, error) {
-	acm, _, _, _, err, internalerr := biosACM(txtAPI, fitHeaders)
-	if internalerr != nil {
-		return false, nil, internalerr
-	}
+	acm, err := biosACM(txtAPI, fitHeaders)
 	if err != nil {
 		return false, err, nil
 	}
 
-	if acm.Header.Size%64 != 0 {
+	if acm.Header.GetSize()%64 != 0 {
 		return false, fmt.Errorf("BIOSACM Size is not correct "), nil
 	}
 	return true, nil, nil
@@ -539,18 +536,19 @@ func BIOSACMAlignmentCorrect(txtAPI hwapi.LowLevelHardwareInterfaces, _ *tools.C
 				return false, nil, fmt.Errorf("ReadPhysBuf failed at %v with error: %v", hdr.Address.Pointer(), err)
 			}
 
-			acm, err := tools.ParseACMHeader(buf1)
+			r := bytes.NewReader(buf1)
+			acm, err := tools.ParseACM(r)
 			if err != nil {
 				return false, nil, fmt.Errorf("can't Parse BIOS ACM header correctly")
 			}
 
-			ret, err := tools.ValidateACMHeader(acm)
+			ret, err := acm.ValidateACMHeader()
 
 			if !ret {
 				return false, nil, fmt.Errorf("validating BIOS ACM Header failed: %v", err)
 			}
 
-			size := uint64(math.Pow(2, math.Ceil(math.Log(float64(acm.Size*4))/math.Log(2))))
+			size := uint64(math.Pow(2, math.Ceil(math.Log(float64(acm.Header.GetSize()))/math.Log(2))))
 			if hdr.Address.Pointer()&(size-1) > 0 {
 				return false, fmt.Errorf("BIOSACM not aligned at %x", size), nil
 			}
@@ -562,10 +560,7 @@ func BIOSACMAlignmentCorrect(txtAPI hwapi.LowLevelHardwareInterfaces, _ *tools.C
 
 // BIOSACMMatchesChipset checks if BIOS ACM matches chipset
 func BIOSACMMatchesChipset(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	_, chp, _, _, err, internalerr := biosACM(txtAPI, fitHeaders)
-	if internalerr != nil {
-		return false, nil, internalerr
-	}
+	acm, err := biosACM(txtAPI, fitHeaders)
 	if err != nil {
 		return false, err, nil
 	}
@@ -578,7 +573,7 @@ func BIOSACMMatchesChipset(txtAPI hwapi.LowLevelHardwareInterfaces, config *tool
 		return false, nil, err
 	}
 
-	for _, ch := range chp.IDList {
+	for _, ch := range acm.Chipsets.IDList {
 		a := ch.VendorID == txt.Vid
 		b := ch.DeviceID == txt.Did
 
@@ -600,10 +595,7 @@ func BIOSACMMatchesChipset(txtAPI hwapi.LowLevelHardwareInterfaces, config *tool
 
 // BIOSACMMatchesCPU checks if BIOS ACM matches CPU
 func BIOSACMMatchesCPU(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	_, _, cpus, _, err, internalerr := biosACM(txtAPI, fitHeaders)
-	if internalerr != nil {
-		return false, nil, internalerr
-	}
+	acm, err := biosACM(txtAPI, fitHeaders)
 	if err != nil {
 		return false, err, nil
 	}
@@ -616,7 +608,7 @@ func BIOSACMMatchesCPU(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Co
 
 	fms := txtAPI.CPUSignature()
 
-	for _, cpu := range cpus.IDList {
+	for _, cpu := range acm.Processors.IDList {
 		a := fms&cpu.FMSMask == cpu.FMS
 		b := platform&cpu.PlatformMask == cpu.PlatformID
 
@@ -628,7 +620,7 @@ func BIOSACMMatchesCPU(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Co
 	return false, fmt.Errorf("BIOS Startup Module and CPU doesn't match"), nil
 }
 
-func biosACM(txtAPI hwapi.LowLevelHardwareInterfaces, fitHeaders fit.Table) (*tools.ACM, *tools.Chipsets, *tools.Processors, *tools.TPMs, error, error) {
+func biosACM(txtAPI hwapi.LowLevelHardwareInterfaces, fitHeaders fit.Table) (*tools.ACM, error) {
 	for _, hdr := range fitHeaders {
 		if hdr.Type() == fit.EntryTypeStartupACModuleEntry {
 			buf1 := make([]byte, tools.ACMheaderLen*4)
@@ -636,44 +628,42 @@ func biosACM(txtAPI hwapi.LowLevelHardwareInterfaces, fitHeaders fit.Table) (*to
 			err := txtAPI.ReadPhysBuf(int64(hdr.Address), buf1)
 
 			if err != nil {
-				return nil, nil, nil, nil, nil, fmt.Errorf("ReadPhysBuf failed at %v with error: %v", hdr.Address, err)
+				return nil, fmt.Errorf("ReadPhysBuf failed at %v with error: %v", hdr.Address, err)
 			}
-
-			acm, err := tools.ParseACMHeader(buf1)
+			r := bytes.NewReader(buf1)
+			acm, err := tools.ParseACM(r)
 			if err != nil {
-				return nil, nil, nil, nil, fmt.Errorf("cannot Parse BIOS ACM header correctly"), nil
+				return nil, fmt.Errorf("cannot Parse BIOS ACM header correctly: %v", err)
 			}
 
-			ret, err := tools.ValidateACMHeader(acm)
+			ret, err := acm.ValidateACMHeader()
 
 			if !ret {
-				return nil, nil, nil, nil, fmt.Errorf("validating BIOS ACM Header failed: %v", err), nil
+				return nil, fmt.Errorf("validating BIOS ACM Header failed: %v", err)
 			}
 
-			buf2 := make([]byte, acm.Size*4)
+			buf2 := make([]byte, acm.Header.GetSize())
 			err = txtAPI.ReadPhysBuf(int64(hdr.Address), buf2)
 
 			if err != nil {
-				return nil, nil, nil, nil, nil, fmt.Errorf("cannot read BIOS ACM completly")
+				return nil, fmt.Errorf("cannot read BIOS ACM completly: %v", err)
 			}
 
-			return tools.ParseACM(buf2)
+			r2 := bytes.NewReader(buf2)
+			return tools.ParseACM(r2)
 		}
 	}
 
-	return nil, nil, nil, nil, fmt.Errorf("no BIOS ACM in FIT"), nil
+	return nil, fmt.Errorf("no BIOS ACM in FIT")
 }
 
 // SINITandBIOSACMnoNPW checks that in BIOS integrated ACMs (SINIT, BIOS) are production worthy
 func SINITandBIOSACMnoNPW(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	biosACMs, _, _, _, err, internalerr := biosACM(txtAPI, fitHeaders)
-	if internalerr != nil {
-		return false, nil, internalerr
-	}
+	biosACMs, err := biosACM(txtAPI, fitHeaders)
 	if err != nil {
 		return false, err, nil
 	}
-	biosACMFlags := biosACMs.Header.ParseACMFlags()
+	biosACMFlags := biosACMs.ParseACMFlags()
 	if biosACMFlags.PreProduction || biosACMFlags.DebugSigned {
 		return false, fmt.Errorf("BIOS ACM is either debug signed or NPW"), nil
 	}
@@ -685,14 +675,11 @@ func SINITandBIOSACMnoNPW(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools
 	if err != nil {
 		return false, nil, err
 	}
-	sinitACMs, _, _, _, err, internalerr := sinitACM(txtAPI, regs)
-	if internalerr != nil {
-		return false, nil, internalerr
-	}
+	sinitACMs, err := sinitACM(txtAPI, regs)
 	if err != nil {
 		return false, err, nil
 	}
-	sinitACMFlags := sinitACMs.Header.ParseACMFlags()
+	sinitACMFlags := sinitACMs.ParseACMFlags()
 	if sinitACMFlags.PreProduction || sinitACMFlags.DebugSigned {
 		return false, fmt.Errorf("SINIT ACM is either debug signed or NPW"), nil
 	}
@@ -709,18 +696,15 @@ func SINITACMcomplyTPMSpec(txtAPI hwapi.LowLevelHardwareInterfaces, config *tool
 	if err != nil {
 		return false, nil, err
 	}
-	_, _, _, tpms, err, internalerr := sinitACM(txtAPI, regs)
-	if internalerr != nil {
-		return false, nil, internalerr
-	}
+	acm, err := sinitACM(txtAPI, regs)
 	if err != nil {
 		return false, err, nil
 	}
-	res := (1 >> tpms.Capabilities & (uint32(tools.TPMFamilyDTPM12) | uint32(tools.TPMFamilyDTPMBoth)))
+	res := (1 >> acm.TPMs.Capabilities & (uint32(tools.TPMFamilyDTPM12) | uint32(tools.TPMFamilyDTPMBoth)))
 	if res == 0 && config.TPM == hwapi.TPMVersion12 && testtpmispresent.Result == ResultPass {
 		return true, nil, nil
 	}
-	res = (1 >> tpms.Capabilities & (uint32(tools.TPMFamilyDTPM20) | uint32(tools.TPMFamilyDTPMBoth)))
+	res = (1 >> acm.TPMs.Capabilities & (uint32(tools.TPMFamilyDTPM20) | uint32(tools.TPMFamilyDTPMBoth)))
 	if res == 0 && config.TPM == hwapi.TPMVersion20 && testtpmispresent.Result == ResultPass {
 		return true, nil, nil
 	}

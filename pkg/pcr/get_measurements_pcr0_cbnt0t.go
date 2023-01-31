@@ -146,11 +146,11 @@ func getKeyManifest(fitEntries []fit.Entry) (*cbntkey.Manifest, *fit.EntryKeyMan
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntryKeyManifestRecord:
-			km, err := fitEntry.ParseData()
-			if err != nil {
+			_, km2, err := fitEntry.ParseData()
+			if err != nil && km2 != nil {
 				return nil, nil, err
 			}
-			return km, fitEntry, nil
+			return km2, fitEntry, nil
 		}
 	}
 	return nil, nil, fmt.Errorf("key manifest FIT entry is not found")
@@ -160,11 +160,11 @@ func getBootPolicyManifest(fitEntries []fit.Entry) (*cbntbootpolicy.Manifest, *f
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntryBootPolicyManifestRecord:
-			bpManifest, err := fitEntry.ParseData()
-			if err != nil {
+			_, bpManifest2, err := fitEntry.ParseData()
+			if err != nil && bpManifest2 != nil {
 				return nil, nil, err
 			}
-			return bpManifest, fitEntry, nil
+			return bpManifest2, fitEntry, nil
 		}
 	}
 	return nil, nil, fmt.Errorf("boot policy manifest FIT entry is not found")

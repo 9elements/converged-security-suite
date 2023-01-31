@@ -105,7 +105,6 @@ func NewBPM(bpm io.ReadSeeker) (*BootGuard, error) {
 	if err != nil {
 		return nil, err
 	}
-	bpm.Seek(0, 0)
 	switch b.Version {
 	case bgheader.Version10:
 		b.VData.BGbpm = bgbootpolicy.NewManifest()
@@ -135,7 +134,6 @@ func NewKM(km io.ReadSeeker) (*BootGuard, error) {
 	if err != nil {
 		return nil, err
 	}
-	km.Seek(0, 0)
 	switch b.Version {
 	case bgheader.Version10:
 		b.VData.BGkm = bgkey.NewManifest()
@@ -165,12 +163,10 @@ func NewBPMAndKM(bpm io.ReadSeeker, km io.ReadSeeker) (*BootGuard, error) {
 	if err != nil {
 		return nil, err
 	}
-	bpm.Seek(0, 0)
 	kmV, err := bgheader.DetectBGV(km)
 	if err != nil {
 		return nil, err
 	}
-	km.Seek(0, 0)
 	if bpmV != kmV {
 		return nil, fmt.Errorf("km and bpm version number differ")
 	}

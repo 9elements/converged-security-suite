@@ -243,11 +243,11 @@ func isCBnT(fitEntries []fit.Entry) (bool, error) {
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntryKeyManifestRecord:
-			data, err := fitEntry.ParseData()
-			if data == nil {
+			data, data2, err := fitEntry.ParseData()
+			if data == nil && data2 == nil {
 				return false, fmt.Errorf("unable to parse KeyManifest policy record: %w", err)
 			}
-			if data.Version < 0x21 {
+			if data != nil {
 				return false, nil
 			}
 			keyManifestFound = true

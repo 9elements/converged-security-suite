@@ -49,7 +49,7 @@ require (
 	github.com/intel-go/cpuid v0.0.0-20220614022739-219e067757cb // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
-	github.com/linuxboot/fiano v1.1.4-0.20230112160421-8a127a636eef // indirect
+	github.com/linuxboot/fiano v1.1.4-0.20230131115913-85ddba13ba44 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
