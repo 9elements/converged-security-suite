@@ -6,8 +6,8 @@ The Converged Security Suite implements all necessary tools for Intel platform s
 | Technology | Testsuite | Provisioning |
 | --- | --- | --- |
 | Intel Trusted Execution Technology Legacy | Supported | Supported |
-| Intel Trusted Execution Technology CBnT | WIP | Supported |
-| Intel Boot Guard | WIP | WIP |
+| Intel Trusted Execution Technology CBnT | Supported | Supported |
+| Intel Boot Guard | WIP | Supported |
 | Intel Platform Firmware Resilience | On Hold | Partly Supported |
 
 Build Status
@@ -19,7 +19,7 @@ Tooling & API
 
 * [Intel TXT Test Suite](cmd/txt-suite) - Test Suite for Intel Trusted Execution Technology validation.
 * [Intel TXT Provisioning](cmd/txt-prov) - Provisioning of Trusted Platform Module for Intel Trusted Execution Technology usage.
-* [Intel CBnT Provisioning](cmd/cbnt-prov) - Provisioning of Converged BootGuard and Trusted Execution Technology (CBnT) usage.
+* [Intel CBnT Provisioning](cmd/bg-prov) - Provisioning of all BootGuard versions and Trusted Execution Technology (CBnT) usage.
 * [Intel/AMD pcr0tool](cmd/pcr0tool) - [PCR0](https://security.stackexchange.com/questions/127224/what-does-crtm-refer-to) diagnostics tool.
 
 Developer notes

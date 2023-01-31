@@ -641,6 +641,81 @@ func (g *generateBPMCmdv2) Run(ctx *context) error {
 	return nil
 }
 
+func (g *generateACMCmdv0) Run(ctx *context) error {
+	var sACM fit.EntrySACM
+	var sACMData *fit.EntrySACMData
+	if g.ConfigIn != "" {
+		data, err := os.ReadFile(g.ConfigIn)
+		if err != nil {
+			return err
+		}
+		if err := sACM.UnmarshalJSON(data); err != nil {
+			return err
+		}
+		sACMData, err = sACM.ParseData()
+		if err != nil {
+			return err
+		}
+	} else {
+		var acmHeaders fit.EntrySACMData0
+		acmHeaders.HeaderVersion = fit.ACHeaderVersion0
+		acmHeaders.HeaderLen.SetSize(uint64(binary.Size(acmHeaders)))
+		acmHeaders.ModuleType = g.ModuleType
+		acmHeaders.ModuleSubType = g.ModuleSubType
+		acmHeaders.ChipsetID = g.ChipsetID
+		acmHeaders.Flags = g.Flags
+		acmHeaders.ModuleVendor = g.ModuleVendor
+		acmHeaders.Date = g.Date
+		acmHeaders.Size.SetSize(g.Size)
+		acmHeaders.TXTSVN = g.TXTSVN
+		acmHeaders.SESVN = g.SESVN
+		acmHeaders.CodeControl = g.CodeControl
+		acmHeaders.ErrorEntryPoint = g.ErrorEntryPoint
+		acmHeaders.GDTLimit = g.GDTLimit
+		acmHeaders.GDTBasePtr = g.GDTBasePtr
+		acmHeaders.SegSel = g.SegSel
+		acmHeaders.EntryPoint = g.EntryPoint
+		acmHeaders.KeySize.SetSize(256)
+		sACMData.EntrySACMDataInterface = &acmHeaders
+	}
+	if g.ConfigOut != "" {
+		buf := new(bytes.Buffer)
+		_, err := sACMData.Write(buf.Bytes())
+		if err != nil {
+			return err
+		}
+		json, err := sACM.MarshalJSON()
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(g.ConfigOut, json, 0700); err != nil {
+			return err
+		}
+	}
+	if g.BodyPath != "" {
+		bodyData, err := os.ReadFile(g.BodyPath)
+		if err != nil {
+			return fmt.Errorf("unable to read the ACM body file '%s': %w", g.BodyPath, err)
+		}
+
+		sACMData.UserArea = bodyData
+	}
+
+	if g.RSAPrivateKeyPEM != "" {
+		return fmt.Errorf("signing is not implemented, yet")
+	}
+
+	var acmBytes bytes.Buffer
+	if _, err := sACMData.WriteTo(&acmBytes); err != nil {
+		return fmt.Errorf("unable to compile the ACM module: %w", err)
+	}
+
+	if err := os.WriteFile(g.ACMOut, acmBytes.Bytes(), 0600); err != nil {
+		return fmt.Errorf("unable to write KM to file: %w", err)
+	}
+	return nil
+}
+
 func (g *generateACMCmdv3) Run(ctx *context) error {
 	var sACM fit.EntrySACM
 	var sACMData *fit.EntrySACMData
