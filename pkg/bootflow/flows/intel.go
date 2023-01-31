@@ -1,0 +1,42 @@
+package flows
+
+import (
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actors"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/commonconds"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/intelconds"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/ocpconds"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/commonsteps"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/intelsteps"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/tpmsteps"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
+)
+
+var Intel = types.Flow{
+	commonsteps.SetActor(actors.IntelACM{}),
+	commonsteps.If(intelconds.BPMPresent{}, commonsteps.SetFlow(IntelCBnT)),
+	commonsteps.SetFlow(IntelLegacyTXT),
+}
+
+var IntelCBnT = types.Flow{
+	commonsteps.If(commonconds.Not(intelconds.ValidACM{}), commonsteps.SetFlow(IntelCBnTFailure)),
+	commonsteps.If(commonconds.Not(intelconds.ValidKM{}), commonsteps.SetFlow(IntelCBnTFailure)),
+	commonsteps.If(commonconds.Not(intelconds.ValidBPM{}), commonsteps.SetFlow(IntelCBnTFailure)),
+	commonsteps.If(commonconds.Not(intelconds.ValidIBB{}), commonsteps.SetFlow(IntelCBnTFailure)),
+	tpmsteps.InitTPM(3),
+	intelsteps.MeasurePCR0DATA{},
+	commonsteps.SetFlow(IntelResetVector),
+}
+
+var IntelCBnTFailure = types.Flow{
+	commonsteps.SetFlow(IntelResetVector),
+}
+
+var IntelResetVector = types.Flow{
+	commonsteps.SetActor(actors.Unknown{}),
+	commonsteps.If(ocpconds.IsOCP{}, commonsteps.SetFlow(OCPPEI)),
+	commonsteps.Panic("unknown flow: is not OCP"),
+}
+
+var IntelLegacyTXT = types.Flow{
+	commonsteps.Panic("legacy TXT flow is not implemented"),
+}

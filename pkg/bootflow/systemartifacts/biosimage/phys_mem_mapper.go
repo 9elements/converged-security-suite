@@ -15,7 +15,7 @@ type PhysMemMapper struct{}
 // Resolve implements types.AddressMapper.
 //
 // It maps a physical memory address to an offset of the BIOS image.
-func Resolve(artifact types.SystemArtifact, r pkgbytes.Range) (pkgbytes.Ranges, error) {
+func (PhysMemMapper) Resolve(artifact types.SystemArtifact, r pkgbytes.Range) (pkgbytes.Ranges, error) {
 	img, ok := artifact.(*BIOSImage)
 	if !ok {
 		return nil, fmt.Errorf("artifact %T is not a BIOSImage", artifact)

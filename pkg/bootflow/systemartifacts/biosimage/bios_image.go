@@ -3,6 +3,7 @@ package biosimage
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
@@ -15,6 +16,7 @@ type BIOSImage struct {
 	Content         []byte
 	CacheParsed     *uefi.UEFI
 	CacheParseError error
+	Accessors       map[reflect.Type]any
 }
 
 // New returns a new instance of BIOSImage.

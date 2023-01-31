@@ -14,6 +14,6 @@ type IntelACM struct{}
 var _ types.Actor = (*IntelACM)(nil)
 
 // ResponsibleCode implements types.Actor.
-func (intelACM *IntelACM) ResponsibleCode() types.DataSource {
+func (IntelACM) ResponsibleCode() types.DataSource {
 	return datasources.IntelFITFirst(fit.EntryTypeStartupACModuleEntry)
 }

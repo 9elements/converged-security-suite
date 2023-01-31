@@ -2,7 +2,9 @@ package commonactions
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
@@ -42,4 +44,8 @@ func SetActor(nextActor types.Actor) types.Action {
 func (step *setActor) Apply(_ context.Context, state *types.State) error {
 	state.CurrentActor = step.nextActor
 	return nil
+}
+
+func (step *setActor) String() string {
+	return fmt.Sprintf("SetActor(%s)", format.NiceString(step.nextActor))
 }

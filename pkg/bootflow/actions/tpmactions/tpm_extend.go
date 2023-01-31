@@ -10,7 +10,7 @@ import (
 	"github.com/google/go-tpm/tpm2"
 )
 
-// TPMEvent is a representation of `TPM2_PCR_Extend`.
+// TPMExtend is a representation of `TPM2_PCR_Extend`.
 type TPMExtend struct {
 	DataSource types.DataSource
 	PCRIndex   pcrtypes.ID
@@ -50,4 +50,8 @@ func (ext *TPMExtend) Apply(ctx context.Context, state *types.State) error {
 
 	state.AddMeasuredData(*data, t, ext.DataSource)
 	return nil
+}
+
+func (ev TPMExtend) String() string {
+	return fmt.Sprintf("TPMExtend(PCR: %d, DataSource: %v)", ev.PCRIndex, ev.DataSource)
 }

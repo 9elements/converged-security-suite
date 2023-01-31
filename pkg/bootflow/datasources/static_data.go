@@ -3,6 +3,7 @@ package datasources
 import (
 	"fmt"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
@@ -18,5 +19,5 @@ func (d *StaticData) Data(*types.State) (*types.Data, error) {
 
 // String implements fmt.Stringer.
 func (d *StaticData) String() string {
-	return fmt.Sprintf("StaticData{%#+v}", (*types.Data)(d))
+	return fmt.Sprintf("StaticData{%s}", format.NiceString((*types.Data)(d)))
 }

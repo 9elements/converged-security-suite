@@ -16,6 +16,8 @@ type State struct {
 	CurrentActor             Actor
 	CurrentActionCoordinates ActionCoordinates
 	MeasuredData             MeasuredDataSlice
+
+	cache Cache
 }
 
 func typeMapKey(i interface{}) reflect.Type {
@@ -27,11 +29,20 @@ func typeMapKey(i interface{}) reflect.Type {
 }
 
 // NewState returns a new instance of State.
-func NewState() *State {
+func NewState(cache Cache) *State {
+	if cache == nil {
+		cache = DummyCache{}
+	}
 	return &State{
 		SystemArtifacts: map[reflect.Type]SystemArtifact{},
 		SubSystems:      map[reflect.Type]SubSystem{},
+
+		cache: cache,
 	}
+}
+
+func (state *State) Cache() Cache {
+	return state.cache
 }
 
 // SetFlow sets the Flow and resets the execution carriage (resets to the first Step).

@@ -5,9 +5,9 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
-// TPMInitLazy initializes the TPM and does nothing if it is already initialized.
-func InitTPMLazy(locality uint8) types.Step {
+// InitTPM initializes the TPM.
+func InitTPM(locality uint8) types.Step {
 	return types.StaticStep{
-		tpmactions.NewTPMInitLazy(locality),
+		tpmactions.NewTPMInit(locality),
 	}
 }

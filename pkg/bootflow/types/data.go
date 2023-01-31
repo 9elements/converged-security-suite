@@ -12,6 +12,9 @@ import (
 type Data struct {
 	ForceBytes []byte
 	References References
+	Converter  DataConverter
+
+	IsMeasurementOf References
 }
 
 // String implements fmt.Stringer.
@@ -22,8 +25,7 @@ func (d Data) String() string {
 	return fmt.Sprintf("{Refs: %v}", d.References)
 }
 
-// Bytes returns the bytes defined by Data.
-func (d *Data) Bytes() []byte {
+func (d *Data) RawBytes() []byte {
 	if d.ForceBytes != nil && d.References != nil {
 		panic("Data is supposed to be used as union")
 	}
@@ -31,6 +33,16 @@ func (d *Data) Bytes() []byte {
 		return d.ForceBytes
 	}
 	return d.References.Bytes()
+}
+
+// Bytes returns the bytes defined by Data.
+func (d *Data) Bytes() []byte {
+	b := d.RawBytes()
+	if d.Converter == nil {
+		return b
+	}
+
+	return d.Converter.Convert(b)
 }
 
 // References is a a slice of Reference-s.

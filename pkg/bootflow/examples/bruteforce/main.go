@@ -25,13 +25,13 @@ func main() {
 
 	// an artificial flow for two separators
 	myFlow := types.Flow{
-		tpmsteps.InitTPMLazy(0),
-		tpmsteps.MeasureSeparator(0),
-		tpmsteps.MeasureSeparator(0),
+		tpmsteps.InitTPM(0),
+		tpmsteps.Measure(0, datasources.Bytes{0, 0, 0, 0}),
+		tpmsteps.Measure(0, datasources.Bytes{0, 0, 0, 0}),
 	}
 
 	// executing the flow (with two simple "\x00\x00\x00\x00" measurements)
-	state := types.NewState()
+	state := types.NewState(nil)
 	state.SetFlow(myFlow)
 	state.IncludeSubSystem(tpm.NewTPM())
 	process := bootengine.NewBootProcess(state)

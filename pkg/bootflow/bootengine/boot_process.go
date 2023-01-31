@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
@@ -36,17 +37,29 @@ func stateNextStep(ctx context.Context, state *types.State) (types.Step, types.A
 	}
 
 	step := actCoords.Flow[actCoords.StepIndex]
+	actCoords.StepIndex++
 	actions := step.Actions(state)
 	var stepIssues StepIssues
 	for idx, action := range actions {
 		actCoords.ActionIndex = uint(idx)
-		issue := action.Apply(ctx, state)
+		issue := func() (issue error) {
+			defer func() {
+				if r := recover(); r != nil {
+					if e, ok := r.(error); ok {
+						issue = fmt.Errorf("got a panic: %w", e)
+					} else {
+						issue = fmt.Errorf("got a panic: %v", r)
+					}
+				}
+			}()
+			issue = action.Apply(ctx, state)
+			return
+		}()
 		if issue != nil {
 			stepIssues = append(stepIssues, StepIssue{ActionIndex: uint(idx), Issue: issue})
 		}
 	}
 
-	actCoords.StepIndex++
 	return step, actions, stepIssues, true
 }
 
@@ -77,12 +90,7 @@ func (process *BootProcess) Finish(ctx context.Context) {
 // String implements fmt.Stringer.
 func (process *BootProcess) String() string {
 	var result strings.Builder
-	fmt.Fprintf(&result, "Current state:\n\t%s\n", nestedStringOf(process.CurrentState))
-	fmt.Fprintf(&result, "Resulting steps:\n\t%s\n", nestedStringOf(process.Log))
+	fmt.Fprintf(&result, "Current state:\n\t%s\n", format.NestedStringOf(process.CurrentState))
+	fmt.Fprintf(&result, "Resulting steps:\n\t%s\n", format.NestedStringOf(process.Log))
 	return result.String()
-}
-
-func nestedStringOf(i interface{}) string {
-	v := fmt.Sprintf("%v", i)
-	return strings.ReplaceAll(strings.Trim(v, "\n"), "\n", "\n\t")
 }

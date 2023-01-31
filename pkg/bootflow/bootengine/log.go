@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
@@ -22,23 +23,23 @@ type Log []StepResult
 func (log Log) String() string {
 	var result strings.Builder
 	for idx, step := range log {
-		fmt.Fprintf(&result, "%d. %v:\n", idx, step.Step)
+		fmt.Fprintf(&result, "%d. %v:\n", idx, format.NiceString(step.Step))
 		if len(step.MeasuredData) > 0 {
 			fmt.Fprintf(&result, "\tMeasuredData:\n")
 			for idx, measuredData := range step.MeasuredData {
-				fmt.Fprintf(&result, "\t\t%d. %s\n", idx, nestedStringOf(measuredData))
+				fmt.Fprintf(&result, "\t\t%d. %s\n", idx, format.NestedStringOf(measuredData))
 			}
 		}
-		if _, ok := step.Step.(types.StaticStep); !ok && len(step.Actions) > 0 {
+		if len(step.Actions) > 0 {
 			fmt.Fprintf(&result, "\tActions:\n")
 			for idx, action := range step.Actions {
-				fmt.Fprintf(&result, "\t\t%d. %s\n", idx, nestedStringOf(action))
+				fmt.Fprintf(&result, "\t\t%d. %s\n", idx, format.NestedStringOf(action))
 			}
 		}
 		if len(step.Issues) > 0 {
 			fmt.Fprintf(&result, "\tIssues:\n")
 			for idx, issue := range step.Issues {
-				fmt.Fprintf(&result, "\t\t%d. %s\n", idx, nestedStringOf(issue))
+				fmt.Fprintf(&result, "\t\t%d. %s\n", idx, format.NestedStringOf(issue))
 			}
 		}
 	}

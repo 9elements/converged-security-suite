@@ -65,6 +65,9 @@ func GetFrom(state *types.State) (*TPM, error) {
 
 // IsInitialized returns if CommandInit was ever executed.
 func (tpm *TPM) IsInitialized() bool {
+	if tpm == nil {
+		return false
+	}
 	return len(tpm.PCRValues) > 0
 }
 

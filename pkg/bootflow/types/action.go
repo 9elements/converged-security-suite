@@ -9,6 +9,8 @@ type Actions []Action
 
 // Action describes a single event happening during some boot step.
 //
+// In contrast to Step, Action implements low-level operations which mutates the State.
+//
 // An example: measure a specific section in an AMD Manifest
 type Action interface {
 	// Apply applies changes to the State.

@@ -2,6 +2,7 @@ package commonsteps
 
 import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/commonactions"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
@@ -43,4 +44,8 @@ func (step *setFlow) Actions(state *types.State) types.Actions {
 	return types.Actions{
 		commonactions.SetFlow(step.nextFlow),
 	}
+}
+
+func (step *setFlow) String() string {
+	return format.NiceString(step.Actions(nil)[0])
 }

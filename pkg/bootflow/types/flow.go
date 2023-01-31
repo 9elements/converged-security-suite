@@ -3,6 +3,8 @@ package types
 import (
 	"fmt"
 	"strings"
+
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
 )
 
 // Flow describes steps of the boot process.
@@ -10,8 +12,22 @@ import (
 // A flow is static (never change).
 type Flow []Step
 
+func (flow Flow) String() string {
+	var result strings.Builder
+	result.WriteString("{\n")
+	for _, step := range flow {
+		result.WriteByte('\t')
+		result.WriteString(format.NiceString(step))
+		result.WriteByte('\n')
+	}
+	result.WriteString("}\n")
+	return result.String()
+}
+
 // Step describes a single step of a boot process, essential for the measurements.
 // Steps of a flow may vary depending on a State.
+//
+// In contrast to Action, Step just answers the question "what to do", but does not execute it.
 //
 // An example: measure specific sections in an AMD Manifest
 type Step interface {

@@ -2,7 +2,9 @@ package commonactions
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
@@ -39,7 +41,22 @@ func SetFlow(flow types.Flow) types.Action {
 }
 
 // Apply implements types.Action.
-func (step *setFlow) Apply(_ context.Context, state *types.State) error {
-	state.SetFlow(step.nextFlow)
+func (action *setFlow) Apply(_ context.Context, state *types.State) error {
+	state.SetFlow(action.nextFlow)
 	return nil
+}
+
+func (action *setFlow) String() string {
+	if len(action.nextFlow) == 0 {
+		return "SetFlow({})"
+	}
+	firstStepEnding := ""
+	firstStep := format.NiceString(action.nextFlow[0])
+	if len(firstStep) > 40 {
+		firstStepEnding = "..."
+	}
+	if len(action.nextFlow) == 1 {
+		return fmt.Sprintf("SetFlow({%.40s%s})", firstStep, firstStepEnding)
+	}
+	return fmt.Sprintf("SetFlow({%.40s%s, ...})", firstStep, firstStepEnding)
 }

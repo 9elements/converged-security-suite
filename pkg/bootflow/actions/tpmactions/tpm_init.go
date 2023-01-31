@@ -37,32 +37,3 @@ func (init *TPMInit) Apply(ctx context.Context, state *types.State) error {
 func (init TPMInit) String() string {
 	return fmt.Sprintf("TPMInit(%d)", init.Locality)
 }
-
-// TPMInitLazy initializes the TPM and does nothing if it is already initialized.
-type TPMInitLazy struct {
-	Locality uint8
-}
-
-// NewTPMInitLazy returns a new instance of TPMInitLazy
-func NewTPMInitLazy(
-	locality uint8,
-) *TPMInitLazy {
-	return &TPMInitLazy{Locality: locality}
-}
-
-// Apply implements types.Action.
-func (init *TPMInitLazy) Apply(ctx context.Context, state *types.State) error {
-	t, err := tpm.GetFrom(state)
-	if err != nil {
-		return err
-	}
-	if t.IsInitialized() {
-		return nil
-	}
-	return t.TPMInit(ctx, init.Locality, NewLogInfoProvider(state))
-}
-
-// String implements fmt.Stringer.
-func (init TPMInitLazy) String() string {
-	return fmt.Sprintf("TPMInitLazy(%d)", init.Locality)
-}

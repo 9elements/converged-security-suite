@@ -14,7 +14,7 @@ type ErrNoSubSystem struct {
 
 // Error implements interface `error`.
 func (err ErrNoSubSystem) Error() string {
-	return fmt.Sprintf("no subsystem of type %T found", err.SubSystemKey)
+	return fmt.Sprintf("no subsystem of type %s found", err.SubSystemKey)
 }
 
 // SubSystemTypeIs returns true if the underlying type of the provided sample
@@ -38,7 +38,7 @@ type ErrNoSystemArtifact struct {
 
 // Error implements interface `error`.
 func (err ErrNoSystemArtifact) Error() string {
-	return fmt.Sprintf("no system artifact of type %T found", err.SystemArtifactKey)
+	return fmt.Sprintf("no system artifact of type %s found", err.SystemArtifactKey)
 }
 
 // SystemArtifactTypeIs returns true if the underlying type of the provided sample
