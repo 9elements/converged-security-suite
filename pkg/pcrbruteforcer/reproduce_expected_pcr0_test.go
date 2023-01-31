@@ -2,6 +2,7 @@ package pcrbruteforcer
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"testing"
 
@@ -9,11 +10,8 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
 	"github.com/9elements/converged-security-suite/v2/testdata/firmware"
-	"github.com/linuxboot/contest/pkg/xcontext/bundles/logrusctx"
-	"github.com/linuxboot/contest/pkg/xcontext/logger"
 
 	"github.com/google/go-tpm/tpm2"
-	"github.com/linuxboot/contest/pkg/xcontext"
 	"github.com/stretchr/testify/require"
 )
 
@@ -59,7 +57,7 @@ func TestReproduceExpectedPCR0(t *testing.T) {
 		measurements, _, debugInfo, err := pcr.GetMeasurements(firmware, 0, measureOptions...)
 		require.NoError(t, err, fmt.Sprintf("debugInfo: '%v'", debugInfo))
 
-		ctx, _ := logrusctx.NewContext(logger.LevelDebug)
+		ctx := context.Background()
 
 		settings := DefaultSettingsReproducePCR0()
 		settings.EnableACMPolicyCombinatorialStrategy = true
@@ -104,7 +102,7 @@ func BenchmarkReproduceExpectedPCR0(b *testing.B) {
 	firmware := getFirmware(b)
 
 	const correctACMRegValue = 0x0000000200108681
-	ctx := xcontext.Background()
+	ctx := context.Background()
 
 	pcr0Correct := unhex(b, "F4D6D480F066F64A78598D82D1DEC77BBD53DEC1")
 	pcr0Incomplete := unhex(b, "4CB03F39E94B0AB4AD99F9A54E3FD0DEFB0BB2D4")
