@@ -148,6 +148,9 @@ type ACM struct {
 
 // ValidateACMHeader validates an ACM Header found in the Firmware Interface Table (FIT)
 func (a *ACM) ValidateACMHeader() (bool, error) {
+	if a.Header == nil {
+		return false, fmt.Errorf("ACM structure not available, input leads to parser error")
+	}
 	if uint16(a.Header.GetModuleType()) != uint16(2) {
 		return false, fmt.Errorf("BIOS ACM ModuleType is not 2, this is not specified")
 	}
@@ -159,7 +162,7 @@ func (a *ACM) ValidateACMHeader() (bool, error) {
 	if uint32(a.Header.GetHeaderLen()) < uint32(ACMheaderLen) {
 		return false, fmt.Errorf("BIOS ACM HeaderLength is smaller than 4*161 Byte")
 	}
-	if a.Header.GetSize() == 0 {
+	if a.Header.GetSize().Size() == 0 {
 		return false, fmt.Errorf("BIOS ACM Size can't be zero")
 	}
 	if a.Header.GetModuleVendor() != ACMVendorIntel {
@@ -176,7 +179,7 @@ func (a *ACM) ParseACMInfo() error {
 	if err := binary.Read(userArea, binary.LittleEndian, &a.Info); err != nil {
 		return err
 	}
-	totalACM := make([]byte, a.Header.GetSize()/4)
+	totalACM := make([]byte, a.Header.GetSize().Size())
 	_, err := a.Header.Write(totalACM)
 	if err != nil {
 		return err
@@ -292,7 +295,7 @@ func (a *ACM) PrettyPrintHeader() {
 	fmt.Printf("      Pre-Production:  %t\n", flags.PreProduction)
 	fmt.Printf("      Debug Signed:  %t\n", flags.DebugSigned)
 	fmt.Printf("   Module Date: 0x%02x\n", a.Header.GetDate())
-	fmt.Printf("   Module Size: 0x%x (%d)\n", a.Header.GetSize(), a.Header.GetSize())
+	fmt.Printf("   Module Size: 0x%x (%d)\n", a.Header.GetSize().Size(), a.Header.GetSize().Size())
 
 	fmt.Printf("   Header Length: 0x%x (%d)\n", a.Header.GetHeaderLen(), a.Header.GetHeaderLen())
 	fmt.Printf("   Header Version: %d\n", a.Header.GetHeaderVersion())

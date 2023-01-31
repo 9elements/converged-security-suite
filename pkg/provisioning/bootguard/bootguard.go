@@ -561,7 +561,7 @@ func (b *BootGuard) CalculateNEMSize(image []byte, acm *tools.ACM) (uint16, erro
 	totalSize += uint32(hdr.GetEntryBase().Headers.Size.Uint32() << 4)
 	totalSize += uint32(2048)
 	totalSize += keySignatureElementMaxSize
-	totalSize += uint32(acm.Header.GetSize())
+	totalSize += uint32(acm.Header.GetSize().Size())
 	totalSize += defaultStackAndDataSize
 	switch b.Version {
 	case bgheader.Version10:

@@ -518,7 +518,7 @@ func BIOSACMSizeCorrect(txtAPI hwapi.LowLevelHardwareInterfaces, _ *tools.Config
 		return false, err, nil
 	}
 
-	if acm.Header.GetSize()%64 != 0 {
+	if acm.Header.GetSize().Size()%64 != 0 {
 		return false, fmt.Errorf("BIOSACM Size is not correct "), nil
 	}
 	return true, nil, nil
@@ -548,7 +548,7 @@ func BIOSACMAlignmentCorrect(txtAPI hwapi.LowLevelHardwareInterfaces, _ *tools.C
 				return false, nil, fmt.Errorf("validating BIOS ACM Header failed: %v", err)
 			}
 
-			size := uint64(math.Pow(2, math.Ceil(math.Log(float64(acm.Header.GetSize()))/math.Log(2))))
+			size := uint64(math.Pow(2, math.Ceil(math.Log(float64(acm.Header.GetSize().Size()))/math.Log(2))))
 			if hdr.Address.Pointer()&(size-1) > 0 {
 				return false, fmt.Errorf("BIOSACM not aligned at %x", size), nil
 			}
@@ -642,7 +642,7 @@ func biosACM(txtAPI hwapi.LowLevelHardwareInterfaces, fitHeaders fit.Table) (*to
 				return nil, fmt.Errorf("validating BIOS ACM Header failed: %v", err)
 			}
 
-			buf2 := make([]byte, acm.Header.GetSize())
+			buf2 := make([]byte, acm.Header.GetSize().Size())
 			err = txtAPI.ReadPhysBuf(int64(hdr.Address), buf2)
 
 			if err != nil {
