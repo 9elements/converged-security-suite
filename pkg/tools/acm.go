@@ -177,9 +177,12 @@ func (a *ACM) ParseACMInfo() error {
 		return err
 	}
 	totalACM := make([]byte, a.Header.GetSize()/4)
-	a.Header.Write(totalACM)
+	_, err := a.Header.Write(totalACM)
+	if err != nil {
+		return err
+	}
 	buf := bytes.NewReader(totalACM)
-	_, err := buf.Seek(int64(a.Info.ChipsetIDList), io.SeekStart)
+	_, err = buf.Seek(int64(a.Info.ChipsetIDList), io.SeekStart)
 	if err != nil {
 		return fmt.Errorf("unable to seek: %w", err)
 	}
