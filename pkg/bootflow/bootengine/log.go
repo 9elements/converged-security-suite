@@ -10,9 +10,11 @@ import (
 
 // StepResult is the outcome of a single Step execution.
 type StepResult struct {
+	Actor        types.Actor
+	ActorCode    *types.Data
 	Step         types.Step
 	Actions      types.Actions
-	MeasuredData []types.MeasuredData
+	MeasuredData types.MeasuredDataSlice
 	Issues       StepIssues
 }
 

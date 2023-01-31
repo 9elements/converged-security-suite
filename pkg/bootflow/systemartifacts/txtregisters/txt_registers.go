@@ -10,11 +10,11 @@ import (
 	"github.com/xaionaro-go/bytesextra"
 )
 
-type Collection struct {
+type TXTRegisters struct {
 	registers.Registers
 }
 
-func (c Collection) ReadAt(p []byte, off int64) (n int, err error) {
+func (c TXTRegisters) ReadAt(p []byte, off int64) (n int, err error) {
 	for _, r := range c.Registers {
 		offset := int64(r.Address() - registers.TxtPublicSpace)
 		if offset < 0 {
@@ -37,7 +37,7 @@ func (c Collection) ReadAt(p []byte, off int64) (n int, err error) {
 	return 0, fmt.Errorf("the register with address 0x%X was not found", off)
 }
 
-func (c Collection) Size() uint64 {
+func (c TXTRegisters) Size() uint64 {
 	return registers.TxtPublicSpaceSize
 }
 
@@ -58,8 +58,8 @@ func GetRegister[R registers.Register](s *types.State, out *R) error {
 	return fmt.Errorf("unable to find register %T in the TXT-registers collection", *out)
 }
 
-func New(rs registers.Registers) *Collection {
-	var c Collection
+func New(rs registers.Registers) *TXTRegisters {
+	var c TXTRegisters
 
 	for _, r := range rs {
 		if r.Address() >= registers.TxtPublicSpace && r.Address() <= registers.TxtPublicSpace+registers.TxtPublicSpaceSize {
@@ -73,10 +73,10 @@ func New(rs registers.Registers) *Collection {
 	return &c
 }
 
-func Get(state *types.State) (*Collection, error) {
-	return types.GetSystemArtifactByTypeFromState[*Collection](state)
+func Get(state *types.State) (*TXTRegisters, error) {
+	return types.GetSystemArtifactByTypeFromState[*TXTRegisters](state)
 }
 
-func With(state *types.State, callback func(*Collection) error) error {
+func With(state *types.State, callback func(*TXTRegisters) error) error {
 	return types.WithSystemArtifact(state, callback)
 }

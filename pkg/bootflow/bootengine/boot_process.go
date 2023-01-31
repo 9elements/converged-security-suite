@@ -26,20 +26,44 @@ func NewBootProcess(state *types.State) *BootProcess {
 	}
 }
 
-func stateNextStep(ctx context.Context, state *types.State) (types.Step, types.Actions, StepIssues, bool) {
+func stateNextStep(
+	ctx context.Context,
+	state *types.State,
+) (
+	*types.Data,
+	types.Step,
+	types.Actions,
+	StepIssues,
+	bool,
+) {
 	actCoords := &state.CurrentActionCoordinates
 	if actCoords.Flow == nil {
-		return nil, nil, nil, false
+		return nil, nil, nil, nil, false
 	}
 
 	if actCoords.StepIndex >= uint(len(actCoords.Flow)) {
-		return nil, nil, nil, false
+		return nil, nil, nil, nil, false
+	}
+
+	var stepIssues StepIssues
+
+	var actorCode *types.Data
+	if state.CurrentActor != nil {
+		if actorCodeSource := state.CurrentActor.ResponsibleCode(); actorCodeSource != nil {
+			var err error
+			actorCode, err = actorCodeSource.Data(state)
+			if err != nil {
+				stepIssues = append(stepIssues, StepIssue{
+					Coords: StepIssueCoordsActor{},
+					Issue:  err,
+				})
+			}
+		}
 	}
 
 	step := actCoords.Flow[actCoords.StepIndex]
 	actCoords.StepIndex++
 	actions := step.Actions(state)
-	var stepIssues StepIssues
 	for idx, action := range actions {
 		actCoords.ActionIndex = uint(idx)
 		issue := func() (issue error) {
@@ -56,22 +80,32 @@ func stateNextStep(ctx context.Context, state *types.State) (types.Step, types.A
 			return
 		}()
 		if issue != nil {
-			stepIssues = append(stepIssues, StepIssue{ActionIndex: uint(idx), Issue: issue})
+			stepIssues = append(stepIssues, StepIssue{
+				Coords: StepIssueCoordsAction{
+					ActionIndex: uint(idx),
+				},
+				Issue: issue,
+			})
 		}
 	}
 
-	return step, actions, stepIssues, true
+	return actorCode, step, actions, stepIssues, true
 }
 
 // BootProcess executes the current step and switches to pointer to the next step.
 func (process *BootProcess) NextStep(ctx context.Context) bool {
 	oldMeasuredData := process.CurrentState.MeasuredData
-	stepBackend, actions, stepIssues, ok := stateNextStep(ctx, process.CurrentState)
+	actorCode, stepBackend, actions, stepIssues, ok := stateNextStep(ctx, process.CurrentState)
 	if !ok {
 		return false
 	}
-	step := StepResult{Step: stepBackend, Actions: actions}
-	step.Issues = stepIssues
+	step := StepResult{
+		Actor:     process.CurrentState.CurrentActor,
+		ActorCode: actorCode,
+		Step:      stepBackend,
+		Actions:   actions,
+		Issues:    stepIssues,
+	}
 
 	if len(process.CurrentState.MeasuredData) > len(oldMeasuredData) {
 		step.MeasuredData = process.CurrentState.MeasuredData[len(oldMeasuredData):]

@@ -1,4 +1,4 @@
-package datasources
+package inteldata
 
 import (
 	"fmt"
@@ -9,14 +9,14 @@ import (
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
-// IntelFITFirst implements DataSource by referencing to the data defined
+// FITFirst implements DataSource by referencing to the data defined
 // by the first FIT entry of the specified type.
-type IntelFITFirst fit.EntryType
+type FITFirst fit.EntryType
 
-var _ types.DataSource = (IntelFITFirst)(0)
+var _ types.DataSource = (FITFirst)(0)
 
 // Data implements types.DataSource.
-func (d IntelFITFirst) Data(state *types.State) (*types.Data, error) {
+func (d FITFirst) Data(state *types.State) (*types.Data, error) {
 	biosFW, err := biosimage.Get(state)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get BIOS image: %w", err)
@@ -29,14 +29,18 @@ func (d IntelFITFirst) Data(state *types.State) (*types.Data, error) {
 	for _, fitEntry := range fitEntries {
 		if fitEntry.GetEntryBase().Headers.Type() == fit.EntryType(d) {
 			offset := fitEntry.GetEntryBase().Headers.Address.Offset(uint64(len(biosFW.Content)))
-			length := fitEntry.GetEntryBase().Headers.Size.Uint32()
+			length := len(fitEntry.GetEntryBase().DataSegmentBytes)
+			ranges := pkgbytes.Ranges{{
+				Offset: offset,
+				Length: uint64(length),
+			}}
+			addrMapper := biosimage.PhysMemMapper{}
+			ranges = addrMapper.UnresolveFullImageOffset(biosFW, ranges...)
 			data := &types.Data{
 				References: []types.Reference{{
-					Artifact: biosFW,
-					Ranges: pkgbytes.Ranges{{
-						Offset: offset,
-						Length: uint64(length),
-					}},
+					Artifact:      biosFW,
+					AddressMapper: addrMapper,
+					Ranges:        ranges,
 				}},
 			}
 			return data, nil
@@ -47,6 +51,6 @@ func (d IntelFITFirst) Data(state *types.State) (*types.Data, error) {
 }
 
 // String implements fmt.Stringer.
-func (d IntelFITFirst) String() string {
+func (d FITFirst) String() string {
 	return fmt.Sprintf("IntelFITFirst(%s)", fit.EntryType(d))
 }

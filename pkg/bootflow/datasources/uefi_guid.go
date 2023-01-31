@@ -44,8 +44,10 @@ func (ds UEFIGUIDFirst) Data(state *types.State) (*types.Data, error) {
 		}
 	}
 	if len(volumes) == 0 {
-		return nil, fmt.Errorf("no volumes with GUIDs %#+v found", ds)
+		return nil, fmt.Errorf("no volumes with GUIDs %s found", ds.guids())
 	}
+
+	addrMapper := biosimage.PhysMemMapper{}
 
 	var (
 		ranges pkgbytes.Ranges
@@ -58,7 +60,7 @@ func (ds UEFIGUIDFirst) Data(state *types.State) (*types.Data, error) {
 			mErr.Errors = append(mErr.Errors, fmt.Errorf("unable to detect the offset of a DXE volume"))
 			continue
 		}
-		ranges = append(ranges, volume.Range)
+		ranges = append(ranges, addrMapper.UnresolveFullImageOffset(imgRaw, volume.Range)...)
 	}
 	if len(ranges) == 0 {
 		return nil, mErr.ErrorOrNil()
@@ -66,18 +68,23 @@ func (ds UEFIGUIDFirst) Data(state *types.State) (*types.Data, error) {
 
 	data = &types.Data{
 		References: []types.Reference{{
-			Artifact: imgRaw,
-			Ranges:   ranges,
+			Artifact:      imgRaw,
+			AddressMapper: addrMapper,
+			Ranges:        ranges,
 		}},
 	}
 	return data, nil
 }
 
-// String implements fmt.Stringer.
-func (ds UEFIGUIDFirst) String() string {
+func (ds UEFIGUIDFirst) guids() string {
 	var result []string
 	for _, guid := range ds {
 		result = append(result, guid.String())
 	}
-	return fmt.Sprintf("UEFIGUIDFirst(%s)", strings.Join(result, ", "))
+	return strings.Join(result, ", ")
+}
+
+// String implements fmt.Stringer.
+func (ds UEFIGUIDFirst) String() string {
+	return fmt.Sprintf("UEFIGUIDFirst(%s)", ds.guids())
 }

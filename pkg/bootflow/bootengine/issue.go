@@ -1,11 +1,31 @@
 package bootengine
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
+)
+
+type StepIssueCoords any
+
+type StepIssueCoordsActor struct{}
+
+func (StepIssueCoordsActor) String() string {
+	return "actor"
+}
+
+type StepIssueCoordsAction struct {
+	ActionIndex uint
+}
+
+func (i StepIssueCoordsAction) String() string {
+	return fmt.Sprintf("action#%d", i.ActionIndex)
+}
 
 // StepIssue is an error returned by a Step.
 type StepIssue struct {
-	ActionIndex uint
-	Issue       error
+	Coords StepIssueCoords
+	Issue  error
 }
 
 // Error implements the `error` interface.
@@ -19,7 +39,7 @@ func (err StepIssue) Unwrap() error {
 }
 
 func (err StepIssue) String() string {
-	return fmt.Sprintf("action#%d: %v", err.ActionIndex, err.Issue)
+	return fmt.Sprintf("%s: %v", format.NiceString(err.Coords), err.Issue)
 }
 
 // StepIssues is a slice of StepIssue-s

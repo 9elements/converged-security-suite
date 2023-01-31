@@ -147,16 +147,12 @@ func (MeasurePCR0DATA) Actions(s *types.State) types.Actions {
 				}
 				found = true
 				if idx == 0 && ibbIsOK {
+					addrMapper := biosimage.PhysMemMapper{}
 					ibbRanges := bpManifest.IBBDataRanges(intelFW.SystemArtifact().Size())
-					for idx, r := range ibbRanges {
-						ibbRanges[idx] = pkgbytes.Range{
-							Offset: r.Offset + 0x100000000 - intelFW.SystemArtifact().Size(),
-							Length: r.Length,
-						}
-					}
+					ibbRanges = addrMapper.UnresolveFullImageOffset(intelFW.SystemArtifact(), ibbRanges...)
 					pcr0DATA.ibbVerifiedRange = &types.Reference{
 						Artifact:      intelFW.SystemArtifact(),
-						AddressMapper: biosimage.PhysMemMapper{},
+						AddressMapper: addrMapper,
 						Ranges:        ibbRanges,
 					}
 				}
@@ -206,7 +202,7 @@ func (d pcr0DATA) compileActions() types.Actions {
 		Converter: dataconverters.Hasher(h),
 	}
 	if d.ibbVerifiedRange != nil {
-		data.IsMeasurementOf = append(data.IsMeasurementOf, *d.ibbVerifiedRange)
+		data.IsAlsoMeasurementOf = append(data.IsAlsoMeasurementOf, *d.ibbVerifiedRange)
 	}
 	return types.Actions{
 		tpmactions.NewTPMExtend(pcrtypes.ID(0), (*datasources.StaticData)(&data), tpm2.Algorithm(d.hashAlgo)),

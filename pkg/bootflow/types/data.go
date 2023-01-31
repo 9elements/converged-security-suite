@@ -3,7 +3,9 @@ package types
 import (
 	"bytes"
 	"fmt"
+	"sort"
 	"strings"
+	"sync"
 
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
@@ -14,7 +16,7 @@ type Data struct {
 	References References
 	Converter  DataConverter
 
-	IsMeasurementOf References
+	IsAlsoMeasurementOf References
 }
 
 // String implements fmt.Stringer.
@@ -45,8 +47,102 @@ func (d *Data) Bytes() []byte {
 	return d.Converter.Convert(b)
 }
 
+func (d *Data) MeasuredReferences() References {
+	var result References
+	result = make(References, len(d.References)+len(d.IsAlsoMeasurementOf))
+	copy(result, d.References)
+	copy(result[len(d.References):], d.IsAlsoMeasurementOf)
+	return result
+}
+
 // References is a a slice of Reference-s.
 type References []Reference
+
+var (
+	objToStringCacheMutex sync.Mutex
+	objToStringCache      = map[any]string{}
+)
+
+func compareReferenceType(a, b Reference) int {
+	// TODO: find less fragile and faster way to order artifacts and address mappers
+
+	objToStringCacheMutex.Lock()
+	defer objToStringCacheMutex.Unlock()
+
+	var c0, c1 string
+	if a.Artifact != b.Artifact {
+		c0, c1 = objToStringCache[a.Artifact], objToStringCache[b.Artifact]
+		if c0 == "" {
+			c0 = fmt.Sprintf("%T", a.Artifact)
+			objToStringCache[a.Artifact] = c0
+		}
+		if c1 == "" {
+			c1 = fmt.Sprintf("%T", b.Artifact)
+			objToStringCache[b.Artifact] = c1
+		}
+		if c0 == c1 {
+			panic("the code is written in assumption of one instance per artifact type")
+		}
+	}
+	if a.AddressMapper != a.AddressMapper {
+		c0, c1 = objToStringCache[a.AddressMapper], objToStringCache[b.AddressMapper]
+		if c0 == "" {
+			c0 = fmt.Sprintf("%T", a.AddressMapper)
+			objToStringCache[a.AddressMapper] = c0
+		}
+		if c1 == "" {
+			c1 = fmt.Sprintf("%T", b.AddressMapper)
+			objToStringCache[b.AddressMapper] = c1
+		}
+		if c0 == c1 {
+			panic("the code is written in assumption of one instance per address mapper type")
+		}
+	}
+
+	switch {
+	case c0 < c1:
+		return -1
+	case c0 > c1:
+		return 1
+	default:
+		return 0
+	}
+}
+
+func (s *References) SortAndMerge() {
+	if len(*s) < 2 {
+		return
+	}
+
+	sort.Slice(*s, func(i, j int) bool {
+		return compareReferenceType((*s)[i], (*s)[j]) < 0
+	})
+
+	for idx := range *s {
+		(*s)[idx].Ranges.SortAndMerge()
+	}
+
+	var (
+		curRef Reference
+		outIdx = 0
+	)
+	for _, ref := range *s {
+		if ref.Artifact == curRef.Artifact && ref.AddressMapper == curRef.AddressMapper {
+			curRef.Ranges = append(curRef.Ranges, ref.Ranges...)
+			continue
+		}
+		if len(curRef.Ranges) != 0 {
+			curRef.Ranges.SortAndMerge()
+			(*s)[outIdx] = curRef
+			outIdx++
+		}
+		curRef = ref
+	}
+	curRef.Ranges.SortAndMerge()
+	(*s)[outIdx] = curRef
+	outIdx++
+	*s = (*s)[:outIdx]
+}
 
 // Bytes returns a concatenation of data of all the referenced byte ranges.
 func (s References) Bytes() []byte {
@@ -59,10 +155,61 @@ func (s References) Bytes() []byte {
 	return buf.Bytes()
 }
 
+func (s References) Exclude(exc ...Reference) References {
+	if len(s) == 0 {
+		return nil
+	}
+
+	s0 := make(References, len(s))
+	copy(s0, s)
+	s0.SortAndMerge()
+
+	s1 := make(References, len(exc))
+	copy(s1, exc)
+	s1.SortAndMerge()
+
+	var filtered References
+	i, j := 0, 0
+	for i < len(s0) && j < len(s1) {
+		r0 := s0[i]
+		r1 := s1[j]
+		switch compareReferenceType(r0, r1) {
+		case -1:
+			filtered = append(filtered, r0)
+			i++
+		case 1:
+			j++
+		default:
+			var result pkgbytes.Ranges
+			for _, r := range r0.Ranges {
+				for _, add := range r.Exclude(r1.Ranges...) {
+					if add.Length == 0 {
+						// TODO: fix this bug in the upstream code
+						continue
+					}
+					result = append(result, add)
+				}
+			}
+			if len(result) > 0 {
+				r0.Ranges = result
+				filtered = append(filtered, r0)
+			}
+			i++
+			j++
+		}
+	}
+	for ; i < len(s0); i++ {
+		filtered = append(filtered, s0[i])
+	}
+
+	return filtered
+}
+
 // AddressMapper maps an address. If is an untyped nil then address should be mapped to itself
 // by the consumer of this interface.
 type AddressMapper interface {
-	Resolve(SystemArtifact, pkgbytes.Range) (pkgbytes.Ranges, error)
+	Resolve(SystemArtifact, ...pkgbytes.Range) (pkgbytes.Ranges, error)
+	Unresolve(SystemArtifact, ...pkgbytes.Range) (pkgbytes.Ranges, error)
 }
 
 // Reference is a reference to a bytes data in a SystemArtifact.
@@ -127,6 +274,9 @@ type MeasuredData struct {
 func (d MeasuredData) String() string {
 	var result strings.Builder
 	result.WriteString(fmt.Sprintf("%s <- %v", typeMapKey(d.TrustChain).Name(), d.Data))
+	if len(d.IsAlsoMeasurementOf) != 0 {
+		result.WriteString(fmt.Sprintf(" <%v>", d.IsAlsoMeasurementOf))
+	}
 	if d.DataSource != nil {
 		result.WriteString(fmt.Sprintf(" (%v)", d.DataSource))
 	}
@@ -138,6 +288,14 @@ func (d MeasuredData) String() string {
 
 // MeasuredDataSlice is a slice of MeasuredData-s.
 type MeasuredDataSlice []MeasuredData
+
+func (s MeasuredDataSlice) MeasuredReferences() References {
+	var result References
+	for _, d := range s {
+		result = append(result, d.MeasuredReferences()...)
+	}
+	return result
+}
 
 // String implements fmt.Stringer.
 func (s MeasuredDataSlice) String() string {

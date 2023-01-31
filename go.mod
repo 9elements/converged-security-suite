@@ -43,6 +43,7 @@ require (
 	github.com/intel-go/cpuid v0.0.0-20200819041909-2aa72927c3e2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
+	github.com/romnn/go-recursive-sort v0.0.5 // indirect
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d // indirect
 	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/term v0.4.0 // indirect
