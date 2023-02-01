@@ -39,7 +39,8 @@ var IntelCBnTFailure = types.Flow{
 
 var IntelResetVector = types.Flow{
 	commonsteps.SetActor(actors.Unknown{}),
-	commonsteps.If(ocpconds.IsOCP{}, commonsteps.SetFlow(OCPPEI)),
+	commonsteps.If(ocpconds.IsOCPv0{}, commonsteps.SetFlow(OCPPEIv0)),
+	commonsteps.If(ocpconds.IsOCPv1{}, commonsteps.SetFlow(OCPPEIv1)),
 	commonsteps.Panic("unknown flow: is not OCP"),
 }
 

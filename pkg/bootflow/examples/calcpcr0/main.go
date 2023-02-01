@@ -9,6 +9,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/flows"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/intelpch"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/txtregisters"
@@ -16,10 +17,12 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/google/go-tpm/tpm2"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
+	"github.com/linuxboot/fiano/pkg/uefi"
 )
 
 func main() {
 	manifest.StrictOrderCheck = false
+	uefi.DisableDecompression = false
 	var regs helpers.FlagRegisters
 	// parsing arguments
 	flag.Var(&regs, "registers", "")
@@ -33,6 +36,7 @@ func main() {
 	// the main part
 	state := types.NewState(nil)
 	state.IncludeSubSystem(tpm.NewTPM())
+	state.IncludeSubSystem(intelpch.NewPCH())
 	state.IncludeSystemArtifact(biosimage.New(biosFirmware))
 	state.IncludeSystemArtifact(txtregisters.New(registers.Registers(regs)))
 	state.SetFlow(flows.Root)
