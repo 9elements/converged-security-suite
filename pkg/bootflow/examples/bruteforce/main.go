@@ -31,7 +31,7 @@ func main() {
 	}
 
 	// executing the flow (with two simple "\x00\x00\x00\x00" measurements)
-	state := types.NewState(nil)
+	state := types.NewState()
 	state.SetFlow(myFlow)
 	state.IncludeSubSystem(tpm.NewTPM())
 	process := bootengine.NewBootProcess(state)

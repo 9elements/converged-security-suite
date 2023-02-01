@@ -1,6 +1,7 @@
 package commonconds
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
@@ -17,8 +18,8 @@ func Not(cond types.Condition) not {
 }
 
 // Check implements types.Condition.
-func (not not) Check(s *types.State) bool {
-	return !not.Condition.Check(s)
+func (not not) Check(ctx context.Context, s *types.State) bool {
+	return !not.Condition.Check(ctx, s)
 }
 
 // String implements fmt.Stringer.

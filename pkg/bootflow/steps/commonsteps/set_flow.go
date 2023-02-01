@@ -1,6 +1,8 @@
 package commonsteps
 
 import (
+	"context"
+
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/commonactions"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
@@ -20,7 +22,7 @@ func SetFlowFromFunc(flowFunc func(state *types.State) types.Flow) types.Step {
 }
 
 // Action implements types.Step.
-func (step *setFlowFunc) Actions(state *types.State) types.Actions {
+func (step *setFlowFunc) Actions(_ context.Context, state *types.State) types.Actions {
 	return types.Actions{
 		commonactions.SetFlowFunc(step.nextFlowFunc),
 	}
@@ -40,12 +42,12 @@ func SetFlow(flow types.Flow) types.Step {
 }
 
 // Action implements types.Step.
-func (step *setFlow) Actions(state *types.State) types.Actions {
+func (step *setFlow) Actions(_ context.Context, state *types.State) types.Actions {
 	return types.Actions{
 		commonactions.SetFlow(step.nextFlow),
 	}
 }
 
 func (step *setFlow) String() string {
-	return format.NiceString(step.Actions(nil)[0])
+	return format.NiceString(step.Actions(context.Background(), nil)[0])
 }

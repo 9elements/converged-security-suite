@@ -1,4 +1,4 @@
-package types
+package cache
 
 // Cache is the storage of cached data.
 type Cache interface {
@@ -7,6 +7,7 @@ type Cache interface {
 	Reset()
 }
 
+// DummyCache is an implementation of Cache, which does not cache anything.
 type DummyCache struct{}
 
 var _ Cache = (*DummyCache)(nil)

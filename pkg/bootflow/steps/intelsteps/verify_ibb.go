@@ -1,6 +1,8 @@
 package intelsteps
 
 import (
+	"context"
+
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/commonactions"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/intelactions"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/intelconds"
@@ -24,8 +26,8 @@ func VerifyIBB(fallbackFlow types.Flow) VerifyIBBType {
 }
 
 // Actions implements types.Step.
-func (v VerifyIBBType) Actions(s *types.State) types.Actions {
-	if (intelconds.ValidIBB{}).Check(s) {
+func (v VerifyIBBType) Actions(ctx context.Context, s *types.State) types.Actions {
+	if (intelconds.ValidIBB{}).Check(ctx, s) {
 		return types.Actions{
 			intelactions.SetPCHVerified(inteldata.IBB{}),
 		}

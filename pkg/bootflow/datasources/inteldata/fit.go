@@ -1,6 +1,7 @@
 package inteldata
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
@@ -16,7 +17,7 @@ type FITFirst fit.EntryType
 var _ types.DataSource = (FITFirst)(0)
 
 // Data implements types.DataSource.
-func (d FITFirst) Data(state *types.State) (*types.Data, error) {
+func (d FITFirst) Data(_ context.Context, state *types.State) (*types.Data, error) {
 	biosFW, err := biosimage.Get(state)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get BIOS image: %w", err)

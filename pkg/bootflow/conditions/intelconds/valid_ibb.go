@@ -1,6 +1,7 @@
 package intelconds
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
@@ -9,11 +10,12 @@ import (
 	bootpolicy "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntbootpolicy"
 )
 
-// ValidACM checks if the Initial Boot Block is valid (including its signatures).
+// ValidIBB checks if the Initial Boot Block is valid (including its signatures).
 type ValidIBB struct{}
 
-func (ValidIBB) Check(s *types.State) bool {
-	intelFW, err := intelbiosimage.Get(s)
+// Check implements types.Condition.
+func (ValidIBB) Check(ctx context.Context, s *types.State) bool {
+	intelFW, err := intelbiosimage.Get(ctx, s)
 	if err != nil {
 		return false
 	}

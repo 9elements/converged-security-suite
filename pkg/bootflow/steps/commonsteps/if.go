@@ -1,6 +1,7 @@
 package commonsteps
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
@@ -19,9 +20,9 @@ func If(condition types.Condition, thenStep types.Step) types.Step {
 	}
 }
 
-func (step *ifStep) Actions(s *types.State) types.Actions {
-	if step.Condition.Check(s) {
-		return step.ThenStep.Actions(s)
+func (step *ifStep) Actions(ctx context.Context, s *types.State) types.Actions {
+	if step.Condition.Check(ctx, s) {
+		return step.ThenStep.Actions(ctx, s)
 	}
 	return nil
 }

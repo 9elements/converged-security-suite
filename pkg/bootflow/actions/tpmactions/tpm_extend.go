@@ -34,7 +34,7 @@ func NewTPMExtend(
 
 // Apply implements types.Action.
 func (ext *TPMExtend) Apply(ctx context.Context, state *types.State) error {
-	data, err := ext.DataSource.Data(state)
+	data, err := ext.DataSource.Data(ctx, state)
 	if err != nil {
 		return fmt.Errorf("unable to extract the data: %w", err)
 	}

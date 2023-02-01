@@ -1,6 +1,8 @@
 package types
 
+import "context"
+
 // Condition is an abstract condition.
 type Condition interface {
-	Check(*State) bool
+	Check(context.Context, *State) bool
 }

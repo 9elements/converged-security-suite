@@ -33,7 +33,7 @@ func NewTPMEvent(
 
 // Apply implements types.Action.
 func (ev *TPMEvent) Apply(ctx context.Context, state *types.State) error {
-	data, err := ev.DataSource.Data(state)
+	data, err := ev.DataSource.Data(ctx, state)
 	if err != nil {
 		return fmt.Errorf("unable to extract the data: %w", err)
 	}

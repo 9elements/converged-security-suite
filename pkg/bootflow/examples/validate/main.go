@@ -44,7 +44,7 @@ func main() {
 	}
 
 	// the main part
-	state := types.NewState(nil)
+	state := types.NewState()
 	state.IncludeSubSystem(tpm.NewTPM())
 	state.IncludeSubSystem(intelpch.NewPCH())
 	state.IncludeSystemArtifact(biosimage.New(biosFirmware))

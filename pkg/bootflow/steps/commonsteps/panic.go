@@ -1,6 +1,7 @@
 package commonsteps
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -10,7 +11,7 @@ import (
 
 type Panic string
 
-func (p Panic) Actions(s *types.State) types.Actions {
+func (p Panic) Actions(_ context.Context, s *types.State) types.Actions {
 	return types.Actions{
 		commonactions.Panic(fmt.Errorf("%s", string(p))),
 	}

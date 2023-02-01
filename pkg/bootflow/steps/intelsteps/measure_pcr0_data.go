@@ -1,6 +1,7 @@
 package intelsteps
 
 import (
+	"context"
 	"encoding/binary"
 	"fmt"
 
@@ -24,8 +25,8 @@ type MeasurePCR0DATA struct{}
 
 var _ types.Step = (*MeasurePCR0DATA)(nil)
 
-func (MeasurePCR0DATA) Actions(s *types.State) types.Actions {
-	intelFW, err := intelbiosimage.Get(s)
+func (MeasurePCR0DATA) Actions(ctx context.Context, s *types.State) types.Actions {
+	intelFW, err := intelbiosimage.Get(ctx, s)
 	if err != nil {
 		return types.Actions{
 			commonactions.Panic(fmt.Errorf("unable to get Intel-specific data accessor for the given BIOS firmware image: %w", err)),

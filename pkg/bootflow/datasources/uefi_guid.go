@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"strings"
@@ -22,7 +23,7 @@ type UEFIGUIDFirst []guid.GUID
 var _ types.DataSource = (UEFIGUIDFirst)(nil)
 
 // Data implements types.DataSource.
-func (ds UEFIGUIDFirst) Data(state *types.State) (*types.Data, error) {
+func (ds UEFIGUIDFirst) Data(_ context.Context, state *types.State) (*types.Data, error) {
 	var data *types.Data
 	imgRaw, err := biosimage.Get(state)
 	if err != nil {

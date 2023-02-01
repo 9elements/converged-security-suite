@@ -1,6 +1,7 @@
 package intelconds
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage/accessor/intelbiosimage"
@@ -13,8 +14,8 @@ import (
 type ValidKM struct{}
 
 // Check implements types.Condition.
-func (ValidKM) Check(s *types.State) bool {
-	intelFW, err := intelbiosimage.Get(s)
+func (ValidKM) Check(ctx context.Context, s *types.State) bool {
+	intelFW, err := intelbiosimage.Get(ctx, s)
 	if err != nil {
 		return false
 	}

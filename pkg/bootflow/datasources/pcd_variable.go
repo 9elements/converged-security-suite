@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/ocpconds"
@@ -12,15 +13,15 @@ type PCDVariable string
 var _ types.DataSource = PCDVariable("")
 
 // Data implements types.DataSource.
-func (d PCDVariable) Data(s *types.State) (*types.Data, error) {
+func (d PCDVariable) Data(ctx context.Context, s *types.State) (*types.Data, error) {
 	switch string(d) {
 	case "FirmwareVendorVersion":
 		switch {
-		case ocpconds.IsOCPv0{}.Check(s):
+		case ocpconds.IsOCPv0{}.Check(ctx, s):
 			return &types.Data{
 				ForceBytes: (ocpconds.IsOCPv0{}).FirmwareVendorVersion(),
 			}, nil
-		case ocpconds.IsOCPv1{}.Check(s):
+		case ocpconds.IsOCPv1{}.Check(ctx, s):
 			return &types.Data{
 				ForceBytes: (ocpconds.IsOCPv1{}).FirmwareVendorVersion(),
 			}, nil

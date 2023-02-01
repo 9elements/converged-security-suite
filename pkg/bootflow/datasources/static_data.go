@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
@@ -13,7 +14,7 @@ type StaticData types.Data
 var _ types.DataSource = (*StaticData)(nil)
 
 // Data implements types.DataSource.
-func (d *StaticData) Data(*types.State) (*types.Data, error) {
+func (d *StaticData) Data(context.Context, *types.State) (*types.Data, error) {
 	return (*types.Data)(d), nil
 }
 

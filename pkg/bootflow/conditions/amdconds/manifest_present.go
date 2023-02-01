@@ -1,6 +1,8 @@
 package amdconds
 
 import (
+	"context"
+
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/linuxboot/fiano/pkg/amd/manifest"
@@ -12,7 +14,7 @@ type ManifestPresent struct{}
 var _ types.Condition = (*ManifestPresent)(nil)
 
 // Check implements types.Condition.
-func (ManifestPresent) Check(s *types.State) bool {
+func (ManifestPresent) Check(_ context.Context, s *types.State) bool {
 	biosImg, err := biosimage.Get(s)
 	if err != nil {
 		return false

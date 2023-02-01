@@ -9,6 +9,7 @@ type ValidatorFinalCoverageIsComplete struct{}
 
 var _ Validator = (*ValidatorFinalCoverageIsComplete)(nil)
 
+// Validate implements Validator.
 func (ValidatorFinalCoverageIsComplete) Validate(l bootengine.Log) Issues {
 	// TODO: implement.
 	return nil

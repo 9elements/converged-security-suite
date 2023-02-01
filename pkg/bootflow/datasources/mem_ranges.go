@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -15,7 +16,7 @@ type MemRanges pkgbytes.Ranges
 var _ types.DataSource = (MemRanges)(nil)
 
 // Data implements types.DataSource.
-func (mrs MemRanges) Data(state *types.State) (*types.Data, error) {
+func (mrs MemRanges) Data(_ context.Context, state *types.State) (*types.Data, error) {
 	biosImg, err := biosimage.Get(state)
 	if err != nil {
 		return nil, fmt.Errorf("unable to find where the memory ranges are mapped to; BIOS image is not set: %w", err)

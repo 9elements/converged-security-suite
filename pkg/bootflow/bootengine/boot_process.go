@@ -51,7 +51,7 @@ func stateNextStep(
 	if state.CurrentActor != nil {
 		if actorCodeSource := state.CurrentActor.ResponsibleCode(); actorCodeSource != nil {
 			var err error
-			actorCode, err = actorCodeSource.Data(state)
+			actorCode, err = actorCodeSource.Data(ctx, state)
 			if err != nil {
 				stepIssues = append(stepIssues, StepIssue{
 					Coords: StepIssueCoordsActor{},
@@ -63,7 +63,7 @@ func stateNextStep(
 
 	step := actCoords.Flow[actCoords.StepIndex]
 	actCoords.StepIndex++
-	actions := step.Actions(state)
+	actions := step.Actions(ctx, state)
 	for idx, action := range actions {
 		actCoords.ActionIndex = uint(idx)
 		issue := func() (issue error) {

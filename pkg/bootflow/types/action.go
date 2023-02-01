@@ -36,7 +36,7 @@ func (coords *ActionCoordinates) Step() Step {
 }
 
 // Action returns the Action.
-func (coords *ActionCoordinates) Action(state *State) Action {
+func (coords *ActionCoordinates) Action(ctx context.Context, state *State) Action {
 	step := coords.Step()
-	return step.Actions(state)[coords.ActionIndex]
+	return step.Actions(ctx, state)[coords.ActionIndex]
 }

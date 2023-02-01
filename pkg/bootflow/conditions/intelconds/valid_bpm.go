@@ -1,6 +1,7 @@
 package intelconds
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage/accessor/intelbiosimage"
@@ -14,8 +15,8 @@ import (
 type ValidBPM struct{}
 
 // Check implements types.Condition.
-func (ValidBPM) Check(s *types.State) bool {
-	intelFW, err := intelbiosimage.Get(s)
+func (ValidBPM) Check(ctx context.Context, s *types.State) bool {
+	intelFW, err := intelbiosimage.Get(ctx, s)
 	if err != nil {
 		return false
 	}

@@ -1,6 +1,8 @@
 package intelsteps
 
 import (
+	"context"
+
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/commonactions"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/intelactions"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actors/intelactors"
@@ -15,7 +17,8 @@ type VerifyACMType struct {
 
 var _ types.Step = (*VerifyACMType)(nil)
 
-// VerifyACM is a types.Step to verify if ACM is valid (and jump to another flow if it isn't).
+// VerifyACM is a types.Step to verify if Intel Authenticated Code Module
+// is valid (and jump to another flow if it is not).
 func VerifyACM(fallbackFlow types.Flow) VerifyACMType {
 	return VerifyACMType{
 		FallbackFlow: fallbackFlow,
@@ -23,8 +26,8 @@ func VerifyACM(fallbackFlow types.Flow) VerifyACMType {
 }
 
 // Actions implements types.Step.
-func (v VerifyACMType) Actions(s *types.State) types.Actions {
-	if (intelconds.ValidACM{}).Check(s) {
+func (v VerifyACMType) Actions(ctx context.Context, s *types.State) types.Actions {
+	if (intelconds.ValidACM{}).Check(ctx, s) {
 		return types.Actions{
 			intelactions.SetPCHVerified(intelactors.ACM{}.ResponsibleCode()),
 		}

@@ -1,6 +1,7 @@
 package inteldata
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
@@ -15,8 +16,8 @@ type IBB struct{}
 var _ types.DataSource = (*IBB)(nil)
 
 // Data implements types.DataSource.
-func (IBB) Data(s *types.State) (*types.Data, error) {
-	intelFW, err := intelbiosimage.Get(s)
+func (IBB) Data(ctx context.Context, s *types.State) (*types.Data, error) {
+	intelFW, err := intelbiosimage.Get(ctx, s)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get Intel data accessor: %w", err)
 	}

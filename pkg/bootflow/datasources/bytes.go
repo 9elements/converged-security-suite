@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
@@ -12,7 +13,7 @@ type Bytes []byte
 var _ types.DataSource = (Bytes)(nil)
 
 // Data implements DataSource.
-func (d Bytes) Data(*types.State) (*types.Data, error) {
+func (d Bytes) Data(context.Context, *types.State) (*types.Data, error) {
 	return &types.Data{ForceBytes: d}, nil
 }
 

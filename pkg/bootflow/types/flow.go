@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -31,14 +32,14 @@ func (flow Flow) String() string {
 //
 // An example: measure specific sections in an AMD Manifest
 type Step interface {
-	Actions(*State) Actions
+	Actions(context.Context, *State) Actions
 }
 
 // StaticStep is a Step which has a predefined static list of Actions.
 type StaticStep Actions
 
 // Actions implements interface Step.
-func (step StaticStep) Actions(*State) Actions {
+func (step StaticStep) Actions(context.Context, *State) Actions {
 	return Actions(step)
 }
 

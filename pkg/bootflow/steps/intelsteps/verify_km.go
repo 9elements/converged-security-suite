@@ -1,6 +1,8 @@
 package intelsteps
 
 import (
+	"context"
+
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/commonactions"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/intelactions"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/intelconds"
@@ -25,8 +27,8 @@ func VerifyKM(fallbackFlow types.Flow) VerifyKMType {
 }
 
 // Actions implements types.Step.
-func (v VerifyKMType) Actions(s *types.State) types.Actions {
-	if (intelconds.ValidKM{}).Check(s) {
+func (v VerifyKMType) Actions(ctx context.Context, s *types.State) types.Actions {
+	if (intelconds.ValidKM{}).Check(ctx, s) {
 		return types.Actions{
 			intelactions.SetPCHVerified(inteldata.FITFirst(fit.EntryTypeKeyManifestRecord)),
 		}

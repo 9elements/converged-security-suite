@@ -1,6 +1,7 @@
 package commonsteps
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/commonactions"
@@ -22,7 +23,7 @@ func SetActorFromFunc(actorFunc func(state *types.State) types.Actor) types.Step
 }
 
 // Actions implements types.Step.
-func (step *setActorFromFunc) Actions(state *types.State) types.Actions {
+func (step *setActorFromFunc) Actions(_ context.Context, state *types.State) types.Actions {
 	return types.Actions{
 		commonactions.SetActorFunc(step.nextActorFunc),
 	}
@@ -40,7 +41,7 @@ func SetActor(actor types.Actor) types.Step {
 }
 
 // Actions implements types.Step.
-func (step *setActor) Actions(state *types.State) types.Actions {
+func (step *setActor) Actions(_ context.Context, state *types.State) types.Actions {
 	return types.Actions{
 		commonactions.SetActor(step.nextActor),
 	}

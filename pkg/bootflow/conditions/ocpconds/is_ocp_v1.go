@@ -2,6 +2,7 @@ package ocpconds
 
 import (
 	"bytes"
+	"context"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
@@ -15,8 +16,10 @@ var (
 // IsOCPv0 checks if it is an OCP firmware of variant after 2022.
 type IsOCPv1 struct{}
 
+var _ types.Condition = (*IsOCPv1)(nil)
+
 // Check implements types.Condition.
-func (IsOCPv1) Check(s *types.State) bool {
+func (IsOCPv1) Check(_ context.Context, s *types.State) bool {
 	biosImg, err := biosimage.Get(s)
 	if err != nil {
 		return false
