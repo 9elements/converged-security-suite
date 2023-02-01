@@ -6,7 +6,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage/accessor/intelbiosimage"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
+	bootpolicy "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntbootpolicy"
 )
 
 type ValidIBB struct{}

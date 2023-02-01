@@ -20,11 +20,11 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/txtregisters"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 )
 
 func main() {
-	manifest.StrictOrderCheck = false
+	cbnt.StrictOrderCheck = false
 	var regs helpers.FlagRegisters
 	// parsing arguments
 	flag.Var(&regs, "registers", "")

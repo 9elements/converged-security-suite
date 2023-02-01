@@ -5,8 +5,8 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage/accessor/intelbiosimage"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
+	key "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntkey"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
 )
 
 type ValidKM struct{}

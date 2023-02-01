@@ -16,7 +16,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/google/go-tpm/tpm2"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
+	manifest "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 )
 
 type MeasurePCR0DATA struct{}

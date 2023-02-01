@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage/accessor"
+	bootpolicy "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntbootpolicy"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
 )
 
 func (a *Accessor) BootPolicyManifest() (
@@ -27,7 +27,7 @@ func (a *Accessor) BootPolicyManifest() (
 		for _, fitEntry := range fitEntries {
 			switch fitEntry := fitEntry.(type) {
 			case *fit.EntryBootPolicyManifestRecord:
-				bpManifest, err := fitEntry.ParseData()
+				_, bpManifest, err := fitEntry.ParseData()
 				if err != nil {
 					result.err = err
 					return
