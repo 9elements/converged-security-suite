@@ -8,10 +8,13 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
+// ValidatorActorsAreProtected validates if the code of an Actor is protected, before
+// the Actor is executed.
 type ValidatorActorsAreProtected struct{}
 
 var _ Validator = (*ValidatorActorsAreProtected)(nil)
 
+// Validate implements Validator.
 func (ValidatorActorsAreProtected) Validate(l bootengine.Log) Issues {
 	var result []Issue
 	var measured types.References

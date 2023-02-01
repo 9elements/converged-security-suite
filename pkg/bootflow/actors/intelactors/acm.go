@@ -6,7 +6,7 @@ import (
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
-// IntelACM is Intel Authenticated Code Module.
+// ACM is Intel Authenticated Code Module.
 // It could be used to verify/measure IBB (Initial Boot Block), which
 // in some flows includes PEI.
 type ACM struct{}

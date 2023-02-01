@@ -8,18 +8,22 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
+// VerifyIBBType is just the type implementing VerifyIBB.
 type VerifyIBBType struct {
 	FallbackFlow types.Flow
 }
 
 var _ types.Step = (*VerifyKMType)(nil)
 
+// VerifyBPM is a types.Step to verify if Initial Boot Block
+// is valid (and jump to another flow if it is not).
 func VerifyIBB(fallbackFlow types.Flow) VerifyIBBType {
 	return VerifyIBBType{
 		FallbackFlow: fallbackFlow,
 	}
 }
 
+// Actions implements types.Step.
 func (v VerifyIBBType) Actions(s *types.State) types.Actions {
 	if (intelconds.ValidIBB{}).Check(s) {
 		return types.Actions{

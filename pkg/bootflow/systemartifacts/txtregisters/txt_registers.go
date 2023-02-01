@@ -10,10 +10,12 @@ import (
 	"github.com/xaionaro-go/bytesextra"
 )
 
+// TXTRegisters is the collection of Intel TXT registers.
 type TXTRegisters struct {
 	registers.Registers
 }
 
+// ReadAt implements types.SystemArtifact.
 func (c TXTRegisters) ReadAt(p []byte, off int64) (n int, err error) {
 	for _, r := range c.Registers {
 		offset := int64(r.Address() - registers.TxtPublicSpace)
@@ -37,10 +39,12 @@ func (c TXTRegisters) ReadAt(p []byte, off int64) (n int, err error) {
 	return 0, fmt.Errorf("the register with address 0x%X was not found", off)
 }
 
+// Size implements types.SystemArtifact.
 func (c TXTRegisters) Size() uint64 {
 	return registers.TxtPublicSpaceSize
 }
 
+// GetRegister sets to `out` the value of the register (which is defined by its type).
 func GetRegister[R registers.Register](s *types.State, out *R) error {
 	c, err := Get(s)
 	if err != nil {
@@ -58,6 +62,7 @@ func GetRegister[R registers.Register](s *types.State, out *R) error {
 	return fmt.Errorf("unable to find register %T in the TXT-registers collection", *out)
 }
 
+// New collects TXT registers and returns them as a SystemArtifact.
 func New(rs registers.Registers) *TXTRegisters {
 	var c TXTRegisters
 
@@ -73,10 +78,12 @@ func New(rs registers.Registers) *TXTRegisters {
 	return &c
 }
 
+// Get returns the collection of TXT registers.
 func Get(state *types.State) (*TXTRegisters, error) {
 	return types.GetSystemArtifactByTypeFromState[*TXTRegisters](state)
 }
 
+// With executes the callback if TXT registers collection is set.
 func With(state *types.State, callback func(*TXTRegisters) error) error {
 	return types.WithSystemArtifact(state, callback)
 }

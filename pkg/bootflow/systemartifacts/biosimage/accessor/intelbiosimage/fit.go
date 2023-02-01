@@ -5,6 +5,7 @@ import (
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
+// FIT returns the Intel Firmware Interface Table.
 func (a *Accessor) FIT() (fit.Entries, error) {
 	result := accessor.Memoize(a.Cache, func() (result struct {
 		entries fit.Entries

@@ -9,6 +9,7 @@ import (
 	bootpolicy "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntbootpolicy"
 )
 
+// ValidACM checks if the Initial Boot Block is valid (including its signatures).
 type ValidIBB struct{}
 
 func (ValidIBB) Check(s *types.State) bool {

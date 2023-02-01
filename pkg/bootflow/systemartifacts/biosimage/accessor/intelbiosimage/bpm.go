@@ -8,6 +8,7 @@ import (
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
+// BootPolicyManifest returns the Boot Policy Manifest.
 func (a *Accessor) BootPolicyManifest() (
 	data *bootpolicy.Manifest,
 	entry *fit.EntryBootPolicyManifestRecord,

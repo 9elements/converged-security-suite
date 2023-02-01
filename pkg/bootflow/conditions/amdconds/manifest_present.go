@@ -6,8 +6,12 @@ import (
 	"github.com/linuxboot/fiano/pkg/amd/manifest"
 )
 
+// ManifestPresent checks if AMD metadata structures as present.
 type ManifestPresent struct{}
 
+var _ types.Condition = (*ManifestPresent)(nil)
+
+// Check implements types.Condition.
 func (ManifestPresent) Check(s *types.State) bool {
 	biosImg, err := biosimage.Get(s)
 	if err != nil {

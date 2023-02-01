@@ -9,8 +9,10 @@ import (
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
+// ValidBPM checks if the Intel Key Manifest is valid (including its signatures).
 type ValidKM struct{}
 
+// Check implements types.Condition.
 func (ValidKM) Check(s *types.State) bool {
 	intelFW, err := intelbiosimage.Get(s)
 	if err != nil {

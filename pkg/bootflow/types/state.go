@@ -41,6 +41,7 @@ func NewState(cache Cache) *State {
 	}
 }
 
+// TODO: move this to "bootengine.*"
 func (state *State) Cache() Cache {
 	return state.cache
 }

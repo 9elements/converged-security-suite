@@ -11,14 +11,17 @@ type not struct {
 	types.Condition
 }
 
-func Not(cond types.Condition) types.Condition {
+// Not negates the given condition.
+func Not(cond types.Condition) not {
 	return not{Condition: cond}
 }
 
+// Check implements types.Condition.
 func (not not) Check(s *types.State) bool {
 	return !not.Condition.Check(s)
 }
 
+// String implements fmt.Stringer.
 func (not not) String() string {
 	return fmt.Sprintf("!%s", format.NiceString(not.Condition))
 }

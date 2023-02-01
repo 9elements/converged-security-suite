@@ -19,6 +19,7 @@ import (
 	manifest "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 )
 
+// MeasurePCR0DATA is a types.Step to measure the PCR0_DATA structure.
 type MeasurePCR0DATA struct{}
 
 var _ types.Step = (*MeasurePCR0DATA)(nil)

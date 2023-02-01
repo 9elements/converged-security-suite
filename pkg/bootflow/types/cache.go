@@ -1,5 +1,6 @@
 package types
 
+// Cache is the storage of cached data.
 type Cache interface {
 	Get(k any) (any, bool)
 	Set(k, v any)

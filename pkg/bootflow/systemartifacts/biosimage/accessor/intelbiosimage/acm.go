@@ -7,6 +7,7 @@ import (
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
+// ACM returns the Intel Authenticated Code Module.
 func (a *Accessor) ACM() (
 	data *fit.EntrySACMData,
 	entry *fit.EntrySACM,

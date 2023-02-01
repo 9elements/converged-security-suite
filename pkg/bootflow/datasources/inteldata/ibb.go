@@ -8,6 +8,8 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
+// IBB implements types.DataSource by referencing to
+// the initial boot block.
 type IBB struct{}
 
 var _ types.DataSource = (*IBB)(nil)

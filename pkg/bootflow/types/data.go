@@ -47,9 +47,12 @@ func (d *Data) Bytes() []byte {
 	return d.Converter.Convert(b)
 }
 
+// MeasuredReferences returns References which are measured/referenced directly or indirectly.
+//
+// For example if the Data contains a signature, then MeasuredReferences will also return the
+// reference to the signed data.
 func (d *Data) MeasuredReferences() References {
-	var result References
-	result = make(References, len(d.References)+len(d.IsAlsoMeasurementOf))
+	result := make(References, len(d.References)+len(d.IsAlsoMeasurementOf))
 	copy(result, d.References)
 	copy(result[len(d.References):], d.IsAlsoMeasurementOf)
 	return result
@@ -155,6 +158,7 @@ func (s References) Bytes() []byte {
 	return buf.Bytes()
 }
 
+// Exclude returns the references left after subtracting regions from the provided references.
 func (s References) Exclude(exc ...Reference) References {
 	if len(s) == 0 {
 		return nil
@@ -289,6 +293,10 @@ func (d MeasuredData) String() string {
 // MeasuredDataSlice is a slice of MeasuredData-s.
 type MeasuredDataSlice []MeasuredData
 
+// MeasuredReferences returns References which are measured/referenced directly or indirectly.
+//
+// For example if the Data contains a signature, then MeasuredReferences will also return the
+// reference to the signed data.
 func (s MeasuredDataSlice) MeasuredReferences() References {
 	var result References
 	for _, d := range s {

@@ -6,6 +6,7 @@ import (
 
 var _ types.SubSystem = (*PCH)(nil)
 
+// PCH is the Intel Platform Controller Hub.
 type PCH struct{}
 
 // NewTPM returns a new instance of TPM.

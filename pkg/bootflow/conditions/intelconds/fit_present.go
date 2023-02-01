@@ -5,8 +5,10 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
+// BPMPresent checks if Intel Firmware Interface Table is present.
 type FITPresent struct{}
 
+// Check implements types.Condition.
 func (FITPresent) Check(s *types.State) bool {
 	intelFW, err := intelbiosimage.Get(s)
 	if err != nil {

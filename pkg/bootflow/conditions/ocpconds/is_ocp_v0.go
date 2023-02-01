@@ -21,8 +21,10 @@ var (
 	ocpVendorVersionV0 = unhex("1EFB6B540C1D5540A4AD4EF4BF17B83A")
 )
 
+// IsOCPv0 checks if it is an OCP firmware of variant before 2022.
 type IsOCPv0 struct{}
 
+// Check implements types.Condition.
 func (IsOCPv0) Check(s *types.State) bool {
 	biosImg, err := biosimage.Get(s)
 	if err != nil {
@@ -51,9 +53,11 @@ func (IsOCPv0) Check(s *types.State) bool {
 		return false
 	}
 
+	// TODO: do better/more_reliable signature check
 	return bytes.Contains(v.Found.Buf(), ocpVendorVersionV0[len(ocpVendorVersionV0)-4:])
 }
 
+// FirmwareVendorVersion returns the well-known PCD Firmware Vendor Version string.
 func (IsOCPv0) FirmwareVendorVersion() []byte {
 	r := make([]byte, len(ocpVendorVersionV0))
 	copy(r, ocpVendorVersionV0)

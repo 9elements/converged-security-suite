@@ -9,6 +9,7 @@ import (
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
+// MemRanges implements types.DataSource as a list of ranges in the physical memory address space.
 type MemRanges pkgbytes.Ranges
 
 var _ types.DataSource = (MemRanges)(nil)

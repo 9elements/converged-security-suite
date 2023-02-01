@@ -5,8 +5,10 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
+// ValidACM checks if the Intel Authenticated Code Module is valid (including its signatures).
 type ValidACM struct{}
 
+// Check implements types.Condition.
 func (ValidACM) Check(s *types.State) bool {
 	intelFW, err := intelbiosimage.Get(s)
 	if err != nil {

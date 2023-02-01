@@ -8,6 +8,7 @@ import (
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
+// FIT returns the Intel Key Manifest.
 func (a *Accessor) KeyManifest() (
 	data *key.Manifest,
 	entry *fit.EntryKeyManifestRecord,

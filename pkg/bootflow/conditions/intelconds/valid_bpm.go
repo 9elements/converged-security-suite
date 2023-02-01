@@ -10,8 +10,10 @@ import (
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
+// ValidBPM checks if the Intel Boot Policy Manifest is valid (including its signatures).
 type ValidBPM struct{}
 
+// Check implements types.Condition.
 func (ValidBPM) Check(s *types.State) bool {
 	intelFW, err := intelbiosimage.Get(s)
 	if err != nil {
