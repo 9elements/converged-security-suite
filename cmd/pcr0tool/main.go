@@ -14,7 +14,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/printnodes"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/sum"
 	"github.com/9elements/converged-security-suite/v2/pkg/log"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 	fianoLog "github.com/linuxboot/fiano/pkg/log"
 )
 
@@ -52,7 +52,7 @@ func setupFlag() {
 }
 
 func main() {
-	manifest.StrictOrderCheck = false // some firmwares have incorrect elements order, should parse them anyway
+	cbnt.StrictOrderCheck = false // some firmwares have incorrect elements order, should parse them anyway
 	fianoLog.DefaultLogger = log.DummyLogger{}
 
 	setupFlag()

@@ -1,16 +1,15 @@
-package cbnt
+package bootguard
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi/consts"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntbootpolicy"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/bootpolicy"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/common/pretty"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest/key"
 
 	"github.com/linuxboot/fiano/pkg/cbfs"
 )
@@ -39,48 +38,33 @@ func WriteCBnTStructures(image []byte, bpmFile, kmFile, acmFile *os.File) error 
 	return nil
 }
 
-// PrintCBnTStructures takes a firmware image and prints boot policy manifest, key manifest, ACM, chipset, processor and tpm information if available.
-func PrintCBnTStructures(image []byte) error {
+// PrintStructures takes a firmware image and prints boot policy manifest, key manifest, ACM, chipset, processor and tpm information if available.
+func PrintStructures(image []byte) error {
 	var acm *tools.ACM
-	var chipsets *tools.Chipsets
-	var processors *tools.Processors
-	var tpms *tools.TPMs
-	var err, err2 error
+	var err error
 	bpmEntry, kmEntry, acmEntry, err := ParseFITEntries(image)
 	if err != nil {
 		return err
 	}
 
-	bpm, err := bpmEntry.ParseData()
+	bpm, err := NewBPM(bpmEntry.Reader())
 	if err != nil {
 		return fmt.Errorf("unable to parse BPM: %w", err)
 	}
 
-	km, err := kmEntry.ParseData()
+	km, err := NewKM(kmEntry.Reader())
 	if err != nil {
 		return fmt.Errorf("unable to parse KM: %w", err)
 	}
 
-	acm, chipsets, processors, tpms, err, err2 = tools.ParseACM(acmEntry.DataSegmentBytes)
-	if err != nil || err2 != nil {
+	acm, err = tools.ParseACM(bytes.NewReader(acmEntry.DataSegmentBytes))
+	if err != nil {
 		return err
 	}
-
-	if bpm != nil {
-		fmt.Println(bpm.PrettyString(0, true))
-	}
-	if km != nil {
-		if km.KeyAndSignature.Signature.DataTotalSize() < 1 {
-			fmt.Println(km.PrettyString(0, true, pretty.OptionOmitKeySignature(true)))
-		} else {
-			fmt.Println(km.PrettyString(0, true, pretty.OptionOmitKeySignature(false)))
-		}
-	}
+	km.PrintKM()
+	bpm.PrintBPM()
 	if acm != nil {
 		acm.PrettyPrint()
-		chipsets.PrettyPrint()
-		processors.PrettyPrint()
-		tpms.PrettyPrint()
 	}
 	return nil
 }
@@ -106,58 +90,6 @@ func ParseFITEntries(image []byte) (bpm *fit.EntryBootPolicyManifestRecord, km *
 		return bpm, km, acm, fmt.Errorf("image has no BPM (isNil:%v) or/and KM (isNil:%v) or/and ACM (isNil:%v)", bpm == nil, km == nil, acm == nil)
 	}
 	return bpm, km, acm, nil
-}
-
-// CalculateNEMSize calculates No Eviction Memory and returns it as count of 4K pages.
-func CalculateNEMSize(image []byte, bpm *bootpolicy.Manifest, km *key.Manifest, acm *tools.ACM) (bootpolicy.Size4K, error) {
-	var totalSize uint32
-	if bpm == nil || km == nil || acm == nil {
-		return 0, fmt.Errorf("BPM, KM or ACM are nil")
-	}
-	fitTable, err := fit.GetTable(image)
-	if err != nil {
-		return 0, fmt.Errorf("unable to get FIT: %w", err)
-	}
-	fitEntries := fitTable.GetEntries(image)
-	if len(fitEntries) == 0 || fitEntries[0].GetEntryBase().Headers.Type() != fit.EntryTypeFITHeaderEntry {
-		return 0, fmt.Errorf("unable to get FIT headers")
-	}
-	hdr := fitEntries[0]
-	if err != nil {
-		return 0, err
-	}
-	totalSize += uint32(km.KeyManifestSignatureOffset)
-	totalSize += keySignatureElementMaxSize
-	totalSize += uint32(hdr.GetEntryBase().Headers.Size.Uint32() << 4)
-	totalSize += uint32(2048)
-	totalSize += keySignatureElementMaxSize
-	totalSize += uint32((&bootpolicy.BPMH{}).TotalSize())
-	for _, se := range bpm.SE {
-		totalSize += uint32(se.ElementSize)
-		for _, ibb := range se.IBBSegments {
-			totalSize += ibb.Size
-		}
-	}
-	if bpm.PCDE != nil {
-		totalSize += uint32(bpm.PCDE.ElementSize)
-	}
-	if bpm.PME != nil {
-		totalSize += uint32(bpm.PME.ElementSize)
-	}
-	totalSize += uint32(12)
-	totalSize += keySignatureElementMaxSize
-	if bpm.TXTE != nil {
-		totalSize += uint32(bpm.TXTE.ElementSize)
-	}
-	totalSize += acm.Header.Size
-	totalSize += defaultStackAndDataSize
-	if (totalSize + additionalNEMSize) > defaultLLCSize {
-		return 0, fmt.Errorf("NEM size is bigger than LLC %d", totalSize+additionalNEMSize)
-	}
-	if (totalSize % 4096) != 0 {
-		totalSize += 4096 - (totalSize % 4096)
-	}
-	return bootpolicy.NewSize4K(totalSize), nil
 }
 
 // StitchFITEntries takes a firmware filename, an acm, a boot policy manifest and a key manifest as byte slices
@@ -274,8 +206,8 @@ func StitchFITEntries(biosFilename string, acm, bpm, km []byte) error {
 
 // FindAdditionalIBBs takes a coreboot image, searches cbfs files for
 // additional IBBSegment.
-func FindAdditionalIBBs(imagepath string) ([]bootpolicy.IBBSegment, error) {
-	ibbs := make([]bootpolicy.IBBSegment, 0)
+func FindAdditionalIBBs(imagepath string) ([]cbntbootpolicy.IBBSegment, error) {
+	ibbs := make([]cbntbootpolicy.IBBSegment, 0)
 	image, err := os.Open(imagepath)
 	if err != nil {
 		return nil, err
@@ -302,7 +234,7 @@ func FindAdditionalIBBs(imagepath string) ([]bootpolicy.IBBSegment, error) {
 		}
 		for _, entry := range fitentries {
 			if entry.GetEntryBase().Headers.Type() == fit.EntryTypeBIOSStartupModuleEntry {
-				ibb := bootpolicy.NewIBBSegment()
+				ibb := cbntbootpolicy.NewIBBSegment()
 				ibb.Base = uint32(entry.GetEntryBase().Headers.Address.Pointer())
 				ibb.Size = entry.GetEntryBase().Headers.Size.Uint32() << 4
 				ibbs = append(ibbs, *ibb)
@@ -320,7 +252,7 @@ func FindAdditionalIBBs(imagepath string) ([]bootpolicy.IBBSegment, error) {
 			"fallback/verstage",
 			"bootblock":
 
-			ibb := bootpolicy.NewIBBSegment()
+			ibb := cbntbootpolicy.NewIBBSegment()
 			ibb.Base = uint32(flashBase) + cbfsbaseaddr + seg.GetFile().RecordStart + seg.GetFile().SubHeaderOffset
 			ibb.Size = seg.GetFile().Size
 			ibb.Flags = 0

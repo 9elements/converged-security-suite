@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/9elements/converged-security-suite/v2/pkg/log"
 	"github.com/alecthomas/kong"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 	fianoLog "github.com/linuxboot/fiano/pkg/log"
 )
 
@@ -24,7 +24,7 @@ func main() {
 			Compact: true,
 			Summary: true,
 		}))
-	manifest.StrictOrderCheck = cli.ManifestStrictOrderCheck
+	cbnt.StrictOrderCheck = cli.ManifestStrictOrderCheck
 	fianoLog.DefaultLogger = log.DummyLogger{}
 
 	// Run commands
