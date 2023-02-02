@@ -11,7 +11,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/datasources"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage/accessor/intelbiosimage"
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/txtregisters"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/txtpublic"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
@@ -33,7 +33,7 @@ func (MeasurePCR0DATA) Actions(ctx context.Context, s *types.State) types.Action
 		}
 	}
 
-	txtRegisters, err := txtregisters.Get(s)
+	txtRegisters, err := txtpublic.Get(s)
 	if err != nil {
 		return types.Actions{
 			commonactions.Panic(fmt.Errorf("unable to get TXT registers: %w", err)),

@@ -17,7 +17,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/intelpch"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/txtregisters"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/txtpublic"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
@@ -51,7 +51,7 @@ func main() {
 	state.IncludeSubSystem(tpm.NewTPM())
 	state.IncludeSubSystem(intelpch.NewPCH())
 	state.IncludeSystemArtifact(biosArtifact)
-	state.IncludeSystemArtifact(txtregisters.New(registers.Registers(regs)))
+	state.IncludeSystemArtifact(txtpublic.New(registers.Registers(regs)))
 	state.SetFlow(flows.Root)
 	process := bootengine.NewBootProcess(state)
 	process.Finish(context.Background())

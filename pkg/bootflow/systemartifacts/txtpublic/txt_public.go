@@ -1,4 +1,4 @@
-package txtregisters
+package txtpublic
 
 import (
 	"encoding/binary"
@@ -10,13 +10,13 @@ import (
 	"github.com/xaionaro-go/bytesextra"
 )
 
-// TXTRegisters is the collection of Intel TXT registers.
-type TXTRegisters struct {
+// TXTPublic is the collection of Intel TXT registers.
+type TXTPublic struct {
 	registers.Registers
 }
 
 // ReadAt implements types.SystemArtifact.
-func (c TXTRegisters) ReadAt(p []byte, off int64) (n int, err error) {
+func (c TXTPublic) ReadAt(p []byte, off int64) (n int, err error) {
 	for _, r := range c.Registers {
 		offset := int64(r.Address() - registers.TxtPublicSpace)
 		if offset < 0 {
@@ -40,7 +40,7 @@ func (c TXTRegisters) ReadAt(p []byte, off int64) (n int, err error) {
 }
 
 // Size implements types.SystemArtifact.
-func (c TXTRegisters) Size() uint64 {
+func (c TXTPublic) Size() uint64 {
 	return registers.TxtPublicSpaceSize
 }
 
@@ -63,8 +63,8 @@ func GetRegister[R registers.Register](s *types.State, out *R) error {
 }
 
 // New collects TXT registers and returns them as a SystemArtifact.
-func New(rs registers.Registers) *TXTRegisters {
-	var c TXTRegisters
+func New(rs registers.Registers) *TXTPublic {
+	var c TXTPublic
 
 	for _, r := range rs {
 		if r.Address() >= registers.TxtPublicSpace && r.Address() <= registers.TxtPublicSpace+registers.TxtPublicSpaceSize {
@@ -79,11 +79,11 @@ func New(rs registers.Registers) *TXTRegisters {
 }
 
 // Get returns the collection of TXT registers.
-func Get(state *types.State) (*TXTRegisters, error) {
-	return types.GetSystemArtifactByTypeFromState[*TXTRegisters](state)
+func Get(state *types.State) (*TXTPublic, error) {
+	return types.GetSystemArtifactByTypeFromState[*TXTPublic](state)
 }
 
 // With executes the callback if TXT registers collection is set.
-func With(state *types.State, callback func(*TXTRegisters) error) error {
+func With(state *types.State, callback func(*TXTPublic) error) error {
 	return types.WithSystemArtifact(state, callback)
 }
