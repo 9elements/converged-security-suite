@@ -6,17 +6,20 @@ import (
 	"github.com/linuxboot/fiano/pkg/uefi"
 )
 
-// PEI represents Pre-EFI Initialization code.
-type PEI struct{}
+type DXE struct{}
 
 // ResponsibleCode implements types.Actor.
-func (PEI) ResponsibleCode() types.DataSource {
+func (DXE) ResponsibleCode() types.DataSource {
 	return datasources.SortAndMerge(datasources.Concat{
 		datasources.UEFIFilesByType{
-			uefi.FVFileTypePEICore,
-			uefi.FVFileTypePEIM,
-			uefi.FVFileTypeCombinedPEIMDriver,
+			uefi.FVFileTypeDXECore,
+			uefi.FVFileTypeDriver,
+			uefi.FVFileTypeApplication,
+			uefi.FVFileTypeCombinedSMMDXE,
+			uefi.FVFileTypeSMMCore,
+			uefi.FVFileTypeSMMStandalone,
+			uefi.FVFileTypeSMMCoreStandalone,
 		},
-		datasources.VolumeOf(datasources.UEFIFilesByName{"PeiCore"}),
+		datasources.VolumeOf(datasources.UEFIFilesByName{"DxeCore"}),
 	})
 }

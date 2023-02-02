@@ -44,20 +44,32 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf("unable to read BIOS firmware image '%s': %w", biosFirmwarePath, err))
 	}
+	biosArtifact := biosimage.New(biosFirmware)
 
 	// the main part
 	state := types.NewState()
 	state.IncludeSubSystem(tpm.NewTPM())
 	state.IncludeSubSystem(intelpch.NewPCH())
-	state.IncludeSystemArtifact(biosimage.New(biosFirmware))
+	state.IncludeSystemArtifact(biosArtifact)
 	state.IncludeSystemArtifact(txtregisters.New(registers.Registers(regs)))
 	state.SetFlow(flows.Root)
 	process := bootengine.NewBootProcess(state)
 	process.Finish(context.Background())
 
+	fmt.Printf("\nActors:\n")
+	var prevActor types.Actor
+	for _, step := range process.Log {
+		if step.Actor == prevActor {
+			continue
+		}
+		prevActor = step.Actor
+
+		fmt.Printf("\t* %s: %s\n", format.NiceString(step.Actor), format.NiceString(step.ActorCode))
+	}
+
 	fmt.Printf("\nMeasured/protected data log:\n")
 	for idx, measuredData := range state.MeasuredData {
-		fmt.Printf("\t%d: %v\n", idx, measuredData)
+		fmt.Printf("\t%d: %s\n", idx, measuredData)
 	}
 
 	fmt.Printf("\nMeasured/protected data:\n")

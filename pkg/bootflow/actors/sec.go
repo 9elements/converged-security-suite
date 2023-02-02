@@ -6,17 +6,15 @@ import (
 	"github.com/linuxboot/fiano/pkg/uefi"
 )
 
-// PEI represents Pre-EFI Initialization code.
-type PEI struct{}
+// SEC represents the SEC module of a BIOS region.
+type SEC struct{}
 
 // ResponsibleCode implements types.Actor.
-func (PEI) ResponsibleCode() types.DataSource {
+func (SEC) ResponsibleCode() types.DataSource {
 	return datasources.SortAndMerge(datasources.Concat{
 		datasources.UEFIFilesByType{
-			uefi.FVFileTypePEICore,
-			uefi.FVFileTypePEIM,
-			uefi.FVFileTypeCombinedPEIMDriver,
+			uefi.FVFileTypeSECCore,
 		},
-		datasources.VolumeOf(datasources.UEFIFilesByName{"PeiCore"}),
+		datasources.VolumeOf(datasources.UEFIFilesByName{"SecCore"}),
 	})
 }

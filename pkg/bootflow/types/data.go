@@ -13,10 +13,15 @@ import (
 
 // Data is byte-data (given directly or by a reference to a SystemArtifact).
 type Data struct {
+	// TODO: remove ForceBytes (replace it with a special kind of a reference)
 	ForceBytes []byte
-	References References
-	Converter  DataConverter
 
+	References References
+
+	// TODO: move into a Reference
+	Converter DataConverter
+
+	// TODO: remove
 	IsAlsoMeasurementOf References
 }
 
@@ -25,7 +30,10 @@ func (d Data) String() string {
 	if d.ForceBytes != nil {
 		return fmt.Sprintf("{ForceBytes: %X}", d.ForceBytes)
 	}
-	return fmt.Sprintf("{Refs: %v}", d.References)
+	if len(d.References) > 0 {
+		return fmt.Sprintf("{Refs: %s}", d.References)
+	}
+	return "{}"
 }
 
 func (d *Data) RawBytes() []byte {
@@ -231,6 +239,13 @@ type Reference struct {
 	Artifact      SystemArtifact
 	AddressMapper AddressMapper
 	Ranges        pkgbytes.Ranges
+}
+
+func (ref *Reference) ResolvedRanges() (pkgbytes.Ranges, error) {
+	if ref.AddressMapper == nil {
+		return ref.Ranges, nil
+	}
+	return ref.AddressMapper.Resolve(ref.Artifact, ref.Ranges...)
 }
 
 // String implements fmt.Stringer()

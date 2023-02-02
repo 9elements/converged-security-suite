@@ -29,6 +29,7 @@ var OCPPEIv0 = types.Flow{
 	tpmsteps.Measure(0, datasources.PCDVariable("FirmwareVendorVersion")),
 	tpmsteps.Measure(0, datasources.UEFIGUIDFirst([]guid.GUID{ffsConsts.GUIDDXE, ffsConsts.GUIDDXEContainer})),
 	tpmsteps.Measure(0, datasources.Bytes{0, 0, 0, 0}),
+	commonsteps.SetFlow(DXE),
 }
 
 // OCPPEIv1 represents the steps of the OCP (Open Compute Project) implementation
@@ -43,4 +44,5 @@ var OCPPEIv1 = types.Flow{
 	tpmsteps.Measure(0, datasources.UEFIGUIDFirst([]guid.GUID{ffsConsts.GUIDDXE, ffsConsts.GUIDDXEContainer})),
 	tpmsteps.Measure(0, datasources.UEFIGUIDFirst([]guid.GUID{guidOCPV1Vol3})),
 	tpmsteps.Measure(0, datasources.Bytes{0, 0, 0, 0}),
+	commonsteps.SetFlow(DXE),
 }

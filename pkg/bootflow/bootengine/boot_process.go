@@ -48,20 +48,6 @@ func stateNextStep(
 
 	var stepIssues StepIssues
 
-	var actorCode *types.Data
-	if state.CurrentActor != nil {
-		if actorCodeSource := state.CurrentActor.ResponsibleCode(); actorCodeSource != nil {
-			var err error
-			actorCode, err = actorCodeSource.Data(ctx, state)
-			if err != nil {
-				stepIssues = append(stepIssues, StepIssue{
-					Coords: StepIssueCoordsActor{},
-					Issue:  err,
-				})
-			}
-		}
-	}
-
 	step := actCoords.Flow[actCoords.StepIndex]
 	actCoords.StepIndex++
 	actions := step.Actions(ctx, state)
@@ -88,6 +74,20 @@ func stateNextStep(
 				},
 				Issue: issue,
 			})
+		}
+	}
+
+	var actorCode *types.Data
+	if state.CurrentActor != nil {
+		if actorCodeSource := state.CurrentActor.ResponsibleCode(); actorCodeSource != nil {
+			var err error
+			actorCode, err = actorCodeSource.Data(ctx, state)
+			if err != nil {
+				stepIssues = append(stepIssues, StepIssue{
+					Coords: StepIssueCoordsActor{},
+					Issue:  err,
+				})
+			}
 		}
 	}
 

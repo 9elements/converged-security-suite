@@ -2,10 +2,15 @@ package format
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 )
 
 func NiceString(v any) string {
+	reflectValue := reflect.ValueOf(v)
+	if reflectValue.Kind() == reflect.Pointer && reflectValue.IsNil() {
+		return "<nil>"
+	}
 	if stringer, ok := v.(fmt.Stringer); ok {
 		return stringer.String()
 	}
@@ -15,6 +20,10 @@ func NiceString(v any) string {
 }
 
 func NiceStringWithIntend(v any) string {
+	reflectValue := reflect.ValueOf(v)
+	if reflectValue.Kind() == reflect.Pointer && reflectValue.IsNil() {
+		return "<nil>"
+	}
 	var result strings.Builder
 	for _, line := range strings.Split(NiceString(v), "\n") {
 		result.WriteByte('\t')
