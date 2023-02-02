@@ -21,10 +21,12 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
+	"github.com/linuxboot/fiano/pkg/uefi"
 )
 
 func main() {
 	cbnt.StrictOrderCheck = false
+	uefi.DisableDecompression = false
 	var regs helpers.FlagRegisters
 	// parsing arguments
 	flag.Var(&regs, "registers", "")

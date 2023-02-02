@@ -18,12 +18,18 @@ var _ Validator = (*ValidatorActorsAreProtected)(nil)
 func (ValidatorActorsAreProtected) Validate(l bootengine.Log) Issues {
 	var result []Issue
 	var measured types.References
+	var prevActor types.Actor
 	for stepIdx, step := range l {
 		prevMeasured := measured
 		measured = append(measured, step.MeasuredData.MeasuredReferences()...)
+		measured.SortAndMerge()
 		if step.ActorCode == nil {
 			continue
 		}
+		if step.Actor == prevActor {
+			continue
+		}
+		prevActor = step.Actor
 		nonMeasured := step.ActorCode.References.Exclude(prevMeasured...)
 		if len(nonMeasured) == 0 {
 			continue
@@ -33,7 +39,7 @@ func (ValidatorActorsAreProtected) Validate(l bootengine.Log) Issues {
 			StepIssue: bootengine.StepIssue{
 				Coords: bootengine.StepIssueCoordsActor{},
 				Issue: fmt.Errorf(
-					"actor %s executed step %d, while their areas %s were not protected; protected: %v",
+					"actor %s executed step %d, while their areas %s were not protected; protected by this moment were only: %v",
 					format.NiceString(step.Actor),
 					stepIdx,
 					format.NiceString(nonMeasured),

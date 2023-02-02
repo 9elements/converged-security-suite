@@ -3,8 +3,6 @@ package validator
 import (
 	"fmt"
 
-	recursivesort "github.com/romnn/go-recursive-sort"
-
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine"
 )
 
@@ -39,7 +37,6 @@ func (s Validators) Validate(l bootengine.Log) Issues {
 	for _, v := range s {
 		result = append(result, v.Validate(l)...)
 	}
-	recursivesort.Sort(&result)
 	return result
 }
 

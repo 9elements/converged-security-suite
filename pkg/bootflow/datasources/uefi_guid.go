@@ -14,7 +14,7 @@ import (
 	"github.com/linuxboot/fiano/pkg/guid"
 )
 
-// IntelFITFirst implements types.DataSource by referencing to the data defined
+// UEFIGUIDFirst implements types.DataSource by referencing to the data defined
 // by the UEFI objects of the specified set of GUID. If multiple GUIDs
 // are provided, then they are being tried in the given order until
 // the first non-empty or erroneous result.
@@ -36,7 +36,17 @@ func (ds UEFIGUIDFirst) Data(_ context.Context, state *types.State) (*types.Data
 
 	var volumes []*ffs.Node
 	for _, guid := range ds {
-		volumes, err = imgUEFI.GetByGUID(guid)
+		err = (&ffs.NodeVisitor{
+			Callback: func(node ffs.Node) (bool, error) {
+				guidCmp := node.GUID()
+				if guidCmp == nil || *guidCmp != guid {
+					return true, nil
+				}
+				volumes = append(volumes, &node)
+				return true, nil
+			},
+			FallbackToContainerRange: true,
+		}).Run(imgUEFI)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get volumes with GUID '%s': %w", guid, err)
 		}
@@ -58,7 +68,7 @@ func (ds UEFIGUIDFirst) Data(_ context.Context, state *types.State) (*types.Data
 		if volume.Offset == math.MaxUint64 {
 			// Was unable to detect the offset; it is expected
 			// if the volume is in a compressed area.
-			mErr.Errors = append(mErr.Errors, fmt.Errorf("unable to detect the offset of a DXE volume"))
+			mErr.Errors = append(mErr.Errors, fmt.Errorf("unable to detect the offset of an UEFI volume"))
 			continue
 		}
 		ranges = append(ranges, addrMapper.UnresolveFullImageOffset(imgRaw, volume.Range)...)

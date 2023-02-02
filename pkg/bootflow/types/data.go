@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
@@ -209,6 +210,15 @@ func (s References) Exclude(exc ...Reference) References {
 	return filtered
 }
 
+// String implements fmt.Stringer
+func (s References) String() string {
+	var result []string
+	for _, ref := range s {
+		result = append(result, format.NiceString(ref))
+	}
+	return strings.Join(result, ", ")
+}
+
 // AddressMapper maps an address. If is an untyped nil then address should be mapped to itself
 // by the consumer of this interface.
 type AddressMapper interface {
@@ -229,7 +239,11 @@ func (ref Reference) String() string {
 	if idx := strings.Index(artifactType, "."); idx >= 0 {
 		artifactType = artifactType[idx+1:]
 	}
-	return fmt.Sprintf("%s:%v", artifactType, ref.Ranges)
+	var rangeStrings []string
+	for _, r := range ref.Ranges {
+		rangeStrings = append(rangeStrings, fmt.Sprintf("%X:%X", r.Offset, r.End()))
+	}
+	return fmt.Sprintf("%s:[%s]", artifactType, strings.Join(rangeStrings, ","))
 }
 
 // Bytes returns the bytes data referenced by the Reference.

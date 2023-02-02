@@ -24,7 +24,7 @@ var (
 // OCPPEIv0 represents the steps of the OCP (Open Compute Project) implementation
 // of PEI (Pre-EFI Initialization of BIOS) before ~2022.
 var OCPPEIv0 = types.Flow{
-	commonsteps.SetActor(actors.OCPPEI{}),
+	commonsteps.SetActor(actors.PEI{}),
 	commonsteps.If(commonconds.Not(tpmconds.TPMIsInited{}), tpmsteps.InitTPM(0)),
 	tpmsteps.Measure(0, datasources.PCDVariable("FirmwareVendorVersion")),
 	tpmsteps.Measure(0, datasources.UEFIGUIDFirst([]guid.GUID{ffsConsts.GUIDDXE, ffsConsts.GUIDDXEContainer})),
@@ -34,7 +34,7 @@ var OCPPEIv0 = types.Flow{
 // OCPPEIv1 represents the steps of the OCP (Open Compute Project) implementation
 // of PEI (Pre-EFI Initialization of BIOS) after ~2022.
 var OCPPEIv1 = types.Flow{
-	commonsteps.SetActor(actors.OCPPEI{}),
+	commonsteps.SetActor(actors.PEI{}),
 	commonsteps.If(commonconds.Not(tpmconds.TPMIsInited{}), tpmsteps.InitTPM(0)),
 	tpmsteps.Measure(0, datasources.PCDVariable("FirmwareVendorVersion")),
 	tpmsteps.Measure(0, datasources.UEFIGUIDFirst([]guid.GUID{guidOCPV1Vol0})),
