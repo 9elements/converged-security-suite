@@ -239,13 +239,21 @@ func (ref Reference) String() string {
 	if idx := strings.Index(artifactType, "."); idx >= 0 {
 		artifactType = artifactType[idx+1:]
 	}
-	addressMapperType := fmt.Sprintf("%T", ref.AddressMapper)
-	if idx := strings.Index(addressMapperType, "."); idx >= 0 {
-		addressMapperType = addressMapperType[idx+1:]
-	}
 	var rangeStrings []string
 	for _, r := range ref.Ranges {
 		rangeStrings = append(rangeStrings, fmt.Sprintf("%X:%X", r.Offset, r.End()))
+	}
+	if ref.AddressMapper == nil {
+		return fmt.Sprintf(
+			"%s:[%s]",
+			artifactType,
+			strings.Join(rangeStrings, ","),
+		)
+	}
+
+	addressMapperType := fmt.Sprintf("%T", ref.AddressMapper)
+	if idx := strings.Index(addressMapperType, "."); idx >= 0 {
+		addressMapperType = addressMapperType[idx+1:]
 	}
 	return fmt.Sprintf(
 		"%s:%s:[%s]",
