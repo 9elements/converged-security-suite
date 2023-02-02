@@ -268,8 +268,8 @@ func (ref *Reference) Bytes() []byte {
 		}
 		for _, r := range mappedRanges {
 			n, err := ref.Artifact.ReadAt(result[curPos:curPos+r.Length], int64(r.Offset))
-			if err != nil {
-				panic(err)
+			if err != nil && n != int(r.Length) {
+				panic(fmt.Errorf("artifact %T, range %X:%X, n: %X, error: %w", ref.Artifact, curPos, curPos+r.Length, n, err))
 			}
 			curPos += r.Length
 			if n != int(r.Length) {

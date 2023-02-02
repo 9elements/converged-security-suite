@@ -88,10 +88,6 @@ func (v *NodeVisitor) Visit(f fianoUEFI.Firmware) error {
 		Length: uint64(len(f.Buf())),
 	}
 
-	if v.FallbackToContainerRange && v.containerRange != nil {
-		firmwareRange = *v.containerRange
-	}
-
 	// Gathering additional information: getting "name".
 	//
 	// We use guid.String() as the name if it is available.
@@ -131,6 +127,9 @@ func (v *NodeVisitor) Visit(f fianoUEFI.Firmware) error {
 		}
 		v.countMap[name]++
 	}
+	if firmwareRange.Offset == math.MaxUint64 && v.FallbackToContainerRange && v.containerRange != nil {
+		firmwareRange = *v.containerRange
+	}
 
 	/* Calling the Callback */
 
@@ -152,6 +151,14 @@ func (v *NodeVisitor) Visit(f fianoUEFI.Firmware) error {
 
 	/* Continuing the traversal */
 
+	if !v.isProcessedSection && firmwareRange.Offset != math.MaxUint64 {
+		oldContainerRange := v.containerRange
+		v.containerRange = &firmwareRange
+		defer func() {
+			v.containerRange = oldContainerRange
+		}()
+	}
+
 	if f, ok := f.(*fianoUEFI.Section); ok {
 		// If the section is decompressed, then absolute offsets
 		// does not make any sense, and therefore we need to
@@ -168,11 +175,9 @@ func (v *NodeVisitor) Visit(f fianoUEFI.Firmware) error {
 				// offsets does not work here. Setting "isProcessedSection"
 				// for children:
 				if !v.isProcessedSection {
-					v.containerRange = &firmwareRange
 					v.isProcessedSection = true
 					defer func() {
 						v.isProcessedSection = false
-						v.containerRange = nil
 					}()
 				}
 				return f.ApplyChildren(v)

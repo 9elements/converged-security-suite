@@ -3,6 +3,7 @@ package bootengine
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"strings"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
@@ -69,10 +70,11 @@ func stateNextStep(
 		issue := func() (issue error) {
 			defer func() {
 				if r := recover(); r != nil {
+					stackTrace := debug.Stack()
 					if e, ok := r.(error); ok {
-						issue = fmt.Errorf("got a panic: %w", e)
+						issue = fmt.Errorf("got a panic: %w:\n%s", e, stackTrace)
 					} else {
-						issue = fmt.Errorf("got a panic: %v", r)
+						issue = fmt.Errorf("got a panic: %v:\n%s", r, stackTrace)
 					}
 				}
 			}()

@@ -33,8 +33,7 @@ func (ds UEFIFilesByType) Data(_ context.Context, state *types.State) (*types.Da
 	}
 
 	var found []ffs.Node
-	var visitor *ffs.NodeVisitor
-	visitor = &ffs.NodeVisitor{
+	visitor := &ffs.NodeVisitor{
 		Callback: func(node ffs.Node) (bool, error) {
 			file, ok := node.Firmware.(*uefi.File)
 			if !ok {

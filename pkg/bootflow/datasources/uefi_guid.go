@@ -34,7 +34,12 @@ func (ds UEFIGUIDFirst) Data(_ context.Context, state *types.State) (*types.Data
 		return nil, fmt.Errorf("unable to parse the firmware image: %w", err)
 	}
 
-	var volumes []*ffs.Node
+	addrMapper := biosimage.PhysMemMapper{}
+
+	var (
+		ranges pkgbytes.Ranges
+		mErr   multierror.Error
+	)
 	for _, guid := range ds {
 		err = (&ffs.NodeVisitor{
 			Callback: func(node ffs.Node) (bool, error) {
@@ -42,7 +47,13 @@ func (ds UEFIGUIDFirst) Data(_ context.Context, state *types.State) (*types.Data
 				if guidCmp == nil || *guidCmp != guid {
 					return true, nil
 				}
-				volumes = append(volumes, &node)
+				if node.Offset == math.MaxUint64 {
+					// Was unable to detect the offset; it is expected
+					// if the volume is in a compressed area.
+					mErr.Errors = append(mErr.Errors, fmt.Errorf("unable to detect the offset of an UEFI volume %s", guid.String()))
+					return true, nil
+				}
+				ranges = append(ranges, addrMapper.UnresolveFullImageOffset(imgRaw, node.Range)...)
 				return true, nil
 			},
 			FallbackToContainerRange: true,
@@ -50,31 +61,15 @@ func (ds UEFIGUIDFirst) Data(_ context.Context, state *types.State) (*types.Data
 		if err != nil {
 			return nil, fmt.Errorf("unable to get volumes with GUID '%s': %w", guid, err)
 		}
-		if len(volumes) > 0 {
+		if len(ranges) > 0 {
 			break
 		}
 	}
-	if len(volumes) == 0 {
-		return nil, fmt.Errorf("no volumes with GUIDs %s found", ds.guids())
-	}
-
-	addrMapper := biosimage.PhysMemMapper{}
-
-	var (
-		ranges pkgbytes.Ranges
-		mErr   multierror.Error
-	)
-	for _, volume := range volumes {
-		if volume.Offset == math.MaxUint64 {
-			// Was unable to detect the offset; it is expected
-			// if the volume is in a compressed area.
-			mErr.Errors = append(mErr.Errors, fmt.Errorf("unable to detect the offset of an UEFI volume"))
-			continue
-		}
-		ranges = append(ranges, addrMapper.UnresolveFullImageOffset(imgRaw, volume.Range)...)
+	if len(mErr.Errors) != 0 {
+		return nil, mErr.ErrorOrNil()
 	}
 	if len(ranges) == 0 {
-		return nil, mErr.ErrorOrNil()
+		return nil, fmt.Errorf("no volumes with GUIDs %s found", ds.guids())
 	}
 
 	data = &types.Data{
