@@ -239,11 +239,20 @@ func (ref Reference) String() string {
 	if idx := strings.Index(artifactType, "."); idx >= 0 {
 		artifactType = artifactType[idx+1:]
 	}
+	addressMapperType := fmt.Sprintf("%T", ref.AddressMapper)
+	if idx := strings.Index(addressMapperType, "."); idx >= 0 {
+		addressMapperType = addressMapperType[idx+1:]
+	}
 	var rangeStrings []string
 	for _, r := range ref.Ranges {
 		rangeStrings = append(rangeStrings, fmt.Sprintf("%X:%X", r.Offset, r.End()))
 	}
-	return fmt.Sprintf("%s:[%s]", artifactType, strings.Join(rangeStrings, ","))
+	return fmt.Sprintf(
+		"%s:%s:[%s]",
+		artifactType,
+		addressMapperType,
+		strings.Join(rangeStrings, ","),
+	)
 }
 
 // Bytes returns the bytes data referenced by the Reference.
