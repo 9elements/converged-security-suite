@@ -73,7 +73,7 @@ func main() {
 	}
 
 	fmt.Printf("\nMeasured/protected data:\n")
-	measuredRefs := state.MeasuredData.MeasuredReferences()
+	measuredRefs := state.MeasuredData.References()
 	measuredRefs.SortAndMerge()
 	for idx, ref := range measuredRefs {
 		fmt.Printf("\t%d: %T", idx, ref.Artifact)

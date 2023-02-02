@@ -109,13 +109,6 @@ func (MeasurePCR0DATA) Actions(ctx context.Context, s *types.State) types.Action
 			Length: uint64(len(bpManifest.PMSE.Signature.Data)),
 		}},
 	}
-	uefi, err := intelFW.Image.Parse()
-	if err != nil {
-		return types.Actions{
-			commonactions.Panic(fmt.Errorf("unable to parse UEFI layout: %w", err)),
-		}
-	}
-	ibbIsOK := bpManifest.ValidateIBB(uefi) == nil
 
 	digests := bpManifest.SE[0].DigestList.List
 	if len(digests) == 0 {
@@ -132,7 +125,6 @@ func (MeasurePCR0DATA) Actions(ctx context.Context, s *types.State) types.Action
 		manifest.AlgSHA256,
 	} {
 		pcr0DATA.hashAlgo = hashAlgo
-		pcr0DATA.ibbVerifiedRange = nil
 		// Note: +2 - skip array size field to get the first element
 		// find ibbDigest with the required algorithm
 		offsetToCurrentDigest := offsetToTheFirstDigest
@@ -148,16 +140,6 @@ func (MeasurePCR0DATA) Actions(ctx context.Context, s *types.State) types.Action
 					}},
 				}
 				found = true
-				if idx == 0 && ibbIsOK {
-					addrMapper := biosimage.PhysMemMapper{}
-					ibbRanges := bpManifest.IBBDataRanges(intelFW.SystemArtifact().Size())
-					ibbRanges = addrMapper.UnresolveFullImageOffset(intelFW.SystemArtifact(), ibbRanges...)
-					pcr0DATA.ibbVerifiedRange = &types.Reference{
-						Artifact:      intelFW.SystemArtifact(),
-						AddressMapper: addrMapper,
-						Ranges:        ibbRanges,
-					}
-				}
 				break
 			}
 			offsetToCurrentDigest += digests[idx].TotalSize()
@@ -176,14 +158,13 @@ func (MeasurePCR0DATA) Actions(ctx context.Context, s *types.State) types.Action
 }
 
 type pcr0DATA struct {
-	hashAlgo         manifest.Algorithm
-	acmPolicyStatus  types.Reference
-	acmHeaderSVN     types.Reference
-	acmSignature     types.Reference
-	kmSignature      types.Reference
-	bpmSignature     types.Reference
-	ibbDigest        types.Reference
-	ibbVerifiedRange *types.Reference
+	hashAlgo        manifest.Algorithm
+	acmPolicyStatus types.Reference
+	acmHeaderSVN    types.Reference
+	acmSignature    types.Reference
+	kmSignature     types.Reference
+	bpmSignature    types.Reference
+	ibbDigest       types.Reference
 }
 
 // Measurement returns pcr0DATA as a Measurement.
@@ -202,9 +183,6 @@ func (d pcr0DATA) compileActions() types.Actions {
 			d.ibbDigest,
 		},
 		Converter: dataconverters.Hasher(h),
-	}
-	if d.ibbVerifiedRange != nil {
-		data.IsAlsoMeasurementOf = append(data.IsAlsoMeasurementOf, *d.ibbVerifiedRange)
 	}
 	return types.Actions{
 		tpmactions.NewTPMExtend(pcrtypes.ID(0), (*datasources.StaticData)(&data), tpm2.Algorithm(d.hashAlgo)),

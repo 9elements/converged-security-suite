@@ -13,16 +13,9 @@ import (
 
 // Data is byte-data (given directly or by a reference to a SystemArtifact).
 type Data struct {
-	// TODO: remove ForceBytes (replace it with a special kind of a reference)
 	ForceBytes []byte
-
 	References References
-
-	// TODO: move into a Reference
-	Converter DataConverter
-
-	// TODO: remove
-	IsAlsoMeasurementOf References
+	Converter  DataConverter
 }
 
 // String implements fmt.Stringer.
@@ -54,17 +47,6 @@ func (d *Data) Bytes() []byte {
 	}
 
 	return d.Converter.Convert(b)
-}
-
-// MeasuredReferences returns References which are measured/referenced directly or indirectly.
-//
-// For example if the Data contains a signature, then MeasuredReferences will also return the
-// reference to the signed data.
-func (d *Data) MeasuredReferences() References {
-	result := make(References, len(d.References)+len(d.IsAlsoMeasurementOf))
-	copy(result, d.References)
-	copy(result[len(d.References):], d.IsAlsoMeasurementOf)
-	return result
 }
 
 // References is a a slice of Reference-s.
@@ -324,9 +306,6 @@ type MeasuredData struct {
 func (d MeasuredData) String() string {
 	var result strings.Builder
 	result.WriteString(fmt.Sprintf("%s <- %v", typeMapKey(d.TrustChain).Name(), d.Data))
-	if len(d.IsAlsoMeasurementOf) != 0 {
-		result.WriteString(fmt.Sprintf(" <%v>", d.IsAlsoMeasurementOf))
-	}
 	if d.DataSource != nil {
 		result.WriteString(fmt.Sprintf(" (%v)", d.DataSource))
 	}
@@ -339,14 +318,11 @@ func (d MeasuredData) String() string {
 // MeasuredDataSlice is a slice of MeasuredData-s.
 type MeasuredDataSlice []MeasuredData
 
-// MeasuredReferences returns References which are measured/referenced directly or indirectly.
-//
-// For example if the Data contains a signature, then MeasuredReferences will also return the
-// reference to the signed data.
-func (s MeasuredDataSlice) MeasuredReferences() References {
+// References returns all References.
+func (s MeasuredDataSlice) References() References {
 	var result References
 	for _, d := range s {
-		result = append(result, d.MeasuredReferences()...)
+		result = append(result, d.References...)
 	}
 	return result
 }

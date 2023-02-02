@@ -48,9 +48,6 @@ func (v VolumeOfType) Data(ctx context.Context, s *types.State) (*types.Data, er
 	if d.Converter != nil {
 		return nil, fmt.Errorf("data source VolumeOf does not support Converter")
 	}
-	if d.IsAlsoMeasurementOf != nil {
-		return nil, fmt.Errorf("data source VolumeOf does not support IsAlsoMeasurementOf")
-	}
 
 	var ranges pkgbytes.Ranges
 	for _, ref := range d.References {

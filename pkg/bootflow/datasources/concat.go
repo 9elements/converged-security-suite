@@ -26,9 +26,6 @@ func (c Concat) Data(ctx context.Context, s *types.State) (*types.Data, error) {
 		if d.Converter != nil {
 			return nil, fmt.Errorf("data source Concat does not support Converter")
 		}
-		if d.IsAlsoMeasurementOf != nil {
-			return nil, fmt.Errorf("data source Concat does not support IsAlsoMeasurementOf")
-		}
 
 		result.References = append(result.References, d.References...)
 	}

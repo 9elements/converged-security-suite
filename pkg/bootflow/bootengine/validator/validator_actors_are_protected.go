@@ -21,7 +21,7 @@ func (ValidatorActorsAreProtected) Validate(l bootengine.Log) Issues {
 	var prevActor types.Actor
 	for stepIdx, step := range l {
 		prevMeasured := measured
-		measured = append(measured, step.MeasuredData.MeasuredReferences()...)
+		measured = append(measured, step.MeasuredData.References()...)
 		measured.SortAndMerge()
 		if step.ActorCode == nil {
 			continue

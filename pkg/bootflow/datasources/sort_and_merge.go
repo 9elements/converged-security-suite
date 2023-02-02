@@ -31,9 +31,6 @@ func (m SortAndMergeType) Data(ctx context.Context, s *types.State) (*types.Data
 	if d.Converter != nil {
 		return nil, fmt.Errorf("data source SortAndMerge does not support Converter")
 	}
-	if d.IsAlsoMeasurementOf != nil {
-		return nil, fmt.Errorf("data source SortAndMerge does not support IsAlsoMeasurementOf")
-	}
 
 	d.References.SortAndMerge()
 	return d, nil
