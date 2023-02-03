@@ -76,7 +76,7 @@ func (v VolumeOfType) Data(ctx context.Context, s *types.State) (*types.Data, er
 				}
 			}
 			if volume == nil {
-				return nil, fmt.Errorf("unable to find the volume for reference: %s", format.NiceString(ref))
+				return nil, fmt.Errorf("unable to find the volume for reference: %s (range: %X:%X)", format.NiceString(ref), r.Offset, r.End())
 			}
 			ranges = append(ranges, volume.Range)
 		}

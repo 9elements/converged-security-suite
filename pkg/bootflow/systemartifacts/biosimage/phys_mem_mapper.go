@@ -15,46 +15,31 @@ type PhysMemMapper struct{}
 
 // Resolve implements types.AddressMapper.
 //
-// It maps a physical memory address to an offset of the BIOS region.
-func (PhysMemMapper) Resolve(artifact types.SystemArtifact, ranges ...pkgbytes.Range) (pkgbytes.Ranges, error) {
-	biosRegion, err := getBIOSRegion(artifact)
-	if err != nil {
-		return nil, err
-	}
+// It maps a physical memory address to an offset inside the system artifact (UEFI image).
+func (t PhysMemMapper) Resolve(artifact types.SystemArtifact, ranges ...pkgbytes.Range) (pkgbytes.Ranges, error) {
+	return t.ResolveFullImageOffset(artifact, ranges...), nil
+}
 
+// ResolveFullImageOffset maps a physical memory address to an offset inside the system artifact (UEFI image).
+func (PhysMemMapper) ResolveFullImageOffset(artifact types.SystemArtifact, ranges ...pkgbytes.Range) pkgbytes.Ranges {
 	var result pkgbytes.Ranges
 	for _, r := range ranges {
 		result = append(result, pkgbytes.Range{
-			Offset: r.Offset + biosRegion.Offset + artifact.Size() - 0x100000000,
+			Offset: r.Offset - 0x100000000 + artifact.Size(),
 			Length: r.Length,
 		})
 	}
-	return result, nil
+	return result
 }
 
 // Unresolve implements types.AddressMapper.
 //
-// It maps an offset of the BIOS region to a physical memory address.
-func (PhysMemMapper) Unresolve(artifact types.SystemArtifact, ranges ...pkgbytes.Range) (pkgbytes.Ranges, error) {
-	biosRegion, err := getBIOSRegion(artifact)
-	if err != nil {
-		return nil, err
-	}
-
-	var result pkgbytes.Ranges
-	for _, r := range ranges {
-		result = append(result, pkgbytes.Range{
-			Offset: r.Offset + biosRegion.Offset + 0x100000000 - artifact.Size(),
-			Length: r.Length,
-		})
-	}
-	return result, nil
+// It maps an offset of the UEFI image to a physical memory address.
+func (t PhysMemMapper) Unresolve(artifact types.SystemArtifact, ranges ...pkgbytes.Range) (pkgbytes.Ranges, error) {
+	return t.UnresolveFullImageOffset(artifact, ranges...), nil
 }
 
-// UnresolveFullImageOffset is similar to Unresolve, but the offset is of the whole UEFI image,
-// (while BIOS region is usually a component inside an UEFI image).
-//
-// It maps an offset of the UEFI image to a physical memory address.
+// UnresolveFullImageOffset maps an offset of the UEFI image to a physical memory address.
 func (PhysMemMapper) UnresolveFullImageOffset(artifact types.SystemArtifact, ranges ...pkgbytes.Range) pkgbytes.Ranges {
 	result := make(pkgbytes.Ranges, 0, len(ranges))
 	for _, r := range ranges {
@@ -64,6 +49,46 @@ func (PhysMemMapper) UnresolveFullImageOffset(artifact types.SystemArtifact, ran
 		})
 	}
 	return result
+}
+
+// ResolveBIOSRegionOffset is similar to Resolve, but the given
+// offsets are based on BIOS region instead of the whole UEFI image.
+//
+// It maps a physical memory address to an offset inside the system artifact (UEFI image).
+func (PhysMemMapper) ResolveBIOSRegionOffset(artifact types.SystemArtifact, ranges ...pkgbytes.Range) (pkgbytes.Ranges, error) {
+	biosRegion, err := getBIOSRegion(artifact)
+	if err != nil {
+		return nil, err
+	}
+
+	var result pkgbytes.Ranges
+	for _, r := range ranges {
+		result = append(result, pkgbytes.Range{
+			Offset: r.Offset + biosRegion.Length - 0x100000000,
+			Length: r.Length,
+		})
+	}
+	return result, nil
+}
+
+// UnresolveBIOSRegionOffset is similar to Unresolve, but the given
+// offsets are based on BIOS region instead of the whole UEFI image.
+//
+// It maps an offset of the BIOS region to a physical memory address.
+func (PhysMemMapper) UnresolveBIOSRegionOffset(artifact types.SystemArtifact, ranges ...pkgbytes.Range) (pkgbytes.Ranges, error) {
+	biosRegion, err := getBIOSRegion(artifact)
+	if err != nil {
+		return nil, err
+	}
+
+	var result pkgbytes.Ranges
+	for _, r := range ranges {
+		result = append(result, pkgbytes.Range{
+			Offset: r.Offset - biosRegion.Length + 0x100000000,
+			Length: r.Length,
+		})
+	}
+	return result, nil
 }
 
 func getBIOSRegion(artifact types.SystemArtifact) (*ffs.Node, error) {

@@ -2,7 +2,6 @@ package biosimage
 
 import (
 	"bytes"
-	"fmt"
 	"reflect"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
@@ -55,5 +54,5 @@ func (fw *BIOSImage) Parse() (*uefi.UEFI, error) {
 
 // String implements fmt.Stringer.
 func (img *BIOSImage) String() string {
-	return fmt.Sprintf("[%d]byte{}", len(img.Content))
+	return "BIOSImage"
 }

@@ -280,14 +280,14 @@ func (ref *Reference) Bytes() []byte {
 				panic(err)
 			}
 		}
-		for _, r := range mappedRanges {
-			n, err := ref.Artifact.ReadAt(result[curPos:curPos+r.Length], int64(r.Offset))
-			if err != nil && n != int(r.Length) {
-				panic(fmt.Errorf("artifact %T, range %X:%X, n: %X, error: %w", ref.Artifact, curPos, curPos+r.Length, n, err))
+		for _, mr := range mappedRanges {
+			n, err := ref.Artifact.ReadAt(result[curPos:curPos+mr.Length], int64(mr.Offset))
+			if err != nil && n != int(mr.Length) {
+				panic(fmt.Errorf("artifact %T, range %X:%X (orig: %X:%X), n: %X, error: %w", ref.Artifact, mr.Offset, mr.End(), r.Offset, r.End(), n, err))
 			}
-			curPos += r.Length
-			if n != int(r.Length) {
-				panic(fmt.Errorf("unexpected read size: expected:%d actual:%d", r.Length, n))
+			curPos += mr.Length
+			if n != int(mr.Length) {
+				panic(fmt.Errorf("unexpected read size: expected:%d actual:%d", mr.Length, n))
 			}
 		}
 	}
