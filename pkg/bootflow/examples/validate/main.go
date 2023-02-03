@@ -8,6 +8,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"runtime/pprof"
 
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine"
@@ -31,14 +32,29 @@ func main() {
 	// parsing arguments
 	flag.Var(&regs, "registers", "")
 	netPprofFlag := flag.String("net-pprof", "", "")
+	cpuProfileFlag := flag.String("cpu-profile", "", "")
 	flag.Parse()
 
 	ctx := context.Background()
 
+	if *netPprofFlag != "" && *cpuProfileFlag != "" {
+		log.Fatalf("options '-net-pprof' and '-cpu-profile' cannot be both used at the same time")
+	}
 	if *netPprofFlag != "" {
 		go func() {
 			log.Println(http.ListenAndServe("localhost:6060", nil))
 		}()
+	}
+	if *cpuProfileFlag != "" {
+		f, err := os.Create(*cpuProfileFlag)
+		if err != nil {
+			log.Fatalf("could not create the CPU profile file '%s': %v", *cpuProfileFlag, err)
+		}
+		defer f.Close()
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Fatalf("could not start the CPU profiling: %v", err)
+		}
+		defer pprof.StopCPUProfile()
 	}
 
 	biosFirmwarePath := flag.Arg(0)
