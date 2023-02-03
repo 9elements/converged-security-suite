@@ -35,7 +35,7 @@ func (ValidatorFinalCoverageIsComplete) Validate(
 	data, err := datasources.UEFIFiles(func(f *uefi.File) (bool, error) {
 		for _, section := range f.Sections {
 			switch section.Header.Type {
-			case uefi.SectionTypePE32, uefi.SectionTypePIC:
+			case uefi.SectionTypePE32, uefi.SectionTypePIC, uefi.SectionTypeTE:
 				return true, nil
 			}
 		}
