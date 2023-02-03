@@ -42,7 +42,7 @@ func main() {
 	}
 	if *netPprofFlag != "" {
 		go func() {
-			log.Println(http.ListenAndServe("localhost:6060", nil))
+			log.Println(http.ListenAndServe(*netPprofFlag, nil))
 		}()
 	}
 	if *cpuProfileFlag != "" {
