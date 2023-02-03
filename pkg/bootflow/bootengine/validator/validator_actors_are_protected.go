@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine"
@@ -15,7 +16,7 @@ type ValidatorActorsAreProtected struct{}
 var _ Validator = (*ValidatorActorsAreProtected)(nil)
 
 // Validate implements Validator.
-func (ValidatorActorsAreProtected) Validate(l bootengine.Log) Issues {
+func (ValidatorActorsAreProtected) Validate(_ context.Context, _ *types.State, l bootengine.Log) Issues {
 	var result []Issue
 	var measured types.References
 	var prevActor types.Actor

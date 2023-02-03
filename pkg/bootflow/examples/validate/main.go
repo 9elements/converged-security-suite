@@ -33,6 +33,8 @@ func main() {
 	netPprofFlag := flag.String("net-pprof", "", "")
 	flag.Parse()
 
+	ctx := context.Background()
+
 	if *netPprofFlag != "" {
 		go func() {
 			log.Println(http.ListenAndServe("localhost:6060", nil))
@@ -86,7 +88,7 @@ func main() {
 		}
 	}
 
-	issues := validator.All().Validate(process.Log)
+	issues := validator.All().Validate(ctx, state, process.Log)
 	fmt.Printf("\nIssues:\n")
 	for idx, issue := range issues {
 		fmt.Printf("\t%d. %v; step: %v\n", idx+1, format.NiceString(issue), format.NiceString(process.Log[issue.StepIdx].Step))
