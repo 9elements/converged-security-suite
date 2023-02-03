@@ -26,6 +26,7 @@ func main() {
 	var regs helpers.FlagRegisters
 	// parsing arguments
 	flag.Var(&regs, "registers", "")
+	printMeasuredBytesLimitFlag := flag.Uint("print-measured-bytes-limit", 0, "")
 	flag.Parse()
 	biosFirmwarePath := flag.Arg(0)
 	biosFirmware, err := os.ReadFile(biosFirmwarePath)
@@ -59,6 +60,28 @@ func main() {
 	fmt.Printf("\nMeasured/protected data log:\n")
 	for idx, measuredData := range state.MeasuredData {
 		fmt.Printf("\t%d: %v\n", idx, measuredData)
+		if *printMeasuredBytesLimitFlag > 0 {
+			refs := make(types.References, len(measuredData.References))
+			copy(refs, measuredData.References)
+			err := refs.Resolve()
+			if err != nil {
+				panic(err)
+			}
+			buf := make([]byte, *printMeasuredBytesLimitFlag)
+			for _, ref := range refs {
+				for _, r := range ref.Ranges {
+					printBuf := buf
+					if r.Length < uint64(*printMeasuredBytesLimitFlag) {
+						printBuf = printBuf[:r.Length]
+					}
+					_, err := ref.Artifact.ReadAt(printBuf, int64(r.Offset))
+					if err != nil {
+						panic(err)
+					}
+					fmt.Printf("\t\t%X\n", printBuf)
+				}
+			}
+		}
 	}
 
 	fmt.Printf("\nTPM EventLog:\n")
