@@ -104,10 +104,17 @@ func main() {
 		}
 	}
 
-	issues := validator.All().Validate(ctx, state, process.Log)
 	fmt.Printf("\nIssues:\n")
-	for idx, issue := range issues {
-		fmt.Printf("\t%d. %v; step: %v\n", idx+1, format.NiceString(issue), format.NiceString(process.Log[issue.StepIdx].Step))
+	for _, v := range validator.All() {
+		issues := v.Validate(ctx, state, process.Log)
+		if len(issues) == 0 {
+			continue
+		}
+		fmt.Printf("\t%s:\n", format.NiceString(v))
+		for idx, issue := range issues {
+			fmt.Printf("\t\t%d. %v; step: %v\n", idx+1, format.NiceString(issue), format.NiceString(process.Log[issue.StepIdx].Step))
+		}
+
 	}
 
 }
