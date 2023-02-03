@@ -21,7 +21,17 @@ func (ValidatorActorsAreProtected) Validate(l bootengine.Log) Issues {
 	var prevActor types.Actor
 	for stepIdx, step := range l {
 		prevMeasured := measured
-		measured = append(measured, step.MeasuredData.References()...)
+		newMeasuredRefs := step.MeasuredData.References()
+		if err := newMeasuredRefs.Resolve(); err != nil {
+			result = append(result, Issue{
+				StepIdx: uint(stepIdx),
+				StepIssue: bootengine.StepIssue{
+					Coords: bootengine.StepIssueCoordsActor{},
+					Issue:  fmt.Errorf("unable to resolve the measured references %s: %w", format.NiceString(measured), err),
+				},
+			})
+		}
+		measured = append(measured, newMeasuredRefs...)
 		measured.SortAndMerge()
 		if step.ActorCode == nil {
 			continue
@@ -30,9 +40,30 @@ func (ValidatorActorsAreProtected) Validate(l bootengine.Log) Issues {
 			continue
 		}
 		prevActor = step.Actor
-		nonMeasured := step.ActorCode.References.Exclude(prevMeasured...)
+		resolvedActorRefs := make(types.References, len(step.ActorCode.References))
+		copy(resolvedActorRefs, step.ActorCode.References)
+		if err := resolvedActorRefs.Resolve(); err != nil {
+			result = append(result, Issue{
+				StepIdx: uint(stepIdx),
+				StepIssue: bootengine.StepIssue{
+					Coords: bootengine.StepIssueCoordsActor{},
+					Issue:  fmt.Errorf("unable to resolve the actor references %s: %w", format.NiceString(resolvedActorRefs), err),
+				},
+			})
+		}
+		nonMeasured := resolvedActorRefs.Exclude(prevMeasured...)
 		if len(nonMeasured) == 0 {
 			continue
+		}
+
+		if err := nonMeasured.Resolve(); err != nil {
+			result = append(result, Issue{
+				StepIdx: uint(stepIdx),
+				StepIssue: bootengine.StepIssue{
+					Coords: bootengine.StepIssueCoordsActor{},
+					Issue:  fmt.Errorf("unable to resolve references %s: %w", format.NiceString(nonMeasured), err),
+				},
+			})
 		}
 		result = append(result, Issue{
 			StepIdx: uint(stepIdx),

@@ -103,6 +103,22 @@ func compareReferenceType(a, b Reference) int {
 	}
 }
 
+func (s References) Resolve() error {
+	for idx := range s {
+		ref := &s[idx]
+		if ref.AddressMapper == nil {
+			continue
+		}
+		ranges, err := ref.AddressMapper.Resolve(ref.Artifact, ref.Ranges...)
+		if err != nil {
+			return fmt.Errorf("unable to resolve reference#%d:%s: %w", idx, format.NiceString(ref), err)
+		}
+		ref.Ranges = ranges
+		ref.AddressMapper = nil
+	}
+	return nil
+}
+
 func (s *References) SortAndMerge() {
 	if len(*s) < 2 {
 		return
