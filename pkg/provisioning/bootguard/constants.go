@@ -1,4 +1,4 @@
-package cbnt
+package bootguard
 
 const (
 	keySignatureElementMaxSize = 3072 // how this value was calculated?

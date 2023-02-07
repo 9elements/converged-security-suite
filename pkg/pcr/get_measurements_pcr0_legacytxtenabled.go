@@ -7,8 +7,8 @@ import (
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
 )
 
 // MeasureInit returns the fake measurement for TPM initialization, it
@@ -83,16 +83,16 @@ func MeasureACMDate(imageSize uint64, fitEntries []fit.Entry) (*Measurement, err
 
 // MeasureACMDateInPlace returns a measurement of ACM date, but without hashing
 // it (it is used in obsolete TPM1.2 flows; a bug of the initial implementation?).
-func MeasureACMDateInPlace(hashAlg manifest.Algorithm, imageSize uint64, fitEntries []fit.Entry) (*Measurement, error) {
+func MeasureACMDateInPlace(hashAlg cbnt.Algorithm, imageSize uint64, fitEntries []fit.Entry) (*Measurement, error) {
 	m := Measurement{
 		ID: MeasurementIDACMDateInPlace,
 	}
 
 	var hashSize int
 	switch hashAlg {
-	case manifest.AlgSHA1:
+	case cbnt.AlgSHA1:
 		hashSize = sha1.New().Size()
-	case manifest.AlgSHA256:
+	case cbnt.AlgSHA256:
 		hashSize = sha256.New().Size()
 	default:
 		return nil, fmt.Errorf("unknown hash algorithm: %v", hashAlg)

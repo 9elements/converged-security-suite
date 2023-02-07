@@ -64,7 +64,7 @@ prepareDependencies() {
 }
 
 setDependency UTK github.com/linuxboot/fiano/cmds/utk
-setDependency CBNTPROV github.com/9elements/converged-security-suite/v2/cmd/cbnt-prov
+setDependency BGPROV github.com/9elements/converged-security-suite/v2/cmd/bg-prov
 setDependency PCR0TOOL github.com/9elements/converged-security-suite/v2/cmd/pcr0tool
 setDependency FITTOOL github.com/linuxboot/fiano/cmds/fittool
 
@@ -172,7 +172,7 @@ openssl rsa -in "$ODMPRIVKEYPATH" -pubout -out "$ODMPUBKEYPATH" 2>/dev/null
 
 # Create a dummy ACM
 DUMMYACMPATH="$(mktemp)"
-"$CBNTPROV" acm-gen "$DUMMYACMPATH" --moduletype 2 --sesvn 1 --txtsvn 2 --date $((16#11223344)) --size 2048
+"$BGPROV" acm-gen-v3 "$DUMMYACMPATH" --moduletype 2 --sesvn 1 --txtsvn 2 --date $((16#11223344)) --size 2048
 
 # Inject the dummy ACM (FIT entry type 0x02) at offset 20K.
 # In real images ACM is usually pleaced between PEI and DXE, so we use offset 20K.
@@ -183,14 +183,14 @@ rm -f "$DUMMYACMPATH"
 # Create a KM.
 #
 # KM uses an OEM key to authorize an ODM key to issue a signed BPM. So `km-gen` will calculate
-# a hash of the ODM (BPM) pubkey and store it inside KM, in turn KM is signed by the OEM (KM) key.
+# a hash of the ODM (BPM) pubkey and store it inside KM, in turn KM is signed by the OEM (KM) cbntkey.
 #
 # Algorithm "SHA256" was picked arbitrary. One may use another algorithm.
 KMPATH="$(mktemp)"
 # Generated an unsigned KM
-"$CBNTPROV" km-gen "$KMPATH" "$OEMPUBKEYPATH" --bpmpubkey "$ODMPUBKEYPATH" --pkhashalg=SHA256 --bpmhashalgo SHA256
+"$BGPROV" km-gen-v-2 "$KMPATH" "$OEMPUBKEYPATH" --bpmpubkey "$ODMPUBKEYPATH" --pkhashalg=SHA256 --bpmhashalgo SHA256
 # Sign the KM (with no password on the private key file)
-"$CBNTPROV" km-sign "$KMPATH" "$KMPATH" "$OEMPRIVKEYPATH" RSASSA ""
+"$BGPROV" km-sign "$KMPATH" "$KMPATH" "$OEMPRIVKEYPATH" RSASSA ""
 
 # Inject the KM reference to FIT (FIT entry type 0x0B), by referencing it as at the offset 21K
 "$FITTOOL" add_raw_headers -f "$OUTPUT_FILE" --address-offset $(( 21 * 1024 )) --size "$(stat -c %s "$KMPATH")" --type $((16#B))
@@ -207,15 +207,15 @@ rm -f "$KMPATH"
 # BPM is signed by an ODM key, which is trusted, because its hash is included into KM, which is
 # signed by the OEM key (which we trust, because OEM is us).
 BPMPATH="$(mktemp)"
-# `$CBNTPROV bpm-gen` (to generate an BPM) depends on scanning the FIT table of
+# `$BGPROV bpm-gen` (to generate an BPM) depends on scanning the FIT table of
 # the image to find BIOS startup modules and include them as IBBs.
 # So first we need to add at least one entry. We will use a part of the dummy PEI
 # as an IBB section (similar things also happens in a real image).
 "$FITTOOL" add_raw_headers -f "$OUTPUT_FILE" --address-offset $((32 * 1024)) --size $((4 * 1024 / 16)) --type $((16#7))
-# Now we can execute the `$CBNTPROV bpm-gen` command
-"$CBNTPROV" bpm-gen --ibbhash SHA1,SHA256 "$BPMPATH" "$OUTPUT_FILE"
+# Now we can execute the `$BGPROV bpm-gen` command
+"$BGPROV" bpm-gen-v-2 --ibbhash SHA1,SHA256 "$BPMPATH" "$OUTPUT_FILE"
 # Sign the BPM (with no password on the private key file)
-"$CBNTPROV" bpm-sign "$BPMPATH" "$BPMPATH" "$ODMPRIVKEYPATH" RSASSA ""
+"$BGPROV" bpm-sign "$BPMPATH" "$BPMPATH" "$ODMPRIVKEYPATH" RSASSA ""
 
 # Inject the BPM reference into FIT (FIT entry type 0x0C), by referencing it as at the offset 22K
 "$FITTOOL" add_raw_headers -f "$OUTPUT_FILE" --address-offset $(( 22 * 1024 )) --size "$(stat -c %s "$BPMPATH")" --type $((16#C))

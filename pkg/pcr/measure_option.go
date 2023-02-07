@@ -3,9 +3,9 @@ package pcr
 import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
 	"github.com/google/go-tpm/tpm2"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
 )
 
 // MeasureOption is the interface of an option which may change
@@ -28,7 +28,7 @@ type SetIBBHashDigest tpm2.Algorithm
 
 // Apply implements `MeasureOption`
 func (opt SetIBBHashDigest) Apply(config *MeasurementConfig) error {
-	config.PCR0DataIbbDigestHashAlgorithm = manifest.Algorithm(opt)
+	config.PCR0DataIbbDigestHashAlgorithm = cbnt.Algorithm(opt)
 	return nil
 }
 

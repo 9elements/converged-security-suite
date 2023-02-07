@@ -1,6 +1,7 @@
 package test
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
@@ -232,7 +233,7 @@ var (
 	biosdata tools.TXTBiosData
 )
 
-//nolint
+// nolint
 const (
 	//Heapsize from newer spec - Document 575623
 	minHeapSize  = uint32(0xF0000)
@@ -489,25 +490,11 @@ func SINITInTXT(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configura
 	if err != nil {
 		return false, nil, err
 	}
-
-	sinitBuf := make([]byte, regs.SinitSize)
-	err = txtAPI.ReadPhysBuf(int64(regs.SinitBase), sinitBuf)
-	if err != nil {
-		return false, nil, err
-	}
-
-	acm, _, _, _, err, internalerr := tools.ParseACM(sinitBuf)
-	if internalerr != nil {
-		return false, nil, internalerr
-	}
+	acm, err := sinitACM(txtAPI, regs)
 	if err != nil {
 		return false, err, nil
 	}
-	if acm == nil {
-		return false, fmt.Errorf("ACM is nil"), nil
-	}
-
-	if acm.Header.ModuleType != 2 {
+	if acm.Header.GetModuleType() != 2 {
 		return false, fmt.Errorf("SINIT in TXT: ACM ModuleType not 2"), nil
 	}
 	return true, nil, nil
@@ -524,24 +511,16 @@ func SINITMatchesChipset(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.
 	if err != nil {
 		return false, nil, err
 	}
-
-	acm, chps, _, _, err, internalerr := sinitACM(txtAPI, regs)
-	if internalerr != nil {
-		return false, nil, internalerr
-	}
+	acm, err := sinitACM(txtAPI, regs)
 	if err != nil {
 		return false, err, nil
 	}
-	if chps == nil {
-		return false, fmt.Errorf("CHPS is nil"), nil
-	}
-
-	for _, ch := range chps.IDList {
+	for _, ch := range acm.Chipsets.IDList {
 		a := ch.VendorID == regs.Vid
 		b := ch.DeviceID == regs.Did
 
 		if a && b {
-			if acm.Header.Flags&1 != 0 {
+			if acm.Header.GetFlags()&1 != 0 {
 				if ch.RevisionID&regs.Rid == regs.Rid {
 					return true, nil, nil
 				}
@@ -567,10 +546,7 @@ func SINITMatchesCPU(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Conf
 		return false, nil, err
 	}
 
-	_, _, cpus, _, err, internalerr := sinitACM(txtAPI, regs)
-	if internalerr != nil {
-		return false, nil, internalerr
-	}
+	acm, err := sinitACM(txtAPI, regs)
 	if err != nil {
 		return false, err, nil
 	}
@@ -583,7 +559,7 @@ func SINITMatchesCPU(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Conf
 
 	fms := txtAPI.CPUSignature()
 
-	for _, cpu := range cpus.IDList {
+	for _, cpu := range acm.Processors.IDList {
 		a := fms&cpu.FMSMask == cpu.FMS
 		b := platform&cpu.PlatformMask == cpu.PlatformID
 
@@ -758,17 +734,24 @@ func ServerModeTXT(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Config
 	return false, fmt.Errorf("servermode not active"), nil
 }
 
-//ReleaseFusedFSBI checks if the FSBI is release fused
+// ReleaseFusedFSBI checks if the FSBI is release fused
 func ReleaseFusedFSBI(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
 	return false, nil, fmt.Errorf("ReleaseFusedFSBI: Unimplemented")
 }
 
-func sinitACM(txtAPI hwapi.LowLevelHardwareInterfaces, regs tools.TXTRegisterSpace) (*tools.ACM, *tools.Chipsets, *tools.Processors, *tools.TPMs, error, error) {
+func sinitACM(txtAPI hwapi.LowLevelHardwareInterfaces, regs tools.TXTRegisterSpace) (*tools.ACM, error) {
 	sinitBuf := make([]byte, regs.SinitSize)
 	err := txtAPI.ReadPhysBuf(int64(regs.SinitBase), sinitBuf)
 	if err != nil {
-		return nil, nil, nil, nil, nil, err
+		return nil, err
 	}
-
-	return tools.ParseACM(sinitBuf)
+	r := bytes.NewReader(sinitBuf)
+	acm, err := tools.ParseACM(r)
+	if err != nil {
+		return nil, err
+	}
+	if acm == nil {
+		return nil, fmt.Errorf("ACM is nil")
+	}
+	return tools.ParseACM(r)
 }

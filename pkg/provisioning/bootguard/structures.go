@@ -1,4 +1,13 @@
-package cbnt
+package bootguard
+
+import (
+	"github.com/linuxboot/fiano/pkg/intel/metadata/bg/bgbootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/bg/bgkey"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntbootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntkey"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/common/bgheader"
+)
 
 // CMOSIoAddress holds information about the location of on-demand power down requests in CMOS.
 // The structure is a substructure used in PowerDownRequest structure.
@@ -48,4 +57,32 @@ type Pcr7Data struct {
 	ACMKeyHash      [32]byte
 	BPMKey          [32]byte
 	BPMKeyHash      []byte
+}
+
+// IbbSegment exports the struct of IBB Segments
+type IbbSegment struct {
+	Offset uint32 `json:"offset"` //
+	Size   uint32 `json:"size"`   //
+	Flags  uint16 `json:"flags"`  //
+}
+
+// KeyHash export for usage as cmd line argument type
+type KeyHash struct {
+	Usage     uint64         `json:"usage"`     //
+	Hash      string         `json:"hash"`      //
+	Algorithm cbnt.Algorithm `json:"algorithm"` //
+}
+
+// Options contains all version bootguard options
+type VersionedData struct {
+	BGbpm   *bgbootpolicy.Manifest   `json:"v1-bootpolicy,omitempty"`
+	BGkm    *bgkey.Manifest          `json:"v1-keymanifest,omitempty"`
+	CBNTbpm *cbntbootpolicy.Manifest `json:"v2-bootpolicy,omitempty"`
+	CBNTkm  *cbntkey.Manifest        `json:"v2-keymanifest,omitempty"`
+}
+
+// BootGuard unification structure, operates on manifests and reader
+type BootGuard struct {
+	VData   VersionedData `json:"bootguard"`
+	Version bgheader.BootGuardVersion
 }

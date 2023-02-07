@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	amd "github.com/linuxboot/fiano/pkg/amd/manifest"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/manifest"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
@@ -55,7 +55,7 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (tpmdetection.Type, 
 				if data == nil {
 					return 0, fmt.Errorf("unable to parse EntrySACM: %w", err)
 				}
-				_, chipset, err := manifest.ParseChipsetACModuleInformation(bytes.NewBuffer(data.UserArea))
+				_, chipset, err := cbnt.ParseChipsetACModuleInformation(bytes.NewBuffer(data.UserArea))
 				if err != nil {
 					return 0, fmt.Errorf("failed to read ChipsetACModuleInformation, err: %w", err)
 				}
@@ -69,7 +69,7 @@ func DetectTPM(firmware Firmware, regs registers.Registers) (tpmdetection.Type, 
 
 				// chipset.TPMInfoList is an offset in bytes from ACM start.
 				image := firmware.ImageBytes()
-				var tpmInfo manifest.TPMInfoList
+				var tpmInfo cbnt.TPMInfoList
 				sacmOffset := fitEntry.Headers.Address.Offset(uint64(len(image)))
 				_, err = tpmInfo.ReadFrom(bytes.NewBuffer(image[sacmOffset+uint64(chipset.TPMInfoList):]))
 				if err != nil {
@@ -243,11 +243,11 @@ func isCBnT(fitEntries []fit.Entry) (bool, error) {
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntryKeyManifestRecord:
-			data, err := fitEntry.ParseData()
-			if data == nil {
+			data, data2, err := fitEntry.ParseData()
+			if data == nil && data2 == nil {
 				return false, fmt.Errorf("unable to parse KeyManifest policy record: %w", err)
 			}
-			if data.Version < 0x21 {
+			if data != nil {
 				return false, nil
 			}
 			keyManifestFound = true
