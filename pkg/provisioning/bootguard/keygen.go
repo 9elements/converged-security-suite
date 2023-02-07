@@ -1,4 +1,4 @@
-package cbnt
+package bootguard
 
 import (
 	"crypto"
@@ -233,4 +233,33 @@ func ReadPubKey(path string) (crypto.PublicKey, error) {
 		raw = rest
 	}
 	return nil, fmt.Errorf("failed to parse public key")
+}
+
+func parsePrivateKey(raw []byte) (crypto.Signer, error) {
+	for {
+		block, rest := pem.Decode(raw)
+		if block == nil {
+			break
+		}
+		if block.Type != "CERTIFICATE" {
+			key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+			if err == nil {
+				if key, ok := key.(crypto.Signer); ok {
+					return key, nil
+				}
+				return nil, fmt.Errorf("found unknown private key type (%T) in PKCS#8 wrapping", key)
+			}
+			key, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+			if err == nil {
+				if key, ok := key.(crypto.Signer); ok {
+					return key, nil
+				}
+				return nil, fmt.Errorf("found unknown private key type (%T) in PKCS#1 wrapping", key)
+			}
+			return nil, err
+
+		}
+		raw = rest
+	}
+	return nil, fmt.Errorf("failed to parse private key")
 }

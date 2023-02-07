@@ -221,6 +221,7 @@ func (f Flow) MeasurementIDs() MeasurementIDs {
 		}
 	case FlowAMDLocality3:
 		return MeasurementIDs{
+			MeasurementIDInit,
 			MeasurementIDPSPVersion,
 			MeasurementIDBIOSRTMVolume,
 			MeasurementIDMP0C2PMsgRegisters,
