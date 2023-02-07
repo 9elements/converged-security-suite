@@ -336,6 +336,8 @@ func (id MeasurementID) EventLogEventTypes() []*tpmeventlog.EventType {
 		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
 	case MeasurementIDPMUFirmwareData:
 		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
+	case MeasurementIDMicrocodePatch:
+		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
 	case MeasurementIDVideoImageInterpreter:
 		eventTypes = append(eventTypes, eventTypePtr(tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB))
 	}
