@@ -3,7 +3,6 @@ package flows
 import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actors"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actors/intelactors"
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/commonconds"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/intelconds"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/ocpconds"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/commonsteps"
@@ -23,10 +22,6 @@ var IntelCBnT = types.Flow{
 	intelsteps.VerifyKM(IntelCBnTFailure),
 	intelsteps.VerifyBPM(IntelCBnTFailure),
 	intelsteps.VerifyIBB(IntelCBnTFailure),
-	commonsteps.If(commonconds.Not(intelconds.ValidACM{}), commonsteps.SetFlow(IntelCBnTFailure)),
-	commonsteps.If(commonconds.Not(intelconds.ValidKM{}), commonsteps.SetFlow(IntelCBnTFailure)),
-	commonsteps.If(commonconds.Not(intelconds.ValidBPM{}), commonsteps.SetFlow(IntelCBnTFailure)),
-	commonsteps.If(commonconds.Not(intelconds.ValidIBB{}), commonsteps.SetFlow(IntelCBnTFailure)),
 	commonsteps.SetActor(intelactors.ACM{}),
 	tpmsteps.InitTPM(3),
 	intelsteps.MeasurePCR0DATA{},
