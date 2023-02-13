@@ -9,6 +9,7 @@ import (
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 )
 
+// nolint
 func notImplemented(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	return false, nil, fmt.Errorf("not implemented")
 }
