@@ -252,7 +252,7 @@ var (
 )
 
 // FITVectorIsSet checks if the FIT Vector is set
-func FITVectorIsSet(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func FITVectorIsSet(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	fitvec := make([]byte, 4)
 	err := txtAPI.ReadPhysBuf(FITVector, fitvec)
 
@@ -277,7 +277,7 @@ func FITVectorIsSet(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Confi
 }
 
 // HasFIT checks if the FIT is present
-func HasFIT(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func HasFIT(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	fithdr := make([]byte, 16)
 	err := txtAPI.ReadPhysBuf(int64(fitPointer), fithdr)
 	if err != nil {
@@ -314,7 +314,7 @@ func HasFIT(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration
 }
 
 // HasMicroCode checks if FIT table indicates a Microcode update for the CPU
-func HasMicroCode(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func HasMicroCode(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	for _, hdr := range fitHeaders {
 		if hdr.Type() == fit.EntryTypeMicrocodeUpdateEntry {
 			return true, nil, nil
@@ -324,7 +324,7 @@ func HasMicroCode(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configu
 }
 
 // HasBIOSACM checks if FIT table has BIOSACM entry
-func HasBIOSACM(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func HasBIOSACM(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	count := 0
 	for _, hdr := range fitHeaders {
 		if hdr.Type() == fit.EntryTypeStartupACModuleEntry {
@@ -338,7 +338,7 @@ func HasBIOSACM(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configura
 }
 
 // HasIBB checks if FIT table has BIOS Startup Module entry
-func HasIBB(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func HasIBB(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	for _, hdr := range fitHeaders {
 		if hdr.Type() == fit.EntryTypeBIOSStartupModuleEntry {
 			return true, nil, nil
@@ -349,8 +349,8 @@ func HasIBB(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration
 }
 
 // HasBIOSPolicy checks if FIT table has ONE BIOS Policy Data Record Entry
-func HasBIOSPolicy(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	if config.TXTMode == tools.AutoPromotion {
+func HasBIOSPolicy(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
+	if p.TXTMode == tools.AutoPromotion {
 		return true, nil, nil
 	}
 	count := 0
@@ -379,7 +379,7 @@ func getFITDataSize(hdr fit.EntryHeaders, txtAPI hwapi.LowLevelHardwareInterface
 }
 
 // IBBCoversResetVector checks if BIOS Startup Module Entry covers Reset Vector
-func IBBCoversResetVector(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func IBBCoversResetVector(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	for _, hdr := range fitHeaders {
 		if hdr.Type() == fit.EntryTypeBIOSStartupModuleEntry {
 			addr := hdr.Address.Pointer()
@@ -395,7 +395,7 @@ func IBBCoversResetVector(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools
 }
 
 // IBBCoversFITVector checks if BIOS Startup Module Entry covers FIT vector
-func IBBCoversFITVector(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func IBBCoversFITVector(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	for _, hdr := range fitHeaders {
 		if hdr.Type() == fit.EntryTypeBIOSStartupModuleEntry {
 			addr := hdr.Address.Pointer()
@@ -410,7 +410,7 @@ func IBBCoversFITVector(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.C
 }
 
 // IBBCoversFIT checks if BIOS Startup Module Entry covers FIT table
-func IBBCoversFIT(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func IBBCoversFIT(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	for _, hdr := range fitHeaders {
 		if hdr.Type() == fit.EntryTypeBIOSStartupModuleEntry {
 			addr := hdr.Address.Pointer()
@@ -426,7 +426,7 @@ func IBBCoversFIT(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configu
 }
 
 // NoIBBOverlap checks if BIOS Startup Module Entries overlap
-func NoIBBOverlap(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func NoIBBOverlap(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	for i, hdr1 := range fitHeaders {
 		if hdr1.Type() == fit.EntryTypeBIOSStartupModuleEntry {
 			for j, hdr2 := range fitHeaders {
@@ -446,7 +446,7 @@ func NoIBBOverlap(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configu
 }
 
 // NoBIOSACMOverlap checks if BIOS ACM Entries Overlap
-func NoBIOSACMOverlap(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func NoBIOSACMOverlap(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	for i, hdr1 := range fitHeaders {
 		if hdr1.Type() == fit.EntryTypeBIOSStartupModuleEntry {
 			for j, hdr2 := range fitHeaders {
@@ -466,7 +466,7 @@ func NoBIOSACMOverlap(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Con
 }
 
 // BIOSACMIsBelow4G checks if BIOS ACM is below 4Gb (has a valid address)
-func BIOSACMIsBelow4G(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func BIOSACMIsBelow4G(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	for _, hdr := range fitHeaders {
 		if hdr.Type() == fit.EntryTypeStartupACModuleEntry {
 			if hdr.Address.Pointer()+uint64(getFITDataSize(hdr, txtAPI)) > uint64(FourGiB) {
@@ -479,7 +479,7 @@ func BIOSACMIsBelow4G(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Con
 }
 
 // PolicyAllowsTXT checks if Record matches TXT requirements.
-func PolicyAllowsTXT(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func PolicyAllowsTXT(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	for _, hdr := range fitHeaders {
 		if hdr.Type() == fit.EntryTypeTXTPolicyRecord {
 			switch hdr.Version {
@@ -505,14 +505,14 @@ func PolicyAllowsTXT(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Conf
 }
 
 // BIOSACMValid checks if BIOS ACM is valid
-func BIOSACMValid(txtAPI hwapi.LowLevelHardwareInterfaces, _ *tools.Configuration) (bool, error, error) {
+func BIOSACMValid(txtAPI hwapi.LowLevelHardwareInterfaces, _ *PreSet) (bool, error, error) {
 	acm, err := biosACM(txtAPI, fitHeaders)
 
 	return acm != nil, err, nil
 }
 
 // BIOSACMSizeCorrect checks if BIOS ACM size is correct
-func BIOSACMSizeCorrect(txtAPI hwapi.LowLevelHardwareInterfaces, _ *tools.Configuration) (bool, error, error) {
+func BIOSACMSizeCorrect(txtAPI hwapi.LowLevelHardwareInterfaces, _ *PreSet) (bool, error, error) {
 	acm, err := biosACM(txtAPI, fitHeaders)
 	if err != nil {
 		return false, err, nil
@@ -525,7 +525,7 @@ func BIOSACMSizeCorrect(txtAPI hwapi.LowLevelHardwareInterfaces, _ *tools.Config
 }
 
 // BIOSACMAlignmentCorrect checks if BIOS ACM alignment is correct
-func BIOSACMAlignmentCorrect(txtAPI hwapi.LowLevelHardwareInterfaces, _ *tools.Configuration) (bool, error, error) {
+func BIOSACMAlignmentCorrect(txtAPI hwapi.LowLevelHardwareInterfaces, _ *PreSet) (bool, error, error) {
 	for _, hdr := range fitHeaders {
 		if hdr.Type() == fit.EntryTypeStartupACModuleEntry {
 			buf1 := make([]byte, tools.ACMheaderLen*4)
@@ -559,7 +559,7 @@ func BIOSACMAlignmentCorrect(txtAPI hwapi.LowLevelHardwareInterfaces, _ *tools.C
 }
 
 // BIOSACMMatchesChipset checks if BIOS ACM matches chipset
-func BIOSACMMatchesChipset(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func BIOSACMMatchesChipset(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	acm, err := biosACM(txtAPI, fitHeaders)
 	if err != nil {
 		return false, err, nil
@@ -594,7 +594,7 @@ func BIOSACMMatchesChipset(txtAPI hwapi.LowLevelHardwareInterfaces, config *tool
 }
 
 // BIOSACMMatchesCPU checks if BIOS ACM matches CPU
-func BIOSACMMatchesCPU(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func BIOSACMMatchesCPU(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	acm, err := biosACM(txtAPI, fitHeaders)
 	if err != nil {
 		return false, err, nil
@@ -658,7 +658,7 @@ func biosACM(txtAPI hwapi.LowLevelHardwareInterfaces, fitHeaders fit.Table) (*to
 }
 
 // SINITandBIOSACMnoNPW checks that in BIOS integrated ACMs (SINIT, BIOS) are production worthy
-func SINITandBIOSACMnoNPW(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func SINITandBIOSACMnoNPW(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	biosACMs, err := biosACM(txtAPI, fitHeaders)
 	if err != nil {
 		return false, err, nil
@@ -687,7 +687,7 @@ func SINITandBIOSACMnoNPW(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools
 }
 
 // SINITACMcomplyTPMSpec tests if the SINIT ACM complys with used TPM
-func SINITACMcomplyTPMSpec(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func SINITACMcomplyTPMSpec(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	buf, err := tools.FetchTXTRegs(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -701,11 +701,11 @@ func SINITACMcomplyTPMSpec(txtAPI hwapi.LowLevelHardwareInterfaces, config *tool
 		return false, err, nil
 	}
 	res := (1 >> acm.TPMs.Capabilities & (uint32(tools.TPMFamilyDTPM12) | uint32(tools.TPMFamilyDTPMBoth)))
-	if res == 0 && config.TPM == hwapi.TPMVersion12 && testtpmispresent.Result == ResultPass {
+	if res == 0 && p.TPM == hwapi.TPMVersion12 && testtpmispresent.Result == ResultPass {
 		return true, nil, nil
 	}
 	res = (1 >> acm.TPMs.Capabilities & (uint32(tools.TPMFamilyDTPM20) | uint32(tools.TPMFamilyDTPMBoth)))
-	if res == 0 && config.TPM == hwapi.TPMVersion20 && testtpmispresent.Result == ResultPass {
+	if res == 0 && p.TPM == hwapi.TPMVersion20 && testtpmispresent.Result == ResultPass {
 		return true, nil, nil
 	}
 	return false, fmt.Errorf("SINIT ACM does not support used TPM"), nil

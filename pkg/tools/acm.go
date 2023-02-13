@@ -146,6 +146,20 @@ type ACM struct {
 	TPMs       TPMs
 }
 
+func (a *ACM) UUID() string {
+	return fmt.Sprintf("%08x-%04x-%04x-%04x-%02x%02x%02x%02x%02x%02x",
+		a.Info.UUID.Field1,
+		a.Info.UUID.Field2,
+		a.Info.UUID.Field3,
+		a.Info.UUID.Field4,
+		a.Info.UUID.Field5[0],
+		a.Info.UUID.Field5[1],
+		a.Info.UUID.Field5[2],
+		a.Info.UUID.Field5[3],
+		a.Info.UUID.Field5[4],
+		a.Info.UUID.Field5[5])
+}
+
 // ValidateACMHeader validates an ACM Header found in the Firmware Interface Table (FIT)
 func (a *ACM) ValidateACMHeader() (bool, error) {
 	if a.Header == nil {

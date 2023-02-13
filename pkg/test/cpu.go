@@ -8,7 +8,7 @@ import (
 	"fmt"
 )
 
-//nolint
+// nolint
 var (
 	txtRegisterValues    *tools.TXTRegisterSpace
 	testcheckforintelcpu = Test{
@@ -154,7 +154,7 @@ func getTxtRegisters(txtAPI hwapi.LowLevelHardwareInterfaces) (*tools.TXTRegiste
 }
 
 // CheckForIntelCPU Check we're running on a Intel CPU
-func CheckForIntelCPU(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func CheckForIntelCPU(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	if txtAPI.VersionString() == "GenuineIntel" {
 		return true, nil, nil
 	}
@@ -162,7 +162,7 @@ func CheckForIntelCPU(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Con
 }
 
 // WeybridgeOrLater Check we're running on Weybridge
-func WeybridgeOrLater(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func WeybridgeOrLater(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	family := (txtAPI.CPUSignature() >> 8) & 0xf
 	if family == 6 {
 		return true, nil, nil
@@ -171,7 +171,7 @@ func WeybridgeOrLater(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Con
 }
 
 // CPUSupportsTXT Check if the CPU supports TXT
-func CPUSupportsTXT(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func CPUSupportsTXT(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	if hwInternal.CPUWhitelistTXTSupport(txtAPI) {
 		return true, nil, nil
 	}
@@ -182,7 +182,7 @@ func CPUSupportsTXT(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Confi
 }
 
 // TXTRegisterSpaceAccessible Check if the TXT register space is accessible
-func TXTRegisterSpaceAccessible(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func TXTRegisterSpaceAccessible(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	regs, err := getTxtRegisters(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -205,7 +205,7 @@ func TXTRegisterSpaceAccessible(txtAPI hwapi.LowLevelHardwareInterfaces, config 
 }
 
 // SupportsSMX Check if CPU supports SMX
-func SupportsSMX(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func SupportsSMX(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	if txtAPI.HasSMX() {
 		return true, nil, nil
 	}
@@ -213,7 +213,7 @@ func SupportsSMX(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configur
 }
 
 // SupportVMX Check if CPU supports VMX
-func SupportVMX(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func SupportVMX(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	if txtAPI.HasVMX() {
 		return true, nil, nil
 	}
@@ -221,7 +221,7 @@ func SupportVMX(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configura
 }
 
 // Ia32FeatureCtrl Check IA_32FEATURE_CONTROL
-func Ia32FeatureCtrl(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func Ia32FeatureCtrl(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	vmxInSmx, err := hwapi.AllowsVMXInSMX(txtAPI)
 	if err != nil || !vmxInSmx {
 		return vmxInSmx, nil, err
@@ -239,7 +239,7 @@ func Ia32FeatureCtrl(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Conf
 }
 
 // SMXIsEnabled not implemented
-func SMXIsEnabled(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func SMXIsEnabled(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	return false, nil, fmt.Errorf("Unimplemented: no comment")
 }
 
@@ -249,7 +249,7 @@ func SMXIsEnabled(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configu
 //}
 
 // TXTNotDisabled Check TXT_DISABLED bit in TXT_ACM_STATUS
-func TXTNotDisabled(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func TXTNotDisabled(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	ret, err := hwapi.TXTLeavesAreEnabled(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -261,7 +261,7 @@ func TXTNotDisabled(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Confi
 }
 
 // IBBMeasured Verify that the IBB has been measured
-func IBBMeasured(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func IBBMeasured(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	regs, err := getTxtRegisters(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -276,7 +276,7 @@ func IBBMeasured(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configur
 
 // IBBIsTrusted Check that the IBB was deemed trusted
 // Only set in Signed Policy mode
-func IBBIsTrusted(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func IBBIsTrusted(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	regs, err := getTxtRegisters(txtAPI)
 
 	if err != nil {
@@ -290,7 +290,7 @@ func IBBIsTrusted(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configu
 }
 
 // TXTRegistersLocked Verify that the TXT register space is locked
-func TXTRegistersLocked(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func TXTRegistersLocked(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	regs, err := getTxtRegisters(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -302,7 +302,7 @@ func TXTRegistersLocked(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.C
 }
 
 // NoBIOSACMErrors Check that the BIOS ACM has no startup error
-func NoBIOSACMErrors(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func NoBIOSACMErrors(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	regs, err := getTxtRegisters(txtAPI)
 	if err != nil {
 		return false, nil, err
@@ -315,7 +315,7 @@ func NoBIOSACMErrors(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Conf
 }
 
 // IA32DebugInterfaceLockedDisabled checks if IA32 debug interface is locked
-func IA32DebugInterfaceLockedDisabled(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func IA32DebugInterfaceLockedDisabled(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	// Check for IA32_DEBUG_INTERFACE support
 	_, _, ecx, _ := txtAPI.CPUSignatureFull()
 	if ecx&(1<<11) != 0 {

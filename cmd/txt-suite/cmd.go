@@ -51,36 +51,35 @@ var cli struct {
 
 func (e *execTestsCmd) Run(ctx *context) error {
 	ret := false
-	var config tools.Configuration
+	preset := new(test.PreSet)
 	if e.Config != "" {
 		var err error
-		configuration, err := tools.ParseConfig(e.Config)
+		preset, err = test.ParsePreSet(e.Config)
 		if err != nil {
 			os.Exit(1)
 		}
-		config = *configuration
 	} else {
 		// Default TPM 2.0 Intel TXT configuration
-		config.LCPHash = tpm2.AlgSHA256
-		config.TPM = hwapi.TPMVersion20
-		config.TXTMode = tools.AutoPromotion
+		preset.LCPHash = tpm2.AlgSHA256
+		preset.TPM = hwapi.TPMVersion20
+		preset.TXTMode = tools.AutoPromotion
 	}
 
 	switch e.Set {
 	case "all":
 		fmt.Println("For more information about the documents and chapters, run: txt-suite -m")
-		ret = run("All", getTests(), config, e.Interactive)
+		ret = run("All", getTests(), preset, e.Interactive)
 	case "uefi":
-		ret = run("UEFI", test.TestsUEFI, config, e.Interactive)
+		ret = run("UEFI", test.TestsTXTUEFI, preset, e.Interactive)
 	case "txtready":
 		fmt.Println("For more information about the documents and chapters, run: txt-suite -m")
-		ret = run("TXT Ready", test.TestsTXTReady, config, e.Interactive)
+		ret = run("TXT Ready", test.TestsTXTReady, preset, e.Interactive)
 	case "tboot":
-		ret = run("Tboot", test.TestsTBoot, config, e.Interactive)
+		ret = run("Tboot", test.TestsTXTTBoot, preset, e.Interactive)
 	case "cbnt":
 		return fmt.Errorf("CBnT support not implemented yet")
 	case "legacy":
-		ret = run("Legacy TXT", test.TestsLegacy, config, e.Interactive)
+		ret = run("Legacy TXT", test.TestsTXTLegacy, preset, e.Interactive)
 	default:
 		return fmt.Errorf("no valid test set given")
 	}
@@ -146,7 +145,7 @@ func getTests() []*test.Test {
 	return tests
 }
 
-func run(testGroup string, tests []*test.Test, config tools.Configuration, interactive bool) bool {
+func run(testGroup string, tests []*test.Test, preset *test.PreSet, interactive bool) bool {
 	var result = false
 	f := bufio.NewWriter(os.Stdout)
 
@@ -171,7 +170,7 @@ func run(testGroup string, tests []*test.Test, config tools.Configuration, inter
 			}
 		}
 
-		if !tests[idx].Run(hwAPI, &config) && tests[idx].Required && interactive {
+		if !tests[idx].Run(hwAPI, preset) && tests[idx].Required && interactive {
 			result = true
 			break
 		}

@@ -18,6 +18,7 @@ import (
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntkey"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/common/bgheader"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
+	"github.com/linuxboot/fiano/pkg/uefi"
 	"github.com/tidwall/pretty"
 )
 
@@ -155,7 +156,7 @@ func NewKM(km io.ReadSeeker) (*BootGuard, error) {
 
 func NewBPMAndKM(bpm io.ReadSeeker, km io.ReadSeeker) (*BootGuard, error) {
 	var b BootGuard
-	if bpm != nil && km != nil {
+	if bpm == nil && km == nil {
 		return nil, fmt.Errorf("either both or one manifest is nil")
 	}
 	var err error
@@ -170,7 +171,8 @@ func NewBPMAndKM(bpm io.ReadSeeker, km io.ReadSeeker) (*BootGuard, error) {
 	if bpmV != kmV {
 		return nil, fmt.Errorf("km and bpm version number differ")
 	}
-	switch bpmV {
+	b.Version = bpmV
+	switch b.Version {
 	case bgheader.Version10:
 		b.VData.BGbpm = bgbootpolicy.NewManifest()
 		b.VData.BGkm = bgkey.NewManifest()
@@ -616,12 +618,8 @@ func (b *BootGuard) CalculateNEMSize(image []byte, acm *tools.ACM) (uint16, erro
 
 // GetBPMPubHash takes the path to public BPM signing key and hash algorithm
 // and returns a hash with hashAlg of pub BPM singing key
-func (b *BootGuard) GetBPMPubHash(pubKeyFilePath, hashAlgo string) error {
+func (b *BootGuard) GetBPMPubHash(pubkey crypto.PublicKey, hashAlgo string) error {
 	var data []byte
-	pubkey, err := ReadPubKey(pubKeyFilePath)
-	if err != nil {
-		return err
-	}
 	var kAs cbnt.Key
 	if err := kAs.SetPubKey(pubkey); err != nil {
 		return err
@@ -789,4 +787,190 @@ func (b *BootGuard) GenerateBPMFromImage(biosFilepath string) (*BootGuard, error
 		fmt.Println("can't identify bootguard header")
 	}
 	return b, nil
+}
+
+// BPMCryptoSecure verifies that BPM uses sane crypto algorithms
+func (b *BootGuard) BPMCryptoSecure() (bool, error) {
+	switch b.Version {
+	case bgheader.Version10:
+		hash := b.VData.BGbpm.SE[0].Digest.HashAlg
+		if hash == bg.AlgSHA1 || hash.IsNull() {
+			return false, fmt.Errorf("signed IBB hash in BPM uses insecure hash algorithm SHA1/Null")
+		}
+		hash = b.VData.BGbpm.PMSE.Signature.HashAlg
+		if hash == bg.AlgSHA1 || hash.IsNull() {
+			return false, fmt.Errorf("BPM signature uses insecure hash algorithm SHA1/Null")
+		}
+	case bgheader.Version20:
+		for _, hash := range b.VData.CBNTbpm.SE[0].DigestList.List {
+			if hash.HashAlg == cbnt.AlgSHA1 || hash.HashAlg.IsNull() {
+				if b.VData.CBNTbpm.SE[0].DigestList.Size < 2 {
+					return false, fmt.Errorf("signed IBB hash list in BPM uses insecure hash algorithm SHA1/Null")
+				}
+			}
+		}
+		hash := b.VData.CBNTbpm.PMSE.Signature.HashAlg
+		if hash == cbnt.AlgSHA1 || hash.IsNull() {
+			return false, fmt.Errorf("BPM signature uses insecure hash algorithm SHA1/Null")
+		}
+	}
+	return true, nil
+}
+
+// KMCryptoSecure verifies that KM uses sane crypto algorithms
+func (b *BootGuard) KMCryptoSecure() (bool, error) {
+	switch b.Version {
+	case bgheader.Version10:
+		hash := b.VData.BGkm.KeyAndSignature.Signature.HashAlg
+		if hash == bg.AlgSHA1 || hash.IsNull() {
+			return false, fmt.Errorf("KM signature uses insecure hash algorithm SHA1/Null")
+		}
+		hash = b.VData.BGkm.BPKey.HashAlg
+		if hash == bg.AlgSHA1 || hash.IsNull() {
+			return false, fmt.Errorf("signed BPM hash in KM uses insecure hash algorithm SHA1/Null")
+		}
+	case bgheader.Version20:
+		hash := b.VData.CBNTkm.PubKeyHashAlg
+		if hash == cbnt.AlgSHA1 || hash.IsNull() {
+			return false, fmt.Errorf("KM signature uses insecure hash algorithm SHA1/Null")
+		}
+		for _, hash := range b.VData.CBNTkm.Hash {
+			if hash.Digest.HashAlg == cbnt.AlgSHA1 || hash.Digest.HashAlg.IsNull() {
+				return false, fmt.Errorf("the KM hash %s uses insecure hash algorithm SHA1/Null", hash.Usage.String())
+			}
+		}
+	}
+	return true, nil
+}
+
+// KMHasBPMHash verifies that KM has the correctly signed BPM hash
+func (b *BootGuard) KMHasBPMHash() (bool, error) {
+	var bpmHashFound bool
+	switch b.Version {
+	case bgheader.Version10:
+		if b.VData.BGkm.BPKey.HashBufferTotalSize() > 32 {
+			bpmHashFound = true
+		}
+	case bgheader.Version20:
+		for _, hash := range b.VData.CBNTkm.Hash {
+			if hash.Usage == cbntkey.UsageBPMSigningPKD {
+				bpmHashFound = true
+			}
+		}
+		if !bpmHashFound {
+			return false, fmt.Errorf("couldn't find BPM hash in KM")
+		}
+	}
+	return true, nil
+}
+
+// BPMKeyMatchKMHash verifies that BPM pubkey hash matches KM hash of Boot Policy
+func (b *BootGuard) BPMKeyMatchKMHash() (bool, error) {
+	switch b.Version {
+	case bgheader.Version10:
+		if b.VData.BGkm.BPKey.HashBufferTotalSize() > 32 {
+			if err := b.VData.BGkm.ValidateBPMKey(b.VData.BGbpm.PMSE.KeySignature); err != nil {
+				return false, fmt.Errorf("couldn't verify bpm hash in km")
+			}
+		}
+	case bgheader.Version20:
+		for _, hash := range b.VData.CBNTkm.Hash {
+			if hash.Usage == cbntkey.UsageBPMSigningPKD {
+				if err := b.VData.CBNTkm.ValidateBPMKey(b.VData.CBNTbpm.PMSE.KeySignature); err != nil {
+					return false, fmt.Errorf("couldn't verify bpm hash in km")
+				}
+			}
+		}
+	}
+	return true, nil
+}
+
+// SaneBPMSecurityProps verifies that BPM contains security properties set accordingly to spec
+func (b *BootGuard) SaneBPMSecurityProps() (bool, error) {
+	switch b.Version {
+	case bgheader.Version10:
+		flags := b.VData.BGbpm.SE[0].Flags
+		if !flags.DMAProtection() {
+			return false, fmt.Errorf("dma protection should be enabled for bootguard")
+		}
+		if !flags.AuthorityMeasure() {
+			return false, fmt.Errorf("pcr-7 data should extended for OS security")
+		}
+		if !flags.TPMFailureLeavesHierarchiesEnabled() {
+			return false, fmt.Errorf("tpm failure should lead to default measurements from PCR0 to PCR7")
+		}
+		if b.VData.BGbpm.SE[0].PBETValue.PBETValue() == 0 {
+			return false, fmt.Errorf("firmware shall not allowed to run infinitely after incident happened")
+		}
+	case bgheader.Version20:
+		bgFlags := b.VData.CBNTbpm.SE[0].Flags
+		if !bgFlags.DMAProtection() {
+			if b.VData.CBNTbpm.SE[0].DMAProtBase0 == 0 && b.VData.CBNTbpm.SE[0].VTdBAR == 0 {
+				return false, fmt.Errorf("dma protection should be enabled for bootguard")
+			}
+		}
+		if !bgFlags.AuthorityMeasure() {
+			return false, fmt.Errorf("pcr-7 data should extended for OS security")
+		}
+		if !bgFlags.TPMFailureLeavesHierarchiesEnabled() {
+			return false, fmt.Errorf("tpm failure should lead to default measurements from PCR0 to PCR7")
+		}
+		if b.VData.BGbpm.SE[0].PBETValue.PBETValue() == 0 {
+			return false, fmt.Errorf("firmware shall not allowed to run infinitely after incident happened")
+		}
+		txtFlags := b.VData.CBNTbpm.TXTE.ControlFlags
+		if txtFlags.MemoryScrubbingPolicy() != cbntbootpolicy.MemoryScrubbingPolicySACM {
+			return false, fmt.Errorf("S-ACM memory scrubbing should be used over the BIOS")
+		}
+		if !txtFlags.IsSACMRequestedToExtendStaticPCRs() {
+			return false, fmt.Errorf("S-ACM shall always extend static PCRs")
+		}
+	}
+	return true, nil
+}
+
+// IBBsMatchBPMDigest verifies that FIT measurements match final digest in BPM
+func (b *BootGuard) IBBsMatchBPMDigest(image []byte) (bool, error) {
+	firmware, err := uefi.Parse(image)
+	if err != nil {
+		return false, fmt.Errorf("can't parse firmware image")
+	}
+	switch b.Version {
+	case bgheader.Version10:
+		if err := b.VData.BGbpm.ValidateIBB(firmware); err != nil {
+			return false, fmt.Errorf("bpm final ibb hash doesn't match selected measurements in image")
+		}
+	case bgheader.Version20:
+		if err := b.VData.CBNTbpm.ValidateIBB(firmware); err != nil {
+			return false, fmt.Errorf("bpm final ibb hash doesn't match selected measurements in image")
+		}
+	}
+	return true, nil
+}
+
+// ValidateMEAgainstManifests validates during runtime ME configuation with BootGuard KM & BPM manifests
+func (b *BootGuard) ValidateMEAgainstManifests(fws *FirmwareStatus6) (bool, error) {
+	switch b.Version {
+	case bgheader.Version10:
+		if fws.BPMSVN != uint32(b.VData.BGbpm.BPMSVN) {
+			return false, fmt.Errorf("bpm svn doesn't match me configuration")
+		}
+		if fws.KMSVN != uint32(b.VData.BGkm.KMSVN) {
+			return false, fmt.Errorf("km svn doesn't match me configuration")
+		}
+		if fws.KMID != uint32(b.VData.BGkm.KMID) {
+			return false, fmt.Errorf("km KMID doesn't match me configuration")
+		}
+	case bgheader.Version20:
+		if fws.BPMSVN != uint32(b.VData.CBNTbpm.BPMSVN) {
+			return false, fmt.Errorf("bpm svn doesn't match me configuration")
+		}
+		if fws.KMSVN != uint32(b.VData.CBNTkm.KMSVN) {
+			return false, fmt.Errorf("km svn doesn't match me configuration")
+		}
+		if fws.KMID != uint32(b.VData.CBNTkm.KMID) {
+			return false, fmt.Errorf("km KMID doesn't match me configuration")
+		}
+	}
+	return true, nil
 }
