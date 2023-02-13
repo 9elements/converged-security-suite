@@ -857,9 +857,9 @@ func (b *BootGuard) KMHasBPMHash() (bool, error) {
 				bpmHashFound = true
 			}
 		}
-		if !bpmHashFound {
-			return false, fmt.Errorf("couldn't find BPM hash in KM")
-		}
+	}
+	if !bpmHashFound {
+		return false, fmt.Errorf("couldn't find BPM hash in KM")
 	}
 	return true, nil
 }
