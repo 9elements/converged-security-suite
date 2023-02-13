@@ -224,7 +224,7 @@ func MeasureEntryFromBIOSDirectory(entryType amd.BIOSDirectoryTableEntryType, op
 	}
 
 	if optCountCheck != nil && *optCountCheck != len(foundEntries) {
-		return nil, fmt.Errorf("expected %d number of %v bios directory items, found: %d",
+		return nil, fmt.Errorf("expected %d BIOS directory items of type %d, but found: %d",
 			*optCountCheck,
 			entryType,
 			len(foundEntries))

@@ -20,12 +20,14 @@ import (
 // SettingsReproduceEventLog defines settings for internal bruteforce algorithms used in ReproduceEventLog
 type SettingsReproduceEventLog struct {
 	SettingsBruteforceACMPolicyStatus
+	DisabledEventsMaxDistance uint64
 }
 
 // DefaultSettingsReproduceEventLog returns recommended default PCR0 settings
 func DefaultSettingsReproduceEventLog() SettingsReproduceEventLog {
 	return SettingsReproduceEventLog{
 		SettingsBruteforceACMPolicyStatus: DefaultSettingsBruteforceACMPolicyStatus(),
+		DisabledEventsMaxDistance:         2, // arbitrary value based on previous experience, hoping to handle within a second; TODO: add benchmarks
 	}
 }
 
@@ -62,7 +64,13 @@ func ReproduceEventLog(
 		return false, nil, issues, fmt.Errorf("TPM EventLog is not provided")
 	}
 
-	events, measurements, measurementDigests, alignIssues, err := alignEventsAndMeasurements(eventLog, inMeasurements, imageBytes, hashAlgo)
+	events, measurements, measurementDigests, alignIssues, err := alignEventsAndMeasurements(
+		&settings,
+		eventLog,
+		inMeasurements,
+		imageBytes,
+		hashAlgo,
+	)
 	issues = append(issues, alignIssues...)
 	if err != nil {
 		return false, nil, issues, fmt.Errorf("unable to align Events and Measurements: %w", err)
@@ -84,8 +92,8 @@ func ReproduceEventLog(
 			issues = append(
 				issues,
 				fmt.Errorf(
-					"unexpected entry in EventLog of type %s on evIdx==%d; log entry analysis: %s",
-					ev.Type, idx, explainLogEntry(nil, ev, imageBytes),
+					"unexpected entry in EventLog of type %s and digest %X on evIdx==%d; log entry analysis: %s",
+					ev.Type, ev.Digest.Digest, idx, explainLogEntry(nil, ev, imageBytes),
 				),
 			)
 			isEventLogMatchesMeasurements = false
@@ -223,6 +231,7 @@ func bruteForceACMPolicyStatus(
 }
 
 func alignEventsAndMeasurements(
+	settings *SettingsReproduceEventLog,
 	eventLog *tpmeventlog.TPMEventLog,
 	inMeasurements pcr.Measurements,
 	imageBytes []byte,
@@ -240,24 +249,30 @@ func alignEventsAndMeasurements(
 		return
 	}
 
+	hasherFactory, err := hashAlgo.Hash()
+	if err != nil {
+		err = fmt.Errorf("unable to initialize a hash function for algorithm %#v", hashAlgo)
+		return
+	}
+
 	var filteredMeasurements pcr.Measurements
 	for _, m := range inMeasurements {
 		if m.IsFake() && m.ID != pcr.MeasurementIDInit {
 			continue
 		}
 		if len(m.EventLogEventTypes()) == 0 {
-			issues = append(issues, fmt.Errorf("the flow requires a measurement, which is not expected to be logged into EventLog"))
+			var digest []byte
+			digest, err = m.Calculate(imageBytes, hasherFactory.New())
+			if err != nil {
+				err = fmt.Errorf("unable to calculate digest of measurement %#+v: %w", *m, err)
+				return
+			}
+			issues = append(issues, fmt.Errorf("the flow requires a measurement '%s' (digest: %X), which is not expected to be logged into EventLog", m.ID, digest))
 			continue
 		}
 		filteredMeasurements = append(filteredMeasurements, m)
 	}
 	inMeasurements = filteredMeasurements
-
-	hasherFactory, err := hashAlgo.Hash()
-	if err != nil {
-		err = fmt.Errorf("unable to initialize a hash function for algorithm %#v", hashAlgo)
-		return
-	}
 
 	inMeasurementDigests := make([][]byte, 0, len(inMeasurements))
 	for _, m := range inMeasurements {
@@ -270,7 +285,12 @@ func alignEventsAndMeasurements(
 		inMeasurementDigests = append(inMeasurementDigests, hash)
 	}
 
-	disabledEvents, disabledMeasurements, distance, err := bruteForceAlignedEventsAndMeasurements(inEvents, inMeasurements, inMeasurementDigests)
+	disabledEvents, disabledMeasurements, distance, err := bruteForceAlignedEventsAndMeasurements(
+		settings,
+		inEvents,
+		inMeasurements,
+		inMeasurementDigests,
+	)
 	if distance == 0 {
 		measurements = inMeasurements
 		measurementDigests = inMeasurementDigests
@@ -333,6 +353,7 @@ func alignEventsAndMeasurements(
 // * We disable an event or a measurement only if it does not match by both: type and digest.
 // * Prefer digest match over type match.
 func bruteForceAlignedEventsAndMeasurements(
+	settings *SettingsReproduceEventLog,
 	events []*tpmeventlog.Event,
 	measurements pcr.Measurements,
 	measurementDigests [][]byte,
@@ -436,7 +457,7 @@ func bruteForceAlignedEventsAndMeasurements(
 		disabledEvents,
 		1,
 		0,
-		5, // arbitrary value based on previous experience, hoping to handle within a second; TODO: add benchmarks
+		settings.DisabledEventsMaxDistance,
 		func() (any, error) {
 			_newDisabledMeasurements := make([]bool, len(disabledMeasurements))
 			copy(_newDisabledMeasurements, disabledMeasurements)
