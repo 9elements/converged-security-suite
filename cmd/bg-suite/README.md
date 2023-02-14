@@ -18,7 +18,7 @@ Load the *msr* kernel module:
 modprobe msr
 ```
 
-**4. Execute the txt-suite.**
+**2. Execute the txt-suite.**
 
 ```bash
 sudo chmod +x bg-suite && sudo ./bg-suite
