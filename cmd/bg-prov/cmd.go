@@ -434,7 +434,11 @@ func (g *generateKMCmdv1) Run(ctx *context) error {
 		//b.VData.BGkm.BPKey = g.KMHash
 		// Create KM_Hash for BPM pub signing key
 		if g.BpmPubkey != "" {
-			err := b.GetBPMPubHash(g.BpmPubkey, g.BpmHashAlg)
+			pubkey, err := bootguard.ReadPubKey(g.BpmPubkey)
+			if err != nil {
+				return err
+			}
+			err = b.GetBPMPubHash(pubkey, g.BpmHashAlg)
 			if err != nil {
 				return err
 			}
@@ -500,7 +504,11 @@ func (g *generateKMCmdv2) Run(ctx *context) error {
 		b.VData.CBNTkm.Hash = g.KMHashes
 		// Create KM_Hash for BPM pub signing key
 		if g.BpmPubkey != "" {
-			err := b.GetBPMPubHash(g.BpmPubkey, g.BpmHashAlg)
+			pubkey, err := bootguard.ReadPubKey(g.BpmPubkey)
+			if err != nil {
+				return err
+			}
+			err = b.GetBPMPubHash(pubkey, g.BpmHashAlg)
 			if err != nil {
 				return err
 			}
