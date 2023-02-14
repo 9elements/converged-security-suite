@@ -22,6 +22,9 @@ import (
 	"github.com/tidwall/pretty"
 )
 
+// Everything more secure than SHA-1
+const minHashTypeSize = 32
+
 func bgBPMReader(bpm *bgbootpolicy.Manifest) (*bytes.Reader, error) {
 	if bpm == nil {
 		return nil, fmt.Errorf("manifest is nil")
@@ -156,7 +159,7 @@ func NewKM(km io.ReadSeeker) (*BootGuard, error) {
 
 func NewBPMAndKM(bpm io.ReadSeeker, km io.ReadSeeker) (*BootGuard, error) {
 	var b BootGuard
-	if bpm == nil && km == nil {
+	if bpm == nil || km == nil {
 		return nil, fmt.Errorf("either both or one manifest is nil")
 	}
 	var err error
@@ -848,7 +851,7 @@ func (b *BootGuard) KMHasBPMHash() (bool, error) {
 	var bpmHashFound bool
 	switch b.Version {
 	case bgheader.Version10:
-		if b.VData.BGkm.BPKey.HashBufferTotalSize() > 32 {
+		if b.VData.BGkm.BPKey.HashBufferTotalSize() > minHashTypeSize {
 			bpmHashFound = true
 		}
 	case bgheader.Version20:
@@ -868,7 +871,7 @@ func (b *BootGuard) KMHasBPMHash() (bool, error) {
 func (b *BootGuard) BPMKeyMatchKMHash() (bool, error) {
 	switch b.Version {
 	case bgheader.Version10:
-		if b.VData.BGkm.BPKey.HashBufferTotalSize() > 32 {
+		if b.VData.BGkm.BPKey.HashBufferTotalSize() > minHashTypeSize {
 			if err := b.VData.BGkm.ValidateBPMKey(b.VData.BGbpm.PMSE.KeySignature); err != nil {
 				return false, fmt.Errorf("couldn't verify bpm hash in km")
 			}
