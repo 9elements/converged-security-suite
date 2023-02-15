@@ -1,12 +1,9 @@
 package sum
 
 import (
-	"crypto/sha1"
-	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"hash"
 	"log"
 	"os"
 	"strings"
@@ -111,15 +108,15 @@ func (cmd Command) Execute(args []string) {
 	measureOpts = append(measureOpts, pcr.SetFlow(flow))
 	measureOpts = append(measureOpts, pcr.SetRegisters(cmd.registers))
 
-	var hashFunc hash.Hash
+	var hashAlgo tpm2.Algorithm
 	hashFuncString := strings.ToLower(*cmd.hashFunc)
 	switch hashFuncString {
 	case "sha1", "":
-		hashFunc = sha1.New()
-		measureOpts = append(measureOpts, pcr.SetIBBHashDigest(tpm2.AlgSHA1))
+		hashAlgo = tpm2.AlgSHA1
+		measureOpts = append(measureOpts, pcr.SetIBBHashDigest(hashAlgo))
 	case "sha256":
-		hashFunc = sha256.New()
-		measureOpts = append(measureOpts, pcr.SetIBBHashDigest(tpm2.AlgSHA256))
+		hashAlgo = tpm2.AlgSHA256
+		measureOpts = append(measureOpts, pcr.SetIBBHashDigest(hashAlgo))
 	default:
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "error: invalid value of option 'hash-func': '%s'\n", hashFuncString)
 		usageAndExit()
@@ -155,7 +152,9 @@ func (cmd Command) Execute(args []string) {
 		os.Exit(1)
 	}
 	pcr.LoggingDataLimit = *cmd.printMeasurementLengthLimit
-	result := measurements.Calculate(firmware.Buf(), flow.TPMLocality(), hashFunc, pcrLogger)
+	hashFuncFactory, err := hashAlgo.Hash()
+	assertNoError(err)
+	result := measurements.Calculate(firmware.Buf(), flow.TPMLocality(), hashFuncFactory.New(), pcrLogger)
 
 	if !*cmd.isQuiet {
 		fmt.Printf("Resulting PCR0: ")
@@ -165,14 +164,11 @@ func (cmd Command) Execute(args []string) {
 	if *cmd.compareWithEventLog != "" {
 		fmt.Println()
 
-		if *cmd.hashFunc != "sha1" {
-			panic("comparing with TPM EventLog is currently supported only for SHA1 digests")
-		}
 		f, err := os.Open(*cmd.compareWithEventLog)
 		assertNoError(err)
 		tpmEventLog, err := tpmeventlog.Parse(f)
 		assertNoError(err)
-		match, updatedACMPolicyStatus, issues, err := pcrbruteforcer.ReproduceEventLog(tpmEventLog, tpmeventlog.TPMAlgorithmSHA1, measurements, firmware.Buf(), pcrbruteforcer.DefaultSettingsReproduceEventLog())
+		match, updatedACMPolicyStatus, issues, err := pcrbruteforcer.ReproduceEventLog(tpmEventLog, hashAlgo, measurements, firmware.Buf(), pcrbruteforcer.DefaultSettingsReproduceEventLog())
 		fmt.Printf("comparing with TPM EventLog result:\n\tmatch: %v\n\tupdated ACM Policy Status: %v\n\terr: %v\n\tissues:\n%s\n",
 			match, updatedACMPolicyStatus, err, formatIssues(issues, "\t\t"))
 	}
