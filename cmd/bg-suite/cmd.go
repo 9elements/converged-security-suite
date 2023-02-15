@@ -60,7 +60,7 @@ func (e *execTestsCmd) Run(ctx *context) error {
 	}
 	switch e.Set {
 	case "all":
-		fmt.Println("For more information about the documents and chapters, run: txt-suite -m")
+		fmt.Println("For more information about the documents and chapters, run: bg-suite -m")
 		ret = run("All", getTests(), &preset, e.Interactive)
 	default:
 		return fmt.Errorf("no valid test set given")
