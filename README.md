@@ -20,7 +20,8 @@ Tooling & API
 
 * [Intel TXT Test Suite](cmd/txt-suite) - Test Suite for Intel Trusted Execution Technology validation.
 * [Intel TXT Provisioning](cmd/txt-prov) - Provisioning of Trusted Platform Module for Intel Trusted Execution Technology usage.
-* [Intel CBnT Provisioning](cmd/bg-prov) - Provisioning of all BootGuard versions and Trusted Execution Technology (CBnT) usage.
+* [Intel BtG/CBnT Test Suite](cmd/bg-suite) - Test Suite for Intel Boot Guard validation.
+* [Intel BtG/CBnT Provisioning](cmd/bg-prov) - Provisioning of all BootGuard versions and Trusted Execution Technology (CBnT) usage.
 * [Intel/AMD pcr0tool](cmd/pcr0tool) - [PCR0](https://security.stackexchange.com/questions/127224/what-does-crtm-refer-to) diagnostics tool.
 
 Developer notes
