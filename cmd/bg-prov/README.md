@@ -1,7 +1,7 @@
-Intel CBnT Provisioning
+Intel BtG/CBnT Provisioning
 ===============================
 
-This Golang utility supports the artifact generation to support Intel Converged BootGuard and Trustes Execution Technology (CBnT)
+This Golang utility supports the artifact generation to support Intel BootGuard and Trustes Execution Technology (CBnT)
 
 Prerequisites for Usage
 -----------------------
