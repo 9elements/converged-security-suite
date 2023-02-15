@@ -4,28 +4,26 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/google/go-tpm/tpm2"
-
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
+	"github.com/google/go-tpm/tpm2"
 )
 
 func TestTest_Run(t *testing.T) {
 	type fields struct {
 		Name         string
 		Required     bool
-		function     func(hwapi.LowLevelHardwareInterfaces, *tools.Configuration) (bool, error, error)
+		function     func(hwapi.LowLevelHardwareInterfaces, *PreSet) (bool, error, error)
 		Result       Result
 		dependencies []*Test
 		ErrorText    string
 		Status       Status
-		Spec         TXTSpec
 	}
 
 	BNotImplemented := Test{
 		"Test B",
 		true,
-		func(a hwapi.LowLevelHardwareInterfaces, c *tools.Configuration) (bool, error, error) {
+		func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 			return true, nil, nil
 		},
 		ResultFail,
@@ -33,7 +31,6 @@ func TestTest_Run(t *testing.T) {
 		"",
 		"",
 		NotImplemented,
-		Common,
 		"",
 		"",
 		"",
@@ -42,7 +39,7 @@ func TestTest_Run(t *testing.T) {
 	BFailed := Test{
 		"Test B",
 		true,
-		func(a hwapi.LowLevelHardwareInterfaces, c *tools.Configuration) (bool, error, error) {
+		func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 			return true, nil, nil
 		},
 		ResultFail,
@@ -50,7 +47,6 @@ func TestTest_Run(t *testing.T) {
 		"",
 		"",
 		Implemented,
-		Common,
 		"",
 		"",
 		"",
@@ -58,7 +54,7 @@ func TestTest_Run(t *testing.T) {
 	BNotRun := Test{
 		"Test B",
 		true,
-		func(a hwapi.LowLevelHardwareInterfaces, c *tools.Configuration) (bool, error, error) {
+		func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 			return true, nil, nil
 		},
 		ResultNotRun,
@@ -66,7 +62,6 @@ func TestTest_Run(t *testing.T) {
 		"",
 		"",
 		Implemented,
-		Common,
 		"",
 		"",
 		"",
@@ -83,14 +78,13 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, ignores unimplemented Test B",
 				true,
-				func(a hwapi.LowLevelHardwareInterfaces, c *tools.Configuration) (bool, error, error) {
+				func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 					return true, nil, nil
 				},
 				ResultNotRun,
 				[]*Test{&BNotImplemented},
 				"",
 				Implemented,
-				Common,
 			},
 			true,
 			ResultPass,
@@ -100,14 +94,13 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, fails on failed dependency Test B",
 				true,
-				func(a hwapi.LowLevelHardwareInterfaces, c *tools.Configuration) (bool, error, error) {
+				func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 					return true, nil, nil
 				},
 				ResultNotRun,
 				[]*Test{&BFailed},
 				"",
 				Implemented,
-				Common,
 			},
 			false,
 			ResultDependencyFailed,
@@ -117,14 +110,13 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, runs dependency Test B",
 				true,
-				func(a hwapi.LowLevelHardwareInterfaces, c *tools.Configuration) (bool, error, error) {
+				func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 					return BNotRun.Result == ResultPass, nil, nil
 				},
 				ResultNotRun,
 				[]*Test{&BNotRun},
 				"",
 				Implemented,
-				Common,
 			},
 			true,
 			ResultPass,
@@ -134,14 +126,13 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, multiple dependencies",
 				true,
-				func(a hwapi.LowLevelHardwareInterfaces, c *tools.Configuration) (bool, error, error) {
+				func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 					return BNotRun.Result == ResultPass, nil, nil
 				},
 				ResultNotRun,
 				[]*Test{&BNotRun, &BNotImplemented},
 				"",
 				Implemented,
-				Common,
 			},
 			true,
 			ResultPass,
@@ -151,14 +142,13 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, returns internal error",
 				true,
-				func(a hwapi.LowLevelHardwareInterfaces, c *tools.Configuration) (bool, error, error) {
+				func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 					return true, nil, fmt.Errorf("Internal error 24")
 				},
 				ResultNotRun,
 				[]*Test{},
 				"",
 				Implemented,
-				Common,
 			},
 			false,
 			ResultInternalError,
@@ -168,14 +158,13 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, returns error",
 				true,
-				func(a hwapi.LowLevelHardwareInterfaces, c *tools.Configuration) (bool, error, error) {
+				func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 					return true, fmt.Errorf("error 1"), nil
 				},
 				ResultNotRun,
 				[]*Test{},
 				"",
 				Implemented,
-				Common,
 			},
 			false,
 			ResultFail,
@@ -185,25 +174,23 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, returns error, but is critical",
 				true,
-				func(a hwapi.LowLevelHardwareInterfaces, c *tools.Configuration) (bool, error, error) {
+				func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 					return false, fmt.Errorf("error 1"), nil
 				},
 				ResultNotRun,
 				[]*Test{},
 				"",
 				Implemented,
-				Common,
 			},
 			false,
 			ResultFail,
 		},
 	}
-
-	txtAPI := hwapi.GetAPI()
-	var config tools.Configuration
-	config.LCPHash = tpm2.AlgSHA256
-	config.TPM = hwapi.TPMVersion20
-	config.TXTMode = tools.AutoPromotion
+	hw := hwapi.GetAPI()
+	var preset PreSet
+	preset.TPM = hwapi.TPMVersion20
+	preset.TXTMode = tools.AutoPromotion
+	preset.LCPHash = tpm2.AlgSHA256
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tr := &Test{
@@ -214,9 +201,8 @@ func TestTest_Run(t *testing.T) {
 				dependencies: tt.fields.dependencies,
 				ErrorText:    tt.fields.ErrorText,
 				Status:       tt.fields.Status,
-				Spec:         tt.fields.Spec,
 			}
-			if got := tr.Run(txtAPI, &config); got != tt.wantReturn {
+			if got := tr.Run(hw, &preset); got != tt.wantReturn {
 				t.Errorf("Test.Run() = %v, want %v", got, tt.wantReturn)
 			}
 			if tr.Result != tt.wantResult {

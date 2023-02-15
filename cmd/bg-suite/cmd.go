@@ -9,7 +9,6 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/test"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
-	"github.com/google/go-tpm/tpm2"
 
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 
@@ -17,7 +16,6 @@ import (
 )
 
 type context struct {
-	tpmdev      *hwapi.TPM
 	interactive bool
 	logpath     string
 }
@@ -32,16 +30,17 @@ type versionCmd struct {
 }
 
 type execTestsCmd struct {
-	Set         string `required default:"all" help:"Select subset of tests. Options: all, uefi, txtready, tboot, cbnt, legacy"`
+	Set         string `required default:"all" help:"Select subset of tests. Options: all"`
 	Interactive bool   `optional short:"i" help:"Interactive mode. Errors will stop the testing."`
 	Config      string `optional short:"c" help:"Path/Filename to config file."`
 	Log         string `optional help:"Give a path/filename for test result output inJSON format. e.g.: /path/to/filename.json"`
+	Firmware    string `optional short:"f" help:"Path/Filename to firmware to test with."`
 }
 
 var cli struct {
 	ManifestStrictOrderCheck bool `help:"Enable checking of manifest elements order"`
 
-	TpmDev string `short:"t" help:"Select TPM-Path. e.g.:--tpmdev=/dev/tpmX, with X as number of the TPM module"`
+	FilePath string `short:"t" help:"Select firmware image filepath"`
 
 	ExecTests execTestsCmd `cmd help:"Executes tests given be TestNo or TestSet"`
 	List      listCmd      `cmd help:"Lists all tests"`
@@ -51,35 +50,18 @@ var cli struct {
 
 func (e *execTestsCmd) Run(ctx *context) error {
 	ret := false
-	preset := new(test.PreSet)
-	if e.Config != "" {
-		var err error
-		preset, err = test.ParsePreSet(e.Config)
-		if err != nil {
-			os.Exit(1)
-		}
-	} else {
-		// Default TPM 2.0 Intel TXT configuration
-		preset.LCPHash = tpm2.AlgSHA256
-		preset.TPM = hwapi.TPMVersion20
-		preset.TXTMode = tools.AutoPromotion
+	data, err := os.ReadFile(e.Firmware)
+	if err != nil {
+		return fmt.Errorf("can't read firmware file")
 	}
-
+	preset := test.PreSet{
+		Firmware:           data,
+		HostBridgeDeviceID: 0x00,
+	}
 	switch e.Set {
 	case "all":
-		fmt.Println("For more information about the documents and chapters, run: txt-suite -m")
-		ret = run("All", getTests(), preset, e.Interactive)
-	case "uefi":
-		ret = run("UEFI", test.TestsTXTUEFI, preset, e.Interactive)
-	case "txtready":
-		fmt.Println("For more information about the documents and chapters, run: txt-suite -m")
-		ret = run("TXT Ready", test.TestsTXTReady, preset, e.Interactive)
-	case "tboot":
-		ret = run("Tboot", test.TestsTXTTBoot, preset, e.Interactive)
-	case "cbnt":
-		return fmt.Errorf("CBnT support not implemented yet")
-	case "legacy":
-		ret = run("Legacy TXT", test.TestsTXTLegacy, preset, e.Interactive)
+		fmt.Println("For more information about the documents and chapters, run: bg-suite -m")
+		ret = run("All", getTests(), &preset, e.Interactive)
 	default:
 		return fmt.Errorf("no valid test set given")
 	}
@@ -127,20 +109,8 @@ func (v *versionCmd) Run(ctx *context) error {
 
 func getTests() []*test.Test {
 	var tests []*test.Test
-	for i := range test.TestsCPU {
-		tests = append(tests, test.TestsCPU[i])
-	}
-	for i := range test.TestsTPM {
-		tests = append(tests, test.TestsTPM[i])
-	}
-	for i := range test.TestsFIT {
-		tests = append(tests, test.TestsFIT[i])
-	}
-	for i := range test.TestsMemory {
-		tests = append(tests, test.TestsMemory[i])
-	}
-	for i := range test.TestsACPI {
-		tests = append(tests, test.TestsACPI[i])
+	for i := range test.TestsBootGuard {
+		tests = append(tests, test.TestsBootGuard[i])
 	}
 	return tests
 }

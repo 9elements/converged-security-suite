@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 )
 
-func notImplemented(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+// nolint
+func notImplemented(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	return false, nil, fmt.Errorf("not implemented")
 }
 
-//nolint
+// nolint
 var (
 	testRSDPChecksum = Test{
 		Name:                    "ACPI RSDP exists and has valid checksum",
@@ -321,7 +321,7 @@ var (
 	}
 )
 
-//ACPIHeader represent the table header as defined in ACPI Spec 6.2 "5.2.6 System Description Table Header"
+// ACPIHeader represent the table header as defined in ACPI Spec 6.2 "5.2.6 System Description Table Header"
 type ACPIHeader struct {
 	Signature       [4]uint8
 	Length          uint32
@@ -334,7 +334,7 @@ type ACPIHeader struct {
 	CreatorRevision uint32
 }
 
-//ACPIRsdp as defined in ACPI Spec 6.2 "5.2.5.3 Root System Description Pointer (RSDP) Structure"
+// ACPIRsdp as defined in ACPI Spec 6.2 "5.2.5.3 Root System Description Pointer (RSDP) Structure"
 type ACPIRsdp struct {
 	Signature        [8]uint8
 	Checksum         uint8
@@ -394,13 +394,13 @@ func checkPresence(txtAPI hwapi.LowLevelHardwareInterfaces, name string) (bool, 
 	return true, nil, nil
 }
 
-//CheckRSDPValid tests if the RSDP ACPI table is vaid
-func CheckRSDPValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+// CheckRSDPValid tests if the RSDP ACPI table is vaid
+func CheckRSDPValid(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	return checkPresence(txtAPI, "RSDP") // the HWAPI will validate the RSDP
 }
 
-//CheckRSDTPresent tests if the RSDT ACPI table is present
-func CheckRSDTPresent(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+// CheckRSDTPresent tests if the RSDT ACPI table is present
+func CheckRSDTPresent(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	rawRsdp, err := hwapi.GetACPITableDevMem(txtAPI, "RSDP")
 	var rsdp ACPIRsdp
 	if os.IsNotExist(err) {
@@ -418,8 +418,8 @@ func CheckRSDTPresent(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Con
 	return true, nil, nil
 }
 
-//CheckXSDTPresent tests if the XSDT ACPI table is present
-func CheckXSDTPresent(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+// CheckXSDTPresent tests if the XSDT ACPI table is present
+func CheckXSDTPresent(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	rawRsdp, err := hwapi.GetACPITableDevMem(txtAPI, "RSDP")
 	var rsdp ACPIRsdp
 	if os.IsNotExist(err) {
@@ -440,8 +440,8 @@ func CheckXSDTPresent(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Con
 	return true, nil, nil
 }
 
-//CheckRSDTValid tests if the RSDT ACPI table is valid
-func CheckRSDTValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+// CheckRSDTValid tests if the RSDT ACPI table is valid
+func CheckRSDTValid(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	_, err := hwapi.GetACPITableDevMem(txtAPI, "RSDT") // HWAPI will validate the table
 	if os.IsNotExist(err) {
 		return false, fmt.Errorf("ACPI table RSDT is invalid"), nil
@@ -452,8 +452,8 @@ func CheckRSDTValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Confi
 	return true, nil, nil
 }
 
-//CheckXSDTValid tests if the XSDT ACPI table is valid
-func CheckXSDTValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+// CheckXSDTValid tests if the XSDT ACPI table is valid
+func CheckXSDTValid(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	_, err1 := hwapi.GetACPITableSysFS(txtAPI, "XSDT")  // HWAPI will validate the table
 	_, err2 := hwapi.GetACPITableDevMem(txtAPI, "XSDT") // HWAPI will validate the table
 	if os.IsNotExist(err1) && os.IsNotExist(err2) {
@@ -464,8 +464,8 @@ func CheckXSDTValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Confi
 	return true, nil, nil
 }
 
-//CheckRSDTorXSDTValid tests if the RSDT or XSDT ACPI table is valid
-func CheckRSDTorXSDTValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+// CheckRSDTorXSDTValid tests if the RSDT or XSDT ACPI table is valid
+func CheckRSDTorXSDTValid(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	_, err1 := hwapi.GetACPITableDevMem(txtAPI, "RSDT") // HWAPI will validate the table
 	_, err2 := hwapi.GetACPITableDevMem(txtAPI, "XSDT") // HWAPI will validate the table
 	if err1 != nil && err2 != nil {
@@ -475,17 +475,17 @@ func CheckRSDTorXSDTValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools
 	return true, nil, nil
 }
 
-//CheckMCFGPresence tests if the MCFG ACPI table exists
-func CheckMCFGPresence(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+// CheckMCFGPresence tests if the MCFG ACPI table exists
+func CheckMCFGPresence(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	return checkPresence(txtAPI, "MCFG")
 }
 
-//CheckMADTPresence tests if the MADT ACPI table exists
-func CheckMADTPresence(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+// CheckMADTPresence tests if the MADT ACPI table exists
+func CheckMADTPresence(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	return checkPresence(txtAPI, "APIC")
 }
 
-//ACPIMADT represent the table header as defined in ACPI Spec 6.2 "Multiple APIC Description Table (MADT) Format"
+// ACPIMADT represent the table header as defined in ACPI Spec 6.2 "Multiple APIC Description Table (MADT) Format"
 type ACPIMADT struct {
 	ACPIHeader
 	LapicAddress uint32
@@ -493,20 +493,20 @@ type ACPIMADT struct {
 	// Variable interrupt controller structures
 }
 
-//ACPIMADTEntryHeader represent the table header for one MADT entry
+// ACPIMADTEntryHeader represent the table header for one MADT entry
 type ACPIMADTEntryHeader struct {
 	Type   uint8
 	Length uint8
 }
 
-//ACPIMADTProcessorLocalAPIC type 0
+// ACPIMADTProcessorLocalAPIC type 0
 type ACPIMADTProcessorLocalAPIC struct {
 	APICProcessorID uint8
 	APICID          uint8
 	Flags           uint32
 }
 
-//ACPIMADTIOAPIC type 1
+// ACPIMADTIOAPIC type 1
 type ACPIMADTIOAPIC struct {
 	IOAPICID                  uint8
 	Reserved                  uint8
@@ -514,7 +514,7 @@ type ACPIMADTIOAPIC struct {
 	GlobalSystemInterruptBase uint32
 }
 
-//ACPIMADTInterruptSourceOverride type 2
+// ACPIMADTInterruptSourceOverride type 2
 type ACPIMADTInterruptSourceOverride struct {
 	BusSource             uint8
 	IRQSource             uint8
@@ -522,26 +522,26 @@ type ACPIMADTInterruptSourceOverride struct {
 	Flags                 uint16
 }
 
-//ACPIMADTNMISource type 3
+// ACPIMADTNMISource type 3
 type ACPIMADTNMISource struct {
 	Flags                 uint16
 	GlobalSystemInterrupt uint32
 }
 
-//ACPIMADTLocalNonMaskableInterrupts type 4
+// ACPIMADTLocalNonMaskableInterrupts type 4
 type ACPIMADTLocalNonMaskableInterrupts struct {
 	APICID uint8
 	Flags  uint16
 	LINT   uint8
 }
 
-//ACPIMADTLocalAPICAddressOverwrite type 5
+// ACPIMADTLocalAPICAddressOverwrite type 5
 type ACPIMADTLocalAPICAddressOverwrite struct {
 	Reserved uint16
 	Address  uint64
 }
 
-//ACPIMADTSAPIC type 6
+// ACPIMADTSAPIC type 6
 type ACPIMADTSAPIC struct {
 	IOAPICID                  uint8
 	Reserved                  uint8
@@ -549,7 +549,7 @@ type ACPIMADTSAPIC struct {
 	IOSAPICAddress            uint64
 }
 
-//ACPIMADTLocalSAPIC type 7
+// ACPIMADTLocalSAPIC type 7
 type ACPIMADTLocalSAPIC struct {
 	ACPIProcessorID   uint8
 	LocalSAPICID      uint8
@@ -560,7 +560,7 @@ type ACPIMADTLocalSAPIC struct {
 	// variable length NULL terminated string
 }
 
-//ACPIMADTLocalx2APIC type 9
+// ACPIMADTLocalx2APIC type 9
 type ACPIMADTLocalx2APIC struct {
 	Reserved          uint16
 	X2ApicID          uint32
@@ -568,7 +568,7 @@ type ACPIMADTLocalx2APIC struct {
 	ACPIProcessorUUID uint32
 }
 
-//ACPIMADTLocalx2APICNMI type 10
+// ACPIMADTLocalx2APICNMI type 10
 type ACPIMADTLocalx2APICNMI struct {
 	Flags             uint16
 	ACPIProcessorUUID uint32
@@ -583,8 +583,8 @@ type ACPIMADTDecoded struct {
 	DecodedEntries []interface{}
 }
 
-//CheckMADTValidAndDecode tests if the MADT ACPI table is valid
-func CheckMADTValidAndDecode(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (ACPIMADTDecoded, bool, error, error) {
+// CheckMADTValidAndDecode tests if the MADT ACPI table is valid
+func CheckMADTValidAndDecode(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (ACPIMADTDecoded, bool, error, error) {
 	var m ACPIMADTDecoded
 
 	table, valid, err, interr := checkTableValid(txtAPI, "APIC")
@@ -746,20 +746,20 @@ func CheckMADTValidAndDecode(txtAPI hwapi.LowLevelHardwareInterfaces, config *to
 	return m, true, nil, nil
 }
 
-//CheckMADTValid tests if the MADT ACPI table is valid
-func CheckMADTValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
-	_, valid, err, interr := CheckMADTValidAndDecode(txtAPI, config)
+// CheckMADTValid tests if the MADT ACPI table is valid
+func CheckMADTValid(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
+	_, valid, err, interr := CheckMADTValidAndDecode(txtAPI, p)
 
 	return valid, err, interr
 }
 
-//CheckDMARPresence tests if the MADT ACPI table exists
-func CheckDMARPresence(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+// CheckDMARPresence tests if the MADT ACPI table exists
+func CheckDMARPresence(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	return checkPresence(txtAPI, "DMAR")
 }
 
-//CheckDMARValid tests if the DMAR ACPI table is valid
-func CheckDMARValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+// CheckDMARValid tests if the DMAR ACPI table is valid
+func CheckDMARValid(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	_, valid, err, interr := checkTableValid(txtAPI, "DMAR")
 	if interr != nil {
 		return false, nil, interr

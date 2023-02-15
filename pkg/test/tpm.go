@@ -13,7 +13,7 @@ import (
 	"github.com/google/go-tpm/tpm2"
 )
 
-//nolint
+// nolint
 const (
 	// Intel Trusted Execution Technology Software Development Guide - Measured Launched Environment Developer’s Guide
 	// August 2016 - Revision 013 - Document: 315168-013
@@ -196,7 +196,7 @@ var (
 )
 
 // TPMConnect Connects to a TPM device (virtual or real)
-func TPMConnect(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func TPMConnect(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	tpmCon, err := txtAPI.NewTPM()
 	if err == nil && tpmCon != nil {
 		defer tpmCon.Close()
@@ -206,20 +206,20 @@ func TPMConnect(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configura
 }
 
 // TPMIsPresent validates if one of the two previous tests succeeded
-func TPMIsPresent(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func TPMIsPresent(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	tpmCon, err := txtAPI.NewTPM()
 	if err != nil {
 		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer tpmCon.Close()
-	if tpmCon.Version == config.TPM {
+	if tpmCon.Version == p.TPM {
 		return true, nil, nil
 	}
 	return false, fmt.Errorf("no TPM present"), nil
 }
 
 // TPMNVRAMIsLocked Checks if NVRAM indexes are write protected
-func TPMNVRAMIsLocked(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func TPMNVRAMIsLocked(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	tpmCon, err := txtAPI.NewTPM()
 	if err != nil {
 		return false, fmt.Errorf("no TPM connection"), nil
@@ -230,7 +230,7 @@ func TPMNVRAMIsLocked(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Con
 }
 
 // PSIndexConfig tests if PS Index has correct configuration
-func PSIndexConfig(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func PSIndexConfig(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	var d1 tpm1.NVDataPublic
 	var d2 tpm2.NVPublic
 	var err error
@@ -336,7 +336,7 @@ func PSIndexConfig(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Config
 }
 
 // AUXIndexConfig tests if the AUX Index has the correct configuration
-func AUXIndexConfig(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func AUXIndexConfig(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	var d1 tpm1.NVDataPublic
 	var d2 tpm2.NVPublic
 	var err error
@@ -442,7 +442,7 @@ func AUXIndexConfig(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Confi
 }
 
 // AUXTPM2IndexCheckHash checks the PolicyHash of AUX index
-func AUXTPM2IndexCheckHash(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func AUXTPM2IndexCheckHash(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	tpmCon, err := txtAPI.NewTPM()
 	if err != nil {
 		return false, fmt.Errorf("no TPM connection"), nil
@@ -499,7 +499,7 @@ func AUXTPM2IndexCheckHash(txtAPI hwapi.LowLevelHardwareInterfaces, config *tool
 }
 
 // POIndexConfig checks the PO index configuration
-func POIndexConfig(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func POIndexConfig(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	var d1 tpm1.NVDataPublic
 	var d2 tpm2.NVPublic
 	var err error
@@ -587,7 +587,7 @@ func POIndexConfig(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Config
 }
 
 // PSIndexHasValidLCP checks if PS Index has a valid LCP
-func PSIndexHasValidLCP(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func PSIndexHasValidLCP(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	emptyHash := make([]byte, 20)
 	pol1, pol2, err := readPSLCPPolicy(txtAPI)
 	if err != nil {
@@ -621,7 +621,7 @@ func PSIndexHasValidLCP(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.C
 		if pol2.Version < tools.LCPPolicyVersion3 {
 			return false, fmt.Errorf("wrong policy version. Have %v - Want: %v", pol2.Version, tools.LCPPolicyVersion3), nil
 		}
-		if pol2.HashAlg != config.LCPHash {
+		if pol2.HashAlg != p.LCPHash {
 			return false, fmt.Errorf("HashAlg has invalid value"), nil
 		}
 		if pol2.PolicyType != tools.LCPPolicyTypeAny && pol1.PolicyType != tools.LCPPolicyTypeList {
@@ -639,7 +639,7 @@ func PSIndexHasValidLCP(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.C
 }
 
 // POIndexHasValidLCP checks if PO Index holds a valid LCP
-func POIndexHasValidLCP(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func POIndexHasValidLCP(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	var pol1 *tools.LCPPolicy
 	var pol2 *tools.LCPPolicy2
 	emptyHash := make([]byte, 20)
@@ -744,7 +744,7 @@ func POIndexHasValidLCP(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.C
 		if pol2.Version < tools.LCPPolicyVersion3 {
 			return false, fmt.Errorf("wrong lcp policy version. Have %v - Want: %v", pol2.Version, tools.LCPPolicyVersion3), nil
 		}
-		if pol2.HashAlg != config.LCPHash {
+		if pol2.HashAlg != p.LCPHash {
 			return false, fmt.Errorf("HashAlg has invalid value"), nil
 		}
 		if pol2.PolicyType != tools.LCPPolicyTypeAny && pol1.PolicyType != tools.LCPPolicyTypeList {
@@ -762,7 +762,7 @@ func POIndexHasValidLCP(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.C
 }
 
 // PCR0IsSet Reads PCR-00 and checks whether if it's not the EmptyDigest
-func PCR0IsSet(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func PCR0IsSet(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	tpmCon, err := txtAPI.NewTPM()
 	if err != nil {
 		return false, fmt.Errorf("no TPM connection"), nil
@@ -858,7 +858,7 @@ func readPSLCPPolicy(txtAPI hwapi.LowLevelHardwareInterfaces) (*tools.LCPPolicy,
 }
 
 // NPWModeIsNotSetInPS checks if NPW is activated or not
-func NPWModeIsNotSetInPS(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func NPWModeIsNotSetInPS(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	pol1, pol2, err := readPSLCPPolicy(txtAPI)
 	if err != nil {
 		return false, err, nil
@@ -877,12 +877,12 @@ func NPWModeIsNotSetInPS(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.
 }
 
 // TXTModeValid checks if TXT is in valid mode
-func TXTModeValid(txtAPI hwapi.LowLevelHardwareInterfaces, config *tools.Configuration) (bool, error, error) {
+func TXTModeValid(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 	pol1, pol2, err := readPSLCPPolicy(txtAPI)
 	if err != nil {
 		return false, nil, err
 	}
-	switch config.TXTMode {
+	switch p.TXTMode {
 	case tools.AutoPromotion:
 		if pol1 != nil && pol1.PolicyType == tools.LCPPolicyTypeAny {
 			return true, nil, nil

@@ -17,11 +17,13 @@ jobs:
       - run: golint -set_exit_status ./cmd/txt-suite
       - run: golint -set_exit_status ./cmd/txt-prov
       - run: golint -set_exit_status ./cmd/bg-prov
+      - run: golint -set_exit_status ./cmd/bg-suite
       - run: go mod download
       - run: go mod verify
       - run: CGO_ENABLED=0 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-suite cmd/txt-suite/*.go
       - run: CGO_ENABLED=0 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-prov cmd/txt-prov/*.go
       - run: CGO_ENABLED=0 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o bg-prov cmd/bg-prov/*.go
+      - run: CGO_ENABLED=0 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o bg-suite cmd/bg-suite/*.go
       - run: go test ./pkg/check/
       - run: apt install -y libtspi-dev && go test ./pkg/diff/
       - run: go test ./pkg/errors/
@@ -42,9 +44,10 @@ jobs:
       - run: git config user.email "circleci@circleci.com"
       - run: git config user.name "CI"
       - run: ./txt-suite markdown > ./cmd/txt-suite/TESTPLAN.md
-      - run: git add ./cmd/txt-suite/TESTPLAN.md
+      - run: ./bg-suite markdown > ./cmd/bg-suite/TESTPLAN.md
+      - run: git add ./cmd/txt-suite/TESTPLAN.md ./cmd/bg-suite/TESTPLAN.md
       - run: (git commit -m "Update testplan file" && git push --set-upstream origin ${CIRCLE_BRANCH}) || true
-      - run: cp txt-suite txt-prov bg-prov out/
+      - run: cp txt-suite txt-prov bg-prov bg-suite out/
 
       - persist_to_workspace:
           root: out
@@ -52,6 +55,7 @@ jobs:
             - txt-suite
             - txt-prov
             - bg-prov
+            - bg-suite
 
   create_deb_rpm:
     docker:
@@ -68,6 +72,7 @@ jobs:
       - run: cp /tmp/out/txt-suite .
       - run: cp /tmp/out/txt-prov .
       - run: cp /tmp/out/bg-prov .
+      - run: cp /tmp/out/bg-suite .
       - run: if [ -z "$CIRCLE_TAG" ]; then echo "export CIRCLE_TAG=$(git describe --tags|cut -d'-' -f1);" >> $BASH_ENV; fi
       - run: if [ -z "$CIRCLE_BUILD_NUM" ]; then echo "export CIRCLE_BUILD_NUM=$(git describe --tags|cut -d'-' -f2);" >> $BASH_ENV; fi
       - run: MY_APP_VERSION=${CIRCLE_TAG} MY_APP_BUILDNUMBER=${CIRCLE_BUILD_NUM} go run github.com/goreleaser/nfpm/cmd/nfpm pkg --config ./build/package/nfpm_rpm.yaml --target golang-css-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}.x86_64.rpm
@@ -76,6 +81,7 @@ jobs:
       - run: cp txt-suite ./out/
       - run: cp txt-prov ./out/
       - run: cp bg-prov ./out/
+      - run: cp bg-suite ./out/
       - run: cp golang-css-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}.x86_64.rpm artifact.rpm
       - run: cp go_css-suite-${CIRCLE_TAG}-${CIRCLE_BUILD_NUM}_amd64.deb artifact.deb
       - persist_to_workspace:
@@ -86,6 +92,7 @@ jobs:
             - txt-suite
             - txt-prov
             - bg-prov
+            - bg-suite
       - store_artifacts:
           path: artifact.rpm
           destination: golang-css-suite.rpm
@@ -106,6 +113,7 @@ jobs:
       - run: CGO_ENABLED=0 GOARCH=arm go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-suite cmd/txt-suite/*.go
       - run: CGO_ENABLED=0 GOARCH=arm go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-prov cmd/txt-prov/*.go
       - run: CGO_ENABLED=0 GOARCH=arm go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o bg-prov cmd/bg-prov/*.go
+      - run: CGO_ENABLED=0 GOARCH=arm go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o bg-suite cmd/bg-suite/*.go
 
   build_arm64:
     docker:
@@ -120,6 +128,7 @@ jobs:
       - run: CGO_ENABLED=0 GOARCH=arm64 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-suite cmd/txt-suite/*.go
       - run: CGO_ENABLED=0 GOARCH=arm64 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-prov cmd/txt-prov/*.go
       - run: CGO_ENABLED=0 GOARCH=arm64 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o bg-prov cmd/bg-prov/*.go
+      - run: CGO_ENABLED=0 GOARCH=arm64 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o bg-suite cmd/bg-suite/*.go
 
   build_ppc64le:
     docker:
@@ -134,7 +143,7 @@ jobs:
       - run: CGO_ENABLED=0 GOARCH=ppc64le go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-suite cmd/txt-suite/*.go
       - run: CGO_ENABLED=0 GOARCH=ppc64le go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-prov cmd/txt-prov/*.go
       - run: CGO_ENABLED=0 GOARCH=ppc64le go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o bg-prov cmd/bg-prov/*.go
-
+      - run: CGO_ENABLED=0 GOARCH=ppc64le go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o bg-suite cmd/bg-suite/*.go
 
   publish-github-release:
     docker:
