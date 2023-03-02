@@ -4,18 +4,20 @@ import (
 	"github.com/linuxboot/fiano/pkg/uefi"
 )
 
-type visitorFindPE32 struct {
+type visitorFindPE32orTE struct {
 	Found *uefi.Section
 }
 
-var _ uefi.Visitor = (*visitorFindPE32)(nil)
+var _ uefi.Visitor = (*visitorFindPE32orTE)(nil)
 
-func (visitorFindPE32) Run(uefi.Firmware) error {
+func (visitorFindPE32orTE) Run(uefi.Firmware) error {
 	return nil
 }
-func (v *visitorFindPE32) Visit(fw uefi.Firmware) error {
+func (v *visitorFindPE32orTE) Visit(fw uefi.Firmware) error {
 	if section, ok := fw.(*uefi.Section); ok {
-		if section.Header.Type == uefi.SectionTypePE32 {
+		switch section.Header.Type {
+		case uefi.SectionTypePE32:
+		case uefi.SectionTypeTE:
 			v.Found = section
 			return nil
 		}

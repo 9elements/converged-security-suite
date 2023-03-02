@@ -15,6 +15,8 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/txtpublic"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
+	"github.com/facebookincubator/go-belt/tool/logger"
+	"github.com/facebookincubator/go-belt/tool/logger/implementation/logrus"
 	"github.com/google/go-tpm/tpm2"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 	"github.com/linuxboot/fiano/pkg/uefi"
@@ -24,8 +26,10 @@ func main() {
 	cbnt.StrictOrderCheck = false
 	uefi.DisableDecompression = false
 	var regs helpers.FlagRegisters
+	logLevel := logger.LevelWarning
 	// parsing arguments
 	flag.Var(&regs, "registers", "")
+	flag.Var(&logLevel, "log-level", "")
 	printMeasuredBytesLimitFlag := flag.Uint("print-measured-bytes-limit", 0, "")
 	flag.Parse()
 	biosFirmwarePath := flag.Arg(0)
@@ -33,6 +37,8 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf("unable to read BIOS firmware image '%s': %w", biosFirmwarePath, err))
 	}
+
+	ctx := logger.CtxWithLogger(context.Background(), logrus.Default().WithLevel(logLevel))
 
 	// the main part
 	state := types.NewState()
@@ -42,7 +48,7 @@ func main() {
 	state.IncludeSystemArtifact(txtpublic.New(registers.Registers(regs)))
 	state.SetFlow(flows.Root)
 	process := bootengine.NewBootProcess(state)
-	process.Finish(context.Background())
+	process.Finish(ctx)
 
 	// printing results
 

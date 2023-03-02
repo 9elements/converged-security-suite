@@ -1,10 +1,8 @@
 package flows
 
 import (
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actors"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actors/intelactors"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/intelconds"
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/ocpconds"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/commonsteps"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/intelsteps"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/tpmsteps"
@@ -25,18 +23,11 @@ var IntelCBnT = types.Flow{
 	commonsteps.SetActor(intelactors.ACM{}),
 	tpmsteps.InitTPM(3),
 	intelsteps.MeasurePCR0DATA{},
-	commonsteps.SetFlow(IntelResetVector),
+	commonsteps.SetFlow(PEI),
 }
 
 var IntelCBnTFailure = types.Flow{
-	commonsteps.SetFlow(IntelResetVector),
-}
-
-var IntelResetVector = types.Flow{
-	commonsteps.SetActor(actors.Unknown{}),
-	commonsteps.If(ocpconds.IsOCPv0{}, commonsteps.SetFlow(OCPPEIv0)),
-	commonsteps.If(ocpconds.IsOCPv1{}, commonsteps.SetFlow(OCPPEIv1)),
-	commonsteps.Panic("unknown flow: is not OCP"),
+	commonsteps.SetFlow(PEI),
 }
 
 var IntelLegacyTXT = types.Flow{

@@ -18,7 +18,6 @@ var (
 	guidOCPV1Vol0 = *guid.MustParse("1638673D-EFE6-400B-951F-ABAC2CB31C60")
 	guidOCPV1Vol1 = *guid.MustParse("14E428FA-1A12-4875-B637-8B3CC87FDF07")
 	guidOCPV1Vol2 = *guid.MustParse("013B9639-D6D5-410F-B7A9-F9173C56ECDA")
-	guidOCPV1Vol3 = *guid.MustParse("4F1C52D3-D824-4D2A-A2F0-EC40C23C5916")
 )
 
 // OCPPEIv0 represents the steps of the OCP (Open Compute Project) implementation
@@ -41,7 +40,7 @@ var OCPPEIv1 = types.Flow{
 	tpmsteps.Measure(0, datasources.UEFIGUIDFirst([]guid.GUID{guidOCPV1Vol0})),
 	tpmsteps.Measure(0, datasources.UEFIGUIDFirst([]guid.GUID{guidOCPV1Vol1})),
 	tpmsteps.Measure(0, datasources.UEFIGUIDFirst([]guid.GUID{guidOCPV1Vol2})),
-	tpmsteps.Measure(0, datasources.UEFIGUIDFirst([]guid.GUID{guidOCPV1Vol3})),
+	tpmsteps.Measure(0, datasources.UEFIGUIDFirst([]guid.GUID{ffsConsts.GUIDDXE, ffsConsts.GUIDDXEContainer})),
 	tpmsteps.Measure(0, datasources.Bytes{0, 0, 0, 0}),
 	commonsteps.SetFlow(DXE),
 }

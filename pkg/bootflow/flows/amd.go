@@ -6,5 +6,5 @@ import (
 )
 
 var AMD = types.Flow{
-	commonsteps.Panic("AMD flows are not implemented, yet"),
+	commonsteps.SetFlow(PEI),
 }
