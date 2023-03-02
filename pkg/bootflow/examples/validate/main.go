@@ -15,8 +15,10 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine/validator"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/flows"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/amdpsp"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/intelpch"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/amdregisters"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/txtpublic"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
@@ -68,8 +70,10 @@ func main() {
 	state := types.NewState()
 	state.IncludeSubSystem(tpm.NewTPM())
 	state.IncludeSubSystem(intelpch.NewPCH())
+	state.IncludeSubSystem(amdpsp.NewPSP())
 	state.IncludeSystemArtifact(biosArtifact)
 	state.IncludeSystemArtifact(txtpublic.New(registers.Registers(regs)))
+	state.IncludeSystemArtifact(amdregisters.New(registers.Registers(regs)))
 	state.SetFlow(flows.Root)
 	process := bootengine.NewBootProcess(state)
 	process.Finish(context.Background())
@@ -104,17 +108,20 @@ func main() {
 		}
 	}
 
+	issuesCount := 0
 	fmt.Printf("\nIssues:\n")
 	for _, v := range validator.All() {
 		issues := v.Validate(ctx, state, process.Log)
 		if len(issues) == 0 {
 			continue
 		}
+		issuesCount += len(issues)
 		fmt.Printf("\t%s:\n", format.NiceString(v))
 		for idx, issue := range issues {
 			fmt.Printf("\t\t%d. %v; step: %v\n", idx+1, format.NiceString(issue), format.NiceString(process.Log[issue.StepIdx].Step))
 		}
-
 	}
-
+	if issuesCount == 0 {
+		fmt.Printf("\t<NONE>\n")
+	}
 }

@@ -303,7 +303,7 @@ func (ref *Reference) Bytes() []byte {
 			}
 			curPos += mr.Length
 			if n != int(mr.Length) {
-				panic(fmt.Errorf("unexpected read size: expected:%d actual:%d", mr.Length, n))
+				panic(fmt.Errorf("unexpected read size: expected:%d actual:%d on range %#+v", mr.Length, n, mr))
 			}
 		}
 	}
