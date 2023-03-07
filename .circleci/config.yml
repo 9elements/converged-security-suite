@@ -147,16 +147,22 @@ jobs:
 
   publish-github-release:
     docker:
-      - image: cibuilds/github:0.10
+      - image: golang:1.18
     steps:
       - checkout
 
       - attach_workspace:
           at: /tmp/out
       - run:
+          name: "Install ghr"
+          command: |
+            apk --update --no-cache add git openssl bash curl wget
+            wget https://github.com/tcnksm/ghr/releases/download/v0.16.0/ghr_v0.16.0_linux_amd64.tar.gz
+            tar -zxvf  ghr_v0.16.0_linux_amd64.tar.gz
+      - run:
           name: "Publish Release on GitHub"
           command: |
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -draft -delete ${CIRCLE_TAG} /tmp/out/
+            ghr_v0.16.0_linux_amd64/ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -draft -delete ${CIRCLE_TAG} /tmp/out/
 
 workflows:
   version: 2
