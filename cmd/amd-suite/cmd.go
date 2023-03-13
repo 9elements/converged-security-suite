@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"strconv"
 
@@ -29,6 +30,15 @@ type showKeysCmd struct {
 type outputAPCBSecurityTokensCmd struct {
 	FwPath    string `required name:"fwpath"     help:"Path to UEFI firmware image." type:"path"`
 	BIOSLevel uint   `required name:"bios-level" help:"PSP Directory Level to use"`
+}
+
+type setAPCBSecurityTokenCmd struct {
+	FwPath       string            `required name:"fwpath"     help:"Path to UEFI firmware image." type:"path"`
+	BIOSLevel    uint              `required name:"bios-level" help:"PSP Directory Level to use"`
+	TokenID      apcb.TokenID      `required name:"token-id"   help:"The ID of the token"`
+	PriorityMask apcb.PriorityMask `required name:"priority-mask"`
+	BoardMask    uint16            `required name:"board-mask"`
+	Value        uint32            `required name:"value"      help:"the value to be set"`
 }
 
 type validatePSPEntriesCmd struct {
@@ -86,6 +96,7 @@ var cli struct {
 	PatchPSPEntry             patchPSPEntryCmd            `cmd help:"take a path on the filesystem pointing to a dump of an PSP entry and re-apply it to the firmware"`
 	PatchBIOSEntry            patchBIOSEntryCmd           `cmd help:"take a path on the filesystem pointing to a dump of an BIOS entry and re-apply it to the firmware"`
 	OutputSecurityTokensEntry outputAPCBSecurityTokensCmd `cmd help:"output security tokens of all APCB (including backup) entries in specified BIOS directory"`
+	SetSecurityToken          setAPCBSecurityTokenCmd     `cmd help:"sets a APCB security token"`
 }
 
 func (s *outputFirmwareCmd) Run(ctx *context) error {
@@ -317,6 +328,39 @@ func (v *outputAPCBSecurityTokensCmd) Run(ctx *context) error {
 			fmt.Printf("Value: 0x%X\n", token.NumValue())
 			fmt.Println("============")
 		}
+	}
+	return nil
+}
+
+func (v *setAPCBSecurityTokenCmd) Run(ctx *context) error {
+	b, err := ioutil.ReadFile(v.FwPath)
+	if err != nil {
+		return fmt.Errorf("unable to read the image '%s': %w", v.FwPath, err)
+	}
+	amdFw, err := psb.ParseAMDFirmware(b)
+	if err != nil {
+		return fmt.Errorf("could not parse firmware image: %w", err)
+	}
+	apcbEntries, err := psb.GetBIOSEntries(amdFw.PSPFirmware(), v.BIOSLevel, amd_manifest.APCBDataEntry)
+	if err != nil {
+		return fmt.Errorf("failed to get APCB binary entries: %w", err)
+	}
+
+	for idx, entry := range apcbEntries {
+		apcbBinary, err := psb.GetRangeBytes(amdFw.Firmware().ImageBytes(), entry.SourceAddress, uint64(entry.Size))
+		if err != nil {
+			return fmt.Errorf("failed to get bytes of entry %s (idx: %d), instance ID: %d: %w", psb.BIOSEntryType(entry.Type), idx, entry.Instance, err)
+		}
+		err = apcb.UpsertToken(v.TokenID, v.PriorityMask, v.BoardMask, v.Value, apcbBinary)
+		if err != nil {
+			return fmt.Errorf("unable to UpsertToken: %w", err)
+		}
+		fmt.Printf("successfully UPSERT-ed to %#+v\n", entry)
+	}
+
+	err = ioutil.WriteFile(v.FwPath, b, 0)
+	if err != nil {
+		return fmt.Errorf("unable to write to file '%s': %w", v.FwPath, err)
 	}
 	return nil
 }
