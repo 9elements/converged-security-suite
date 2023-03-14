@@ -25,16 +25,14 @@ type context struct {
 	Debug bool
 }
 
-type versionCmd struct {
-}
+type versionCmd struct{}
 
 type templateCmdv1 struct {
 	Path string `arg:"" required:"" name:"path" help:"Path to the newly generated JSON configuration file." type:"path"`
-	//CBnT Manifest Header args
-	Revision uint8               `flag:"" optional:"" name:"revision" help:"Platform Manufacturer’s BPM revision number."`
-	SVN      bg.SVN              `flag:"" optional:"" name:"svn" help:"Boot Policy Manifest Security Version Number"`
-	ACMSVN   bg.SVN              `flag:"" optional:"" name:"acmsvn" help:"Authorized ACM Security Version Number"`
-	NEMS     bgbootpolicy.Size4K `flag:"" optional:"" name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
+	// CBnT Manifest Header args
+	SVN    bg.SVN              `flag optional name:"svn" help:"Boot Policy Manifest Security Version Number"`
+	ACMSVN bg.SVN              `flag optional name:"acmsvn" help:"Authorized ACM Security Version Number"`
+	NEMS   bgbootpolicy.Size4K `flag optional name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
 	// IBB args
 	PBET        bgbootpolicy.PBETValue `flag:"" optional:"" name:"pbet" help:"Protect BIOS Environment Timer (PBET) value."`
 	IBBSegFlags bgbootpolicy.SEFlags   `flag:"" optional:"" name:"ibbflags" help:"IBB Control flags"`
@@ -48,7 +46,7 @@ type templateCmdv1 struct {
 
 type templateCmdv2 struct {
 	Path string `arg:"" required:"" name:"path" help:"Path to the newly generated JSON configuration file." type:"path"`
-	//CBnT Manifest Header args
+	// CBnT Manifest Header args
 	Revision uint8                 `flag:"" optional:"" name:"revision" help:"Platform Manufacturer’s BPM revision number."`
 	SVN      cbnt.SVN              `flag:"" optional:"" name:"svn" help:"Boot Policy Manifest Security Version Number"`
 	ACMSVN   cbnt.SVN              `flag:"" optional:"" name:"acmsvn" help:"Authorized ACM Security Version Number"`
@@ -160,7 +158,7 @@ type generateKMCmdv1 struct {
 	SVN       bg.SVN `flag:"" optional:"" name:"svn" help:"Boot Policy Manifest Security Version Number"`
 	ID        uint8  `flag:"" optional:"" name:"id" help:"The key Manifest Identifier"`
 	PKHashAlg string `flag:"" optional:"" name:"pkhashalg" help:"Hash algorithm of OEM public key digest. E.g.: SHA256, SHA384, SM3"`
-	//KMHash     bg.HashStructure `flag optional:"" name:"kmhash" help:"Key hash for BPM, ACM, uCode etc"`
+	// KMHash     bg.HashStructure `flag optional:"" name:"kmhash" help:"Key hash for BPM, ACM, uCode etc"`
 	BpmPubkey  string `flag:"" optional:"" name:"bpmpubkey" help:"Path to bpm public signing key"`
 	BpmHashAlg string `flag:"" optional:"" name:"bpmhashalgo" help:"Hash algorithm for bpm public signing cbntkey.. E.g.: SHA256, SHA384, SM3"`
 	Out        string `flag:"" optional:"" name:"out" help:"Path to write applied config to"`
@@ -185,50 +183,45 @@ type generateKMCmdv2 struct {
 }
 
 type generateBPMCmdv1 struct {
-	BPM    string `arg:"" required:"" name:"bpm" help:"Path to the newly generated Boot Policy Manifest binary file." type:"path"`
-	BIOS   string `arg:"" required:"" name:"bios" help:"Path to the full BIOS binary file." type:"path"`
-	Config string `flag:"" optional:"" name:"config" help:"Path to the JSON config file." type:"path"`
-	//CBnT Manifest Header args
-	Revision uint8               `flag:"" optional:"" name:"revision" help:"Platform Manufacturer’s BPM revision number."`
-	SVN      bg.SVN              `flag:"" optional:"" name:"svn" help:"Boot Policy Manifest Security Version Number"`
-	ACMSVN   bg.SVN              `flag:"" optional:"" name:"acmsvn" help:"Authorized ACM Security Version Number"`
-	NEMS     bgbootpolicy.Size4K `flag:"" optional:"" name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
-	// IBB args
-	PBET        bgbootpolicy.PBETValue `flag:"" optional:"" name:"pbet" help:"Protect BIOS Environment Timer (PBET) value."`
-	IBBSegFlags bgbootpolicy.SEFlags   `flag:"" optional:"" name:"ibbflags" help:"IBB Control flags"`
-	MCHBAR      uint64                 `flag:"" optional:"" name:"mchbar" help:"MCHBAR address"`
-	VDTBAR      uint64                 `flag:"" optional:"" name:"vdtbar" help:"VTDPVC0BAR address"`
-	PMRLBase    uint32                 `flag:"" optional:"" name:"dmabase0" help:"Low DMA protected range base"`
-	PMRLLimit   uint32                 `flag:"" optional:"" name:"dmasize0" help:"Low DMA protected range limit"`
-	EntryPoint  uint32                 `flag:"" optional:"" name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
-	IbbHash     []string               `flag:"" optional:"" name:"ibbhash" help:"IBB Hash Algorithm. Valid options: SHA256, SHA384, SM3"`
-	IbbSegFlag  uint16                 `flag:"" optional:"" name:"ibbsegflag" help:"Reducted"`
+	BPM         string                 `arg required name:"bpm" help:"Path to the newly generated Boot Policy Manifest binary file." type:"path"`
+	BIOS        string                 `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
+	Config      string                 `flag optional name:"config" help:"Path to the JSON config file." type:"path"`
+	SVN         bg.SVN                 `flag optional name:"svn" help:"Boot Policy Manifest Security Version Number"`
+	ACMSVN      bg.SVN                 `flag optional name:"acmsvn" help:"Authorized ACM Security Version Number"`
+	NEMS        bgbootpolicy.Size4K    `flag optional name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
+	PBET        bgbootpolicy.PBETValue `flag optional name:"pbet" help:"Protect BIOS Environment Timer (PBET) value."`
+	IBBSegFlags bgbootpolicy.SEFlags   `flag optional name:"ibbflags" help:"IBB Control flags"`
+	MCHBAR      uint64                 `flag optional name:"mchbar" help:"MCHBAR address"`
+	VDTBAR      uint64                 `flag optional name:"vdtbar" help:"VTDPVC0BAR address"`
+	PMRLBase    uint32                 `flag optional name:"dmabase0" help:"Low DMA protected range base"`
+	PMRLLimit   uint32                 `flag optional name:"dmasize0" help:"Low DMA protected range limit"`
+	EntryPoint  uint32                 `flag optional name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
+	IbbHash     string                 `flag optional name:"ibbhash" help:"IBB Hash Algorithm. Valid options: SHA1, SHA256, SHA384, SM3"`
+	IbbSegFlag  uint16                 `flag optional name:"ibbsegflag" help:"Reducted"`
 
 	Out string `flag:"" optional:"" name:"out" help:"Path to write applied config to"`
 	Cut bool   `flag:"" optional:"" name:"cut" help:"Cuts the signature before writing to binary."`
 }
 
 type generateBPMCmdv2 struct {
-	BPM    string `arg:"" required:"" name:"bpm" help:"Path to the newly generated Boot Policy Manifest binary file." type:"path"`
-	BIOS   string `arg:"" required:"" name:"bios" help:"Path to the full BIOS binary file." type:"path"`
-	Config string `flag:"" optional:"" name:"config" help:"Path to the JSON config file." type:"path"`
-	//CBnT Manifest Header args
-	Revision uint8                 `flag:"" optional:"" name:"revision" help:"Platform Manufacturer’s BPM revision number."`
-	SVN      cbnt.SVN              `flag:"" optional:"" name:"svn" help:"Boot Policy Manifest Security Version Number"`
-	ACMSVN   cbnt.SVN              `flag:"" optional:"" name:"acmsvn" help:"Authorized ACM Security Version Number"`
-	NEMS     cbntbootpolicy.Size4K `flag:"" optional:"" name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
-	// IBB args
-	PBET        cbntbootpolicy.PBETValue `flag:"" optional:"" name:"pbet" help:"Protect BIOS Environment Timer (PBET) value."`
-	IBBSegFlags cbntbootpolicy.SEFlags   `flag:"" optional:"" name:"ibbflags" help:"IBB Control flags"`
-	MCHBAR      uint64                   `flag:"" optional:"" name:"mchbar" help:"MCHBAR address"`
-	VDTBAR      uint64                   `flag:"" optional:"" name:"vdtbar" help:"VTDPVC0BAR address"`
-	DMABase0    uint32                   `flag:"" optional:"" name:"dmabase0" help:"Low DMA protected range base"`
-	DMASize0    uint32                   `flag:"" optional:"" name:"dmasize0" help:"Low DMA protected range limit"`
-	DMABase1    uint64                   `flag:"" optional:"" name:"dmabase1" help:"High DMA protected range base."`
-	DMASize1    uint64                   `flag:"" optional:"" name:"dmasize1" help:"High DMA protected range limit."`
-	EntryPoint  uint32                   `flag:"" optional:"" name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
-	IbbHash     []string                 `flag:"" optional:"" name:"ibbhash" help:"IBB Hash Algorithm. Valid options: SHA256, SHA384, SM3"`
-	IbbSegFlag  uint16                   `flag:"" optional:"" name:"ibbsegflag" help:"Reducted"`
+	BPM         string                   `arg required name:"bpm" help:"Path to the newly generated Boot Policy Manifest binary file." type:"path"`
+	BIOS        string                   `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
+	Config      string                   `flag optional name:"config" help:"Path to the JSON config file." type:"path"`
+	Revision    uint8                    `flag optional name:"revision" help:"Platform Manufacturer’s BPM revision number."`
+	SVN         cbnt.SVN                 `flag optional name:"svn" help:"Boot Policy Manifest Security Version Number"`
+	ACMSVN      cbnt.SVN                 `flag optional name:"acmsvn" help:"Authorized ACM Security Version Number"`
+	NEMS        cbntbootpolicy.Size4K    `flag optional name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
+	PBET        cbntbootpolicy.PBETValue `flag optional name:"pbet" help:"Protect BIOS Environment Timer (PBET) value."`
+	IBBSegFlags cbntbootpolicy.SEFlags   `flag optional name:"ibbflags" help:"IBB Control flags"`
+	MCHBAR      uint64                   `flag optional name:"mchbar" help:"MCHBAR address"`
+	VDTBAR      uint64                   `flag optional name:"vdtbar" help:"VTDPVC0BAR address"`
+	DMABase0    uint32                   `flag optional name:"dmabase0" help:"Low DMA protected range base"`
+	DMASize0    uint32                   `flag optional name:"dmasize0" help:"Low DMA protected range limit"`
+	DMABase1    uint64                   `flag optional name:"dmabase1" help:"High DMA protected range base."`
+	DMASize1    uint64                   `flag optional name:"dmasize1" help:"High DMA protected range limit."`
+	EntryPoint  uint32                   `flag optional name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
+	IbbHash     []string                 `flag optional name:"ibbhash" help:"IBB Hash Algorithm. Valid options: SHA256, SHA384, SM3"`
+	IbbSegFlag  uint16                   `flag optional name:"ibbsegflag" help:"Reducted"`
 	// TXT args
 	SinitMin          uint8                           `flag:"" optional:"" name:"sinitmin" help:"OEM authorized SinitMinSvn value"`
 	TXTFlags          cbntbootpolicy.TXTControlFlags  `flag:"" optional:"" name:"txtflags" help:"TXT Element control flags"`
@@ -251,11 +244,12 @@ type signKMCmd struct {
 }
 
 type signBPMCmd struct {
-	BpmIn    string `arg:"" required:"" name:"bpmin" help:"Path to the newly generated Boot Policy Manifest binary file." type:"path"`
-	BpmOut   string `arg:"" required:"" name:"bpmout" help:"Path to write the signed BPM to"`
-	Key      string `arg:"" required:"" name:"bpm-keyfile" help:"Path to the encrypted PKCS8 private key file." type:"path"`
-	SignAlgo string `arg:"" required:"" name:"signalgo" help:"Signing algorithm for KM. E.g.: RSASSA, RSAPSS, SM2"`
-	Password string `arg:"" required:"" name:"password" help:"Password to decrypt PKCS8 private key file"`
+	BpmIn    string `arg required name:"bpmin" help:"Path to the newly generated Boot Policy Manifest binary file." type:"path"`
+	BpmOut   string `arg required name."bpmout" help:"Path to write the signed BPM to"`
+	Key      string `arg required name:"bpm-keyfile" help:"Path to the encrypted PKCS8 private key file." type:"path"`
+	SignAlgo string `arg required name:"signalgo" help:"Signing algorithm for BPM. E.g.: RSASSA, RSAPSS, SM2"`
+	HashAlgo string `arg required name:"hashalgo" help:"Hash algorithm for BPM. E.g.: SHA1, SHA256, SHA384, SM3"`
+	Password string `arg required name:"password" help:"Password to decrypt PKCS8 private key file"`
 }
 
 type readConfigCmd struct {
@@ -316,7 +310,6 @@ func (kmp *kmPrintCmd) Run(ctx *context) error {
 	bg, err := bootguard.NewKM(file)
 	if err != nil {
 		return err
-
 	}
 	bg.PrintKM()
 	return nil
@@ -431,7 +424,7 @@ func (g *generateKMCmdv1) Run(ctx *context) error {
 		if err != nil {
 			return err
 		}
-		//b.VData.BGkm.BPKey = g.KMHash
+		// b.VData.BGkm.BPKey = g.KMHash
 		// Create KM_Hash for BPM pub signing key
 		if g.BpmPubkey != "" {
 			pubkey, err := bootguard.ReadPubKey(g.BpmPubkey)
@@ -474,10 +467,10 @@ func (g *generateKMCmdv1) Run(ctx *context) error {
 		}
 	}
 	if g.Cut {
-		//Cut signature from binary
+		// Cut signature from binary
 		bKM = bKM[:int(b.VData.BGkm.KeyAndSignatureOffset())]
 	}
-	if err = os.WriteFile(g.KM, bKM, 0600); err != nil {
+	if err = os.WriteFile(g.KM, bKM, 0o600); err != nil {
 		return fmt.Errorf("unable to write KM to file: %w", err)
 	}
 	return nil
@@ -544,88 +537,51 @@ func (g *generateKMCmdv2) Run(ctx *context) error {
 		}
 	}
 	if g.Cut {
-		//Cut signature from binary
+		// Cut signature from binary
 		bKM = bKM[:int(b.VData.CBNTkm.KeyManifestSignatureOffset)]
 	}
-	if err = os.WriteFile(g.KM, bKM, 0600); err != nil {
+	if err = os.WriteFile(g.KM, bKM, 0o600); err != nil {
 		return fmt.Errorf("unable to write KM to file: %w", err)
 	}
 	return nil
 }
 
-func (g *generateBPMCmdv2) Run(ctx *context) error {
+func (g *generateBPMCmdv1) Run(ctx *context) error {
 	var b bootguard.BootGuard
+	b.Version = bgheader.Version10
 	if g.Config != "" {
 		err := b.ReadJSON(g.Config)
 		if err != nil {
 			return err
 		}
 	} else {
-		b.VData.CBNTbpm = cbntbootpolicy.NewManifest()
-		b.VData.CBNTkm = cbntkey.NewManifest()
+		b.VData.BGbpm = bgbootpolicy.NewManifest()
+		b.VData.BGbpm.BPMH = *bgbootpolicy.NewBPMH()
+		b.VData.BGbpm.BPMH.BPMSVN = g.SVN
+		b.VData.BGbpm.BPMH.ACMSVNAuth = g.ACMSVN
+		b.VData.BGbpm.BPMH.NEMDataStack = g.NEMS
 
-		se := cbntbootpolicy.NewSE()
-		se.PBETValue = g.PBET
-		se.Flags = g.IBBSegFlags
-		se.IBBMCHBAR = g.MCHBAR
-		se.VTdBAR = g.VDTBAR
-		se.DMAProtBase0 = g.DMABase0
-		se.DMAProtLimit0 = g.DMASize0
-		se.DMAProtBase1 = g.DMABase1
-		se.DMAProtLimit1 = g.DMASize1
-		se.IBBEntryPoint = g.EntryPoint
-
-		se.DigestList.List = make([]cbnt.HashStructure, len(g.IbbHash))
-		se.DigestList.Size = uint16(len(g.IbbHash))
-
-		ibbhashalgs := make([]cbnt.Algorithm, 0)
-		for _, item := range g.IbbHash {
-			hash, err := cbnt.GetAlgFromString(item)
-			if err != nil {
-				return err
-			}
-			ibbhashalgs = append(ibbhashalgs, hash)
-		}
-
-		for iterator := range se.DigestList.List {
-			se.DigestList.List[iterator].HashAlg = ibbhashalgs[iterator]
-		}
-
-		ibbs, err := bootguard.FindAdditionalIBBs(g.BIOS)
+		b.VData.BGbpm.SE = make([]bgbootpolicy.SE, 1)
+		b.VData.BGbpm.SE[0].PBETValue = g.PBET
+		b.VData.BGbpm.SE[0].Flags = g.IBBSegFlags
+		b.VData.BGbpm.SE[0].IBBMCHBAR = g.MCHBAR
+		b.VData.BGbpm.SE[0].VTdBAR = g.VDTBAR
+		b.VData.BGbpm.SE[0].PMRLBase = g.PMRLBase
+		b.VData.BGbpm.SE[0].PMRLLimit = g.PMRLLimit
+		b.VData.BGbpm.SE[0].IBBEntryPoint = g.EntryPoint
+		hashAlgo, err := bg.GetAlgFromString(g.IbbHash)
 		if err != nil {
-			return fmt.Errorf("FindAdditionalIBBs: %w", err)
+			return err
 		}
-		for counter := range ibbs {
-			ibbs[counter].Flags = g.IbbSegFlag
+		b.VData.BGbpm.SE[0].Digest.HashAlg = hashAlgo
+		err = b.CreateIBBSegments(0, g.IbbSegFlag, g.BIOS)
+		if err != nil {
+			return err
 		}
-		se.IBBSegments = append(se.IBBSegments, ibbs...)
-
-		b.VData.CBNTbpm.SE = append(b.VData.CBNTbpm.SE, *se)
-
-		txt := cbntbootpolicy.NewTXT()
-		txt.SInitMinSVNAuth = g.SinitMin
-		txt.ControlFlags = g.TXTFlags
-		txt.PwrDownInterval = g.PowerDownInterval
-		txt.ACPIBaseOffset = g.ACPIBaseOffset
-		txt.PwrMBaseOffset = g.PowermBaseOffset
-		txt.PTTCMOSOffset0 = g.CMOSOff0
-		txt.PTTCMOSOffset1 = g.CMOSOff1
-
-		b.VData.CBNTbpm.TXTE = txt
-
-		b.VData.CBNTbpm.PCDE = cbntbootpolicy.NewPCD()
-		b.VData.CBNTbpm.PME = cbntbootpolicy.NewPM()
-		b.VData.CBNTbpm.PMSE = *cbntbootpolicy.NewSignature()
-		b.VData.CBNTbpm.BPMH = *cbntbootpolicy.NewBPMH()
-
-		b.VData.CBNTbpm.BPMH.BPMRevision = g.Revision
-		b.VData.CBNTbpm.BPMH.BPMSVN = g.SVN
-		b.VData.CBNTbpm.BPMH.ACMSVNAuth = g.ACMSVN
-		b.VData.CBNTbpm.BPMH.NEMDataStack = g.NEMS
 	}
-	bpm, err := b.GenerateBPMFromImage(g.BIOS)
+	err := b.CreateIBBDigest(g.BIOS)
 	if err != nil {
-		return fmt.Errorf("GenerateBPM: %w", err)
+		return err
 	}
 	if g.Out != "" {
 		out, err := os.Create(g.Out)
@@ -641,9 +597,88 @@ func (g *generateBPMCmdv2) Run(ctx *context) error {
 		return err
 	}
 	if g.Cut {
-		bBPM = bBPM[:bpm.VData.CBNTbpm.KeySignatureOffset]
+		bBPM = bBPM[:b.VData.BGbpm.PMSE.KeySignatureOffset()]
 	}
-	if err = os.WriteFile(g.BPM, bBPM, 0600); err != nil {
+	if err = os.WriteFile(g.BPM, bBPM, 0o600); err != nil {
+		return fmt.Errorf("unable to write BPM to file: %w", err)
+	}
+	return nil
+}
+
+func (g *generateBPMCmdv2) Run(ctx *context) error {
+	var b bootguard.BootGuard
+	b.Version = bgheader.Version20
+	if g.Config != "" {
+		err := b.ReadJSON(g.Config)
+		if err != nil {
+			return err
+		}
+	} else {
+		b.VData.CBNTbpm = cbntbootpolicy.NewManifest()
+		b.VData.CBNTbpm.BPMH = *cbntbootpolicy.NewBPMH()
+		b.VData.CBNTbpm.BPMH.BPMRevision = g.Revision
+		b.VData.CBNTbpm.BPMH.BPMSVN = g.SVN
+		b.VData.CBNTbpm.BPMH.ACMSVNAuth = g.ACMSVN
+		b.VData.CBNTbpm.BPMH.NEMDataStack = g.NEMS
+
+		b.VData.CBNTbpm.SE = make([]cbntbootpolicy.SE, 1)
+		b.VData.CBNTbpm.SE[0].PBETValue = g.PBET
+		b.VData.CBNTbpm.SE[0].Flags = g.IBBSegFlags
+		b.VData.CBNTbpm.SE[0].IBBMCHBAR = g.MCHBAR
+		b.VData.CBNTbpm.SE[0].VTdBAR = g.VDTBAR
+		b.VData.CBNTbpm.SE[0].DMAProtBase0 = g.DMABase0
+		b.VData.CBNTbpm.SE[0].DMAProtLimit0 = g.DMASize0
+		b.VData.CBNTbpm.SE[0].DMAProtBase1 = g.DMABase1
+		b.VData.CBNTbpm.SE[0].DMAProtLimit1 = g.DMASize1
+		b.VData.CBNTbpm.SE[0].IBBEntryPoint = g.EntryPoint
+		b.VData.CBNTbpm.SE[0].DigestList.List = make([]cbnt.HashStructure, len(g.IbbHash))
+		b.VData.CBNTbpm.SE[0].DigestList.Size = uint16(len(g.IbbHash))
+		ibbhashalgs := make([]cbnt.Algorithm, 0)
+		for _, item := range g.IbbHash {
+			hash, err := cbnt.GetAlgFromString(item)
+			if err != nil {
+				return err
+			}
+			ibbhashalgs = append(ibbhashalgs, hash)
+		}
+		for iterator := range b.VData.CBNTbpm.SE[0].DigestList.List {
+			b.VData.CBNTbpm.SE[0].DigestList.List[iterator].HashAlg = ibbhashalgs[iterator]
+		}
+		err := b.CreateIBBSegments(0, g.IbbSegFlag, g.BIOS)
+		if err != nil {
+			return err
+		}
+		txt := cbntbootpolicy.NewTXT()
+		txt.SInitMinSVNAuth = g.SinitMin
+		txt.ControlFlags = g.TXTFlags
+		txt.PwrDownInterval = g.PowerDownInterval
+		txt.ACPIBaseOffset = g.ACPIBaseOffset
+		txt.PwrMBaseOffset = g.PowermBaseOffset
+		txt.PTTCMOSOffset0 = g.CMOSOff0
+		txt.PTTCMOSOffset1 = g.CMOSOff1
+		b.VData.CBNTbpm.TXTE = txt
+	}
+	err := b.CreateIBBDigest(g.BIOS)
+	if err != nil {
+		return err
+	}
+	if g.Out != "" {
+		out, err := os.Create(g.Out)
+		if err != nil {
+			return err
+		}
+		if err := b.WriteJSON(out); err != nil {
+			return err
+		}
+	}
+	bBPM, err := b.WriteBPM()
+	if err != nil {
+		return err
+	}
+	if g.Cut {
+		bBPM = bBPM[:b.VData.CBNTbpm.KeySignatureOffset]
+	}
+	if err = os.WriteFile(g.BPM, bBPM, 0o600); err != nil {
 		return fmt.Errorf("unable to write BPM to file: %w", err)
 	}
 	return nil
@@ -696,7 +731,7 @@ func (g *generateACMCmdv0) Run(ctx *context) error {
 		if err != nil {
 			return err
 		}
-		if err := os.WriteFile(g.ConfigOut, json, 0700); err != nil {
+		if err := os.WriteFile(g.ConfigOut, json, 0o700); err != nil {
 			return err
 		}
 	}
@@ -718,7 +753,7 @@ func (g *generateACMCmdv0) Run(ctx *context) error {
 		return fmt.Errorf("unable to compile the ACM module: %w", err)
 	}
 
-	if err := os.WriteFile(g.ACMOut, acmBytes.Bytes(), 0600); err != nil {
+	if err := os.WriteFile(g.ACMOut, acmBytes.Bytes(), 0o600); err != nil {
 		return fmt.Errorf("unable to write KM to file: %w", err)
 	}
 	return nil
@@ -771,7 +806,7 @@ func (g *generateACMCmdv3) Run(ctx *context) error {
 		if err != nil {
 			return err
 		}
-		if err := os.WriteFile(g.ConfigOut, json, 0700); err != nil {
+		if err := os.WriteFile(g.ConfigOut, json, 0o700); err != nil {
 			return err
 		}
 	}
@@ -793,7 +828,7 @@ func (g *generateACMCmdv3) Run(ctx *context) error {
 		return fmt.Errorf("unable to compile the ACM module: %w", err)
 	}
 
-	if err := os.WriteFile(g.ACMOut, acmBytes.Bytes(), 0600); err != nil {
+	if err := os.WriteFile(g.ACMOut, acmBytes.Bytes(), 0o600); err != nil {
 		return fmt.Errorf("unable to write KM to file: %w", err)
 	}
 	return nil
@@ -821,7 +856,7 @@ func (s *signKMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(s.KmOut, bKMSigned, 0600); err != nil {
+	if err := os.WriteFile(s.KmOut, bKMSigned, 0o600); err != nil {
 		return err
 	}
 	return nil
@@ -845,11 +880,11 @@ func (s *signBPMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	bBPMSigned, err := bg.SignBPM(s.SignAlgo, key)
+	bBPMSigned, err := bg.SignBPM(s.SignAlgo, s.HashAlgo, key)
 	if err != nil {
 		return err
 	}
-	if err = os.WriteFile(s.BpmOut, bBPMSigned, 0600); err != nil {
+	if err = os.WriteFile(s.BpmOut, bBPMSigned, 0o600); err != nil {
 		return fmt.Errorf("unable to write BPM to file: %w", err)
 	}
 	return nil
@@ -911,7 +946,7 @@ func (t *templateCmdv2) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	if err = os.WriteFile(t.Path, bBPM, 0600); err != nil {
+	if err = os.WriteFile(t.Path, bBPM, 0o600); err != nil {
 		return fmt.Errorf("unable to write BPM to file: %w", err)
 	}
 	return nil
@@ -950,7 +985,7 @@ func (t *templateCmdv1) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	if err = os.WriteFile(t.Path, bBPM, 0600); err != nil {
+	if err = os.WriteFile(t.Path, bBPM, 0o600); err != nil {
 		return fmt.Errorf("unable to write BPM to file: %w", err)
 	}
 	return nil
@@ -993,7 +1028,7 @@ func (s *stitchingKMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(s.Out, km, 0644); err != nil {
+	if err := os.WriteFile(s.Out, km, 0o644); err != nil {
 		return err
 	}
 	return nil
@@ -1024,7 +1059,7 @@ func (s *stitchingBPMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(s.Out, bpm, 0644); err != nil {
+	if err := os.WriteFile(s.Out, bpm, 0o644); err != nil {
 		return err
 	}
 	return nil
@@ -1071,7 +1106,7 @@ func (s *stitchingCmd) Run(ctx *context) error {
 		if len(me) > int(meRegionSize) {
 			return fmt.Errorf("ME size exceeds region size! (%d > %d)", len(me), meRegionSize)
 		}
-		file, err := os.OpenFile(s.BIOS, os.O_RDWR, 0600)
+		file, err := os.OpenFile(s.BIOS, os.O_RDWR, 0o600)
 		if err != nil {
 			return err
 		}
@@ -1184,13 +1219,13 @@ var cli struct {
 	KMStitch stitchingKMCmd  `cmd:""  help:"Stitches KM Signatue into unsigned KM"`
 	KMExport kmExportCmd     `cmd:""  help:"Exports KM structures from BIOS image into file"`
 
-	BPMShow   bpmPrintCmd      `cmd:""  help:"Prints Boot Policy Manifest binary in human-readable format"`
-	BPMGenV1  generateBPMCmdv1 `cmd:""  help:"Generate v1 BPM file based von json configuration"`
-	BPMGenV2  generateBPMCmdv2 `cmd:""  help:"Generate v2 BPM file based von json configuration"`
-	BPMSign   signBPMCmd       `cmd:""  help:"Sign Boot Policy Manifest with given key"`
-	BPMVerify verifyBPMSigCmd  `cmd:""  help:"Verify the signature of a given KM"`
-	BPMStitch stitchingBPMCmd  `cmd:""  help:"Stitches BPM Signatue into unsigned BPM"`
-	BPMExport bpmExportCmd     `cmd:""  help:"Exports BPM structures from BIOS image into file"`
+	BPMShow   bpmPrintCmd      `cmd help:"Prints Boot Policy Manifest binary in human-readable format"`
+	BPMGenV1  generateBPMCmdv1 `cmd help:"Generate v1 BPM file based von json configuration"`
+	BPMGenV2  generateBPMCmdv2 `cmd help:"Generate v2 BPM file based von json configuration"`
+	BPMSign   signBPMCmd       `cmd help:"Sign Boot Policy Manifest with given key"`
+	BPMVerify verifyBPMSigCmd  `cmd help:"Verify the signature of a given BPM"`
+	BPMStitch stitchingBPMCmd  `cmd help:"Stitches BPM Signatue into unsigned BPM"`
+	BPMExport bpmExportCmd     `cmd help:"Exports BPM structures from BIOS image into file"`
 
 	ACMGenV0  generateACMCmdv0 `cmd:""  help:"Generate an ACM v0 module (usable only for unit-tests)"`
 	ACMGenV3  generateACMCmdv3 `cmd:""  help:"Generate an ACM v3 module (usable only for unit-tests)"`

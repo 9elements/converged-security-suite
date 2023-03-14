@@ -7,11 +7,7 @@ import (
 	"os"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
-	"github.com/9elements/converged-security-suite/v2/pkg/uefi/consts"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntbootpolicy"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
-
-	"github.com/linuxboot/fiano/pkg/cbfs"
 )
 
 // WriteCBnTStructures takes a firmware image and extracts boot policy manifest, key manifest and acm into separate files.
@@ -202,62 +198,4 @@ func StitchFITEntries(biosFilename string, acm, bpm, km []byte) error {
 		}
 	}
 	return nil
-}
-
-// FindAdditionalIBBs takes a coreboot image, searches cbfs files for
-// additional IBBSegment.
-func FindAdditionalIBBs(imagepath string) ([]cbntbootpolicy.IBBSegment, error) {
-	ibbs := make([]cbntbootpolicy.IBBSegment, 0)
-	image, err := os.Open(imagepath)
-	if err != nil {
-		return nil, err
-	}
-	defer image.Close()
-
-	stat, err := image.Stat()
-	if err != nil {
-		return nil, err
-	}
-
-	img, err := cbfs.NewImage(image)
-	// If this returns an error, we assume it's an UEFI image
-	if err != nil {
-		// To be sure the image file is closed before reading from it again
-		image.Close()
-		img, err := os.ReadFile(imagepath)
-		if err != nil {
-			return ibbs, err
-		}
-		fitentries, err := fit.GetEntries(img)
-		if err != nil {
-			return ibbs, err
-		}
-		for _, entry := range fitentries {
-			if entry.GetEntryBase().Headers.Type() == fit.EntryTypeBIOSStartupModuleEntry {
-				ibb := cbntbootpolicy.NewIBBSegment()
-				ibb.Base = uint32(entry.GetEntryBase().Headers.Address.Pointer())
-				ibb.Size = entry.GetEntryBase().Headers.Size.Uint32() << 4
-				ibbs = append(ibbs, *ibb)
-			}
-		}
-		return ibbs, nil
-	}
-	// From here we consider it is a coreboot image
-	flashBase := consts.BasePhysAddr - stat.Size()
-	cbfsbaseaddr := img.Area.Offset
-	for _, seg := range img.Segs {
-		switch seg.GetFile().Name {
-		case
-			"fspt.bin",
-			"fallback/verstage",
-			"bootblock":
-
-			ibb := cbntbootpolicy.NewIBBSegment()
-			ibb.Base = uint32(flashBase) + cbfsbaseaddr + seg.GetFile().RecordStart + seg.GetFile().SubHeaderOffset
-			ibb.Size = seg.GetFile().Size
-			ibb.Flags = 0
-			ibbs = append(ibbs, *ibb)
-		}
-	}
-	return ibbs, nil
 }
