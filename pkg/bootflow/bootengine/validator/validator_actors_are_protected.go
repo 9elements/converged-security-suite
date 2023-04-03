@@ -41,18 +41,17 @@ func (ValidatorActorsAreProtected) Validate(_ context.Context, _ *types.State, l
 			continue
 		}
 		prevActor = step.Actor
-		resolvedActorRefs := make(types.References, len(step.ActorCode.References))
-		copy(resolvedActorRefs, step.ActorCode.References)
-		if err := resolvedActorRefs.Resolve(); err != nil {
+		actorRefs := step.ActorCode.References()
+		if err := actorRefs.Resolve(); err != nil {
 			result = append(result, Issue{
 				StepIdx: uint(stepIdx),
 				StepIssue: bootengine.StepIssue{
 					Coords: bootengine.StepIssueCoordsActor{},
-					Issue:  fmt.Errorf("unable to resolve the actor references %s: %w", format.NiceString(resolvedActorRefs), err),
+					Issue:  fmt.Errorf("unable to resolve the actor references %s: %w", format.NiceString(actorRefs), err),
 				},
 			})
 		}
-		nonMeasured := resolvedActorRefs.Exclude(prevMeasured...)
+		nonMeasured := actorRefs.Exclude(prevMeasured...)
 		if len(nonMeasured) == 0 {
 			continue
 		}

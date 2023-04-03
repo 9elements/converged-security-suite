@@ -25,13 +25,14 @@ func (m SortAndMergeType) Data(ctx context.Context, s *types.State) (*types.Data
 		return nil, err
 	}
 
-	if d.ForceBytes != nil {
-		return nil, fmt.Errorf("data source SortAndMerge does not support ForceBytes")
+	if d.ForcedBytes() != nil {
+		return nil, fmt.Errorf("data source SortAndMerge does not support ForcedBytes")
 	}
 	if d.Converter != nil {
 		return nil, fmt.Errorf("data source SortAndMerge does not support Converter")
 	}
 
-	d.References.SortAndMerge()
-	return d, nil
+	refs := d.References()
+	refs.SortAndMerge()
+	return types.NewReferencesData(refs), nil
 }

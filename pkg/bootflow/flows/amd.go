@@ -36,7 +36,7 @@ var AMDGenoaVerificationFailureV2 = types.Flow{
 
 var AMDGenoaLocality0V2 = types.Flow{
 	commonsteps.If(commonconds.Not(tpmconds.TPMIsInited{}), tpmsteps.InitTPM(0)),
-	tpmsteps.Measure(0, &datasources.StaticData{ForceBytes: []byte{0x8d, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x50}}),
+	tpmsteps.Measure(0, (*datasources.StaticData)(types.NewForcedData([]byte{0x8d, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x50}))),
 	amdsteps.MeasureEmbeddedFirmwareStructure{},
 	amdsteps.MeasureBIOSDirectory{},
 	amdsteps.MeasureBIOSStaticEntries{},

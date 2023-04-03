@@ -42,15 +42,15 @@ func (v VolumeOfType) Data(ctx context.Context, s *types.State) (*types.Data, er
 		return nil, err
 	}
 
-	if d.ForceBytes != nil {
-		return nil, fmt.Errorf("data source VolumeOf does not support ForceBytes")
+	if d.ForcedBytes() != nil {
+		return nil, fmt.Errorf("data source VolumeOf does not support ForcedBytes")
 	}
 	if d.Converter != nil {
 		return nil, fmt.Errorf("data source VolumeOf does not support Converter")
 	}
 
 	var ranges pkgbytes.Ranges
-	for _, ref := range d.References {
+	for _, ref := range d.References() {
 		if ref.Artifact != biosImg {
 			return nil, fmt.Errorf("reference %s is not referencing to the BIOSImage", format.NiceString(ref))
 		}
@@ -89,11 +89,9 @@ func (v VolumeOfType) Data(ctx context.Context, s *types.State) (*types.Data, er
 
 	addrMapper := biosimage.PhysMemMapper{}
 	ranges = addrMapper.UnresolveFullImageOffset(biosImg, ranges...)
-	return &types.Data{
-		References: types.References{{
-			Artifact:      biosImg,
-			AddressMapper: addrMapper,
-			Ranges:        ranges,
-		}},
-	}, nil
+	return types.NewReferenceData(&types.Reference{
+		Artifact:      biosImg,
+		AddressMapper: addrMapper,
+		Ranges:        ranges,
+	}), nil
 }

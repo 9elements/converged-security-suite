@@ -27,15 +27,17 @@ func measureToTPMEachRangeSeparately(
 	}
 
 	var actions types.Actions
-	for refIdx, ref := range data.References {
+	for refIdx, ref := range data.References() {
 		for rangeIdx, r := range ref.Ranges {
-			actions = append(actions, tpmactions.NewTPMEvent(pcrtypes.ID(0), &datasources.StaticData{
-				References: types.References{{
+			actions = append(actions, tpmactions.NewTPMEvent(
+				pcrtypes.ID(0),
+				(*datasources.StaticData)(types.NewReferenceData(&types.Reference{
 					Artifact:      ref.Artifact,
 					AddressMapper: ref.AddressMapper,
 					Ranges:        []pkgbytes.Range{r},
-				}},
-			}, []byte(fmt.Sprintf("%s_%d_%d", comment, refIdx, rangeIdx))))
+				})),
+				[]byte(fmt.Sprintf("%s_%d_%d", comment, refIdx, rangeIdx)),
+			))
 		}
 	}
 

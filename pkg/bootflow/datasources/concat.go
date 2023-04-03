@@ -13,21 +13,22 @@ type Concat []types.DataSource
 var _ types.DataSource = (Concat)(nil)
 
 func (c Concat) Data(ctx context.Context, s *types.State) (*types.Data, error) {
-	var result types.Data
+	var refs types.References
 	for idx, ds := range c {
 		d, err := ds.Data(ctx, s)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get Data from DataSource#%d:%s: %w", idx, format.NiceString(ds), err)
 		}
 
-		if d.ForceBytes != nil {
-			return nil, fmt.Errorf("data source Concat does not support ForceBytes")
+		if d.ForcedBytes() != nil {
+			return nil, fmt.Errorf("data source Concat does not support ForcedBytes")
 		}
 		if d.Converter != nil {
 			return nil, fmt.Errorf("data source Concat does not support Converter")
 		}
 
-		result.References = append(result.References, d.References...)
+		refs = append(refs, d.References()...)
 	}
-	return &result, nil
+
+	return types.NewReferencesData(refs), nil
 }

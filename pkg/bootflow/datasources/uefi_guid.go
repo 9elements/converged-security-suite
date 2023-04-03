@@ -24,7 +24,6 @@ var _ types.DataSource = (UEFIGUIDFirst)(nil)
 
 // Data implements types.DataSource.
 func (ds UEFIGUIDFirst) Data(_ context.Context, state *types.State) (*types.Data, error) {
-	var data *types.Data
 	imgRaw, err := biosimage.Get(state)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get BIOS Firmware: %w", err)
@@ -72,14 +71,11 @@ func (ds UEFIGUIDFirst) Data(_ context.Context, state *types.State) (*types.Data
 		return nil, fmt.Errorf("no volumes with GUIDs %s found", ds.guids())
 	}
 
-	data = &types.Data{
-		References: []types.Reference{{
-			Artifact:      imgRaw,
-			AddressMapper: addrMapper,
-			Ranges:        ranges,
-		}},
-	}
-	return data, nil
+	return types.NewReferenceData(&types.Reference{
+		Artifact:      imgRaw,
+		AddressMapper: addrMapper,
+		Ranges:        ranges,
+	}), nil
 }
 
 func (ds UEFIGUIDFirst) guids() string {

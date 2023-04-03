@@ -18,13 +18,9 @@ func (d PCDVariable) Data(ctx context.Context, s *types.State) (*types.Data, err
 	case "FirmwareVendorVersion":
 		switch {
 		case ocpconds.IsOCPv0{}.Check(ctx, s):
-			return &types.Data{
-				ForceBytes: (ocpconds.IsOCPv0{}).FirmwareVendorVersion(),
-			}, nil
+			return types.NewForcedData((ocpconds.IsOCPv0{}).FirmwareVendorVersion()), nil
 		case ocpconds.IsOCPv1{}.Check(ctx, s):
-			return &types.Data{
-				ForceBytes: (ocpconds.IsOCPv1{}).FirmwareVendorVersion(),
-			}, nil
+			return types.NewForcedData((ocpconds.IsOCPv1{}).FirmwareVendorVersion()), nil
 		default:
 			return nil, fmt.Errorf("no PCD parser is defined for this case")
 		}

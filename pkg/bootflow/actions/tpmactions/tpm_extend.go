@@ -43,7 +43,7 @@ func (ext *TPMExtend) Apply(ctx context.Context, state *types.State) error {
 	if err != nil {
 		return err
 	}
-	err = t.TPMExtend(ctx, ext.PCRIndex, ext.HashAlgo, data.Bytes(), NewLogInfoProvider(state))
+	err = t.TPMExtend(ctx, ext.PCRIndex, ext.HashAlgo, data.ConvertedBytes(), NewLogInfoProvider(state))
 	if err != nil {
 		return fmt.Errorf("unable to extend: %w", err)
 	}

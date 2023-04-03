@@ -30,13 +30,12 @@ func (IBB) Data(ctx context.Context, s *types.State) (*types.Data, error) {
 	ranges := bpm.IBBDataRanges(intelFW.SystemArtifact().Size())
 	addrMapper := biosimage.PhysMemMapper{}
 	ranges = addrMapper.UnresolveFullImageOffset(intelFW.SystemArtifact(), ranges...)
-	return &types.Data{
-		References: []types.Reference{{
-			Artifact:      intelFW.SystemArtifact(),
-			AddressMapper: addrMapper,
-			Ranges:        ranges,
-		}},
-	}, nil
+
+	return types.NewReferenceData(&types.Reference{
+		Artifact:      intelFW.SystemArtifact(),
+		AddressMapper: addrMapper,
+		Ranges:        ranges,
+	}), nil
 }
 
 func (IBB) String() string {

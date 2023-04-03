@@ -11,42 +11,172 @@ import (
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
-// Data is byte-data (given directly or by a reference to a SystemArtifact).
-type Data struct {
-	ForceBytes []byte
-	References References
-	Converter  DataConverter
+// RawBytes are the initial (not yet hashed or converted other way) bytes.
+type RawBytes []byte
+
+// RawBytes implements RawBytesGetter.
+func (b RawBytes) RawBytes() RawBytes {
+	return b
+}
+
+// ConvertBy converts the bytes to final bytes given a DataConverter.
+func (b RawBytes) ConvertBy(c DataConverter) ConvertedBytes {
+	if c == nil {
+		return ConvertedBytes(b)
+	}
+	return c.Convert(b)
+}
+
+// RawBytesGetter is an abstract source of RawBytes.
+type RawBytesGetter interface {
+	RawBytes() RawBytes
+}
+
+// ConvertedBytes is the final representation of bytes (for example
+// a digest to be extended to a PCR).
+type ConvertedBytes []byte
+
+// UnionForcedBytesOrReference is an union of ForcedBytes and a Reference.
+// Go does not support union-s, so a `struct` is used here instead.
+//
+// If `ForcedBytes` is not-nil then `ForcedBytes` is used, otherwise `Reference`.
+type UnionForcedBytesOrReference struct {
+	ForcedBytes RawBytes
+	Reference   *Reference
+}
+
+// Value returns the value stored in union `ForcedBytesOrReference`.
+//
+// It then can be type-switched as `[]byte` and `Reference`.
+func (u *UnionForcedBytesOrReference) Value() RawBytesGetter {
+	if u.ForcedBytes == nil {
+		return u.Reference
+	}
+	if u.Reference != nil {
+		panic("UnionForcedBytesOrReference is supposed to be an union, but both ForcedBytes and Reference are set")
+	}
+	return u.ForcedBytes
 }
 
 // String implements fmt.Stringer.
-func (d Data) String() string {
-	if d.ForceBytes != nil {
-		return fmt.Sprintf("{ForceBytes: %X}", d.ForceBytes)
+func (u UnionForcedBytesOrReference) String() string {
+	if u.ForcedBytes != nil {
+		return fmt.Sprintf("{ForcedBytes: 0x%X}", u.ForcedBytes)
 	}
-	if len(d.References) > 0 {
-		return fmt.Sprintf("{Refs: %s}", d.References)
-	}
-	return "{}"
+	return fmt.Sprintf("{Ref: %s}", u.Reference.String())
 }
 
-func (d *Data) RawBytes() []byte {
-	if d.ForceBytes != nil && d.References != nil {
-		panic("Data is supposed to be used as union")
-	}
-	if d.ForceBytes != nil {
-		return d.ForceBytes
-	}
-	return d.References.Bytes()
+// RawBytes implements RawBytesGetter.
+func (u *UnionForcedBytesOrReference) RawBytes() RawBytes {
+	return u.Value().RawBytes()
 }
 
-// Bytes returns the bytes defined by Data.
-func (d *Data) Bytes() []byte {
-	b := d.RawBytes()
-	if d.Converter == nil {
-		return b
+// UnionForcedBytesOrReferences is a slice of unions 'UnionForcedBytesOrReference'.
+type UnionForcedBytesOrReferences []UnionForcedBytesOrReference
+
+// RawBytes concatenates all RawBytes values together.
+func (s UnionForcedBytesOrReferences) RawBytes() RawBytes {
+	var result RawBytes
+	for _, u := range s {
+		result = append(result, u.RawBytes()...)
+	}
+	return result
+}
+
+// ForcedBytes concatenates all ForcedByte values together.
+func (s UnionForcedBytesOrReferences) ForcedBytes() RawBytes {
+	size := 0
+	isSet := false
+	for _, u := range s {
+		size += len(u.ForcedBytes)
+		isSet = isSet || u.ForcedBytes != nil
+	}
+	if !isSet {
+		return nil
+	}
+	result := make([]byte, size)
+	ptr := result
+	for _, u := range s {
+		copy(ptr, u.ForcedBytes)
+		ptr = ptr[len(u.ForcedBytes):]
+	}
+	return result
+}
+
+// References returns all references.
+func (s UnionForcedBytesOrReferences) References() References {
+	var result References
+	for _, u := range s {
+		if u.ForcedBytes != nil {
+			continue
+		}
+		result = append(result, *u.Reference)
+	}
+	return result
+}
+
+// String implements fmt.Stringer.
+func (s UnionForcedBytesOrReferences) String() string {
+	if len(s) == 0 {
+		return "{}"
 	}
 
-	return d.Converter.Convert(b)
+	if s.ForcedBytes() == nil {
+		return fmt.Sprintf("{Refs: %s}", s.References())
+	}
+	if s.References() == nil {
+		return fmt.Sprintf("{ForcedBytes: 0x%X}", s.ForcedBytes())
+	}
+
+	var result strings.Builder
+	result.WriteRune('[')
+	for idx, u := range s {
+		if idx != 0 {
+			result.WriteString(", ")
+		}
+		result.WriteString(u.String())
+	}
+	result.WriteRune(']')
+	return result.String()
+}
+
+// Data is byte-data (given directly or by a reference to a SystemArtifact).
+type Data struct {
+	UnionForcedBytesOrReferences
+	Converter DataConverter
+}
+
+func NewForcedData(b RawBytes) *Data {
+	return &Data{
+		UnionForcedBytesOrReferences: []UnionForcedBytesOrReference{{
+			ForcedBytes: b,
+		}},
+	}
+}
+
+func NewReferenceData(ref *Reference) *Data {
+	return &Data{
+		UnionForcedBytesOrReferences: []UnionForcedBytesOrReference{{
+			Reference: ref,
+		}},
+	}
+}
+
+func NewReferencesData(refs References) *Data {
+	var result UnionForcedBytesOrReferences
+	for idx := range refs {
+		result = append(result, UnionForcedBytesOrReference{
+			Reference: &refs[idx],
+		})
+	}
+	return &Data{
+		UnionForcedBytesOrReferences: result,
+	}
+}
+
+// ConvertedBytes returns the final/converted bytes defined by Data.
+func (d *Data) ConvertedBytes() []byte {
+	return d.RawBytes().ConvertBy(d.Converter)
 }
 
 // References is a a slice of Reference-s.
@@ -103,6 +233,11 @@ func compareReferenceType(a, b Reference) int {
 	}
 }
 
+// Resolve uses AddressMapper-s to resolve addresses to final references.
+//
+// On success: all AddressMappers will be nil and all Ranges will reference
+// to the actual ranges of the data. On failure an error returned, but
+// some References might be already resolved.
 func (s References) Resolve() error {
 	for idx := range s {
 		ref := &s[idx]
@@ -119,6 +254,7 @@ func (s References) Resolve() error {
 	return nil
 }
 
+// SortAndMerge sorts References and merges those which touch or overlap.
 func (s *References) SortAndMerge() {
 	if len(*s) < 2 {
 		return
@@ -155,10 +291,10 @@ func (s *References) SortAndMerge() {
 }
 
 // Bytes returns a concatenation of data of all the referenced byte ranges.
-func (s References) Bytes() []byte {
+func (s References) RawBytes() RawBytes {
 	var buf bytes.Buffer
 	for _, ref := range s {
-		if _, err := buf.Write(ref.Bytes()); err != nil {
+		if _, err := buf.Write(ref.RawBytes()); err != nil {
 			panic(err)
 		}
 	}
@@ -239,6 +375,7 @@ type Reference struct {
 	Ranges        pkgbytes.Ranges
 }
 
+// ResolvedRanges returns Ranges, already resolved using AddressMapper.
 func (ref *Reference) ResolvedRanges() (pkgbytes.Ranges, error) {
 	if ref.AddressMapper == nil {
 		return ref.Ranges, nil
@@ -276,8 +413,8 @@ func (ref Reference) String() string {
 	)
 }
 
-// Bytes returns the bytes data referenced by the Reference.
-func (ref *Reference) Bytes() []byte {
+// RawBytes returns the bytes data referenced by the Reference.
+func (ref *Reference) RawBytes() RawBytes {
 	totalLength := uint64(0)
 	ranges := ref.Ranges
 	ranges.SortAndMerge()
@@ -338,7 +475,7 @@ type MeasuredDataSlice []MeasuredData
 func (s MeasuredDataSlice) References() References {
 	var result References
 	for _, d := range s {
-		result = append(result, d.References...)
+		result = append(result, d.References()...)
 	}
 	return result
 }

@@ -121,7 +121,7 @@ func main() {
 	fmt.Printf("RESULT: 0x%X\n", result)
 
 	tpmMeasurements := process.Log.GetDataMeasuredWith(tpmInstance)
-	bruteforcer.ApplyBitFlipsBytes(combination, tpmMeasurements[0].Data.ForceBytes)
+	bruteforcer.ApplyBitFlipsBytes(combination, tpmMeasurements[0].Data.ForcedBytes())
 	fmt.Printf("resulting measurements:\n%v", tpmMeasurements)
 }
 

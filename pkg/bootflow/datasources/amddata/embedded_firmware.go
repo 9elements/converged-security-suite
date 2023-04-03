@@ -30,13 +30,12 @@ func (EmbeddedFirmware) Data(ctx context.Context, s *types.State) (*types.Data, 
 	ranges := pkgbytes.Ranges{pspFW.EmbeddedFirmwareRange}
 	addrMapper := biosimage.PhysMemMapper{}
 	ranges = addrMapper.UnresolveFullImageOffset(amdAccessor.Image, ranges...)
-	return &types.Data{
-		References: []types.Reference{{
-			Artifact:      amdAccessor.Image,
-			AddressMapper: addrMapper,
-			Ranges:        ranges,
-		}},
-	}, nil
+
+	return types.NewReferenceData(&types.Reference{
+		Artifact:      amdAccessor.Image,
+		AddressMapper: addrMapper,
+		Ranges:        ranges,
+	}), nil
 }
 
 func (EmbeddedFirmware) String() string {

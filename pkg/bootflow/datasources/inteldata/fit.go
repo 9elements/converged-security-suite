@@ -37,14 +37,12 @@ func (d FITFirst) Data(_ context.Context, state *types.State) (*types.Data, erro
 			}}
 			addrMapper := biosimage.PhysMemMapper{}
 			ranges = addrMapper.UnresolveFullImageOffset(biosFW, ranges...)
-			data := &types.Data{
-				References: []types.Reference{{
-					Artifact:      biosFW,
-					AddressMapper: addrMapper,
-					Ranges:        ranges,
-				}},
-			}
-			return data, nil
+
+			return types.NewReferenceData(&types.Reference{
+				Artifact:      biosFW,
+				AddressMapper: addrMapper,
+				Ranges:        ranges,
+			}), nil
 		}
 	}
 

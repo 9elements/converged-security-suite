@@ -51,7 +51,7 @@ func (ValidatorFinalCoverageIsComplete) Validate(
 		}}
 	}
 
-	nonMeasured := data.References.Exclude(measured...)
+	nonMeasured := data.References().Exclude(measured...)
 	if len(nonMeasured) == 0 {
 		return nil
 	}

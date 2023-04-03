@@ -173,19 +173,17 @@ func (d pcr0DATA) compileActions() types.Actions {
 	if err != nil {
 		panic(fmt.Errorf("d.hashAlgo.Hash() return an error: should never happen: %w", err))
 	}
-	data := types.Data{
-		References: []types.Reference{
-			d.acmPolicyStatus,
-			d.acmHeaderSVN,
-			d.acmSignature,
-			d.kmSignature,
-			d.bpmSignature,
-			d.ibbDigest,
-		},
-		Converter: dataconverters.Hasher(h),
-	}
+	data := types.NewReferencesData(types.References{
+		d.acmPolicyStatus,
+		d.acmHeaderSVN,
+		d.acmSignature,
+		d.kmSignature,
+		d.bpmSignature,
+		d.ibbDigest,
+	})
+	data.Converter = dataconverters.Hasher(h)
 	return types.Actions{
-		tpmactions.NewTPMExtend(pcrtypes.ID(0), (*datasources.StaticData)(&data), tpm2.Algorithm(d.hashAlgo)),
-		tpmactions.NewTPMEventLogAdd(pcrtypes.ID(0), tpm2.Algorithm(d.hashAlgo), data.Bytes(), []byte("PCR0_DATA "+d.hashAlgo.String())),
+		tpmactions.NewTPMExtend(pcrtypes.ID(0), (*datasources.StaticData)(data), tpm2.Algorithm(d.hashAlgo)),
+		tpmactions.NewTPMEventLogAdd(pcrtypes.ID(0), tpm2.Algorithm(d.hashAlgo), data.ConvertedBytes(), []byte("PCR0_DATA "+d.hashAlgo.String())),
 	}
 }

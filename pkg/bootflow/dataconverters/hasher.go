@@ -21,7 +21,7 @@ func Hasher(h hash.Hash) hasher {
 }
 
 // Convert implements types.DataConverter.
-func (h hasher) Convert(in []byte) []byte {
+func (h hasher) Convert(in types.RawBytes) types.ConvertedBytes {
 	h.Write(in)
 	result := h.Sum(nil)
 	h.Reset()

@@ -42,12 +42,10 @@ func (RegistersMP0C2PMsg) Data(ctx context.Context, s *types.State) (*types.Data
 		}
 	}
 
-	return &types.Data{
-		References: []types.Reference{{
-			Artifact: rs,
-			Ranges:   ranges,
-		}},
-	}, nil
+	return types.NewReferenceData(&types.Reference{
+		Artifact: rs,
+		Ranges:   ranges,
+	}), nil
 }
 
 func (RegistersMP0C2PMsg) String() string {

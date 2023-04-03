@@ -51,13 +51,12 @@ func (PSPVersion) Data(ctx context.Context, s *types.State) (*types.Data, error)
 				}}
 				addrMapper := biosimage.PhysMemMapper{}
 				ranges = addrMapper.UnresolveFullImageOffset(amdAccessor.Image, ranges...)
-				return &types.Data{
-					References: []types.Reference{{
-						Artifact:      amdAccessor.Image,
-						AddressMapper: addrMapper,
-						Ranges:        ranges,
-					}},
-				}, nil
+
+				return types.NewReferenceData(&types.Reference{
+					Artifact:      amdAccessor.Image,
+					AddressMapper: addrMapper,
+					Ranges:        ranges,
+				}), nil
 			}
 		}
 	}

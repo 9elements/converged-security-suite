@@ -48,7 +48,7 @@ func (ev *TPMEvent) Apply(ctx context.Context, state *types.State) error {
 			return fmt.Errorf("unable to get hasher factory for algo %v: %w", hashAlgo, err)
 		}
 		hasher := h.New()
-		if _, err := hasher.Write(data.Bytes()); err != nil {
+		if _, err := hasher.Write(data.ConvertedBytes()); err != nil {
 			return fmt.Errorf("unable to hash data with %T: %w", hasher, err)
 		}
 		digest := hasher.Sum(nil)

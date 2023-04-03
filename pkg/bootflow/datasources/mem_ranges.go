@@ -27,13 +27,11 @@ func (mrs MemRanges) Data(_ context.Context, state *types.State) (*types.Data, e
 		return nil, fmt.Errorf("unable to find where the memory ranges are mapped to; it is not to BIOS image, but I do not know how to map anything else, yet: %w", err)
 	}
 
-	return &types.Data{
-		References: []types.Reference{{
-			Artifact:      biosImg,
-			AddressMapper: addrMapper,
-			Ranges:        pkgbytes.Ranges(mrs),
-		}},
-	}, nil
+	return types.NewReferenceData(&types.Reference{
+		Artifact:      biosImg,
+		AddressMapper: addrMapper,
+		Ranges:        pkgbytes.Ranges(mrs),
+	}), nil
 }
 
 // String implements fmt.Stringer.
