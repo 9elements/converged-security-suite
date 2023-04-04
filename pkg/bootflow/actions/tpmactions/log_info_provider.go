@@ -18,3 +18,8 @@ func NewLogInfoProvider(s *types.State) *LogInfoProvider {
 func (p *LogInfoProvider) CauseCoordinates() tpm.CauseCoordinates {
 	return (*types.State)(p).GetCurrentActionCoordinates()
 }
+
+// Action returns the Action, which is the reason, why the tpm.Command was executed.
+func (p *LogInfoProvider) CauseAction() types.Action {
+	return p.CurrentAction
+}

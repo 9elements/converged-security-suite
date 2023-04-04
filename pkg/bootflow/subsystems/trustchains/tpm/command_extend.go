@@ -3,8 +3,6 @@ package tpm
 import (
 	"context"
 	"fmt"
-
-	"github.com/google/go-tpm/tpm2"
 )
 
 // CommandExtend implements Command to represent TPM2_PCR_Extend
@@ -12,7 +10,7 @@ import (
 // Is also used (together with CommandEventLogAdd) to implement a TPM2_PCR_Event Action.
 type CommandExtend struct {
 	PCRIndex PCRID
-	HashAlgo tpm2.Algorithm
+	HashAlgo Algorithm
 	Digest   Digest
 }
 
@@ -21,7 +19,7 @@ var _ Command = (*CommandExtend)(nil)
 // NewCommandExtend returns a new instance of CommandExtend.
 func NewCommandExtend(
 	pcrIdx PCRID,
-	hashAlgo tpm2.Algorithm,
+	hashAlgo Algorithm,
 	digest Digest,
 ) *CommandExtend {
 	return &CommandExtend{

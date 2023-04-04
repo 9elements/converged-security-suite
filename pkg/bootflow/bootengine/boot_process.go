@@ -49,10 +49,10 @@ func stateNextStep(
 	var stepIssues StepIssues
 
 	step := actCoords.Flow[actCoords.StepIndex]
-	actCoords.StepIndex++
 	actions := step.Actions(ctx, state)
 	for idx, action := range actions {
 		actCoords.ActionIndex = uint(idx)
+		state.CurrentAction = action
 		issue := func() (issue error) {
 			defer func() {
 				if r := recover(); r != nil {
@@ -76,6 +76,7 @@ func stateNextStep(
 			})
 		}
 	}
+	actCoords.StepIndex++
 
 	var actorCode *types.Data
 	if state.CurrentActor != nil {

@@ -30,7 +30,10 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
+require github.com/DataDog/gostackparse v0.6.0 // indirect
+
 require (
+	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/go-ng/slices v0.0.0-20220616195238-b8d239c57d65 // indirect
 	github.com/go-ng/sort v0.0.0-20220617173827-2cc7cd04f7c7 // indirect
@@ -39,13 +42,11 @@ require (
 	github.com/google/certificate-transparency-go v1.1.1 // indirect
 	github.com/google/go-tspi v0.2.1-0.20190423175329-115dea689aad // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/intel-go/cpuid v0.0.0-20200819041909-2aa72927c3e2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/romnn/go-recursive-sort v0.0.5 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
-	github.com/romnn/go-recursive-sort v0.0.5 // indirect
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d // indirect
 	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/term v0.4.0 // indirect

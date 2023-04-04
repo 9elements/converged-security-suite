@@ -36,6 +36,11 @@ type RawBytesGetter interface {
 // a digest to be extended to a PCR).
 type ConvertedBytes []byte
 
+// String implements fmt.Stringer.
+func (d ConvertedBytes) String() string {
+	return fmt.Sprintf("0x%X", []byte(d))
+}
+
 // UnionForcedBytesOrReference is an union of ForcedBytes and a Reference.
 // Go does not support union-s, so a `struct` is used here instead.
 //
@@ -143,7 +148,7 @@ func (s UnionForcedBytesOrReferences) String() string {
 // Data is byte-data (given directly or by a reference to a SystemArtifact).
 type Data struct {
 	UnionForcedBytesOrReferences
-	Converter DataConverter
+	Converter DataConverter `faker:"data_converter_factory"`
 }
 
 func NewForcedData(b RawBytes) *Data {
@@ -231,6 +236,26 @@ func compareReferenceType(a, b Reference) int {
 	default:
 		return 0
 	}
+}
+
+// BySystemArtifact filters references to only those, who refers to the given SystemArtifact.
+func (s References) BySystemArtifact(sa SystemArtifact) References {
+	var result References
+	for _, ref := range s {
+		if ref.Artifact == sa {
+			result = append(result, ref)
+		}
+	}
+	return result
+}
+
+// Ranges concatenates and returns all Ranges together.
+func (s References) Ranges() pkgbytes.Ranges {
+	var result pkgbytes.Ranges
+	for _, r := range s {
+		result = append(result, r.Ranges...)
+	}
+	return result
 }
 
 // Resolve uses AddressMapper-s to resolve addresses to final references.
@@ -370,8 +395,8 @@ type AddressMapper interface {
 
 // Reference is a reference to a bytes data in a SystemArtifact.
 type Reference struct {
-	Artifact      SystemArtifact
-	AddressMapper AddressMapper
+	Artifact      SystemArtifact `faker:"system_artifact"`
+	AddressMapper AddressMapper  `faker:"address_mapper"`
 	Ranges        pkgbytes.Ranges
 }
 
@@ -450,9 +475,10 @@ func (ref *Reference) RawBytes() RawBytes {
 // MeasuredData is a piece of Data which was measured by any of TrustChain-s.
 type MeasuredData struct {
 	Data
-	DataSource DataSource
-	Actor      Actor
-	TrustChain TrustChain
+	DataSource DataSource `faker:"data_source"`
+	Actor      Actor      `faker:"actor"`
+	Action     Action     `faker:"action"`
+	TrustChain TrustChain `faker:"trust_chain"`
 }
 
 // String implements fmt.Stringer.

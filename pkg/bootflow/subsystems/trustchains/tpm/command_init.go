@@ -34,6 +34,9 @@ func (cmd *CommandInit) apply(_ context.Context, tpm *TPM) error {
 	if tpm.IsInitialized() {
 		return fmt.Errorf("TPM is already initialized")
 	}
+
+	// TODO: avoid memory allocation if not needed.
+
 	tpm.PCRValues = make(PCRValues, PCRRegistersAmount)
 
 	supportedAlgos := SupportedHashAlgos()
@@ -45,9 +48,9 @@ func (cmd *CommandInit) apply(_ context.Context, tpm *TPM) error {
 		hasher := h.New()
 		for pcrID := PCRID(0); pcrID < PCRRegistersAmount; pcrID++ {
 			if tpm.PCRValues[pcrID] == nil {
-				tpm.PCRValues[pcrID] = make([][]byte, tpmMaxHashAlgo+1)
+				tpm.PCRValues[pcrID] = make([]Digest, tpmMaxHashAlgo+1)
 			}
-			tpm.PCRValues[pcrID][hashAlgo] = make([]byte, hasher.Size())
+			tpm.PCRValues[pcrID][hashAlgo] = make(Digest, hasher.Size())
 			pcrValue := tpm.PCRValues[pcrID][hashAlgo]
 			switch pcrID {
 			case 0:

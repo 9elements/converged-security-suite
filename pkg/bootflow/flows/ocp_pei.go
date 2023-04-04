@@ -9,6 +9,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/commonsteps"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/tpmsteps"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
+	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 	ffsConsts "github.com/9elements/converged-security-suite/v2/pkg/uefi/ffs/consts"
 	"github.com/linuxboot/fiano/pkg/guid"
 )
@@ -25,10 +26,10 @@ var (
 // of PEI (Pre-EFI Initialization of BIOS) before ~2022.
 var OCPPEIv0 = types.Flow{
 	commonsteps.SetActor(actors.PEI{}),
-	commonsteps.If(commonconds.Not(tpmconds.TPMIsInited{}), tpmsteps.InitTPM(0)),
-	tpmsteps.Measure(0, datasources.PCDVariable("FirmwareVendorVersion")),
-	tpmsteps.Measure(0, datasources.UEFIGUIDFirst([]guid.GUID{ffsConsts.GUIDDXEContainer, ffsConsts.GUIDDXE})),
-	tpmsteps.Measure(0, datasources.Bytes{0, 0, 0, 0}),
+	commonsteps.If(commonconds.Not(tpmconds.TPMIsInited{}), tpmsteps.InitTPM(0, false)),
+	tpmsteps.Measure(0, tpmeventlog.EV_S_CRTM_VERSION, datasources.PCDVariable("FirmwareVendorVersion")),
+	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.UEFIGUIDFirst([]guid.GUID{ffsConsts.GUIDDXEContainer, ffsConsts.GUIDDXE})),
+	tpmsteps.Measure(0, tpmeventlog.EV_SEPARATOR, datasources.Bytes{0, 0, 0, 0}),
 	commonsteps.SetFlow(DXE),
 }
 
@@ -36,22 +37,22 @@ var OCPPEIv0 = types.Flow{
 // of PEI (Pre-EFI Initialization of BIOS) after ~2022.
 var OCPPEIv1 = types.Flow{
 	commonsteps.SetActor(actors.PEI{}),
-	commonsteps.If(commonconds.Not(tpmconds.TPMIsInited{}), tpmsteps.InitTPM(0)),
-	tpmsteps.Measure(0, datasources.PCDVariable("FirmwareVendorVersion")),
+	commonsteps.If(commonconds.Not(tpmconds.TPMIsInited{}), tpmsteps.InitTPM(0, false)),
+	tpmsteps.Measure(0, tpmeventlog.EV_S_CRTM_VERSION, datasources.PCDVariable("FirmwareVendorVersion")),
 	commonsteps.If(amdconds.ManifestPresent{}, commonsteps.SetFlow(OCPPEIv1AMD)), // TODO: this is a weird divergence, needs investigation and explanation
-	tpmsteps.Measure(0, datasources.UEFIGUIDFirst([]guid.GUID{guidOCPV1Vol0Intel})),
-	tpmsteps.Measure(0, datasources.UEFIGUIDFirst([]guid.GUID{guidOCPV1Vol1Intel})),
-	tpmsteps.Measure(0, datasources.UEFIGUIDFirst([]guid.GUID{guidOCPV1Vol2Intel})),
-	tpmsteps.Measure(0, datasources.UEFIGUIDFirst([]guid.GUID{ffsConsts.GUIDDXEContainer, ffsConsts.GUIDDXE})),
-	tpmsteps.Measure(0, datasources.Bytes{0, 0, 0, 0}),
+	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.UEFIGUIDFirst([]guid.GUID{guidOCPV1Vol0Intel})),
+	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.UEFIGUIDFirst([]guid.GUID{guidOCPV1Vol1Intel})),
+	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.UEFIGUIDFirst([]guid.GUID{guidOCPV1Vol2Intel})),
+	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.UEFIGUIDFirst([]guid.GUID{ffsConsts.GUIDDXEContainer, ffsConsts.GUIDDXE})),
+	tpmsteps.Measure(0, tpmeventlog.EV_SEPARATOR, datasources.Bytes{0, 0, 0, 0}),
 	commonsteps.SetFlow(DXE),
 }
 
 var OCPPEIv1AMD = types.Flow{
-	tpmsteps.Measure(0, datasources.MemRanges{{Offset: 0xFF7F1000 + 0x1034, Length: 0x20}}), // TODO: this was bruteforced on a specific firmware, replace with analytical way to find the ranges
-	tpmsteps.Measure(0, datasources.MemRanges{{Offset: 0xFF7F1000 + 0x1074, Length: 0x20}}), // TODO: this was bruteforced on a specific firmware, replace with analytical way to find the ranges
-	tpmsteps.Measure(0, datasources.MemRanges{{Offset: 0xFF7F1000 + 0x10B4, Length: 0x20}}), // TODO: this was bruteforced on a specific firmware, replace with analytical way to find the ranges
-	tpmsteps.Measure(0, datasources.MemRanges{{Offset: 0xFF7F1000 + 0x11D4, Length: 0x20}}), // TODO: this was bruteforced on a specific firmware, replace with analytical way to find the ranges
-	tpmsteps.Measure(0, datasources.Bytes{0, 0, 0, 0}),
+	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.MemRanges{{Offset: 0xFF7F1000 + 0x1034, Length: 0x20}}), // TODO: this was bruteforced on a specific firmware, replace with analytical way to find the ranges
+	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.MemRanges{{Offset: 0xFF7F1000 + 0x1074, Length: 0x20}}), // TODO: this was bruteforced on a specific firmware, replace with analytical way to find the ranges
+	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.MemRanges{{Offset: 0xFF7F1000 + 0x10B4, Length: 0x20}}), // TODO: this was bruteforced on a specific firmware, replace with analytical way to find the ranges
+	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.MemRanges{{Offset: 0xFF7F1000 + 0x11D4, Length: 0x20}}), // TODO: this was bruteforced on a specific firmware, replace with analytical way to find the ranges
+	tpmsteps.Measure(0, tpmeventlog.EV_SEPARATOR, datasources.Bytes{0, 0, 0, 0}),
 	commonsteps.SetFlow(DXE),
 }

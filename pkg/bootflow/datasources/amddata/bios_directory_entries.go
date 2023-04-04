@@ -47,6 +47,7 @@ func (selector BIOSDirectoryEntriesType) Data(ctx context.Context, s *types.Stat
 
 	addrMapper := biosimage.PhysMemMapper{}
 	ranges = addrMapper.UnresolveFullImageOffset(amdAccessor.Image, ranges...)
+
 	return types.NewReferenceData(&types.Reference{
 		Artifact:      amdAccessor.Image,
 		AddressMapper: addrMapper,

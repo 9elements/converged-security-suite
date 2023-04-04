@@ -42,10 +42,14 @@ func (s Commands) LogString() string {
 // CauseCoordinates defines the coordinates of the Action in a Flow which caused the Command.
 type CauseCoordinates = types.ActionCoordinates
 
+// CauseAction defines the Action which caused the Command.
+type CauseAction = types.Action
+
 // CommandLogEntry is a log entry of a Command.
 type CommandLogEntry struct {
 	Command
 	CauseCoordinates
+	CauseAction
 }
 
 // String implements fmt.Stringer.
@@ -56,10 +60,12 @@ func (entry CommandLogEntry) String() string {
 func newCommandLogEntry(
 	cmd Command,
 	causeCoords types.ActionCoordinates,
+	causeAction types.Action,
 ) CommandLogEntry {
 	return CommandLogEntry{
 		Command:          cmd,
 		CauseCoordinates: causeCoords,
+		CauseAction:      causeAction,
 	}
 }
 

@@ -9,12 +9,13 @@ import (
 // State describes a virtual state of a machine being booted
 type State struct {
 	// Do not mutate these fields from the outside, the mutability
-	// is owned by State itself.
+	// is owned by State itself and BootProcess.
 
-	SystemArtifacts          SystemArtifacts
-	SubSystems               SubSystems
-	CurrentActor             Actor
+	SystemArtifacts          SystemArtifacts `faker:"system_artifact_map"`
+	SubSystems               SubSystems      `faker:"sub_system_map"`
+	CurrentActor             Actor           `faker:"actor"`
 	CurrentActionCoordinates ActionCoordinates
+	CurrentAction            Action `faker:"action"`
 	MeasuredData             MeasuredDataSlice
 }
 
@@ -32,6 +33,19 @@ func NewState() *State {
 		SystemArtifacts: map[reflect.Type]SystemArtifact{},
 		SubSystems:      map[reflect.Type]SubSystem{},
 	}
+}
+
+// Reset returns to the initial state, but tries to keep the already allocated memory.
+func (state *State) Reset() {
+	for k := range state.SystemArtifacts {
+		delete(state.SystemArtifacts, k)
+	}
+	for k := range state.SubSystems {
+		delete(state.SubSystems, k)
+	}
+	state.CurrentActor = nil
+	state.CurrentActionCoordinates = ActionCoordinates{}
+	state.MeasuredData = state.MeasuredData[:0]
 }
 
 // SetFlow sets the Flow and resets the execution carriage (resets to the first Step).
@@ -146,13 +160,15 @@ func (state *State) AddMeasuredData(
 	data Data,
 	trustChain TrustChain,
 	dataSource DataSource,
-) {
+) *MeasuredData {
 	state.MeasuredData = append(state.MeasuredData, MeasuredData{
 		Data:       data,
 		DataSource: dataSource,
 		Actor:      state.CurrentActor,
+		Action:     state.CurrentAction,
 		TrustChain: trustChain,
 	})
+	return &state.MeasuredData[len(state.MeasuredData)-1]
 }
 
 // String implements fmt.Stringer.
@@ -177,8 +193,8 @@ func (state *State) String() string {
 // GetDataMeasuredBy returns MeasuredData which was measured within the specified TrustChain.
 //
 // See also (*State).AddMeasuredData().
-func (state *State) GetDataMeasuredBy(trustChain TrustChain) []MeasuredData {
-	var result []MeasuredData
+func (state *State) GetDataMeasuredBy(trustChain TrustChain) MeasuredDataSlice {
+	var result MeasuredDataSlice
 	for _, measuredData := range state.MeasuredData {
 		if measuredData.TrustChain == trustChain {
 			result = append(result, measuredData)

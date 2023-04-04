@@ -4,3 +4,8 @@ package types
 type DataConverter interface {
 	Convert(RawBytes) ConvertedBytes
 }
+
+// DataConverterFactory is a factory of DataConverter.
+type DataConverterFactory interface {
+	NewDataConverter() DataConverter
+}

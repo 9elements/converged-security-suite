@@ -14,6 +14,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/bruteforcer"
+	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 	"github.com/google/go-tpm/tpm2"
 )
 
@@ -25,9 +26,9 @@ func main() {
 
 	// an artificial flow for two separators
 	myFlow := types.Flow{
-		tpmsteps.InitTPM(0),
-		tpmsteps.Measure(0, datasources.Bytes{0, 0, 0, 0}),
-		tpmsteps.Measure(0, datasources.Bytes{0, 0, 0, 0}),
+		tpmsteps.InitTPM(0, false),
+		tpmsteps.Measure(0, tpmeventlog.EV_SEPARATOR, datasources.Bytes{0, 0, 0, 0}),
+		tpmsteps.Measure(0, tpmeventlog.EV_SEPARATOR, datasources.Bytes{0, 0, 0, 0}),
 	}
 
 	// executing the flow (with two simple "\x00\x00\x00\x00" measurements)

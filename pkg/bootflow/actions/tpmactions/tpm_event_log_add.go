@@ -7,14 +7,15 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
-	"github.com/google/go-tpm/tpm2"
+	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 )
 
 // TPMEvent is a representation of `TPM2_PCR_Event`.
 type TPMEventLogAdd struct {
 	PCRIndex  pcrtypes.ID
-	Algo      tpm2.Algorithm
-	Digest    []byte
+	Algo      tpm.Algorithm
+	Digest    tpm.Digest
+	Type      tpmeventlog.EventType
 	EventData []byte
 }
 
@@ -23,14 +24,16 @@ var _ types.Action = (*TPMEvent)(nil)
 // NewTPMEvent returns a new instance of TPMEvent
 func NewTPMEventLogAdd(
 	pcrIndex pcrtypes.ID,
-	algo tpm2.Algorithm,
+	algo tpm.Algorithm,
 	digest []byte,
+	evType tpmeventlog.EventType,
 	eventData []byte,
 ) *TPMEventLogAdd {
 	return &TPMEventLogAdd{
 		PCRIndex:  pcrIndex,
 		Algo:      algo,
 		Digest:    digest,
+		Type:      evType,
 		EventData: eventData,
 	}
 }
@@ -43,7 +46,7 @@ func (ev *TPMEventLogAdd) Apply(ctx context.Context, state *types.State) error {
 		return err
 	}
 
-	if err := t.TPMEventLogAdd(ctx, ev.PCRIndex, ev.Algo, ev.Digest, ev.EventData, NewLogInfoProvider(state)); err != nil {
+	if err := t.TPMEventLogAdd(ctx, ev.PCRIndex, ev.Algo, ev.Digest, ev.Type, ev.EventData, NewLogInfoProvider(state)); err != nil {
 		return fmt.Errorf("unable to add an entry to TPM EventLog: %w", err)
 	}
 
@@ -52,5 +55,8 @@ func (ev *TPMEventLogAdd) Apply(ctx context.Context, state *types.State) error {
 
 // String implements fmt.Stringer.
 func (ev TPMEventLogAdd) String() string {
-	return fmt.Sprintf("TPMEventLogAdd(PCR: %d, Algo: %s, Digest: 0x%X, EventData: %X)", ev.PCRIndex, ev.Algo, ev.Digest, ev.EventData)
+	if ev.EventData == nil {
+		return fmt.Sprintf("TPMEventLogAdd(PCR: %d, Algo: %s, Digest: 0x%s)", ev.PCRIndex, ev.Algo, ev.Digest)
+	}
+	return fmt.Sprintf("TPMEventLogAdd(PCR: %d, Algo: %s, Digest: 0x%s, EventData: %X)", ev.PCRIndex, ev.Algo, ev.Digest, ev.EventData)
 }

@@ -3,8 +3,6 @@ package pcrbruteforcer
 import (
 	"bytes"
 	"context"
-	"crypto/sha1"
-	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"hash"
@@ -13,11 +11,16 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/tpmactions"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/datasources"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/intelsteps"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bruteforcer"
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
-	"github.com/facebookincubator/go-belt/tool/experimental/tracer"
+	"github.com/facebookincubator/go-belt/beltctx"
+	"github.com/facebookincubator/go-belt/tool/experimental/errmon"
 	"github.com/facebookincubator/go-belt/tool/logger"
 )
 
@@ -30,14 +33,14 @@ const (
 type ReproducePCR0Result struct {
 	Locality               uint8
 	CorrectACMPolicyStatus *registers.ACMPolicyStatus
-	DisabledMeasurements   pcr.Measurements
+	DisabledMeasurements   tpm.CommandLog
 }
 
 // SettingsBruteforceACMPolicyStatus defines settings of how to reproduce Intel ACM Policy Status.
 type SettingsBruteforceACMPolicyStatus struct {
 	// EnableACMPolicyCombinatorialStrategy enables a strategy to brute-force ACM Policy
 	// Status register by finding a combination of bits to flip. This was the
-	// initial approach before the nature of the corruptions was investaged,
+	// initial approach before the nature of the corruptions was investigated,
 	// and it became clear that a more effective strategy is just linear decrement.
 	EnableACMPolicyCombinatorialStrategy bool
 
@@ -65,7 +68,7 @@ type SettingsReproducePCR0 struct {
 	SettingsBruteforceACMPolicyStatus
 }
 
-// DefaultSettingsReproducePCR0 returns recommeneded default PCR0 settings
+// DefaultSettingsReproducePCR0 returns recommended default PCR0 settings
 func DefaultSettingsReproducePCR0() SettingsReproducePCR0 {
 	return SettingsReproducePCR0{
 		MaxDisabledMeasurements:           3,
@@ -86,25 +89,15 @@ func DefaultSettingsReproducePCR0() SettingsReproducePCR0 {
 // we will return the rest amended measurements as well.
 func ReproduceExpectedPCR0(
 	ctx context.Context,
-	expectedPCR0 []byte,
-	flow pcr.Flow,
-	measurements pcr.Measurements,
-	imageBytes []byte,
+	measurements tpm.CommandLog,
+	hashAlgo tpm.Algorithm,
+	expectedPCR0 tpm.Digest,
 	settings SettingsReproducePCR0,
 ) (*ReproducePCR0Result, error) {
-	var realMeasurements pcr.Measurements
-	for _, ms := range measurements {
-		if ms.IsFake() {
-			continue
-		}
-		realMeasurements = append(realMeasurements, ms)
-	}
-
 	handler, err := newReproduceExpectedPCR0Handler(
+		measurements,
+		hashAlgo,
 		expectedPCR0,
-		flow,
-		realMeasurements,
-		imageBytes,
 		settings,
 	)
 	if err != nil {
@@ -114,81 +107,29 @@ func ReproduceExpectedPCR0(
 }
 
 type reproduceExpectedPCR0Handler struct {
-	expectedPCR0              []byte
-	flow                      pcr.Flow
-	precalculatedMeasurements []*pcr.CachedMeasurement
-	imageBytes                []byte
-	hashFuncFactory           func() hash.Hash
+	hashAlgo                  tpm.Algorithm
+	expectedPCR0              tpm.Digest
+	precalculatedMeasurements tpm.CommandLog
 	settings                  SettingsReproducePCR0
 }
 
 func newReproduceExpectedPCR0Handler(
-	expectedPCR0 []byte,
-	flow pcr.Flow,
-	measurements pcr.Measurements,
-	imageBytes []byte,
+	measurements tpm.CommandLog,
+	hashAlgo tpm.Algorithm,
+	expectedPCR0 tpm.Digest,
 	settings SettingsReproducePCR0,
 ) (*reproduceExpectedPCR0Handler, error) {
-	var hashFuncFactory func() hash.Hash
-	switch len(expectedPCR0) {
-	case sha1.Size:
-		hashFuncFactory = sha1.New
-	case sha256.Size:
-		hashFuncFactory = sha256.New
-	default:
-		return nil, fmt.Errorf("invalid len for expectedPCR0: %d", len(expectedPCR0))
-	}
-
-	precalculatedMeasurements, err := cacheMeasurements(measurements, imageBytes, hashFuncFactory)
-	if err != nil {
-		return nil, fmt.Errorf("invalid measurements: %w", err)
-	}
-
 	return &reproduceExpectedPCR0Handler{
+		hashAlgo:                  hashAlgo,
 		expectedPCR0:              expectedPCR0,
-		flow:                      flow,
-		precalculatedMeasurements: precalculatedMeasurements,
-		imageBytes:                imageBytes,
-		hashFuncFactory:           hashFuncFactory,
+		precalculatedMeasurements: preprocessMeasurements(measurements, hashAlgo),
 		settings:                  settings,
 	}, nil
 }
 
 func (h *reproduceExpectedPCR0Handler) Execute(ctx context.Context) (*ReproducePCR0Result, error) {
-	// To speedup brute-force process we try the expected locality first,
-	// and only after that we try second expected locality.
-
-	span, ctx := tracer.StartChildSpanFromCtx(ctx, "reproduceExpectedPCR0Handler")
-	defer span.Finish()
-
-	// The expected locality.
-	result, err := h.execute(ctx, []uint8{h.flow.TPMLocality()})
-	if err != nil {
-		return nil, err
-	}
-	if result != nil {
-		return result, nil
-	}
-
-	// The second expected locality (flipping 0 and 3).
-	var restLocalities []uint8
-	switch h.flow.TPMLocality() {
-	case 0:
-		restLocalities = []uint8{3}
-	case 3:
-		restLocalities = []uint8{0}
-	default:
-		// The expected locality is neither 0 nor 3? We are not aware of
-		// such cases. Let's try all other localities then :)
-		for tryLocality := uint8(0); tryLocality < 4; tryLocality++ {
-			if tryLocality == h.flow.TPMLocality() {
-				continue
-			}
-			restLocalities = append(restLocalities, tryLocality)
-		}
-	}
-
-	return h.execute(ctx, restLocalities)
+	// TODO: try first the locality we expect
+	return h.execute(ctx, []uint8{0, 3})
 }
 
 func (h *reproduceExpectedPCR0Handler) execute(ctx context.Context, localities []uint8) (*ReproducePCR0Result, error) {
@@ -202,6 +143,11 @@ func (h *reproduceExpectedPCR0Handler) execute(ctx context.Context, localities [
 		wg.Add(1)
 		go func(tryLocality uint8) {
 			defer wg.Done()
+			ctx = beltctx.WithField(ctx, "locality", tryLocality)
+			defer func() {
+				errmon.ObserveRecoverCtx(ctx, recover())
+			}()
+
 			logger.FromCtx(ctx).Debugf("reproduce pcr0 starting bruteforce... (locality: %v)", tryLocality)
 
 			startTime := time.Now()
@@ -223,7 +169,7 @@ func (h *reproduceExpectedPCR0Handler) execute(ctx context.Context, localities [
 				return
 			}
 
-			logger.FromCtx(ctx).Debugf("received an answer (locality:%d, expectedLocality:%d): %v %v", tryLocality, h.flow.TPMLocality(), _result, err)
+			logger.FromCtx(ctx).Debugf("received an answer (locality: %d): %v %v", tryLocality, _result, err)
 			cancelFunc()
 
 			result = _result
@@ -237,25 +183,27 @@ func (h *reproduceExpectedPCR0Handler) newJob(
 	locality uint8,
 ) *reproduceExpectedPCR0Job {
 	return &reproduceExpectedPCR0Job{
-		imageBytes:        h.imageBytes,
 		measurements:      h.precalculatedMeasurements,
-		hashFuncFactory:   h.hashFuncFactory,
+		hashAlgo:          h.hashAlgo,
 		expectedPCR0:      h.expectedPCR0,
-		locality:          locality,
+		tpmInitCmd:        tpm.CommandInit{Locality: locality},
 		settings:          h.settings,
 		registerHashCache: newRegisterHashCache(),
+		supportedAlgos:    []tpm.Algorithm{h.hashAlgo},
 	}
 }
 
 type reproduceExpectedPCR0Job struct {
 	// immutable fields:
-	imageBytes        []byte
-	measurements      []*pcr.CachedMeasurement
-	hashFuncFactory   func() hash.Hash
-	expectedPCR0      []byte
-	locality          uint8
+	measurements      tpm.CommandLog
+	hashAlgo          tpm.Algorithm
+	expectedPCR0      tpm.Digest
+	tpmInitCmd        tpm.CommandInit
 	settings          SettingsReproducePCR0
 	registerHashCache *registerHashCache
+
+	// cache:
+	supportedAlgos []tpm.Algorithm
 }
 
 func isDone(ctx context.Context) bool {
@@ -291,7 +239,7 @@ func (j *reproduceExpectedPCR0Job) Execute(
 
 		type iterationResult struct {
 			isSuccess             bool
-			disabledMeasurements  pcr.Measurements
+			disabledMeasurements  tpm.CommandLog
 			actualACMPolicyStatus *registers.ACMPolicyStatus
 			err                   error
 		}
@@ -302,6 +250,8 @@ func (j *reproduceExpectedPCR0Job) Execute(
 			wg.Add(1)
 			go func(disabledMeasurementsIterator *bruteforcer.UniqueUnorderedCombinationIterator, startCombinationID uint64) {
 				defer wg.Done()
+				tpmInstance := tpm.NewTPM()
+
 				endCombinationID := startCombinationID + combinationsPerRoutine
 				if endCombinationID > maxCombinationID {
 					endCombinationID = maxCombinationID + 1
@@ -315,14 +265,14 @@ func (j *reproduceExpectedPCR0Job) Execute(
 						return
 					}
 					disabledMeasurementsComb := disabledMeasurementsIterator.GetCombinationUnsafe()
-					_isSuccess, _actualACMPolicyStatus, _err := j.tryDisabledMeasurementsCombination(ctx, disabledMeasurementsComb, j.hashFuncFactory)
+					_isSuccess, _actualACMPolicyStatus, _err := j.tryDisabledMeasurementsCombination(ctx, tpmInstance, disabledMeasurementsComb)
 					if _isSuccess || _err != nil {
-						var disabledMeasurements pcr.Measurements
+						var disabledMeasurements tpm.CommandLog
 						if _isSuccess {
 							for _, disabledMeasurementIdx := range disabledMeasurementsComb {
 								for idx := range j.measurements {
 									if int(disabledMeasurementIdx) == idx {
-										disabledMeasurements = append(disabledMeasurements, &j.measurements[idx].Measurement)
+										disabledMeasurements = append(disabledMeasurements, j.measurements[idx])
 										break
 									}
 								}
@@ -350,7 +300,7 @@ func (j *reproduceExpectedPCR0Job) Execute(
 		var (
 			isSuccess             bool
 			actualACMPolicyStatus *registers.ACMPolicyStatus
-			disabledMeasurements  pcr.Measurements
+			disabledMeasurements  tpm.CommandLog
 			mErr                  errors.MultiError
 		)
 		for result := range resultCh {
@@ -366,7 +316,7 @@ func (j *reproduceExpectedPCR0Job) Execute(
 
 		if isSuccess {
 			return &ReproducePCR0Result{
-				Locality:               j.locality,
+				Locality:               j.tpmInitCmd.Locality,
 				CorrectACMPolicyStatus: actualACMPolicyStatus,
 				DisabledMeasurements:   disabledMeasurements,
 			}, nil
@@ -381,10 +331,10 @@ func (j *reproduceExpectedPCR0Job) Execute(
 
 func (j *reproduceExpectedPCR0Job) tryDisabledMeasurementsCombination(
 	ctx context.Context,
+	tpmInstance *tpm.TPM,
 	disabledMeasurementsCombination bruteforcer.UniqueUnorderedCombination,
-	hashFuncFactory func() hash.Hash,
 ) (bool, *registers.ACMPolicyStatus, error) {
-	var enabledMeasurements []*pcr.CachedMeasurement
+	var enabledMeasurements tpm.CommandLog
 	for idx, m := range j.measurements {
 		isDisabled := false
 		// TODO: refactor this O(N^2); generate the picked measurements from the get go
@@ -400,17 +350,17 @@ func (j *reproduceExpectedPCR0Job) tryDisabledMeasurementsCombination(
 		enabledMeasurements = append(enabledMeasurements, m)
 	}
 
-	return j.measurementsVerify(j.expectedPCR0, enabledMeasurements, hashFuncFactory)
+	return j.measurementsVerify(tpmInstance, j.expectedPCR0, enabledMeasurements)
 }
 
 func (j *reproduceExpectedPCR0Job) measurementsVerify(
-	expectedHashValue []byte,
-	enabledMeasurements []*pcr.CachedMeasurement,
-	hasherFactory func() hash.Hash,
+	tpmInstance *tpm.TPM,
+	expectedHashValue tpm.Digest,
+	enabledMeasurements tpm.CommandLog,
 ) (bool, *registers.ACMPolicyStatus, error) {
 	switch {
-	case len(enabledMeasurements) > 0 && enabledMeasurements[0].ID == pcr.MeasurementIDPCR0DATA:
-		acmPolicyStatus, err := j.measurementsVerifyWithBruteForceACMPolicyStatus(expectedHashValue, enabledMeasurements, hasherFactory)
+	case len(enabledMeasurements) > 0 && isMeasurePCR0DATACmdLogEntry(enabledMeasurements[0]):
+		acmPolicyStatus, err := j.measurementsVerifyWithBruteForceACMPolicyStatus(expectedHashValue, enabledMeasurements)
 		if err != nil {
 			return false, nil, err
 		}
@@ -420,76 +370,120 @@ func (j *reproduceExpectedPCR0Job) measurementsVerify(
 		return true, acmPolicyStatus, nil
 
 	default:
-		// just check that the measurements lead to the expected pcr0 value
-		ms := make([]pcr.MeasureEvent, 0, len(enabledMeasurements))
-		for _, m := range enabledMeasurements {
-			ms = append(ms, m)
-		}
-		pcr0HashValue, err := pcr.CalculatePCR(j.imageBytes, j.locality, ms, hasherFactory(), nil)
-		if err != nil {
-			return false, nil, fmt.Errorf("unable to calculate PCR0 value: %w", err)
-		}
-		if bytes.Equal(pcr0HashValue, expectedHashValue) {
+		if bytes.Equal(j.replayTPMCommands(tpmInstance, enabledMeasurements), expectedHashValue) {
 			return true, nil, nil
 		}
 	}
 	return false, nil, nil
 }
 
+func isMeasurePCR0DATACmdLogEntry(logEntry tpm.CommandLogEntry) bool {
+	_, ok := logEntry.CauseCoordinates.Flow[logEntry.CauseCoordinates.StepIndex].(intelsteps.MeasurePCR0DATA)
+	return ok
+}
+
+func (j *reproduceExpectedPCR0Job) replayTPMCommands(
+	tpmInstance *tpm.TPM,
+	log tpm.CommandLog,
+) tpm.Digest {
+	tpmInstance.DoNotUse_ResetNoInit()
+	tpmInstance.SupportedAlgos = j.supportedAlgos
+	ctx := context.Background()
+	err := tpmInstance.DoNotUse_TPMExecuteNoLog(ctx, &j.tpmInitCmd)
+	if err != nil {
+		// this is caught by recover()
+		panic(err)
+	}
+	for _, cmd := range log {
+		// call `apply` method because it is faster than `TPMExecute`.
+		err := tpmInstance.DoNotUse_TPMExecuteNoLog(ctx, cmd)
+		if err != nil {
+			// this is caught by recover()
+			panic(err)
+		}
+	}
+	return tpmInstance.PCRValues[0][j.hashAlgo]
+}
+
 func (j *reproduceExpectedPCR0Job) measurementsVerifyWithBruteForceACMPolicyStatus(
-	expectedHashValue []byte,
-	enabledMeasurements []*pcr.CachedMeasurement,
-	hasherFactory func() hash.Hash,
+	expectedHashValue tpm.Digest,
+	enabledMeasurements tpm.CommandLog,
 ) (*registers.ACMPolicyStatus, error) {
 	if len(enabledMeasurements) < 1 {
 		return nil, fmt.Errorf("empty measurements slice, cannot compute PCR0")
 	}
 
-	if enabledMeasurements[0].ID != pcr.MeasurementIDPCR0DATA {
-		return nil, fmt.Errorf("first measurement is not the ACM policy status register")
+	_, ok := enabledMeasurements[0].CauseCoordinates.Step().(intelsteps.MeasurePCR0DATA)
+	if !ok {
+		return nil, fmt.Errorf("the first TPM command is not caused by a MeasurePCR0DATA step")
 	}
 
-	acmPolicyStatus := enabledMeasurements[0].Data[0].ForceData
-	if len(acmPolicyStatus) != 8 {
-		return nil, fmt.Errorf("ACM POLICY STATUS register is expected to be 64bits, but it is %d bits", len(acmPolicyStatus)*8)
+	// supposed to be always doable for a MeasurePCR0DATA step:
+	action := enabledMeasurements[0].CauseAction.(*tpmactions.TPMExtend)
+	dataSource := action.DataSource.(*datasources.StaticData)
+	pcr0DataBytes := dataSource.RawBytes()
+	acmPolicyStatusRef := dataSource.References()[0]
+
+	acmPolicyStatusOrig := acmPolicyStatusRef.RawBytes()
+	if len(acmPolicyStatusOrig) != 8 {
+		return nil, fmt.Errorf("ACM POLICY STATUS register is expected to be 64bits, but it is %d bits", len(acmPolicyStatusOrig)*8)
 	}
 
 	type bruteForceContext struct {
-		Hash          hash.Hash
-		MeasureEvents []pcr.MeasureEvent
+		TPMInstance  *tpm.TPM
+		Hasher       hash.Hash
+		Measurements tpm.CommandLog
+
+		PCR0DataDigestPointer tpm.Digest
+	}
+
+	h, err := j.hashAlgo.Hash()
+	if err != nil {
+		return nil, fmt.Errorf("unable to initialize hasher factory for algorithm %s: %w", j.hashAlgo, err)
 	}
 
 	init := func() ([]byte, any, error) {
-		fastMS := prepareFastMeasurements(enabledMeasurements, j.imageBytes, j.registerHashCache)
-		acmPolicyStatusValue := fastMS[0].(*pcr0DataFastMeasurement).Data[:len(enabledMeasurements[0].Data[0].ForceData)]
+		acmPolicyStatusValue := make([]byte, len(acmPolicyStatusOrig))
+		copy(acmPolicyStatusValue, acmPolicyStatusOrig)
+		measurements := make(tpm.CommandLog, len(enabledMeasurements))
+		copy(measurements, enabledMeasurements)
+		cmd := &tpm.CommandExtend{
+			PCRIndex: 0,
+			HashAlgo: j.hashAlgo,
+			Digest:   make([]byte, h.Size()),
+		}
+		measurements[0].Command = cmd
+
 		return acmPolicyStatusValue,
 			&bruteForceContext{
-				Hash:          j.hashFuncFactory(),
-				MeasureEvents: fastMS,
+				TPMInstance:           tpm.NewTPM(),
+				Hasher:                h.New(),
+				Measurements:          measurements,
+				PCR0DataDigestPointer: cmd.Digest,
 			}, nil
 	}
 
-	check := func(_ctx any, date []byte) (bool, error) {
+	check := func(_ctx any, data []byte) (bool, error) {
 		ctx := _ctx.(*bruteForceContext)
 		// check if this series of measurements lead to the expected pcr0
-		pcr0HashValue, err := pcr.CalculatePCR(
-			j.imageBytes, j.locality, ctx.MeasureEvents,
-			ctx.Hash, nil,
-		)
-		if err != nil {
-			return false, err
-		}
+		hasher := ctx.Hasher
+		measurements := ctx.Measurements
 
-		return bytes.Equal(pcr0HashValue, j.expectedPCR0), nil
+		hasher.Reset()
+		hasher.Write(data)
+		hasher.Write(pcr0DataBytes[len(data):])
+		hasher.Sum(ctx.PCR0DataDigestPointer[:0])
+
+		return bytes.Equal(j.replayTPMCommands(ctx.TPMInstance, measurements), j.expectedPCR0), nil
 	}
 
 	// try these in series because each completely fills the cpu
 	strategies := []acmPolicyStatusBruteForceStrategy{
-		newLinearSearch(j.settings.MaxACMPolicyLinearDistance, j.imageBytes, expectedHashValue),
+		newLinearSearch(j.settings.MaxACMPolicyLinearDistance, expectedHashValue),
 	}
 
 	if j.settings.EnableACMPolicyCombinatorialStrategy {
-		strategies = append(strategies, newCombinatorialSearch(j.settings.MaxACMPolicyCombinatorialDistance, j.imageBytes, expectedHashValue))
+		strategies = append(strategies, newCombinatorialSearch(j.settings.MaxACMPolicyCombinatorialDistance, expectedHashValue))
 	}
 
 	for _, s := range strategies {
@@ -509,8 +503,6 @@ func (j *reproduceExpectedPCR0Job) measurementsVerifyWithBruteForceACMPolicyStat
 // ACM bruteforcing strategies
 //-----------------------------------------------------------------------------
 
-type hashFactory func() hash.Hash
-
 type acmPolicyStatusBruteForceStrategy interface {
 	Process(
 		init func() ([]byte, any, error),
@@ -518,26 +510,28 @@ type acmPolicyStatusBruteForceStrategy interface {
 	) (*registers.ACMPolicyStatus, error)
 }
 
-func cacheMeasurements(ms pcr.Measurements, image []byte, hashFactory hashFactory) ([]*pcr.CachedMeasurement, error) {
-	msCached := make([]*pcr.CachedMeasurement, 0, len(ms))
-	for i := 0; i < len(ms); i++ {
-		cached, err := ms[i].Cache(image, hashFactory())
-		if err != nil {
-			return nil, err
+func preprocessMeasurements(ms tpm.CommandLog, hashAlgo tpm.Algorithm) tpm.CommandLog {
+	var result tpm.CommandLog
+	for _, m := range ms {
+		cmd, ok := m.Command.(*tpm.CommandExtend)
+		if !ok {
+			continue
 		}
-		msCached = append(msCached, cached)
+		if cmd.PCRIndex != 0 || cmd.HashAlgo != hashAlgo {
+			continue
+		}
+		result = append(result, m)
 	}
-	return msCached, nil
+	return result
 }
 
 type linearSearch struct {
 	limit    int
-	image    []byte
 	expected []byte
 }
 
-func newLinearSearch(limit int, image []byte, expected []byte) *linearSearch {
-	return &linearSearch{limit, image, expected}
+func newLinearSearch(limit int, expected []byte) *linearSearch {
+	return &linearSearch{limit, expected}
 }
 
 // locality uint8, ms []*pcr.CachedMeasurement
@@ -632,12 +626,11 @@ func (ls *linearSearch) Process(
 
 type combinatorialSearch struct {
 	limit    int
-	image    []byte
 	expected []byte
 }
 
-func newCombinatorialSearch(limit int, image []byte, expected []byte) *combinatorialSearch {
-	return &combinatorialSearch{limit, image, expected}
+func newCombinatorialSearch(limit int, expected []byte) *combinatorialSearch {
+	return &combinatorialSearch{limit, expected}
 }
 
 type pcr0DataFastMeasurement struct {
@@ -669,28 +662,6 @@ func (m *pcr0DataFastMeasurement) Calculate(image []byte, hashFunc hash.Hash) ([
 	hashValue := hashFunc.Sum(nil)
 	m.RegisterHashCache.Set(reg, hashValue)
 	return hashValue, nil
-}
-
-func newPCR0DataFastMeasurement(origMeasurement *pcr.CachedMeasurement, image []byte, cache *registerHashCache) *pcr0DataFastMeasurement {
-	data := origMeasurement.CompileMeasurableData(image)
-	b := make([]byte, len(data))
-	copy(b, data)
-	return &pcr0DataFastMeasurement{
-		Data:              b,
-		RegisterHashCache: cache,
-	}
-}
-
-func prepareFastMeasurements(ms []*pcr.CachedMeasurement, image []byte, cache *registerHashCache) []pcr.MeasureEvent {
-	copyMS := make([]pcr.MeasureEvent, len(ms))
-	for idx, m := range ms {
-		if m.ID == pcr.MeasurementIDPCR0DATA {
-			copyMS[idx] = newPCR0DataFastMeasurement(m, image, cache)
-		} else {
-			copyMS[idx] = m
-		}
-	}
-	return copyMS
 }
 
 func (cs *combinatorialSearch) Process(

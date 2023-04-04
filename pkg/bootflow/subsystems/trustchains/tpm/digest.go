@@ -1,13 +1,8 @@
 package tpm
 
 import (
-	"fmt"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
 // Digest is a digest/hash value
-type Digest []byte
-
-// String implements fmt.Stringer.
-func (d Digest) String() string {
-	return fmt.Sprintf("0x%X", []byte(d))
-}
+type Digest = types.ConvertedBytes

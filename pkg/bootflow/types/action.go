@@ -19,9 +19,11 @@ type Action interface {
 
 // ActionCoordinates is a set of coordinates, which defines an Action
 // within a Flow.
+//
+// TODO: make serializable
 type ActionCoordinates struct {
 	// Flow is the Flow where the Action is defined.
-	Flow Flow
+	Flow Flow `faker:"flow"`
 
 	// StepIndex is the index of the Step within the Flow.
 	StepIndex uint
@@ -33,10 +35,4 @@ type ActionCoordinates struct {
 // Step returns the Step.
 func (coords *ActionCoordinates) Step() Step {
 	return coords.Flow[coords.StepIndex]
-}
-
-// Action returns the Action.
-func (coords *ActionCoordinates) Action(ctx context.Context, state *State) Action {
-	step := coords.Step()
-	return step.Actions(ctx, state)[coords.ActionIndex]
 }

@@ -13,6 +13,18 @@ import (
 // A flow is static (never change).
 type Flow []Step
 
+func (flow Flow) Equal(cmp Flow) bool {
+	if len(flow) != len(cmp) {
+		return false
+	}
+	for idx, step := range flow {
+		if fmt.Sprintf("%#v", step) != fmt.Sprintf("%#v", cmp[idx]) {
+			return false
+		}
+	}
+	return true
+}
+
 func (flow Flow) String() string {
 	var result strings.Builder
 	result.WriteString("{\n")

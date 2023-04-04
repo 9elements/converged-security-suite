@@ -15,6 +15,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
+	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 	"github.com/google/go-tpm/tpm2"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 	manifest "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
@@ -181,9 +182,9 @@ func (d pcr0DATA) compileActions() types.Actions {
 		d.bpmSignature,
 		d.ibbDigest,
 	})
-	data.Converter = dataconverters.Hasher(h)
+	data.Converter = dataconverters.NewHasher(h)
 	return types.Actions{
 		tpmactions.NewTPMExtend(pcrtypes.ID(0), (*datasources.StaticData)(data), tpm2.Algorithm(d.hashAlgo)),
-		tpmactions.NewTPMEventLogAdd(pcrtypes.ID(0), tpm2.Algorithm(d.hashAlgo), data.ConvertedBytes(), []byte("PCR0_DATA "+d.hashAlgo.String())),
+		tpmactions.NewTPMEventLogAdd(pcrtypes.ID(0), tpm2.Algorithm(d.hashAlgo), data.ConvertedBytes(), tpmeventlog.EV_S_CRTM_CONTENTS, []byte("PCR0_DATA "+d.hashAlgo.String())),
 	}
 }

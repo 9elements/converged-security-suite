@@ -16,7 +16,7 @@ type TXTPublic struct {
 }
 
 // ReadAt implements types.SystemArtifact.
-func (c TXTPublic) ReadAt(p []byte, off int64) (n int, err error) {
+func (c *TXTPublic) ReadAt(p []byte, off int64) (n int, err error) {
 	for _, r := range c.Registers {
 		offset := int64(r.Address() - registers.TxtPublicSpace)
 		if offset < 0 {
@@ -40,7 +40,7 @@ func (c TXTPublic) ReadAt(p []byte, off int64) (n int, err error) {
 }
 
 // Size implements types.SystemArtifact.
-func (c TXTPublic) Size() uint64 {
+func (c *TXTPublic) Size() uint64 {
 	return registers.TxtPublicSpaceSize
 }
 

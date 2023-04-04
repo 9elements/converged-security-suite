@@ -7,12 +7,14 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
+	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 )
 
 // TPMEvent is a representation of `TPM2_PCR_Event`.
 type TPMEvent struct {
 	DataSource types.DataSource
 	PCRIndex   pcrtypes.ID
+	Type       tpmeventlog.EventType
 	EventData  []byte
 }
 
@@ -22,11 +24,13 @@ var _ types.Action = (*TPMEvent)(nil)
 func NewTPMEvent(
 	pcrIndex pcrtypes.ID,
 	dataSource types.DataSource,
+	evType tpmeventlog.EventType,
 	eventData []byte,
 ) *TPMEvent {
 	return &TPMEvent{
 		DataSource: dataSource,
 		PCRIndex:   pcrIndex,
+		Type:       evType,
 		EventData:  eventData,
 	}
 }
@@ -57,7 +61,7 @@ func (ev *TPMEvent) Apply(ctx context.Context, state *types.State) error {
 			return fmt.Errorf("unable to extend: %w", err)
 		}
 
-		if err := t.TPMEventLogAdd(ctx, ev.PCRIndex, hashAlgo, digest, ev.EventData, NewLogInfoProvider(state)); err != nil {
+		if err := t.TPMEventLogAdd(ctx, ev.PCRIndex, hashAlgo, digest, ev.Type, ev.EventData, NewLogInfoProvider(state)); err != nil {
 			return fmt.Errorf("unable to add an entry to TPM EventLog: %w", err)
 		}
 	}
@@ -69,7 +73,7 @@ func (ev *TPMEvent) Apply(ctx context.Context, state *types.State) error {
 // String implements fmt.Stringer.
 func (ev TPMEvent) String() string {
 	if len(ev.EventData) == 0 {
-		return fmt.Sprintf("TPMEvent(PCR: %d, DataSource: %v)", ev.PCRIndex, ev.DataSource)
+		return fmt.Sprintf("TPMEvent(PCR: %d, DataSource: %v, Type: %s)", ev.PCRIndex, ev.DataSource, ev.Type)
 	}
-	return fmt.Sprintf("TPMEvent(PCR: %d, DataSource: %v, EventData: %X)", ev.PCRIndex, ev.DataSource, ev.EventData)
+	return fmt.Sprintf("TPMEvent(PCR: %d, DataSource: %v, Type: %s, EventData: %X)", ev.PCRIndex, ev.DataSource, ev.Type, ev.EventData)
 }

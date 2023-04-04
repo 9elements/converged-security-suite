@@ -21,7 +21,7 @@ var IntelCBnT = types.Flow{
 	intelsteps.VerifyBPM(IntelCBnTFailure),
 	intelsteps.VerifyIBB(IntelCBnTFailure),
 	commonsteps.SetActor(intelactors.ACM{}),
-	tpmsteps.InitTPM(3),
+	tpmsteps.InitTPM(3, true),
 	intelsteps.MeasurePCR0DATA{},
 	commonsteps.SetFlow(PEI),
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/datasources"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
+	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
@@ -17,6 +18,7 @@ func measureToTPMEachRangeSeparately(
 	s *types.State,
 	pcrID pcrtypes.ID,
 	dataSource types.DataSource,
+	eventType tpmeventlog.EventType,
 	comment string,
 ) types.Actions {
 	data, err := dataSource.Data(ctx, s)
@@ -36,6 +38,7 @@ func measureToTPMEachRangeSeparately(
 					AddressMapper: ref.AddressMapper,
 					Ranges:        []pkgbytes.Range{r},
 				})),
+				eventType,
 				[]byte(fmt.Sprintf("%s_%d_%d", comment, refIdx, rangeIdx)),
 			))
 		}
