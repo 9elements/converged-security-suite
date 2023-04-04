@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"os"
@@ -12,11 +13,13 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/amdpsp"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/intelpch"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm/pcrbruteforcer"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/amdregisters"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/txtpublic"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
+	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 	"github.com/facebookincubator/go-belt/tool/logger"
 	"github.com/facebookincubator/go-belt/tool/logger/implementation/logrus"
 	"github.com/google/go-tpm/tpm2"
@@ -32,6 +35,8 @@ func main() {
 	// parsing arguments
 	flag.Var(&regs, "registers", "")
 	flag.Var(&logLevel, "log-level", "")
+	compareWithEventLogFlag := flag.String("compare-with-eventlog", "", "")
+	expectedPCR0Flag := flag.String("expected-pcr0", "", "")
 	printMeasuredBytesLimitFlag := flag.Uint("print-measured-bytes-limit", 0, "")
 	flag.Parse()
 	biosFirmwarePath := flag.Arg(0)
@@ -41,15 +46,56 @@ func main() {
 	}
 
 	ctx := logger.CtxWithLogger(context.Background(), logrus.Default().WithLevel(logLevel))
-	calcAndPrintPCR0(ctx, biosFirmware, registers.Registers(regs), *printMeasuredBytesLimitFlag)
+	process := boot(ctx, biosFirmware, registers.Registers(regs))
+	printBootResults(ctx, process, *printMeasuredBytesLimitFlag)
+
+	if *compareWithEventLogFlag != "" {
+		eventLogFile, err := os.Open(*compareWithEventLogFlag)
+		if err != nil {
+			panic(err)
+		}
+		defer eventLogFile.Close()
+
+		eventLog, err := tpmeventlog.Parse(eventLogFile)
+		if err != nil {
+			panic(err)
+		}
+
+		success, _, issues, err := pcrbruteforcer.ReproduceEventLog(ctx, process, eventLog, tpm2.AlgSHA256, pcrbruteforcer.DefaultSettingsReproduceEventLog())
+		if err != nil {
+			panic(err)
+		}
+		printEventLogIssues(ctx, issues)
+		if !success {
+			fmt.Println("unable to reproduce TPM EventLog")
+		}
+	}
+
+	if *expectedPCR0Flag != "" {
+		expectedPCR0, err := hex.DecodeString(*expectedPCR0Flag)
+		if err != nil {
+			panic(err)
+		}
+
+		tpmInstance, err := tpm.GetFrom(process.CurrentState)
+		if err != nil {
+			panic(err)
+		}
+
+		result, err := pcrbruteforcer.ReproduceExpectedPCR0(ctx, tpmInstance.CommandLog, tpm2.AlgSHA256, expectedPCR0, pcrbruteforcer.DefaultSettingsReproducePCR0())
+		if err != nil {
+			panic(err)
+		}
+
+		printReproducePCR0Result(ctx, result)
+	}
 }
 
-func calcAndPrintPCR0(
+func boot(
 	ctx context.Context,
 	biosFirmware []byte,
 	regs registers.Registers,
-	printMeasuredBytesLimit uint,
-) {
+) *bootengine.BootProcess {
 	// the main part
 	state := types.NewState()
 	state.IncludeSubSystem(tpm.NewTPM())
@@ -58,9 +104,18 @@ func calcAndPrintPCR0(
 	state.IncludeSystemArtifact(biosimage.New(biosFirmware))
 	state.IncludeSystemArtifact(txtpublic.New(registers.Registers(regs)))
 	state.IncludeSystemArtifact(amdregisters.New(registers.Registers(regs)))
-	state.SetFlow(flows.Root)
+	state.SetFlow(flows.AMD)
 	process := bootengine.NewBootProcess(state)
 	process.Finish(ctx)
+	return process
+}
+
+func printBootResults(
+	ctx context.Context,
+	process *bootengine.BootProcess,
+	printMeasuredBytesLimit uint,
+) {
+	state := process.CurrentState
 
 	// printing results
 
@@ -109,6 +164,33 @@ func calcAndPrintPCR0(
 
 	fmt.Printf("\nFinal PCR values:\n")
 	for pcrID, values := range tpmInstance.PCRValues {
-		fmt.Printf("\tPCR[%d]: SHA1:%X SHA256:%X\n", pcrID, values[tpm2.AlgSHA1], values[tpm2.AlgSHA256])
+		fmt.Printf("\tPCR[%d]: SHA1:%s SHA256:%s\n", pcrID, values[tpm2.AlgSHA1], values[tpm2.AlgSHA256])
+	}
+}
+
+func printEventLogIssues(ctx context.Context, issues []pcrbruteforcer.Issue) {
+	if len(issues) == 0 {
+		return
+	}
+	fmt.Printf("\nTPM EventLog replay issues:\n")
+	for idx, issue := range issues {
+		fmt.Printf("\t%3d.) %v\n", idx+1, issue)
+	}
+}
+
+func printReproducePCR0Result(ctx context.Context, result *pcrbruteforcer.ReproducePCR0Result) {
+	if result == nil {
+		fmt.Println("unable to reproduce PCR0")
+		return
+	}
+	fmt.Printf("\nReproduce PCR0 result:\n")
+	fmt.Printf("\tLocality: %d\n", result.Locality)
+	fmt.Printf("\tCorrectedACMPolicyStatus: %#+v\n", result.CorrectACMPolicyStatus)
+	if len(result.DisabledMeasurements) == 0 {
+		return
+	}
+	fmt.Printf("\tDisabledMeasurements:\n")
+	for idx, disabledMeasurement := range result.DisabledMeasurements {
+		fmt.Printf("\t\t%3d.) %v\n", idx+1, disabledMeasurement)
 	}
 }
