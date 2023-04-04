@@ -68,7 +68,7 @@ func main() {
 			panic(err)
 		}
 
-		printReproducePCR0Result(ctx, commandLog, reproducePCR0Result)
+		printReproducePCR0Result(ctx, commandLog, reproducePCR0Result, tpm2.AlgSHA256)
 	}
 
 	if *compareWithEventLogFlag != "" {
@@ -114,7 +114,7 @@ func main() {
 			panic(err)
 		}
 
-		printReproducePCR0Result(ctx, commandLog, reproducePCR0Result)
+		printReproducePCR0Result(ctx, commandLog, reproducePCR0Result, tpm2.AlgSHA256)
 		if reproducePCR0Result != nil {
 			return
 		}
@@ -123,7 +123,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		printReproducePCR0Result(ctx, sanitizedCommandLog, reproducePCR0Result)
+		printReproducePCR0Result(ctx, sanitizedCommandLog, reproducePCR0Result, tpm2.AlgSHA256)
 		if reproducePCR0Result != nil {
 			return
 		}
@@ -267,6 +267,7 @@ func printReproducePCR0Result(
 	ctx context.Context,
 	commandLog tpm.CommandLog,
 	result *pcrbruteforcer.ReproducePCR0Result,
+	hashAlgo tpm.Algorithm,
 ) {
 	if result == nil {
 		fmt.Println("unable to reproduce PCR0")
@@ -290,11 +291,15 @@ func printReproducePCR0Result(
 		if _, ok := disabledMeasurementsMap[&commandLog[idx]]; ok {
 			continue
 		}
-		switch logEntry.Command.(type) {
+		switch cmd := logEntry.Command.(type) {
 		case *tpm.CommandEventLogAdd:
 			continue
 		case *tpm.CommandInit:
 			if idx != 0 {
+				continue
+			}
+		case *tpm.CommandExtend:
+			if cmd.HashAlgo != hashAlgo {
 				continue
 			}
 		}
