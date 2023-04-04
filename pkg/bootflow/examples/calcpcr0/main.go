@@ -189,7 +189,7 @@ func boot(
 	state.IncludeSystemArtifact(biosimage.New(biosFirmware))
 	state.IncludeSystemArtifact(txtpublic.New(registers.Registers(regs)))
 	state.IncludeSystemArtifact(amdregisters.New(registers.Registers(regs)))
-	state.SetFlow(flows.AMD)
+	state.SetFlow(flows.Root)
 	process := bootengine.NewBootProcess(state)
 	process.Finish(ctx)
 	return process
