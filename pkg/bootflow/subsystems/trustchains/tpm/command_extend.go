@@ -40,7 +40,7 @@ func (cmd CommandExtend) String() string {
 }
 
 // apply implements Command.
-func (cmd *CommandExtend) apply(_ context.Context, tpm *TPM) error {
+func (cmd *CommandExtend) Apply(_ context.Context, tpm *TPM) error {
 	h, err := cmd.HashAlgo.Hash()
 	if err != nil {
 		return fmt.Errorf("invalid hash algo: %w", err)

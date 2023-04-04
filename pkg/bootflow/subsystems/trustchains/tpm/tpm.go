@@ -126,16 +126,7 @@ func (tpm *TPM) TPMExecute(ctx context.Context, cmd Command, logInfo CommandLogI
 			causeAction,
 		),
 	)
-	return tpm.DoNotUse_TPMExecuteNoLog(ctx, cmd)
-}
-
-// DoNotUse_TPMExecuteNoLog executes an abstract command, but without logging.
-//
-// Consider using TPMExecute instead, unless you know what you do.
-//
-// TODO: consider removing this method.
-func (tpm *TPM) DoNotUse_TPMExecuteNoLog(ctx context.Context, cmd Command) error {
-	return cmd.apply(ctx, tpm)
+	return cmd.Apply(ctx, tpm)
 }
 
 // TPMInit is just a wrapper which creates a CommandInit and executes it.

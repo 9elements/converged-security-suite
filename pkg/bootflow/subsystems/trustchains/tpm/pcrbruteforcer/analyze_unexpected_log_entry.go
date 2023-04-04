@@ -1,3 +1,7 @@
+// This package needs deep redesigning: there are more and more ways to do
+// brute-forcing, so these modules should be flattened out instead of going
+// coupling every method among each other.
+
 package pcrbruteforcer
 
 import (

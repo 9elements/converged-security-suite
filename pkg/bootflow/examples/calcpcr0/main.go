@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine"
@@ -49,6 +50,27 @@ func main() {
 	process := boot(ctx, biosFirmware, registers.Registers(regs))
 	printBootResults(ctx, process, *printMeasuredBytesLimitFlag)
 
+	tpmInstance, err := tpm.GetFrom(process.CurrentState)
+	if err != nil {
+		panic(err)
+	}
+
+	var reproducePCR0Result *pcrbruteforcer.ReproducePCR0Result
+	commandLog := tpmInstance.CommandLog
+	if *expectedPCR0Flag != "" {
+		expectedPCR0, err := hex.DecodeString(*expectedPCR0Flag)
+		if err != nil {
+			panic(err)
+		}
+
+		reproducePCR0Result, err = pcrbruteforcer.ReproduceExpectedPCR0(ctx, commandLog, tpm2.AlgSHA256, expectedPCR0, pcrbruteforcer.DefaultSettingsReproducePCR0())
+		if err != nil {
+			panic(err)
+		}
+
+		printReproducePCR0Result(ctx, commandLog, reproducePCR0Result)
+	}
+
 	if *compareWithEventLogFlag != "" {
 		eventLogFile, err := os.Open(*compareWithEventLogFlag)
 		if err != nil {
@@ -61,34 +83,97 @@ func main() {
 			panic(err)
 		}
 
-		success, _, issues, err := pcrbruteforcer.ReproduceEventLog(ctx, process, eventLog, tpm2.AlgSHA256, pcrbruteforcer.DefaultSettingsReproduceEventLog())
+		result, _, issues, err := pcrbruteforcer.ReproduceEventLog(ctx, process, eventLog, tpm2.AlgSHA256, pcrbruteforcer.DefaultSettingsReproduceEventLog())
 		if err != nil {
 			panic(err)
 		}
 		printEventLogIssues(ctx, issues)
-		if !success {
-			fmt.Println("unable to reproduce TPM EventLog")
+
+		commandLog = result.CombineAsCommandLog()
+	}
+
+	expectedPCR0, err := hex.DecodeString(*expectedPCR0Flag)
+	if err != nil {
+		panic(err)
+	}
+
+	if reproducePCR0Result != nil || *expectedPCR0Flag == "" {
+		return
+	}
+
+	sanitizedCommandLog := sanitizeCommandLog(commandLog)
+	for _, maxReorders := range []int{0, 1, 2, 3} {
+		settings := pcrbruteforcer.DefaultSettingsReproducePCR0()
+		settings.MaxDisabledMeasurements = 6 - maxReorders
+		settings.MaxReorders = maxReorders
+
+		logger.FromCtx(ctx).Infof("ReproducePCR0Settings = %#+v", settings)
+
+		reproducePCR0Result, err = pcrbruteforcer.ReproduceExpectedPCR0(ctx, commandLog, tpm2.AlgSHA256, expectedPCR0, settings)
+		if err != nil {
+			panic(err)
+		}
+
+		printReproducePCR0Result(ctx, commandLog, reproducePCR0Result)
+		if reproducePCR0Result != nil {
+			return
+		}
+
+		reproducePCR0Result, err = pcrbruteforcer.ReproduceExpectedPCR0(ctx, commandLog, tpm2.AlgSHA256, expectedPCR0, settings)
+		if err != nil {
+			panic(err)
+		}
+		printReproducePCR0Result(ctx, sanitizedCommandLog, reproducePCR0Result)
+		if reproducePCR0Result != nil {
+			return
+		}
+	}
+}
+
+func sanitizeCommandLog(commandLog tpm.CommandLog) tpm.CommandLog {
+	commandLogSanitized := make(tpm.CommandLog, 0, len(commandLog))
+	isInitialized := false
+	digestDenyList := map[string]struct{}{}
+	for _, logEntry := range commandLog {
+		switch cmd := logEntry.Command.(type) {
+		case *tpm.CommandInit:
+			if isInitialized {
+				continue
+			}
+			isInitialized = true
+			commandLogSanitized = append(commandLogSanitized, logEntry)
+		case *tpm.CommandEventLogAdd:
+			if strings.HasPrefix(strings.ToLower(string(cmd.Data)), "hrot measurement") {
+				commandLogSanitized = append(commandLogSanitized, tpm.CommandLogEntry{
+					Command:          &cmd.CommandExtend,
+					CauseCoordinates: logEntry.CauseCoordinates,
+					CauseAction:      logEntry.CauseAction,
+				})
+				digestDenyList[string(cmd.Digest)] = struct{}{}
+			}
+		}
+	}
+	for _, logEntry := range commandLog {
+		switch cmd := logEntry.Command.(type) {
+		case *tpm.CommandExtend:
+			if _, ok := digestDenyList[string(cmd.Digest)]; ok {
+				continue
+			}
+			allZerosDigest := true
+			for _, b := range cmd.Digest {
+				if b != 0 {
+					allZerosDigest = false
+					break
+				}
+			}
+			if allZerosDigest {
+				continue
+			}
+			commandLogSanitized = append(commandLogSanitized, logEntry)
 		}
 	}
 
-	if *expectedPCR0Flag != "" {
-		expectedPCR0, err := hex.DecodeString(*expectedPCR0Flag)
-		if err != nil {
-			panic(err)
-		}
-
-		tpmInstance, err := tpm.GetFrom(process.CurrentState)
-		if err != nil {
-			panic(err)
-		}
-
-		result, err := pcrbruteforcer.ReproduceExpectedPCR0(ctx, tpmInstance.CommandLog, tpm2.AlgSHA256, expectedPCR0, pcrbruteforcer.DefaultSettingsReproducePCR0())
-		if err != nil {
-			panic(err)
-		}
-
-		printReproducePCR0Result(ctx, result)
-	}
+	return commandLogSanitized
 }
 
 func boot(
@@ -178,7 +263,11 @@ func printEventLogIssues(ctx context.Context, issues []pcrbruteforcer.Issue) {
 	}
 }
 
-func printReproducePCR0Result(ctx context.Context, result *pcrbruteforcer.ReproducePCR0Result) {
+func printReproducePCR0Result(
+	ctx context.Context,
+	commandLog tpm.CommandLog,
+	result *pcrbruteforcer.ReproducePCR0Result,
+) {
 	if result == nil {
 		fmt.Println("unable to reproduce PCR0")
 		return
@@ -186,11 +275,42 @@ func printReproducePCR0Result(ctx context.Context, result *pcrbruteforcer.Reprod
 	fmt.Printf("\nReproduce PCR0 result:\n")
 	fmt.Printf("\tLocality: %d\n", result.Locality)
 	fmt.Printf("\tCorrectedACMPolicyStatus: %#+v\n", result.CorrectACMPolicyStatus)
-	if len(result.DisabledMeasurements) == 0 {
-		return
+
+	resultCommandLog := make(tpm.CommandLog, 0, len(commandLog))
+
+	disabledMeasurementsMap := map[*tpm.CommandLogEntry]struct{}{}
+	if len(result.DisabledMeasurements) != 0 {
+		fmt.Printf("\tDisabledMeasurements:\n")
+		for idx, disabledMeasurement := range result.DisabledMeasurements {
+			disabledMeasurementsMap[disabledMeasurement] = struct{}{}
+			fmt.Printf("\t\t%3d.) %v\n", idx+1, disabledMeasurement)
+		}
 	}
-	fmt.Printf("\tDisabledMeasurements:\n")
-	for idx, disabledMeasurement := range result.DisabledMeasurements {
-		fmt.Printf("\t\t%3d.) %v\n", idx+1, disabledMeasurement)
+	for idx, logEntry := range commandLog {
+		if _, ok := disabledMeasurementsMap[&commandLog[idx]]; ok {
+			continue
+		}
+		switch logEntry.Command.(type) {
+		case *tpm.CommandEventLogAdd:
+			continue
+		case *tpm.CommandInit:
+			if idx != 0 {
+				continue
+			}
+		}
+		resultCommandLog = append(resultCommandLog, logEntry)
+	}
+
+	if len(result.OrderSwaps) != 0 {
+		fmt.Printf("\tOrderSwaps:\n")
+		for idx, orderSwap := range result.OrderSwaps {
+			fmt.Printf("\t\t%3d.) #%d <-> #%d\n", idx+1, orderSwap.IdxA, orderSwap.IdxB)
+		}
+		pcrbruteforcer.ApplyOrderSwaps(result.OrderSwaps, resultCommandLog)
+	}
+
+	fmt.Printf("\tThe instruction to reproduce the PCR0:\n")
+	for idx, measurement := range resultCommandLog {
+		fmt.Printf("\t\t%3d.) %v\n", idx+1, measurement)
 	}
 }

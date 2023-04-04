@@ -123,7 +123,7 @@ func TestReproduceEventLog(t *testing.T) {
 
 		_, process := dummyBoot()
 		process.Finish(ctx)
-		succeeded, acmPolicyStatus, issues, err := ReproduceEventLog(
+		result, acmPolicyStatus, issues, err := ReproduceEventLog(
 			ctx,
 			process,
 			eventLog,
@@ -132,7 +132,7 @@ func TestReproduceEventLog(t *testing.T) {
 		)
 		require.NoError(t, err)
 		require.Len(t, issues, 0)
-		require.True(t, succeeded)
+		require.NotNil(t, result)
 		require.Nil(t, acmPolicyStatus)
 	})
 
@@ -144,7 +144,7 @@ func TestReproduceEventLog(t *testing.T) {
 
 		eventLog := getTPMEventLog(t)
 
-		succeeded, acmPolicyStatus, issues, err := ReproduceEventLog(
+		result, acmPolicyStatus, issues, err := ReproduceEventLog(
 			ctx,
 			process,
 			eventLog,
@@ -153,7 +153,7 @@ func TestReproduceEventLog(t *testing.T) {
 		)
 		assert.NoError(t, err)
 		assert.Len(t, issues, 1, fmt.Sprintf("%s\n%s\n%v", process, tpmInstance.EventLog, eventLog))
-		assert.True(t, succeeded)
+		assert.NotNil(t, result)
 		require.NotNil(t, acmPolicyStatus)
 		require.Equal(t, uint64(0x0000000200108681), acmPolicyStatus.Raw())
 
@@ -187,7 +187,7 @@ func TestReproduceEventLog(t *testing.T) {
 
 		_, process := dummyBoot()
 		process.Finish(ctx)
-		succeeded, acmPolicyStatus, issues, err := ReproduceEventLog(
+		result, acmPolicyStatus, issues, err := ReproduceEventLog(
 			ctx,
 			process,
 			eventLog,
@@ -195,7 +195,7 @@ func TestReproduceEventLog(t *testing.T) {
 			DefaultSettingsReproduceEventLog(),
 		)
 		require.NoError(t, err)
-		require.False(t, succeeded)
+		require.NotNil(t, result)
 		require.Equal(t, []Issue{
 			fmt.Errorf("unexpected entry in EventLog of type EV_EFI_VARIABLE_AUTHORITY (0x800000E0) and digest 0000000000000000000000000000000000000000 on evIdx==1; log entry analysis: <unable to get any info; event: {PCR:0, Type:EV_EFI_VARIABLE_AUTHORITY (0x800000E0), Digest:{Algo:SHA1, Digest:0x0000000000000000000000000000000000000000}, Data:0x696E6A6563746564}>"),
 			fmt.Errorf("unexpected entry in EventLog of type EV_S_CRTM_CONTENTS (0x7) and digest 0000000000000000000000000000000000000000 on evIdx==2; log entry analysis: <unable to get any info; event: {PCR:0, Type:EV_S_CRTM_CONTENTS (0x7), Digest:{Algo:SHA1, Digest:0x0000000000000000000000000000000000000000}, Data:0x}>"),

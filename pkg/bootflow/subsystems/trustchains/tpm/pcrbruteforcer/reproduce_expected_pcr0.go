@@ -1,3 +1,7 @@
+// This package needs deep redesigning: there are more and more ways to do
+// brute-forcing, so these modules should be flattened out instead of going
+// coupling every method among each other.
+
 package pcrbruteforcer
 
 import (
@@ -33,7 +37,8 @@ const (
 type ReproducePCR0Result struct {
 	Locality               uint8
 	CorrectACMPolicyStatus *registers.ACMPolicyStatus
-	DisabledMeasurements   tpm.CommandLog
+	DisabledMeasurements   []*tpm.CommandLogEntry
+	OrderSwaps             OrderSwaps
 }
 
 // SettingsBruteforceACMPolicyStatus defines settings of how to reproduce Intel ACM Policy Status.
@@ -64,6 +69,7 @@ func DefaultSettingsBruteforceACMPolicyStatus() SettingsBruteforceACMPolicyStatu
 // SettingsReproducePCR0 defines settings for internal bruteforce algorithms used in ReproduceExpectedPCR0
 type SettingsReproducePCR0 struct {
 	MaxDisabledMeasurements int
+	MaxReorders             int
 
 	SettingsBruteforceACMPolicyStatus
 }
@@ -71,7 +77,8 @@ type SettingsReproducePCR0 struct {
 // DefaultSettingsReproducePCR0 returns recommended default PCR0 settings
 func DefaultSettingsReproducePCR0() SettingsReproducePCR0 {
 	return SettingsReproducePCR0{
-		MaxDisabledMeasurements:           3,
+		MaxDisabledMeasurements:           4,
+		MaxReorders:                       0,
 		SettingsBruteforceACMPolicyStatus: DefaultSettingsBruteforceACMPolicyStatus(),
 	}
 }
@@ -107,10 +114,10 @@ func ReproduceExpectedPCR0(
 }
 
 type reproduceExpectedPCR0Handler struct {
-	hashAlgo                  tpm.Algorithm
-	expectedPCR0              tpm.Digest
-	precalculatedMeasurements tpm.CommandLog
-	settings                  SettingsReproducePCR0
+	hashAlgo             tpm.Algorithm
+	expectedPCR0         tpm.Digest
+	filteredMeasurements []*tpm.CommandLogEntry
+	settings             SettingsReproducePCR0
 }
 
 func newReproduceExpectedPCR0Handler(
@@ -120,10 +127,10 @@ func newReproduceExpectedPCR0Handler(
 	settings SettingsReproducePCR0,
 ) (*reproduceExpectedPCR0Handler, error) {
 	return &reproduceExpectedPCR0Handler{
-		hashAlgo:                  hashAlgo,
-		expectedPCR0:              expectedPCR0,
-		precalculatedMeasurements: preprocessMeasurements(measurements, hashAlgo),
-		settings:                  settings,
+		hashAlgo:             hashAlgo,
+		expectedPCR0:         expectedPCR0,
+		filteredMeasurements: filteredMeasurements(measurements, hashAlgo),
+		settings:             settings,
 	}, nil
 }
 
@@ -183,7 +190,7 @@ func (h *reproduceExpectedPCR0Handler) newJob(
 	locality uint8,
 ) *reproduceExpectedPCR0Job {
 	return &reproduceExpectedPCR0Job{
-		measurements:      h.precalculatedMeasurements,
+		measurements:      h.filteredMeasurements,
 		hashAlgo:          h.hashAlgo,
 		expectedPCR0:      h.expectedPCR0,
 		tpmInitCmd:        tpm.CommandInit{Locality: locality},
@@ -195,7 +202,7 @@ func (h *reproduceExpectedPCR0Handler) newJob(
 
 type reproduceExpectedPCR0Job struct {
 	// immutable fields:
-	measurements      tpm.CommandLog
+	measurements      []*tpm.CommandLogEntry
 	hashAlgo          tpm.Algorithm
 	expectedPCR0      tpm.Digest
 	tpmInitCmd        tpm.CommandInit
@@ -239,7 +246,8 @@ func (j *reproduceExpectedPCR0Job) Execute(
 
 		type iterationResult struct {
 			isSuccess             bool
-			disabledMeasurements  tpm.CommandLog
+			orderSwaps            OrderSwaps
+			disabledMeasurements  []*tpm.CommandLogEntry
 			actualACMPolicyStatus *registers.ACMPolicyStatus
 			err                   error
 		}
@@ -251,6 +259,7 @@ func (j *reproduceExpectedPCR0Job) Execute(
 			go func(disabledMeasurementsIterator *bruteforcer.UniqueUnorderedCombinationIterator, startCombinationID uint64) {
 				defer wg.Done()
 				tpmInstance := tpm.NewTPM()
+				buf := make([]bool, len(j.measurements))
 
 				endCombinationID := startCombinationID + combinationsPerRoutine
 				if endCombinationID > maxCombinationID {
@@ -265,9 +274,9 @@ func (j *reproduceExpectedPCR0Job) Execute(
 						return
 					}
 					disabledMeasurementsComb := disabledMeasurementsIterator.GetCombinationUnsafe()
-					_isSuccess, _actualACMPolicyStatus, _err := j.tryDisabledMeasurementsCombination(ctx, tpmInstance, disabledMeasurementsComb)
+					_isSuccess, _orderSwaps, _actualACMPolicyStatus, _err := j.tryDisabledMeasurementsCombination(ctx, tpmInstance, disabledMeasurementsComb, buf)
 					if _isSuccess || _err != nil {
-						var disabledMeasurements tpm.CommandLog
+						var disabledMeasurements []*tpm.CommandLogEntry
 						if _isSuccess {
 							for _, disabledMeasurementIdx := range disabledMeasurementsComb {
 								for idx := range j.measurements {
@@ -281,6 +290,7 @@ func (j *reproduceExpectedPCR0Job) Execute(
 
 						resultCh <- iterationResult{
 							isSuccess:             _isSuccess,
+							orderSwaps:            _orderSwaps,
 							disabledMeasurements:  disabledMeasurements,
 							actualACMPolicyStatus: _actualACMPolicyStatus,
 							err:                   _err,
@@ -299,13 +309,15 @@ func (j *reproduceExpectedPCR0Job) Execute(
 
 		var (
 			isSuccess             bool
+			orderSwaps            OrderSwaps
 			actualACMPolicyStatus *registers.ACMPolicyStatus
-			disabledMeasurements  tpm.CommandLog
+			disabledMeasurements  []*tpm.CommandLogEntry
 			mErr                  errors.MultiError
 		)
 		for result := range resultCh {
 			if result.isSuccess && !isSuccess {
 				isSuccess = true
+				orderSwaps = result.orderSwaps
 				disabledMeasurements = result.disabledMeasurements
 				actualACMPolicyStatus = result.actualACMPolicyStatus
 			}
@@ -319,6 +331,7 @@ func (j *reproduceExpectedPCR0Job) Execute(
 				Locality:               j.tpmInitCmd.Locality,
 				CorrectACMPolicyStatus: actualACMPolicyStatus,
 				DisabledMeasurements:   disabledMeasurements,
+				OrderSwaps:             orderSwaps,
 			}, nil
 		}
 
@@ -333,8 +346,11 @@ func (j *reproduceExpectedPCR0Job) tryDisabledMeasurementsCombination(
 	ctx context.Context,
 	tpmInstance *tpm.TPM,
 	disabledMeasurementsCombination bruteforcer.UniqueUnorderedCombination,
-) (bool, *registers.ACMPolicyStatus, error) {
-	var enabledMeasurements tpm.CommandLog
+	buf []bool,
+) (bool, OrderSwaps, *registers.ACMPolicyStatus, error) {
+	var enabledMeasurements []*tpm.CommandLogEntry
+	disabledCount := 0
+	idxShifts := make([]int, 0, len(enabledMeasurements))
 	for idx, m := range j.measurements {
 		isDisabled := false
 		// TODO: refactor this O(N^2); generate the picked measurements from the get go
@@ -345,58 +361,202 @@ func (j *reproduceExpectedPCR0Job) tryDisabledMeasurementsCombination(
 			}
 		}
 		if isDisabled {
+			disabledCount++
 			continue
 		}
+		idxShifts = append(idxShifts, disabledCount)
 		enabledMeasurements = append(enabledMeasurements, m)
 	}
 
-	return j.measurementsVerify(tpmInstance, j.expectedPCR0, enabledMeasurements)
+	success, orderSwaps, acmPSR, err := j.measurementsVerify(tpmInstance, j.expectedPCR0, enabledMeasurements, buf)
+
+	// Inside measurementsVerify we worked with a subset of measurements which excludes
+	// the disabled measurements. But these indexes are wrong in context of full set of
+	// measurements, correcting the indexes:
+	for idx := range orderSwaps {
+		orderSwap := &orderSwaps[idx]
+		orderSwap.IdxA += idxShifts[orderSwap.IdxA]
+		orderSwap.IdxB += idxShifts[orderSwap.IdxB]
+	}
+
+	return success, orderSwaps, acmPSR, err
 }
 
 func (j *reproduceExpectedPCR0Job) measurementsVerify(
 	tpmInstance *tpm.TPM,
 	expectedHashValue tpm.Digest,
-	enabledMeasurements tpm.CommandLog,
-) (bool, *registers.ACMPolicyStatus, error) {
+	enabledMeasurements []*tpm.CommandLogEntry,
+	buf []bool,
+) (bool, OrderSwaps, *registers.ACMPolicyStatus, error) {
 	switch {
 	case len(enabledMeasurements) > 0 && isMeasurePCR0DATACmdLogEntry(enabledMeasurements[0]):
-		acmPolicyStatus, err := j.measurementsVerifyWithBruteForceACMPolicyStatus(expectedHashValue, enabledMeasurements)
+		orderSwaps, acmPolicyStatus, err := j.measurementsVerifyWithBruteForceACMPolicyStatus(
+			expectedHashValue,
+			enabledMeasurements,
+		)
 		if err != nil {
-			return false, nil, err
+			return false, nil, nil, err
 		}
 		if acmPolicyStatus == nil {
-			return false, nil, nil
+			return false, nil, nil, nil
 		}
-		return true, acmPolicyStatus, nil
+		return true, orderSwaps, acmPolicyStatus, nil
 
 	default:
-		if bytes.Equal(j.replayTPMCommands(tpmInstance, enabledMeasurements), expectedHashValue) {
-			return true, nil, nil
+		if success, orderSwaps := j.bruteforceOrder(
+			tpmInstance,
+			expectedHashValue,
+			enabledMeasurements,
+			buf,
+		); success {
+			return success, orderSwaps, nil, nil
 		}
 	}
-	return false, nil, nil
+	return false, nil, nil, nil
 }
 
-func isMeasurePCR0DATACmdLogEntry(logEntry tpm.CommandLogEntry) bool {
+type OrderSwap struct {
+	IdxA int
+	IdxB int
+}
+
+type OrderSwaps []OrderSwap
+
+func ApplyOrderSwaps[T any](swaps OrderSwaps, s []T) {
+	for _, swap := range swaps {
+		s[swap.IdxA], s[swap.IdxB] = s[swap.IdxB], s[swap.IdxA]
+	}
+}
+
+func (j *reproduceExpectedPCR0Job) bruteforceOrder(
+	tpmInstance *tpm.TPM,
+	expectedHashValue tpm.Digest,
+	measurements []*tpm.CommandLogEntry,
+	buf []bool,
+) (bool, OrderSwaps) {
+	if cap(buf) < len(measurements) {
+		buf = make([]bool, len(measurements))
+	} else {
+		buf = buf[:len(measurements)]
+		for idx := range buf {
+			buf[idx] = false
+		}
+	}
+	for swapsLimit := 0; swapsLimit <= j.settings.MaxReorders; swapsLimit++ {
+		success, orderSwaps := (&orderBruteforcerJob{
+			parent:            j,
+			tpmInstance:       tpmInstance,
+			expectedHashValue: expectedHashValue,
+			measurements:      measurements,
+			alreadySwapped:    buf,
+			swapsLimit:        swapsLimit,
+		}).executeRecursive()
+		if success {
+			return success, orderSwaps
+		}
+	}
+
+	return false, nil
+}
+
+type orderBruteforcerJob struct {
+	parent *reproduceExpectedPCR0Job
+
+	tpmInstance         *tpm.TPM
+	expectedHashValue   tpm.Digest
+	measurements        []*tpm.CommandLogEntry
+	alreadySwapped      []bool
+	alreadySwappedCount int
+	swapsLimit          int
+}
+
+func (j *orderBruteforcerJob) executeRecursive() (bool, OrderSwaps) {
+	availableForOrderSwap := len(j.measurements) - j.alreadySwappedCount
+	if j.swapsLimit == 0 || availableForOrderSwap < 2 {
+		success := bytes.Equal(j.parent.replayTPMCommands(j.tpmInstance, j.measurements), j.expectedHashValue)
+		return success, nil
+	}
+
+	iterator := bruteforcer.NewUniqueUnorderedCombinationIterator(
+		2,
+		int64(availableForOrderSwap-1),
+	)
+	j.alreadySwappedCount += 2
+	j.swapsLimit--
+	defer func() {
+		j.alreadySwappedCount -= 2
+		j.swapsLimit++
+	}()
+
+	for {
+		combination := iterator.GetCombinationUnsafe()
+
+		idxA, idxB := int(combination[0]), int(combination[1])
+		//     v v v   v        -- the indexes over which the combination are bruteforced
+		// 0 1 2 3 4 5 6        -- actual index values
+		// S S n n n S n      S -- already swapped
+		//     ^       ^      n -- not yet swapped
+		//     0       3        -- the index values from within the combination area
+		//     A       B        -- the name of the index
+		//
+		// shifts:
+		// A += 2
+		// B += 3
+		for idx := range j.alreadySwapped {
+			isSwapped := j.alreadySwapped[idx]
+			if !isSwapped {
+				continue
+			}
+			if idx <= idxA {
+				idxA++
+			}
+			if idx <= idxB {
+				idxB++
+			}
+		}
+
+		j.alreadySwapped[idxA], j.alreadySwapped[idxB] = true, true
+		j.measurements[idxA], j.measurements[idxB] = j.measurements[idxB], j.measurements[idxA]
+		success, orderSwaps := j.executeRecursive()
+		if success {
+			return success, append(orderSwaps, OrderSwap{
+				IdxA: idxA,
+				IdxB: idxB,
+			})
+		}
+		j.measurements[idxA], j.measurements[idxB] = j.measurements[idxB], j.measurements[idxA]
+		j.alreadySwapped[idxA], j.alreadySwapped[idxB] = false, false
+		if !iterator.Next() {
+			break
+		}
+	}
+
+	return false, nil
+}
+
+func isMeasurePCR0DATACmdLogEntry(logEntry *tpm.CommandLogEntry) bool {
+	if logEntry.CauseCoordinates.Flow == nil {
+		return false
+	}
 	_, ok := logEntry.CauseCoordinates.Flow[logEntry.CauseCoordinates.StepIndex].(intelsteps.MeasurePCR0DATA)
 	return ok
 }
 
 func (j *reproduceExpectedPCR0Job) replayTPMCommands(
 	tpmInstance *tpm.TPM,
-	log tpm.CommandLog,
+	log []*tpm.CommandLogEntry,
 ) tpm.Digest {
 	tpmInstance.DoNotUse_ResetNoInit()
 	tpmInstance.SupportedAlgos = j.supportedAlgos
 	ctx := context.Background()
-	err := tpmInstance.DoNotUse_TPMExecuteNoLog(ctx, &j.tpmInitCmd)
+	err := j.tpmInitCmd.Apply(ctx, tpmInstance)
 	if err != nil {
 		// this is caught by recover()
 		panic(err)
 	}
 	for _, cmd := range log {
 		// call `apply` method because it is faster than `TPMExecute`.
-		err := tpmInstance.DoNotUse_TPMExecuteNoLog(ctx, cmd)
+		err := cmd.Command.Apply(ctx, tpmInstance)
 		if err != nil {
 			// this is caught by recover()
 			panic(err)
@@ -407,15 +567,15 @@ func (j *reproduceExpectedPCR0Job) replayTPMCommands(
 
 func (j *reproduceExpectedPCR0Job) measurementsVerifyWithBruteForceACMPolicyStatus(
 	expectedHashValue tpm.Digest,
-	enabledMeasurements tpm.CommandLog,
-) (*registers.ACMPolicyStatus, error) {
+	enabledMeasurements []*tpm.CommandLogEntry,
+) (OrderSwaps, *registers.ACMPolicyStatus, error) {
 	if len(enabledMeasurements) < 1 {
-		return nil, fmt.Errorf("empty measurements slice, cannot compute PCR0")
+		return nil, nil, fmt.Errorf("empty measurements slice, cannot compute PCR0")
 	}
 
 	_, ok := enabledMeasurements[0].CauseCoordinates.Step().(intelsteps.MeasurePCR0DATA)
 	if !ok {
-		return nil, fmt.Errorf("the first TPM command is not caused by a MeasurePCR0DATA step")
+		return nil, nil, fmt.Errorf("the first TPM command is not caused by a MeasurePCR0DATA step")
 	}
 
 	// supposed to be always doable for a MeasurePCR0DATA step:
@@ -426,43 +586,52 @@ func (j *reproduceExpectedPCR0Job) measurementsVerifyWithBruteForceACMPolicyStat
 
 	acmPolicyStatusOrig := acmPolicyStatusRef.RawBytes()
 	if len(acmPolicyStatusOrig) != 8 {
-		return nil, fmt.Errorf("ACM POLICY STATUS register is expected to be 64bits, but it is %d bits", len(acmPolicyStatusOrig)*8)
+		return nil, nil, fmt.Errorf("ACM POLICY STATUS register is expected to be 64bits, but it is %d bits", len(acmPolicyStatusOrig)*8)
 	}
 
 	type bruteForceContext struct {
 		TPMInstance  *tpm.TPM
 		Hasher       hash.Hash
-		Measurements tpm.CommandLog
+		Measurements []*tpm.CommandLogEntry
+		Buf          []bool
 
 		PCR0DataDigestPointer tpm.Digest
 	}
 
 	h, err := j.hashAlgo.Hash()
 	if err != nil {
-		return nil, fmt.Errorf("unable to initialize hasher factory for algorithm %s: %w", j.hashAlgo, err)
+		return nil, nil, fmt.Errorf("unable to initialize hasher factory for algorithm %s: %w", j.hashAlgo, err)
 	}
 
 	init := func() ([]byte, any, error) {
 		acmPolicyStatusValue := make([]byte, len(acmPolicyStatusOrig))
 		copy(acmPolicyStatusValue, acmPolicyStatusOrig)
-		measurements := make(tpm.CommandLog, len(enabledMeasurements))
+		measurements := make([]*tpm.CommandLogEntry, len(enabledMeasurements))
 		copy(measurements, enabledMeasurements)
 		cmd := &tpm.CommandExtend{
 			PCRIndex: 0,
 			HashAlgo: j.hashAlgo,
 			Digest:   make([]byte, h.Size()),
 		}
-		measurements[0].Command = cmd
+		measurements[0] = &tpm.CommandLogEntry{
+			Command:          cmd,
+			CauseCoordinates: measurements[0].CauseCoordinates,
+			CauseAction:      measurements[0].CauseAction,
+		}
 
 		return acmPolicyStatusValue,
 			&bruteForceContext{
 				TPMInstance:           tpm.NewTPM(),
 				Hasher:                h.New(),
 				Measurements:          measurements,
+				Buf:                   make([]bool, len(measurements)),
 				PCR0DataDigestPointer: cmd.Digest,
 			}, nil
 	}
 
+	// TODO: fix consistency on control flow between orderSwapsResult and reg.
+	var orderSwapsResult OrderSwaps
+	orderSwapsSetCount := uint32(0)
 	check := func(_ctx any, data []byte) (bool, error) {
 		ctx := _ctx.(*bruteForceContext)
 		// check if this series of measurements lead to the expected pcr0
@@ -474,7 +643,16 @@ func (j *reproduceExpectedPCR0Job) measurementsVerifyWithBruteForceACMPolicyStat
 		hasher.Write(pcr0DataBytes[len(data):])
 		hasher.Sum(ctx.PCR0DataDigestPointer[:0])
 
-		return bytes.Equal(j.replayTPMCommands(ctx.TPMInstance, measurements), j.expectedPCR0), nil
+		success, orderSwaps := j.bruteforceOrder(ctx.TPMInstance, j.expectedPCR0, measurements, ctx.Buf)
+		if success {
+			switch atomic.AddUint32(&orderSwapsSetCount, 1) {
+			case 1:
+				orderSwapsResult = orderSwaps
+			case 2:
+				return success, fmt.Errorf("internal error: order swaps are already set")
+			}
+		}
+		return success, nil
 	}
 
 	// try these in series because each completely fills the cpu
@@ -489,14 +667,14 @@ func (j *reproduceExpectedPCR0Job) measurementsVerifyWithBruteForceACMPolicyStat
 	for _, s := range strategies {
 		reg, err := s.Process(init, check)
 		if err != nil {
-			return nil, err
+			return orderSwapsResult, nil, err
 		}
 		if reg != nil {
-			return reg, nil
+			return orderSwapsResult, reg, nil
 		}
 	}
 
-	return nil, nil
+	return orderSwapsResult, nil, nil
 }
 
 //-----------------------------------------------------------------------------
@@ -510,9 +688,9 @@ type acmPolicyStatusBruteForceStrategy interface {
 	) (*registers.ACMPolicyStatus, error)
 }
 
-func preprocessMeasurements(ms tpm.CommandLog, hashAlgo tpm.Algorithm) tpm.CommandLog {
-	var result tpm.CommandLog
-	for _, m := range ms {
+func filteredMeasurements(ms tpm.CommandLog, hashAlgo tpm.Algorithm) []*tpm.CommandLogEntry {
+	var result []*tpm.CommandLogEntry
+	for idx, m := range ms {
 		cmd, ok := m.Command.(*tpm.CommandExtend)
 		if !ok {
 			continue
@@ -520,7 +698,7 @@ func preprocessMeasurements(ms tpm.CommandLog, hashAlgo tpm.Algorithm) tpm.Comma
 		if cmd.PCRIndex != 0 || cmd.HashAlgo != hashAlgo {
 			continue
 		}
-		result = append(result, m)
+		result = append(result, &ms[idx])
 	}
 	return result
 }

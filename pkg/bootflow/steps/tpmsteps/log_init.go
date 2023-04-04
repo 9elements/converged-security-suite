@@ -40,7 +40,7 @@ func (s LogInitStruct) Actions(ctx context.Context, state *types.State) types.Ac
 			algo,
 			make([]byte, h.Size()),
 			tpmeventlog.EV_NO_ACTION,
-			[]byte(fmt.Sprintf("StartupLocality\x00%d", s.Locality)),
+			[]byte(fmt.Sprintf("StartupLocality\x00%c", s.Locality)),
 		))
 	}
 	return result

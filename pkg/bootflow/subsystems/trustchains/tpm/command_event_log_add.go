@@ -45,7 +45,7 @@ func (cmd *CommandEventLogAdd) String() string {
 }
 
 // apply implements Command.
-func (cmd *CommandEventLogAdd) apply(_ context.Context, tpm *TPM) error {
+func (cmd *CommandEventLogAdd) Apply(_ context.Context, tpm *TPM) error {
 	tpm.EventLog.Add(cmd.CommandExtend, cmd.Type, cmd.Data)
 	return nil
 }

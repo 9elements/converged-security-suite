@@ -30,7 +30,7 @@ func (cmd *CommandInit) String() string {
 }
 
 // apply implements Command.
-func (cmd *CommandInit) apply(_ context.Context, tpm *TPM) error {
+func (cmd *CommandInit) Apply(_ context.Context, tpm *TPM) error {
 	if tpm.IsInitialized() {
 		return fmt.Errorf("TPM is already initialized")
 	}

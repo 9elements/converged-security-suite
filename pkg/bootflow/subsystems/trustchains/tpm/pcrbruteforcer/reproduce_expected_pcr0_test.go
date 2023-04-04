@@ -40,6 +40,8 @@ func TestReproduceExpectedPCR0(t *testing.T) {
 	// * Separator
 	pcr0Incomplete := unhex(t, "4CB03F39E94B0AB4AD99F9A54E3FD0DEFB0BB2D4")
 	pcr0Invalid := unhex(t, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+	// Swapped PCR0_DATA with Separator and DXE with PCD Firmware Vendor Version
+	pcr0ReorderedContributions := unhex(t, "8B6F10F7D4425BACB22ADF41176AFA546036FC72")
 
 	testACM := func(t *testing.T, pcr0 []byte, acmReg uint64) {
 		tpmInstance := tpm.NewTPM()
@@ -57,6 +59,9 @@ func TestReproduceExpectedPCR0(t *testing.T) {
 
 		settings := DefaultSettingsReproducePCR0()
 		settings.EnableACMPolicyCombinatorialStrategy = true
+		if bytes.Equal(pcr0, pcr0ReorderedContributions) {
+			settings.MaxReorders = 2
+		}
 
 		result, err := ReproduceExpectedPCR0(
 			ctx,
@@ -82,6 +87,8 @@ func TestReproduceExpectedPCR0(t *testing.T) {
 	t.Run("test_corrupted_combinatorial", func(t *testing.T) { testACM(t, pcr0Correct, correctACMRegValue^0x10000000) })
 	t.Run("test_incompletePCR0_corruptedACM", func(t *testing.T) { testACM(t, pcr0Incomplete, correctACMRegValue+1) })
 	t.Run("test_invalid_PCR0", func(t *testing.T) { testACM(t, pcr0Invalid, correctACMRegValue) })
+	t.Run("test_reordered_contributions_PCR0", func(t *testing.T) { testACM(t, pcr0ReorderedContributions, correctACMRegValue) })
+	t.Run("test_reordered_contributions_PCR0_corruptedACM", func(t *testing.T) { testACM(t, pcr0ReorderedContributions, correctACMRegValue+1) })
 }
 
 func BenchmarkReproduceExpectedPCR0(b *testing.B) {

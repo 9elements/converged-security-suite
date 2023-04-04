@@ -1,3 +1,7 @@
+// This package needs deep redesigning: there are more and more ways to do
+// brute-forcing, so these modules should be flattened out instead of going
+// coupling every method among each other.
+
 package pcrbruteforcer
 
 import (
@@ -60,14 +64,14 @@ func ReproduceEventLog(
 	eventLogExpected *tpmeventlog.TPMEventLog,
 	hashAlgo tpmeventlog.TPMAlgorithm,
 	settings SettingsReproduceEventLog,
-) (bool, *registers.ACMPolicyStatus, []Issue, error) {
+) (ReproduceEventLogResult, *registers.ACMPolicyStatus, []Issue, error) {
 	var issues []Issue
 
 	if eventLogExpected == nil {
-		return false, nil, issues, fmt.Errorf("TPM EventLog is not provided")
+		return nil, nil, issues, fmt.Errorf("TPM EventLog is not provided")
 	}
 
-	measurementsCalculated, eventsCalculated, eventsExpected, measurementDigests, alignIssues, err := alignLogsAndMeasurements(
+	measurementsCalculated, eventsCalculated, eventsExpected, measurementDigests, coords, alignIssues, err := alignLogsAndMeasurements(
 		ctx,
 		calculated,
 		&settings,
@@ -79,19 +83,20 @@ func ReproduceEventLog(
 	logger.FromCtx(ctx).Tracef("eventsExpected == %v", eventsExpected)
 	issues = append(issues, alignIssues...)
 	if err != nil {
-		return false, nil, issues, err
+		return nil, nil, issues, err
 	}
 
 	txtPublicRegisters, _ := txtpublic.Get(calculated.CurrentState)
 
 	var updatedACMPolicyStatusValue *registers.ACMPolicyStatus
 
-	isEventLogMatchesMeasurements := true
+	result := make([]ReproduceEventLogEntry, 0, len(measurementsCalculated))
 	for idx := 0; idx < len(measurementsCalculated); idx++ {
 		m := measurementsCalculated[idx]
 		mD := measurementDigests[idx]
 		evC := eventsCalculated[idx]
 		evE := eventsExpected[idx]
+		coords := coords[idx]
 
 		if evC == nil && evE != nil {
 			issues = append(
@@ -101,21 +106,36 @@ func ReproduceEventLog(
 					evE.Type, evE.Digest.Digest, idx, explainLogEntry(ctx, calculated.CurrentState, m, evE),
 				),
 			)
-			isEventLogMatchesMeasurements = false
+			result = append(result, ReproduceEventLogEntry{
+				Expected: evE,
+				Status:   ReproduceEventLogEntryStatusUnexpected,
+			})
 			continue
 		}
 
 		if evE == nil {
 			if evC != nil {
 				issues = append(issues, fmt.Errorf("missing entry (for measurement '%s') in EventLog (expected event types are: %s)", m, eventTypesString(evC.Type)))
-				isEventLogMatchesMeasurements = false
+				result = append(result, ReproduceEventLogEntry{
+					Measurement:       m,
+					Calculated:        evC,
+					ActionCoordinates: coords,
+					Status:            ReproduceEventLogEntryStatusMissing,
+				})
 				continue
 			}
-			return false, nil, issues, fmt.Errorf("not supported: do not know how to handle the case when a measurement has no event log entry associated")
+			return nil, nil, issues, fmt.Errorf("not supported: do not know how to handle the case when a measurement has no event log entry associated")
 		}
 
 		logger.FromCtx(ctx).Tracef("digest cmp: %X ? %s", evE.Digest.Digest, mD)
 		if bytes.Equal(evE.Digest.Digest, mD) {
+			result = append(result, ReproduceEventLogEntry{
+				Measurement:       m,
+				Calculated:        evC,
+				Expected:          evE,
+				ActionCoordinates: coords,
+				Status:            ReproduceEventLogEntryStatusMatch,
+			})
 			// It matched, everything is OK, let's check next pair.
 			continue
 		}
@@ -134,13 +154,26 @@ func ReproduceEventLog(
 			correctedACMPolicyStatus, err := bruteForceACMPolicyStatus(m, txtPublicRegisters, evE.Digest.HashAlgo, evE.Digest.Digest, settings.SettingsBruteforceACMPolicyStatus)
 			if err != nil {
 				issues = append(issues, fmt.Errorf("PCR0_DATA measurement does not match the digest reported in EventLog and unable to brute force a possible bitflip: calculated:%s != given:0x%X", mD, evE.Digest.Digest))
-				isEventLogMatchesMeasurements = false
+				result = append(result, ReproduceEventLogEntry{
+					Measurement:       m,
+					Calculated:        evC,
+					Expected:          evE,
+					ActionCoordinates: coords,
+					Status:            ReproduceEventLogEntryStatusMismatch,
+				})
 				continue
 			}
 			var buf [8]byte
 			binary.LittleEndian.PutUint64(buf[:], uint64(correctedACMPolicyStatus))
 			issues = append(issues, fmt.Errorf("changed ACM_POLICY_STATUS from %X to %X", m.References().BySystemArtifact(txtPublicRegisters).RawBytes(), buf))
 			updatedACMPolicyStatusValue = &correctedACMPolicyStatus
+			result = append(result, ReproduceEventLogEntry{
+				Measurement:       m,
+				Calculated:        evC,
+				Expected:          evE,
+				ActionCoordinates: coords,
+				Status:            ReproduceEventLogEntryStatusMatch,
+			})
 		default:
 			// I do not know how to remediate this problem.
 			issues = append(
@@ -150,11 +183,17 @@ func ReproduceEventLog(
 					m, mD, evE.Digest.Digest, explainLogEntry(ctx, calculated.CurrentState, m, evE),
 				),
 			)
-			isEventLogMatchesMeasurements = false
+			result = append(result, ReproduceEventLogEntry{
+				Measurement:       m,
+				Calculated:        evC,
+				Expected:          evE,
+				ActionCoordinates: coords,
+				Status:            ReproduceEventLogEntryStatusMismatch,
+			})
 		}
 	}
 
-	return isEventLogMatchesMeasurements, updatedACMPolicyStatusValue, issues, nil
+	return result, updatedACMPolicyStatusValue, issues, nil
 }
 
 func isPCRxDataMeasurement(
@@ -266,6 +305,7 @@ func alignLogsAndMeasurements(
 	eventsCalculatedAligned []*tpm.EventLogEntry,
 	eventsExpectedAligned []*tpmeventlog.Event,
 	measurementDigestsAligned []tpm.Digest,
+	coordsAligned []*types.ActionCoordinates,
 	issues []Issue,
 	err error,
 ) {
@@ -275,7 +315,7 @@ func alignLogsAndMeasurements(
 		return
 	}
 
-	measurementsCalculatedUnaligned, eventsCalculatedUnaligned, err := alignLogAndMeasurements(
+	measurementsCalculatedUnaligned, eventsCalculatedUnaligned, coordsUnaligned, err := alignLogAndMeasurements(
 		ctx,
 		calculated,
 		0,
@@ -311,6 +351,7 @@ func alignLogsAndMeasurements(
 
 	if len(measurementsCalculatedUnaligned) == len(eventsCalculatedAligned) {
 		measurementsCalculatedAligned = measurementsCalculatedUnaligned
+		coordsAligned = coordsUnaligned
 		return
 	}
 
@@ -318,6 +359,7 @@ func alignLogsAndMeasurements(
 	// we also need to add these empty entries to measurementsCalculatedAligned.
 
 	measurementsCalculatedAligned = make([]*types.MeasuredData, len(eventsCalculatedAligned))
+	coordsAligned = make([]*types.ActionCoordinates, len(eventsCalculatedAligned))
 	for idxUnaligned, idxAligned := 0, 0; idxAligned < len(eventsCalculatedAligned); idxAligned++ {
 		if idxUnaligned >= len(eventsCalculatedUnaligned) {
 			break
@@ -326,6 +368,7 @@ func alignLogsAndMeasurements(
 		evAligned := eventsCalculatedAligned[idxAligned]
 		if evAligned == evUnaligned {
 			measurementsCalculatedAligned[idxAligned] = measurementsCalculatedUnaligned[idxUnaligned]
+			coordsAligned[idxAligned] = coordsUnaligned[idxUnaligned]
 			idxUnaligned++
 			continue
 		}
@@ -336,37 +379,39 @@ func alignLogsAndMeasurements(
 
 func alignLogAndMeasurements(
 	ctx context.Context,
-	process *bootengine.BootProcess,
+	calculated *bootengine.BootProcess,
 	pcrID tpm.PCRID,
 	hashAlgo tpm.Algorithm,
 ) (
 	measurements []*types.MeasuredData,
 	log []*tpm.EventLogEntry,
+	coords []*types.ActionCoordinates,
 	err error,
 ) {
-	tpmInstance, err := tpm.GetFrom(process.CurrentState)
+	tpmInstance, err := tpm.GetFrom(calculated.CurrentState)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to get TPM: %w", err)
+		return nil, nil, nil, fmt.Errorf("unable to get TPM: %w", err)
 	}
 
 	type stepResult struct {
 		measurements []*types.MeasuredData
 		eventLog     []*tpm.EventLogEntry
+		coords       types.ActionCoordinates
 	}
 
 	measuredDataMap := map[types.Action]*types.MeasuredData{}
-	for idx, m := range process.CurrentState.MeasuredData {
+	for idx, m := range calculated.CurrentState.MeasuredData {
 		if m.TrustChain != tpmInstance {
 			continue
 		}
 		if m.Action == nil {
-			return nil, nil, fmt.Errorf("internal error: Action is nil at %v", m)
+			return nil, nil, nil, fmt.Errorf("internal error: Action is nil at %v", m)
 		}
 		if _, ok := measuredDataMap[m.Action]; ok {
-			return nil, nil, fmt.Errorf("internal error: should never happen: measuredDataMap[%s] is already set", m.DataSource)
+			return nil, nil, nil, fmt.Errorf("internal error: should never happen: measuredDataMap[%s] is already set", m.DataSource)
 		}
-		logger.FromCtx(ctx).Tracef("measuredDataMap[%v (%#+v)] = %v", m.Action, m.Action, process.CurrentState.MeasuredData[idx])
-		measuredDataMap[m.Action] = &process.CurrentState.MeasuredData[idx]
+		logger.FromCtx(ctx).Tracef("measuredDataMap[%v (%#+v)] = %v", m.Action, m.Action, calculated.CurrentState.MeasuredData[idx])
+		measuredDataMap[m.Action] = &calculated.CurrentState.MeasuredData[idx]
 	}
 
 	tpmEventLog := tpmInstance.EventLog
@@ -404,7 +449,7 @@ func alignLogAndMeasurements(
 		}
 	}
 	if tpmEventLogIdx != len(tpmEventLog) {
-		return nil, nil, fmt.Errorf("internal error: should never happen: %d != %d", tpmEventLogIdx, len(tpmEventLog))
+		return nil, nil, nil, fmt.Errorf("internal error: should never happen: %d != %d", tpmEventLogIdx, len(tpmEventLog))
 	}
 
 	for idx, stepResult := range stepResults {
@@ -413,7 +458,7 @@ func alignLogAndMeasurements(
 
 		// defensive code: just rechecking if magic above worked correctly.
 		if len(stepMeasurements) > 0 && stepMeasurements[0] == nil {
-			return nil, nil, fmt.Errorf("internal error: stepMeasurements[0] == nil at idx:%d", idx)
+			return nil, nil, nil, fmt.Errorf("internal error: stepMeasurements[0] == nil at idx:%d", idx)
 		}
 
 		logger.FromCtx(ctx).Tracef("stepResult[%d]: stepMeasurements == %v", idx, stepMeasurements)
@@ -426,23 +471,39 @@ func alignLogAndMeasurements(
 			// NOOP
 		case len(stepMeasurements) > 0 && len(stepEvents) > 0:
 			if len(stepMeasurements) != len(stepEvents) {
-				return nil, nil, fmt.Errorf("do not know how to map measurements %s with log entries %s", stepMeasurements, stepEvents)
+				return nil, nil, nil, fmt.Errorf("do not know how to map measurements %s with log entries %s", stepMeasurements, stepEvents)
 			}
 			measurements = append(measurements, stepMeasurements...)
 			log = append(log, stepEvents...)
+			for range stepEvents {
+				coords = append(coords, &stepResult.coords)
+			}
 		case len(stepMeasurements) > 0 && len(stepEvents) == 0:
 			measurements = append(measurements, stepMeasurements...)
 			log = append(log, make([]*tpm.EventLogEntry, len(stepMeasurements))...)
+			for range stepMeasurements {
+				coords = append(coords, &stepResult.coords)
+			}
 			// TODO: add support for non-logged measurements and remove this line:
-			return nil, nil, fmt.Errorf("not implemented, yet: measurements '%s' has no EventLog, this case is not supported, yet", measurements)
+			return nil, nil, nil, fmt.Errorf("not implemented, yet: measurements '%s' has no EventLog, this case is not supported, yet", measurements)
 		case len(stepMeasurements) == 0 && len(stepEvents) > 0:
 			measurements = append(measurements, make([]*types.MeasuredData, len(stepEvents))...)
 			log = append(log, stepEvents...)
+			for range stepEvents {
+				coords = append(coords, &stepResult.coords)
+			}
 		default:
 			panic("internal error: should be impossible, all the cases should be covered above in the code")
 		}
 		logger.FromCtx(ctx).Tracef("stepResult[%d]: measurements <- %v", idx, measurements)
 		logger.FromCtx(ctx).Tracef("stepResult[%d]: eventLog <- %v", idx, log)
+	}
+
+	if len(measurements) != len(log) {
+		return nil, nil, nil, fmt.Errorf("internal error: len(measurements) != len(log): %d != %d", len(measurements), len(log))
+	}
+	if len(measurements) != len(coords) {
+		return nil, nil, nil, fmt.Errorf("internal error: len(measurements) != len(coords): %d != %d", len(measurements), len(coords))
 	}
 	return
 }

@@ -10,8 +10,11 @@ import (
 
 // Command is a serializable command that could be "sent" (applied) to TPM.
 type Command interface {
-	// apply applies the changes themselves to the given *TPM (not including appending CommandLog).
-	apply(context.Context, *TPM) error
+	// Apply applies the changes themselves to the given *TPM (not including appending CommandLog).
+	//
+	// Do not use this method directly unless you know what are you doing,
+	// use (*TPM).TPMExecute instead.
+	Apply(context.Context, *TPM) error
 
 	// LogString formats the entry for CommandLog.
 	LogString() string
@@ -21,9 +24,9 @@ type Command interface {
 type Commands []Command
 
 // apply implements Command.
-func (s Commands) apply(ctx context.Context, tpm *TPM) error {
+func (s Commands) Apply(ctx context.Context, tpm *TPM) error {
 	for idx, cmd := range s {
-		if err := cmd.apply(ctx, tpm); err != nil {
+		if err := cmd.Apply(ctx, tpm); err != nil {
 			return fmt.Errorf("unable to apply command #%d '%T': %w", idx, cmd, err)
 		}
 	}

@@ -16,6 +16,9 @@ type EventLogEntry struct {
 	Data []byte
 }
 
+// Apply is just a placeholder which forbids to use this entry directly as a Command.
+func (entry EventLogEntry) Apply() {}
+
 // String implements fmt.Stringer.
 func (entry EventLogEntry) String() string {
 	if len(entry.Data) == 0 {
@@ -28,6 +31,42 @@ func (entry EventLogEntry) String() string {
 		"{PCR: %d, Alg: %s, Digest: %v, Type: %s, Data: 0x%X}",
 		entry.PCRIndex, entry.HashAlgo, entry.Digest, entry.Type, entry.Data,
 	)
+}
+
+// ToCommands returns a list of command logged by the EventLog.
+func (log EventLog) ToCommands() []Command {
+	result := make([]Command, 0, len(log)*2)
+
+	for _, e := range log {
+		if e.Type == tpmeventlog.EV_NO_ACTION {
+			if e.PCRIndex == 0 {
+				locality, err := tpmeventlog.ParseLocality(e.Data)
+				if err == nil {
+					result = append(result, &CommandInit{
+						Locality: locality,
+					})
+				}
+			}
+			continue
+		}
+
+		cmd := &CommandExtend{
+			PCRIndex: e.PCRIndex,
+			HashAlgo: e.HashAlgo,
+			Digest:   e.Digest,
+		}
+		result = append(
+			result,
+			cmd,
+			&CommandEventLogAdd{
+				CommandExtend: *cmd,
+				Type:          e.Type,
+				Data:          e.Data,
+			},
+		)
+	}
+
+	return result
 }
 
 func (log EventLog) Replay(pcrID PCRID, hashAlgo Algorithm, locality uint8) Digest {
