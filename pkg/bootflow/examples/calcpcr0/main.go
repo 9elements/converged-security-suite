@@ -279,16 +279,21 @@ func printReproducePCR0Result(
 
 	resultCommandLog := make(tpm.CommandLog, 0, len(commandLog))
 
-	disabledMeasurementsMap := map[*tpm.CommandLogEntry]struct{}{}
+	measurementIdx := map[*tpm.CommandLogEntry]int{}
+	for idx := range commandLog {
+		measurementIdx[&commandLog[idx]] = idx
+	}
+
 	if len(result.DisabledMeasurements) != 0 {
 		fmt.Printf("\tDisabledMeasurements:\n")
-		for idx, disabledMeasurement := range result.DisabledMeasurements {
-			disabledMeasurementsMap[disabledMeasurement] = struct{}{}
-			fmt.Printf("\t\t%3d.) %v\n", idx+1, disabledMeasurement)
+		for _, disabledMeasurement := range result.DisabledMeasurements {
+			idx := measurementIdx[disabledMeasurement]
+			delete(measurementIdx, disabledMeasurement)
+			fmt.Printf("\t\t%3d.) %v\n", idx, disabledMeasurement)
 		}
 	}
 	for idx, logEntry := range commandLog {
-		if _, ok := disabledMeasurementsMap[&commandLog[idx]]; ok {
+		if _, ok := measurementIdx[&commandLog[idx]]; !ok {
 			continue
 		}
 		switch cmd := logEntry.Command.(type) {
