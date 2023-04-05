@@ -354,7 +354,7 @@ func printReproducePCR0Result(
 		return
 	}
 	if !bytes.Equal(replayedPCR0, expectedPCR0) {
-		fmt.Printf("\tinternal error: replayed PCR0 does not match the expected one; the information above could not be trusted:\t\t%X != %X\n", replayedPCR0, expectedPCR0)
+		fmt.Printf("\tinternal error: replayed PCR0 does not match the expected one; the information above could not be trusted:\n\t\t%s != %s\n", replayedPCR0, expectedPCR0)
 		return
 	}
 	fmt.Printf("\t\tResulting PCR0: %s\n", replayedPCR0)
