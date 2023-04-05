@@ -328,7 +328,7 @@ func (b *BootGuard) WriteBPM() ([]byte, error) {
 	case bgheader.Version10:
 		_, err = b.VData.BGbpm.WriteTo(buf)
 	case bgheader.Version20:
-		_, err = b.VData.BGbpm.WriteTo(buf)
+		_, err = b.VData.CBNTbpm.WriteTo(buf)
 	default:
 		fmt.Println("WriteBPM: can't identify bootguard header")
 	}
