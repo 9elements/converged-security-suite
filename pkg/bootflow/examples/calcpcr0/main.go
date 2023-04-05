@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"flag"
@@ -68,7 +69,7 @@ func main() {
 			panic(err)
 		}
 
-		printReproducePCR0Result(ctx, commandLog, reproducePCR0Result, tpm2.AlgSHA256)
+		printReproducePCR0Result(ctx, expectedPCR0, commandLog, reproducePCR0Result, tpm2.AlgSHA256)
 	}
 
 	var combinedCommandLog tpm.CommandLog
@@ -129,7 +130,7 @@ func main() {
 				panic(err)
 			}
 
-			printReproducePCR0Result(ctx, commandLog, reproducePCR0Result, tpm2.AlgSHA256)
+			printReproducePCR0Result(ctx, expectedPCR0, commandLog, reproducePCR0Result, tpm2.AlgSHA256)
 			if reproducePCR0Result != nil {
 				return
 			}
@@ -274,6 +275,7 @@ func printEventLogIssues(ctx context.Context, issues []pcrbruteforcer.Issue) {
 
 func printReproducePCR0Result(
 	ctx context.Context,
+	expectedPCR0 tpm.Digest,
 	commandLog tpm.CommandLog,
 	result *pcrbruteforcer.ReproducePCR0Result,
 	hashAlgo tpm.Algorithm,
@@ -300,6 +302,7 @@ func printReproducePCR0Result(
 			fmt.Printf("\t\t%3d.) %v\n", idx, disabledMeasurement)
 		}
 	}
+	containsInitCmd := false
 	for idx, logEntry := range commandLog {
 		if _, ok := measurementIdx[&commandLog[idx]]; !ok {
 			continue
@@ -311,6 +314,7 @@ func printReproducePCR0Result(
 			if idx != 0 {
 				continue
 			}
+			containsInitCmd = true
 		case *tpm.CommandExtend:
 			if cmd.PCRIndex != 0 {
 				continue
@@ -334,4 +338,24 @@ func printReproducePCR0Result(
 	for idx, measurement := range resultCommandLog {
 		fmt.Printf("\t\t%3d.) %v\n", idx+1, measurement)
 	}
+
+	dummyTPM := tpm.NewTPM()
+	if !containsInitCmd {
+		err := dummyTPM.TPMInit(ctx, result.Locality, nil)
+		if err != nil {
+			logger.FromCtx(ctx).Error(err)
+			return
+		}
+	}
+	resultCommandLog.Commands().Apply(ctx, dummyTPM)
+	replayedPCR0, err := dummyTPM.PCRValues.Get(0, hashAlgo)
+	if err != nil {
+		logger.FromCtx(ctx).Error(err)
+		return
+	}
+	if !bytes.Equal(replayedPCR0, expectedPCR0) {
+		fmt.Printf("\tinternal error: replayed PCR0 does not match the expected one; the information above could not be trusted:\t\t%X != %X\n", replayedPCR0, expectedPCR0)
+		return
+	}
+	fmt.Printf("\t\tResulting PCR0: %s\n", replayedPCR0)
 }
