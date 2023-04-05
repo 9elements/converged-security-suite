@@ -285,7 +285,9 @@ func printReproducePCR0Result(
 	}
 	fmt.Printf("\nReproduce PCR0 result:\n")
 	fmt.Printf("\tLocality: %d\n", result.Locality)
-	fmt.Printf("\tCorrectedACMPolicyStatus: %#+v\n", result.CorrectACMPolicyStatus)
+	if result.CorrectACMPolicyStatus != nil {
+		fmt.Printf("\tCorrectedACMPolicyStatus: %#+v\n", result.CorrectACMPolicyStatus)
+	}
 
 	resultCommandLog := make(tpm.CommandLog, 0, len(commandLog))
 
