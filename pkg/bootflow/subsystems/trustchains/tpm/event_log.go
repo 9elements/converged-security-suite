@@ -9,6 +9,26 @@ import (
 // EventLog represents TPM Event Log.
 type EventLog []EventLogEntry
 
+func EventLogFromParsed(parsed *tpmeventlog.TPMEventLog) EventLog {
+	result := make(EventLog, 0, len(parsed.Events))
+	for _, ev := range parsed.Events {
+		result = append(result, EventLogEntryFromParsed(ev))
+	}
+	return result
+}
+
+func EventLogEntryFromParsed(ev *tpmeventlog.Event) EventLogEntry {
+	return EventLogEntry{
+		CommandExtend: CommandExtend{
+			PCRIndex: ev.PCRIndex,
+			HashAlgo: ev.Digest.HashAlgo,
+			Digest:   ev.Digest.Digest,
+		},
+		Type: ev.Type,
+		Data: ev.Data,
+	}
+}
+
 // EventLogEntry is a single entry of EventLog.
 type EventLogEntry struct {
 	CommandExtend
@@ -33,8 +53,8 @@ func (entry EventLogEntry) String() string {
 	)
 }
 
-// ToCommands returns a list of command logged by the EventLog.
-func (log EventLog) ToCommands() []Command {
+// RestoreCommands returns a list of command logged by the EventLog.
+func (log EventLog) RestoreCommands() []Command {
 	result := make([]Command, 0, len(log)*2)
 
 	for _, e := range log {

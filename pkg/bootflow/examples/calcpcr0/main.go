@@ -71,6 +71,7 @@ func main() {
 		printReproducePCR0Result(ctx, commandLog, reproducePCR0Result, tpm2.AlgSHA256)
 	}
 
+	var combinedCommandLog tpm.CommandLog
 	if *compareWithEventLogFlag != "" {
 		eventLogFile, err := os.Open(*compareWithEventLogFlag)
 		if err != nil {
@@ -78,18 +79,26 @@ func main() {
 		}
 		defer eventLogFile.Close()
 
-		eventLog, err := tpmeventlog.Parse(eventLogFile)
+		parsedEventLog, err := tpmeventlog.Parse(eventLogFile)
 		if err != nil {
 			panic(err)
 		}
 
-		result, _, issues, err := pcrbruteforcer.ReproduceEventLog(ctx, process, eventLog, tpm2.AlgSHA256, pcrbruteforcer.DefaultSettingsReproduceEventLog())
+		result, _, issues, err := pcrbruteforcer.ReproduceEventLog(ctx, process, parsedEventLog, tpm2.AlgSHA256, pcrbruteforcer.DefaultSettingsReproduceEventLog())
 		if err != nil {
 			panic(err)
 		}
 		printEventLogIssues(ctx, issues)
 
-		commandLog = result.CombineAsCommandLog()
+		eventLog := tpm.EventLogFromParsed(parsedEventLog)
+		commands := eventLog.RestoreCommands()
+		commandLog = commandLog[:0]
+		for _, cmd := range commands {
+			commandLog = append(commandLog, tpm.CommandLogEntry{
+				Command: cmd,
+			})
+		}
+		combinedCommandLog = result.CombineAsRestoredCommandLog()
 	}
 
 	expectedPCR0, err := hex.DecodeString(*expectedPCR0Flag)
@@ -101,33 +110,33 @@ func main() {
 		return
 	}
 
-	sanitizedCommandLog := sanitizeCommandLog(commandLog)
-	for _, maxReorders := range []int{0, 1, 2, 3} {
-		settings := pcrbruteforcer.DefaultSettingsReproducePCR0()
-		settings.MaxDisabledMeasurements = 6 - maxReorders*2
-		settings.MaxReorders = maxReorders
+	for _, commandLog := range []tpm.CommandLog{
+		commandLog,
+		sanitizeCommandLog(commandLog),
+		combinedCommandLog,
+		sanitizeCommandLog(combinedCommandLog),
+	} {
 
-		logger.FromCtx(ctx).Infof("ReproducePCR0Settings = %#+v", settings)
+		for _, maxReorders := range []int{0, 1, 2, 3} {
+			settings := pcrbruteforcer.DefaultSettingsReproducePCR0()
+			settings.MaxDisabledMeasurements = 6 - maxReorders*2
+			settings.MaxReorders = maxReorders
 
-		reproducePCR0Result, err = pcrbruteforcer.ReproduceExpectedPCR0(ctx, commandLog, tpm2.AlgSHA256, expectedPCR0, settings)
-		if err != nil {
-			panic(err)
-		}
+			logger.FromCtx(ctx).Infof("ReproducePCR0Settings = %#+v", settings)
 
-		printReproducePCR0Result(ctx, commandLog, reproducePCR0Result, tpm2.AlgSHA256)
-		if reproducePCR0Result != nil {
-			return
-		}
+			reproducePCR0Result, err = pcrbruteforcer.ReproduceExpectedPCR0(ctx, commandLog, tpm2.AlgSHA256, expectedPCR0, settings)
+			if err != nil {
+				panic(err)
+			}
 
-		reproducePCR0Result, err = pcrbruteforcer.ReproduceExpectedPCR0(ctx, commandLog, tpm2.AlgSHA256, expectedPCR0, settings)
-		if err != nil {
-			panic(err)
-		}
-		printReproducePCR0Result(ctx, sanitizedCommandLog, reproducePCR0Result, tpm2.AlgSHA256)
-		if reproducePCR0Result != nil {
-			return
+			printReproducePCR0Result(ctx, commandLog, reproducePCR0Result, tpm2.AlgSHA256)
+			if reproducePCR0Result != nil {
+				return
+			}
 		}
 	}
+
+	fmt.Println("unable to reproduce PCR0")
 }
 
 func sanitizeCommandLog(commandLog tpm.CommandLog) tpm.CommandLog {
@@ -270,7 +279,6 @@ func printReproducePCR0Result(
 	hashAlgo tpm.Algorithm,
 ) {
 	if result == nil {
-		fmt.Println("unable to reproduce PCR0")
 		return
 	}
 	fmt.Printf("\nReproduce PCR0 result:\n")
@@ -304,6 +312,9 @@ func printReproducePCR0Result(
 				continue
 			}
 		case *tpm.CommandExtend:
+			if cmd.PCRIndex != 0 {
+				continue
+			}
 			if cmd.HashAlgo != hashAlgo {
 				continue
 			}

@@ -17,7 +17,6 @@ var AMD = types.Flow{
 }
 
 var AMDGenoa = types.Flow{
-	commonsteps.SetFlow(AMDGenoaLocality3V2),
 	commonsteps.SetFlow(AMDGenoaLocality3),
 	commonsteps.Panic("this case is not implemented, yet"),
 }

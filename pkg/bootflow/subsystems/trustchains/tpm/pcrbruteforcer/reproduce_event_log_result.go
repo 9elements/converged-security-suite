@@ -52,7 +52,7 @@ func (s ReproduceEventLogResult) CombineAsEventLog() tpm.EventLog {
 	return result
 }
 
-func (s ReproduceEventLogResult) CombineAsCommandLog() tpm.CommandLog {
+func (s ReproduceEventLogResult) CombineAsRestoredCommandLog() tpm.CommandLog {
 	extendOrInit := func(ev *tpm.EventLogEntry) tpm.Command {
 		if ev.PCRIndex != 0 || ev.Type != tpmeventlog.EV_NO_ACTION {
 			return &ev.CommandExtend
