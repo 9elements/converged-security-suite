@@ -314,6 +314,9 @@ func printReproducePCR0Result(
 			if idx != 0 {
 				continue
 			}
+			if cmd.Locality != result.Locality {
+				continue
+			}
 			containsInitCmd = true
 		case *tpm.CommandExtend:
 			if cmd.PCRIndex != 0 {
