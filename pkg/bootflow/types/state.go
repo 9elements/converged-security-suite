@@ -45,6 +45,7 @@ func (state *State) Reset() {
 	}
 	state.CurrentActor = nil
 	state.CurrentActionCoordinates = ActionCoordinates{}
+	state.CurrentAction = nil
 	state.MeasuredData = state.MeasuredData[:0]
 }
 

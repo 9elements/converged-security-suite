@@ -148,7 +148,7 @@ func (s UnionForcedBytesOrReferences) String() string {
 // Data is byte-data (given directly or by a reference to a SystemArtifact).
 type Data struct {
 	UnionForcedBytesOrReferences
-	Converter DataConverter `faker:"data_converter_factory"`
+	Converter DataConverter `faker:"data_converter"`
 }
 
 func NewForcedData(b RawBytes) *Data {

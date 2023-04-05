@@ -22,6 +22,7 @@ var entryTypes = []manifest.BIOSDirectoryTableEntryType{
 }
 
 func (MeasureBIOSStaticEntries) Actions(ctx context.Context, s *types.State) types.Actions {
+	_ = entryTypes
 	// TODO: verify through signatures
 	//       amddata.BIOSDirectoryEntries(amdbiosimage.DirectoryLevelL1, entryTypes...)
 	//       amddata.BIOSDirectoryEntries(amdbiosimage.DirectoryLevelL2, entryTypes...)

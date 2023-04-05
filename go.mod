@@ -30,10 +30,9 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/DataDog/gostackparse v0.6.0 // indirect
-
 require (
-	github.com/bxcodec/faker v2.0.1+incompatible
+	github.com/DataDog/gostackparse v0.6.0 // indirect
+	github.com/bxcodec/faker v2.0.1+incompatible // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/go-ng/slices v0.0.0-20220616195238-b8d239c57d65 // indirect
 	github.com/go-ng/sort v0.0.0-20220617173827-2cc7cd04f7c7 // indirect

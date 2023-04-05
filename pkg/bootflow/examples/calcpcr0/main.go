@@ -104,7 +104,7 @@ func main() {
 	sanitizedCommandLog := sanitizeCommandLog(commandLog)
 	for _, maxReorders := range []int{0, 1, 2, 3} {
 		settings := pcrbruteforcer.DefaultSettingsReproducePCR0()
-		settings.MaxDisabledMeasurements = 6 - maxReorders
+		settings.MaxDisabledMeasurements = 6 - maxReorders*2
 		settings.MaxReorders = maxReorders
 
 		logger.FromCtx(ctx).Infof("ReproducePCR0Settings = %#+v", settings)

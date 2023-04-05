@@ -12,10 +12,6 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 )
 
-func ptr[T any](in T) *T {
-	return &in
-}
-
 type ReproduceEventLogEntry struct {
 	Measurement       *types.MeasuredData
 	Calculated        *tpm.EventLogEntry

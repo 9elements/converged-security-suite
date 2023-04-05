@@ -479,12 +479,6 @@ func alignLogAndMeasurements(
 				coords = append(coords, &stepResult.coords)
 			}
 		case len(stepMeasurements) > 0 && len(stepEvents) == 0:
-			measurements = append(measurements, stepMeasurements...)
-			log = append(log, make([]*tpm.EventLogEntry, len(stepMeasurements))...)
-			for range stepMeasurements {
-				coords = append(coords, &stepResult.coords)
-			}
-			// TODO: add support for non-logged measurements and remove this line:
 			return nil, nil, nil, fmt.Errorf("not implemented, yet: measurements '%s' has no EventLog, this case is not supported, yet", measurements)
 		case len(stepMeasurements) == 0 && len(stepEvents) > 0:
 			measurements = append(measurements, make([]*types.MeasuredData, len(stepEvents))...)
