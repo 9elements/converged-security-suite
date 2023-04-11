@@ -25,11 +25,11 @@ func main() {
 	// bruteforce the first measurement to 0x01000001
 
 	// an artificial flow for two separators
-	myFlow := types.Flow{
+	myFlow := types.NewFlow("example-flow", types.Steps{
 		tpmsteps.InitTPM(0, false),
 		tpmsteps.Measure(0, tpmeventlog.EV_SEPARATOR, datasources.Bytes{0, 0, 0, 0}),
 		tpmsteps.Measure(0, tpmeventlog.EV_SEPARATOR, datasources.Bytes{0, 0, 0, 0}),
-	}
+	})
 
 	// executing the flow (with two simple "\x00\x00\x00\x00" measurements)
 	state := types.NewState()

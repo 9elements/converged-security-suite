@@ -47,15 +47,16 @@ func (action *setFlow) Apply(_ context.Context, state *types.State) error {
 }
 
 func (action *setFlow) String() string {
-	if len(action.nextFlow) == 0 {
+	nextSteps := action.nextFlow.Steps
+	if len(nextSteps) == 0 {
 		return "SetFlow({})"
 	}
 	firstStepEnding := ""
-	firstStep := format.NiceString(action.nextFlow[0])
+	firstStep := format.NiceString(nextSteps[0])
 	if len(firstStep) > 40 {
 		firstStepEnding = "..."
 	}
-	if len(action.nextFlow) == 1 {
+	if len(nextSteps) == 1 {
 		return fmt.Sprintf("SetFlow({%.40s%s})", firstStep, firstStepEnding)
 	}
 	return fmt.Sprintf("SetFlow({%.40s%s, ...})", firstStep, firstStepEnding)

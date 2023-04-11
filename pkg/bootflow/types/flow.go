@@ -9,32 +9,23 @@ import (
 )
 
 // Flow describes steps of the boot process.
-//
-// A flow is static (never change).
-type Flow []Step
+type Flow struct {
+	// Name is the unique name of the Flow.
+	//
+	// Equivalence of Name-s between two flows should guarantee the equivalence
+	// of Steps.
+	Name string
 
-func (flow Flow) Equal(cmp Flow) bool {
-	if len(flow) != len(cmp) {
-		return false
-	}
-	for idx, step := range flow {
-		if fmt.Sprintf("%#v", step) != fmt.Sprintf("%#v", cmp[idx]) {
-			return false
-		}
-	}
-	return true
+	// Steps returns the list of Step-s implied by this flow.
+	Steps Steps
 }
 
-func (flow Flow) String() string {
-	var result strings.Builder
-	result.WriteString("{\n")
-	for _, step := range flow {
-		result.WriteByte('\t')
-		result.WriteString(format.NiceString(step))
-		result.WriteByte('\n')
+// NewFlow returns a Flow.
+func NewFlow(name string, steps Steps) Flow {
+	return Flow{
+		Name:  name,
+		Steps: steps,
 	}
-	result.WriteString("}\n")
-	return result.String()
 }
 
 // Step describes a single step of a boot process, essential for the measurements.
@@ -46,6 +37,23 @@ func (flow Flow) String() string {
 type Step interface {
 	Actions(context.Context, *State) Actions
 }
+
+// Steps is a slice of Step-s.
+type Steps []Step
+
+func (s Steps) String() string {
+	var result strings.Builder
+	result.WriteString("{\n")
+	for _, step := range s {
+		result.WriteByte('\t')
+		result.WriteString(format.NiceString(step))
+		result.WriteByte('\n')
+	}
+	result.WriteString("}\n")
+	return result.String()
+}
+
+var _ Step = StaticStep(nil)
 
 // StaticStep is a Step which has a predefined static list of Actions.
 type StaticStep Actions

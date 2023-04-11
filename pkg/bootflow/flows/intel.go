@@ -9,12 +9,12 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
-var Intel = types.Flow{
+var Intel = types.NewFlow("Intel", types.Steps{
 	commonsteps.If(intelconds.BPMPresent{}, commonsteps.SetFlow(IntelCBnT)),
 	commonsteps.SetFlow(IntelLegacyTXT),
-}
+})
 
-var IntelCBnT = types.Flow{
+var IntelCBnT = types.NewFlow("IntelCBnT", types.Steps{
 	commonsteps.SetActor(intelactors.PCH{}),
 	intelsteps.VerifyACM(IntelCBnTFailure),
 	intelsteps.VerifyKM(IntelCBnTFailure),
@@ -24,12 +24,12 @@ var IntelCBnT = types.Flow{
 	tpmsteps.InitTPM(3, true),
 	intelsteps.MeasurePCR0DATA{},
 	commonsteps.SetFlow(PEI),
-}
+})
 
-var IntelCBnTFailure = types.Flow{
+var IntelCBnTFailure = types.NewFlow("IntelCBnTFailure", types.Steps{
 	commonsteps.SetFlow(PEI),
-}
+})
 
-var IntelLegacyTXT = types.Flow{
+var IntelLegacyTXT = types.NewFlow("IntelLegacyTXT", types.Steps{
 	commonsteps.Panic("legacy TXT flow is not implemented"),
-}
+})

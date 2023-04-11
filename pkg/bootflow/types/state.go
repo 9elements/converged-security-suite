@@ -181,7 +181,7 @@ func (state *State) String() string {
 	if len(state.SubSystems) > 0 {
 		fmt.Fprintf(&result, "SubSystems:\n\t%s\n", nestedStringOf(state.SubSystems))
 	}
-	if len(state.CurrentActionCoordinates.Flow) > 0 {
+	if len(state.CurrentActionCoordinates.Flow.Steps) > 0 {
 		fmt.Fprintf(&result, "CurrentFlow:\n\t%s\n", nestedStringOf(state.CurrentActionCoordinates.Flow))
 		fmt.Fprintf(&result, "CurrentStepIndex: %d\n", state.CurrentActionCoordinates.StepIndex)
 	}

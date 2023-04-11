@@ -423,7 +423,7 @@ func alignLogAndMeasurements(
 	)
 	for _, logEntry := range tpmInstance.CommandLog {
 		coords := logEntry.CauseCoordinates
-		if !coords.Flow.Equal(prevCoords.Flow) || coords.StepIndex != prevCoords.StepIndex {
+		if !coords.IsSameStep(prevCoords) {
 			stepIdx++
 			prevCoords = coords
 		}
@@ -479,7 +479,7 @@ func alignLogAndMeasurements(
 				coords = append(coords, &stepResult.coords)
 			}
 		case len(stepMeasurements) > 0 && len(stepEvents) == 0:
-			return nil, nil, nil, fmt.Errorf("not implemented, yet: measurements '%s' has no EventLog, this case is not supported, yet", measurements)
+			return nil, nil, nil, fmt.Errorf("not implemented, yet: measurements '%s' has no EventLog, this case is not supported, yet", stepMeasurements)
 		case len(stepMeasurements) == 0 && len(stepEvents) > 0:
 			measurements = append(measurements, make([]*types.MeasuredData, len(stepEvents))...)
 			log = append(log, stepEvents...)

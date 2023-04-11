@@ -135,7 +135,7 @@ func init() {
 			return (*fakeStep)(nil), nil
 		}),
 		faker.AddProvider("flow", func(v reflect.Value) (interface{}, error) {
-			return Flow{(*fakeStep)(nil)}, nil
+			return Flow{Name: "fakeFLow", Steps: Steps{(*fakeStep)(nil)}}, nil
 		}),
 	)
 

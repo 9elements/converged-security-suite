@@ -34,5 +34,10 @@ type ActionCoordinates struct {
 
 // Step returns the Step.
 func (coords *ActionCoordinates) Step() Step {
-	return coords.Flow[coords.StepIndex]
+	return coords.Flow.Steps[coords.StepIndex]
+}
+
+// IsSameStep returns true if the Flow and StepIndex are the same.
+func (coords *ActionCoordinates) IsSameStep(cmp ActionCoordinates) bool {
+	return coords.Flow.Name == cmp.Flow.Name && coords.StepIndex == cmp.StepIndex
 }

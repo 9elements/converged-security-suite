@@ -535,10 +535,10 @@ func (j *orderBruteforcerJob) executeRecursive() (bool, OrderSwaps) {
 }
 
 func isMeasurePCR0DATACmdLogEntry(logEntry *tpm.CommandLogEntry) bool {
-	if logEntry.CauseCoordinates.Flow == nil {
+	if logEntry.CauseCoordinates.Flow.Steps == nil {
 		return false
 	}
-	_, ok := logEntry.CauseCoordinates.Flow[logEntry.CauseCoordinates.StepIndex].(intelsteps.MeasurePCR0DATA)
+	_, ok := logEntry.CauseCoordinates.Flow.Steps[logEntry.CauseCoordinates.StepIndex].(intelsteps.MeasurePCR0DATA)
 	return ok
 }
 

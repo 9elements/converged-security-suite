@@ -38,17 +38,17 @@ func stateNextStep(
 	bool,
 ) {
 	actCoords := &state.CurrentActionCoordinates
-	if actCoords.Flow == nil {
+	if actCoords.Flow.Steps == nil {
 		return nil, nil, nil, nil, false
 	}
 
-	if actCoords.StepIndex >= uint(len(actCoords.Flow)) {
+	if actCoords.StepIndex >= uint(len(actCoords.Flow.Steps)) {
 		return nil, nil, nil, nil, false
 	}
 
 	var stepIssues StepIssues
 
-	step := actCoords.Flow[actCoords.StepIndex]
+	step := actCoords.Flow.Steps[actCoords.StepIndex]
 	actCoords.StepIndex++
 	actions := step.Actions(ctx, state)
 	for idx, action := range actions {

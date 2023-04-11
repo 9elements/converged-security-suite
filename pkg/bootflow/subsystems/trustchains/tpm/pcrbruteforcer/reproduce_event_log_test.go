@@ -30,7 +30,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var testFlow = types.Flow{
+var testFlow = types.NewFlow("unit-test-flow", types.Steps{
 	commonsteps.SetActor(intelactors.PCH{}),
 	commonsteps.SetActor(intelactors.ACM{}),
 	tpmsteps.InitTPM(3, true),
@@ -40,7 +40,7 @@ var testFlow = types.Flow{
 	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.UEFIGUIDFirst([]guid.GUID{ffsConsts.GUIDDXEContainer, ffsConsts.GUIDDXE})),
 	tpmsteps.Measure(0, tpmeventlog.EV_SEPARATOR, datasources.Bytes{0, 0, 0, 0}),
 	commonsteps.SetActor(actors.DXE{}),
-}
+})
 
 func unhex(fataler fataler, h string) []byte {
 	b, err := hex.DecodeString(h)
