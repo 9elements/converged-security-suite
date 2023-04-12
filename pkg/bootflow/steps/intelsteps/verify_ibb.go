@@ -5,7 +5,7 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/commonactions"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/intelactions"
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/intelconds"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/biosconds/intelconds"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/datasources/inteldata"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )

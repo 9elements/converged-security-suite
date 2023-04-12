@@ -2,9 +2,11 @@ package biosimage
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
+	"github.com/9elements/converged-security-suite/v2/pkg/dmidecode"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
 )
 
@@ -55,6 +57,32 @@ func (fw *BIOSImage) Parse() (*uefi.UEFI, error) {
 	}
 
 	return fw.CacheParsed, fw.CacheParseError
+}
+
+// DMITable parses the SMBIOS section and returns data as as DMITable.
+func (fw *BIOSImage) DMITable() (*dmidecode.DMITable, error) {
+	parsed, err := fw.Parse()
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse the firmware image: %w", err)
+	}
+
+	dmiTable, err := dmidecode.DMITableFromFirmware(parsed)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get DMI data from the firmware: %w", err)
+	}
+
+	return dmiTable, nil
+}
+
+// Info returns basic BIOS info: vendor, version, release date and revision.
+func (fw *BIOSImage) Info() (*dmidecode.BIOSInfo, error) {
+	d, err := fw.DMITable()
+	if err != nil {
+		return nil, err
+	}
+
+	info := d.BIOSInfo()
+	return &info, nil
 }
 
 // String implements fmt.Stringer.

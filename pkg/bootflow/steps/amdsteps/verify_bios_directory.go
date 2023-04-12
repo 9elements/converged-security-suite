@@ -5,7 +5,7 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/amdactions"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/commonactions"
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/amdconds"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/biosconds/amdconds"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/datasources/amddata"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )

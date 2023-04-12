@@ -2,7 +2,7 @@ package flows
 
 import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actors/intelactors"
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/intelconds"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/biosconds/intelconds"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/commonsteps"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/intelsteps"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/tpmsteps"
