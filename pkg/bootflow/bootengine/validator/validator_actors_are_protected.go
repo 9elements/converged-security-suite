@@ -34,7 +34,7 @@ func (ValidatorActorsAreProtected) Validate(_ context.Context, _ *types.State, l
 		}
 		measured = append(measured, newMeasuredRefs...)
 		measured.SortAndMerge()
-		if step.ActorCode == nil {
+		if step.Actor == nil {
 			continue
 		}
 		if step.Actor == prevActor {

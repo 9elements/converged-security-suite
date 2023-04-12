@@ -1,6 +1,7 @@
 package bootengine
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -63,4 +64,71 @@ func (log Log) GetDataMeasuredWith(trustChain types.TrustChain) types.MeasuredDa
 	}
 
 	return result
+}
+
+// IssuesCount returns the total amount of issues.
+func (log Log) IssuesCount() uint {
+	var count uint
+	for _, stepResult := range log {
+		count += uint(len(stepResult.Issues))
+	}
+	return count
+}
+
+func (log Log) Error() error {
+	var erroredSteps ErroredSteps
+	for idx := range log {
+		stepResult := &log[idx]
+		if len(stepResult.Issues) == 0 {
+			continue
+		}
+		erroredSteps = append(erroredSteps, stepResult)
+	}
+
+	if len(erroredSteps) == 0 {
+		return nil
+	}
+
+	return erroredSteps
+}
+
+// ErroredSteps is an implementation of `error` given a log of errored steps.
+type ErroredSteps []*StepResult
+
+// Error implements error.
+func (s ErroredSteps) Error() string {
+	var result strings.Builder
+	for _, step := range s {
+		result.WriteString(fmt.Sprintf("step %s:\n", step))
+		for _, issue := range step.Issues {
+			result.WriteString(fmt.Sprintf("\t%s: %v\n", issue.Coords, issue.Issue))
+		}
+	}
+	return result.String()
+}
+
+// Is implements errors.Is.
+func (s ErroredSteps) Is(target error) bool {
+	for _, step := range s {
+		for _, issue := range step.Issues {
+			if errors.Is(issue, target) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// As implements errors.As.
+func (s ErroredSteps) As(target any) bool {
+	for _, step := range s {
+		for _, issue := range step.Issues {
+			if errors.As(issue, target) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
