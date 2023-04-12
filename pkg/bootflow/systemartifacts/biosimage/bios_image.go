@@ -23,6 +23,11 @@ func New(content []byte) *BIOSImage {
 	return &BIOSImage{Content: content}
 }
 
+// NewFromParsed returns a new instance of BIOSImage.
+func NewFromParsed(parsed *uefi.UEFI) *BIOSImage {
+	return &BIOSImage{Content: parsed.Buf(), CacheParsed: parsed}
+}
+
 // Get returns the BIOSImage given a State.
 func Get(state *types.State) (*BIOSImage, error) {
 	return types.GetSystemArtifactByTypeFromState[*BIOSImage](state)
