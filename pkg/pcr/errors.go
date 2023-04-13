@@ -2,8 +2,6 @@ package pcr
 
 import (
 	"fmt"
-
-	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 )
 
 // ErrUnknownPCRID means we don't know how to perform the requested action
@@ -58,32 +56,6 @@ type ErrPCDVendorVersion struct{}
 
 func (err ErrPCDVendorVersion) Error() string {
 	return "unable to find the source of firmware vendor version"
-}
-
-// ErrNotSupportedIndex means selected PCR index is not supported (yet?)
-type ErrNotSupportedIndex struct {
-	Index       ID
-	Description string
-}
-
-// Error implements interface `error`.
-func (err ErrNotSupportedIndex) Error() string {
-	result := fmt.Sprintf("PCR index %d is not supported", err.Index)
-	if len(err.Description) > 0 {
-		result += ": " + err.Description
-	}
-	return result
-}
-
-// ErrUnexpectedEventType means there was received an unexpected event type
-type ErrUnexpectedEventType struct {
-	Event  tpmeventlog.Event
-	Reason string
-}
-
-// Error implements interface `error`.
-func (err ErrUnexpectedEventType) Error() string {
-	return fmt.Sprintf("unexpected event type, reason: '%s'; event: '%#+v'", err.Reason, err.Event)
 }
 
 // ErrNoSACM means no S-ACM was found.
