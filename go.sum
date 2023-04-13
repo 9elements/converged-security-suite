@@ -144,8 +144,8 @@ github.com/go-ng/sort v0.0.0-20220617173827-2cc7cd04f7c7 h1:Ng6QMSlQSB+goG6430/F
 github.com/go-ng/sort v0.0.0-20220617173827-2cc7cd04f7c7/go.mod h1:QUXmOopthsqLYJ+rAybuCf16J7qQm60TLVdQR0w1Nus=
 github.com/go-ng/xatomic v0.0.0-20230519181013-85c0ec87e55f h1:lifmuIc/S/hzVoStbEAsdryJ6qBSNeXXb9NseP0vlfs=
 github.com/go-ng/xatomic v0.0.0-20230519181013-85c0ec87e55f/go.mod h1:+3P6aQ4zDVR6jGPnXq3g/7kHnKLB73EsnGBhM0adWhA=
-github.com/go-ng/xmath v0.0.0-20230703160032-8997beacd505 h1:On9hoMaabCW5Loyd3zq9AK4w+LYAIO/awUy3pR/2Vfs=
-github.com/go-ng/xmath v0.0.0-20230703160032-8997beacd505/go.mod h1:rmcKNA11zmis1auYtl0UY64vE/4+QKeS07w/htllpSE=
+github.com/go-ng/xmath v0.0.0-20230704233441-028f5ea62335 h1:N17hl+3/Zqxg3SM+33Q792qUHDoWwt4M7tVuOVpLspc=
+github.com/go-ng/xmath v0.0.0-20230704233441-028f5ea62335/go.mod h1:rmcKNA11zmis1auYtl0UY64vE/4+QKeS07w/htllpSE=
 github.com/go-ng/xsort v0.0.0-20220617174223-1d146907bccc h1:VNz633GRJx2/hL0SpBNoNlLid4xtyi7LSJP1kHpD2Fo=
 github.com/go-ng/xsort v0.0.0-20220617174223-1d146907bccc/go.mod h1:Pz/V4pxeXP0hjBlXIrm2ehR0GJ0l4Bon3fsOl6TmoJs=
 github.com/go-redis/redis v6.15.8+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=
@@ -319,8 +319,6 @@ github.com/klauspost/compress v1.10.6/go.mod h1:aoV0uJVorq1K+umq18yTdKaF57EivdYs
 github.com/klauspost/compress v1.13.6 h1:P76CopJELS0TiO2mebmnzgWaajssP/EszplttgQxcgc=
 github.com/klauspost/compress v1.13.6/go.mod h1:/3/Vjq9QcHkK5uEr5lBEmyoZ1iFhe47etQ6QUkpK6sk=
 github.com/klauspost/cpuid/v2 v2.0.9/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
-github.com/klauspost/cpuid/v2 v2.2.3 h1:sxCkb+qR91z4vsqw4vGGZlDgPz3G7gjaLyK3V8y70BU=
-github.com/klauspost/cpuid/v2 v2.2.3/go.mod h1:RVVoqg1df56z8g3pUjL/3lE5UfnlrJX8tyFgg4nqhuY=
 github.com/klauspost/pgzip v1.2.4/go.mod h1:Ch1tH69qFZu15pkjo5kYi6mth2Zzwzt50oCQKQE9RUs=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.2/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
@@ -732,7 +730,6 @@ golang.org/x/sys v0.0.0-20211019181941-9d821ace8654/go.mod h1:oPkhp1MJrh7nUepCBc
 golang.org/x/sys v0.0.0-20211205182925-97ca703d548d/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
-golang.org/x/sys v0.0.0-20220704084225-05e143d24a9e/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.1.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=

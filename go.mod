@@ -12,13 +12,12 @@ require (
 	github.com/facebookincubator/go-belt v0.0.0-20230703220829-b6b46c95ec1f
 	github.com/fearful-symmetry/gomsr v0.0.1
 	github.com/go-ng/slices v0.0.0-20230703171042-6195d35636a2
-	github.com/go-ng/xmath v0.0.0-20230703160032-8997beacd505
+	github.com/go-ng/xmath v0.0.0-20230704233441-028f5ea62335
 	github.com/golang-collections/go-datastructures v0.0.0-20150211160725-59788d5eb259
 	github.com/google/go-attestation v0.4.3
 	github.com/google/go-tpm v0.3.3
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/klauspost/cpuid/v2 v2.2.3
 	github.com/linuxboot/fiano v1.1.4-0.20230509204726-c0f54661a4fe
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/marcoguerri/go-tpm-tcti v0.0.0-20210425104733-8e8c8fe68e60

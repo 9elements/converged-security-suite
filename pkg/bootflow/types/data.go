@@ -495,6 +495,7 @@ type MeasuredData struct {
 	Data
 	DataSource DataSource `faker:"data_source"`
 	Actor      Actor      `faker:"actor"`
+	Step       Step       `faker:"step"`
 	Action     Action     `faker:"action"`
 	TrustChain TrustChain `faker:"trust_chain"`
 }

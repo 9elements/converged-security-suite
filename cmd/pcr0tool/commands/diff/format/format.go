@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/diff"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
@@ -35,13 +37,9 @@ const (
 func AsText(
 	report diff.AnalysisReport,
 	debugInfo map[string]interface{},
-	goodData []byte,
-	badData []byte,
-) (output string, err error) {
+	goodData, badData *biosimage.BIOSImage,
+) (string, error) {
 	var result strings.Builder
-	defer func() {
-		output = result.String()
-	}()
 
 	debugInfoBytes, err := json.MarshalIndent(debugInfo, "", "  ")
 	if err != nil {
@@ -65,7 +63,11 @@ func AsText(
 				continue
 			}
 
-			result.WriteString(dumpDiffEntryInHex(entry.DiffRange, goodData, badData))
+			entryInHex, err := dumpDiffEntryInHex(entry.DiffRange, report.AddressMapper, goodData, badData)
+			if err != nil {
+				return "", fmt.Errorf("unable to dump into hex a range: %w", err)
+			}
+			result.WriteString(entryInHex)
 		}
 	}
 
@@ -73,13 +75,27 @@ func AsText(
 	result.WriteString(fmt.Sprintf("\tchanged bytes: %d (in %d ranges)\n", report.BytesChanged, len(report.Entries)))
 	result.WriteString(fmt.Sprintf("\thamming distance: %d\n", report.HammingDistance))
 	result.WriteString(fmt.Sprintf("\thamming distance for non-(0x00|0xff) bytes: %d\n", report.HammingDistanceNon00orFF))
-	result.WriteString(fmt.Sprintf("The earliest offset of a different measured bytes: 0x%x\n", report.FirstProblemOffset))
+	result.WriteString(fmt.Sprintf("The earliest offset of a different measured byte: 0x%X\n", report.FirstProblemOffset))
+
+	earliestRangeG, earliestRangeB, err := resolveRange(pkgbytes.Range{
+		Offset: report.FirstProblemOffset,
+		Length: 1,
+	}, report.AddressMapper, goodData, badData)
+	if err != nil {
+		return "", fmt.Errorf("unable to resolve the earliest range: %w", err)
+	}
+	if earliestRangeB.Offset != earliestRangeG.Offset {
+		result.WriteString(fmt.Sprintf("The earliest offset of a different measured byte in good image: 0x%08X\n", earliestRangeG.Offset))
+		result.WriteString(fmt.Sprintf("The earliest offset of a different measured byte in  bad image: 0x%08X\n", earliestRangeB.Offset))
+	} else {
+		result.WriteString(fmt.Sprintf("The earliest offset of a different measured byte in the image: 0x%08X\n", earliestRangeG.Offset))
+	}
 
 	// If we did not print dumps, but totalHammingDistanceNon00orFF is not that large
 	// than we can dump the difference causes this totalHammingDistanceNon00orFF.
 	if len(report.Entries) < rangesThreshold ||
 		report.HammingDistanceNon00orFF == 0 && report.HammingDistanceNon00orFF > non00orFFOutputHammingDistanceThreshold {
-		return
+		return result.String(), nil
 	}
 
 	result.WriteString("\nSome non-(0x00|0xff)-related diffs:\n")
@@ -101,21 +117,47 @@ func AsText(
 			result.WriteString(fmt.Sprintf("related nodes: %v\n", entry.Nodes))
 		}
 
-		result.WriteString(dumpDiffEntryInHex(entry.DiffRange, goodData, badData))
+		entryInHex, err := dumpDiffEntryInHex(entry.DiffRange, report.AddressMapper, goodData, badData)
+		if err != nil {
+			return "", fmt.Errorf("unable to dump into hex a range: %w", err)
+		}
+		result.WriteString(entryInHex)
 	}
 
-	return
+	return result.String(), nil
+}
+
+func resolveRange(
+	memRange pkgbytes.Range,
+	memMapper types.AddressMapper,
+	goodData, badData *biosimage.BIOSImage,
+) (pkgbytes.Range, pkgbytes.Range, error) {
+	rangesG, err := memMapper.Resolve(goodData, memRange)
+	if err != nil {
+		return pkgbytes.Range{}, pkgbytes.Range{}, fmt.Errorf("unable to resolve the good data: %w", err)
+	}
+	if len(rangesG) != 1 {
+		return pkgbytes.Range{}, pkgbytes.Range{}, fmt.Errorf("not supported, yet; we currently support only 1-to-1 mapping of ranges: %d", len(rangesG))
+	}
+	rangeG := rangesG[0]
+	rangesB, err := memMapper.Resolve(goodData, memRange)
+	if err != nil {
+		return pkgbytes.Range{}, pkgbytes.Range{}, fmt.Errorf("unable to resolve the bad data: %w", err)
+	}
+	if len(rangesB) != 1 {
+		return pkgbytes.Range{}, pkgbytes.Range{}, fmt.Errorf("not supported, yet; we currently support only 1-to-1 mapping of ranges: %d", len(rangesB))
+	}
+	rangeB := rangesB[0]
+
+	return rangeG, rangeB, nil
 }
 
 func dumpDiffEntryInHex(
 	diffRange pkgbytes.Range,
-	goodData []byte,
-	badData []byte,
-) (output string) {
+	memMapper types.AddressMapper,
+	goodData, badData *biosimage.BIOSImage,
+) (string, error) {
 	var result strings.Builder
-	defer func() {
-		output = result.String()
-	}()
 
 	// Get whole lines aligned by "printWordByteLength" bytes addresses.
 	alignMask := ^uint64(printWordByteLength - 1)
@@ -126,21 +168,30 @@ func dumpDiffEntryInHex(
 	logStartOffset -= printWordByteLength
 	logEndOffset += printWordByteLength
 
+	// Resolve the offset into given files.
+	logRangeG, logRangeB, err := resolveRange(pkgbytes.Range{
+		Offset: logStartOffset,
+		Length: logEndOffset,
+	}, memMapper, goodData, badData)
+	if err != nil {
+		return "", err
+	}
+
 	// Dump the lines:
-	for lineOffset := logStartOffset; lineOffset < logEndOffset; lineOffset += printWordByteLength {
-		result.WriteString(fmt.Sprintf("0x%016X:  ", lineOffset))
+	for lineOffset := uint64(0); lineOffset < logEndOffset-logStartOffset; lineOffset += printWordByteLength {
+		result.WriteString(fmt.Sprintf("0x%08X:  ", logStartOffset+lineOffset))
 		for offset := lineOffset; offset < lineOffset+printWordByteLength; offset++ {
-			result.WriteString(fmt.Sprintf(" %02X", goodData[offset]))
-			innerOffset := int64(offset) - int64(diffRange.Offset)
+			result.WriteString(fmt.Sprintf(" %02X", goodData.Content[offset+logRangeG.Offset]))
+			innerOffset := int64(logStartOffset+offset) - int64(diffRange.Offset)
 			if innerOffset < 0 || uint64(innerOffset) >= diffRange.Length ||
-				goodData[offset] == badData[offset] {
+				goodData.Content[offset+logRangeG.Offset] == badData.Content[offset+logRangeB.Offset] {
 				result.WriteString("   ")
 				continue
 			}
-			result.WriteString(fmt.Sprintf("|%02X", badData[offset]))
+			result.WriteString(fmt.Sprintf("|%02X", badData.Content[offset+logRangeB.Offset]))
 		}
 		result.WriteString("\n")
 	}
 
-	return
+	return result.String(), nil
 }
