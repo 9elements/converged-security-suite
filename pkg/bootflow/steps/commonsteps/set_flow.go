@@ -28,27 +28,28 @@ func (step *setFlowFunc) Actions(_ context.Context, state *types.State) types.Ac
 	}
 }
 
-type setFlow struct {
-	nextFlow types.Flow
+// SetFlowStruct is the value returned by SetFlow.
+type SetFlowStruct struct {
+	NextFlow types.Flow
 }
 
-var _ types.Step = (*setFlow)(nil)
+var _ types.Step = (*SetFlowStruct)(nil)
 
-// SetFlow just sets the Flow.
+// SetFlow returns a types.Step, which just sets the Flow.
 func SetFlow(flow types.Flow) types.Step {
-	return &setFlow{
-		nextFlow: flow,
+	return &SetFlowStruct{
+		NextFlow: flow,
 	}
 }
 
 // Action implements types.Step.
-func (step *setFlow) Actions(_ context.Context, state *types.State) types.Actions {
+func (step *SetFlowStruct) Actions(_ context.Context, state *types.State) types.Actions {
 	return types.Actions{
-		commonactions.SetFlow(step.nextFlow),
+		commonactions.SetFlow(step.NextFlow),
 	}
 }
 
 // String implements fmt.Stringer.
-func (step *setFlow) String() string {
+func (step *SetFlowStruct) String() string {
 	return format.NiceString(step.Actions(context.Background(), nil)[0])
 }
