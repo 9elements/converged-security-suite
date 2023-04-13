@@ -49,7 +49,7 @@ func (rs AMDRegisters) Size() uint64 {
 func GetRegister[R registers.Register](s *types.State, out *R) error {
 	c, err := Get(s)
 	if err != nil {
-		return fmt.Errorf("unable to get the TXT-registers collection: %w", err)
+		return fmt.Errorf("unable to get the AMD-registers collection: %w", err)
 	}
 
 	registerID := (*out).ID()
@@ -60,7 +60,7 @@ func GetRegister[R registers.Register](s *types.State, out *R) error {
 		}
 	}
 
-	return fmt.Errorf("unable to find register %T in the TXT-registers collection", *out)
+	return fmt.Errorf("unable to find register %T in the AMD-registers collection", *out)
 }
 
 // New collects TXT registers and returns them as a SystemArtifact.
@@ -83,12 +83,12 @@ func New(_rs registers.Registers) *AMDRegisters {
 	return &rs
 }
 
-// Get returns the collection of TXT registers.
+// Get returns the collection of AMD registers.
 func Get(state *types.State) (*AMDRegisters, error) {
 	return types.GetSystemArtifactByTypeFromState[*AMDRegisters](state)
 }
 
-// With executes the callback if TXT registers collection is set.
+// With executes the callback if AMD registers collection is set.
 func With(state *types.State, callback func(*AMDRegisters) error) error {
 	return types.WithSystemArtifact(state, callback)
 }
