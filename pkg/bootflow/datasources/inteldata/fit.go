@@ -29,19 +29,16 @@ func (d FITFirst) Data(_ context.Context, state *types.State) (*types.Data, erro
 
 	for _, fitEntry := range fitEntries {
 		if fitEntry.GetEntryBase().Headers.Type() == fit.EntryType(d) {
-			offset := fitEntry.GetEntryBase().Headers.Address.Offset(uint64(len(biosFW.Content)))
+			offset := fitEntry.GetEntryBase().Headers.Address.Pointer()
 			length := len(fitEntry.GetEntryBase().DataSegmentBytes)
-			ranges := pkgbytes.Ranges{{
-				Offset: offset,
-				Length: uint64(length),
-			}}
-			addrMapper := biosimage.PhysMemMapper{}
-			ranges = addrMapper.UnresolveFullImageOffset(biosFW, ranges...)
 
 			return types.NewReferenceData(&types.Reference{
 				Artifact:      biosFW,
-				AddressMapper: addrMapper,
-				Ranges:        ranges,
+				AddressMapper: biosimage.PhysMemMapper{},
+				Ranges: pkgbytes.Ranges{{
+					Offset: offset,
+					Length: uint64(length),
+				}},
 			}), nil
 		}
 	}
@@ -52,4 +49,47 @@ func (d FITFirst) Data(_ context.Context, state *types.State) (*types.Data, erro
 // String implements fmt.Stringer.
 func (d FITFirst) String() string {
 	return fmt.Sprintf("IntelFITFirst(%s)", fit.EntryType(d))
+}
+
+// FITAll implements DataSource by referencing to the data defined
+// by the all FIT entries of the specified type.
+type FITAll fit.EntryType
+
+var _ types.DataSource = (FITAll)(0)
+
+// Data implements types.DataSource.
+func (d FITAll) Data(_ context.Context, state *types.State) (*types.Data, error) {
+	biosFW, err := biosimage.Get(state)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get BIOS image: %w", err)
+	}
+	fitEntries, err := fit.GetEntries(biosFW.Content)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse FIT table: %w", err)
+	}
+
+	ref := types.Reference{
+		Artifact:      biosFW,
+		AddressMapper: biosimage.PhysMemMapper{},
+		Ranges:        []pkgbytes.Range{},
+	}
+	result := types.NewReferenceData(&ref)
+	for _, fitEntry := range fitEntries {
+		if fitEntry.GetEntryBase().Headers.Type() == fit.EntryType(d) {
+			offset := fitEntry.GetEntryBase().Headers.Address.Pointer()
+			length := len(fitEntry.GetEntryBase().DataSegmentBytes)
+
+			ref.Ranges = append(ref.Ranges, pkgbytes.Range{
+				Offset: offset,
+				Length: uint64(length),
+			})
+		}
+	}
+
+	return result, nil
+}
+
+// String implements fmt.Stringer.
+func (d FITAll) String() string {
+	return fmt.Sprintf("IntelFITAll(%s)", fit.EntryType(d))
 }

@@ -9,7 +9,7 @@ import (
 
 var PEI = types.NewFlow("PEI", types.Steps{
 	commonsteps.SetActor(actors.Unknown{}),
-	commonsteps.If(ocpconds.IsOCPv0{}, commonsteps.SetFlow(OCPPEIv0), nil),
-	commonsteps.If(ocpconds.IsOCPv1{}, commonsteps.SetFlow(OCPPEIv1), nil),
+	commonsteps.If(ocpconds.IsOCPv0{}, commonsteps.SetFlow(OCPPEI), nil),
+	commonsteps.If(ocpconds.IsOCPv1{}, commonsteps.SetFlow(OCPPEI), nil),
 	commonsteps.Panic("unknown flow: is not OCP"),
 })
