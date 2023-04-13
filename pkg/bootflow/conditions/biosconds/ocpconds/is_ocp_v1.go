@@ -56,7 +56,10 @@ func (IsOCPv1) Check(ctx context.Context, s *types.State) bool {
 	}
 
 	// TODO: do better/more_reliable signature check
-	foundMagic := bytes.Contains(v.Found.Buf(), ocpVendorVersionV1[len(ocpVendorVersionV1)-4:])
+	foundMagic := bytes.Contains(v.Found.Buf(), ocpVendorVersionV1[:4])
+	if !foundMagic {
+		foundMagic = bytes.Contains(v.Found.Buf(), ocpVendorVersionV1[len(ocpVendorVersionV1)-4:])
+	}
 	logger.FromCtx(ctx).Tracef("is_found_magic:%v", foundMagic)
 	return foundMagic
 }
