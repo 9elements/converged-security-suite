@@ -48,6 +48,7 @@ func (step *setFlow) Actions(_ context.Context, state *types.State) types.Action
 	}
 }
 
+// String implements fmt.Stringer.
 func (step *setFlow) String() string {
 	return format.NiceString(step.Actions(context.Background(), nil)[0])
 }

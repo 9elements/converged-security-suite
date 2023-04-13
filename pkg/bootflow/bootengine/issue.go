@@ -6,18 +6,28 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
 )
 
+// StepIssueCoords helps to find a specific place where an issue occurred,
+// within a types.Step.
+//
+// Currently may contain either StepIssueCoordsActor or StepIssueCoordsAction.
 type StepIssueCoords any
 
+// StepIssueCoordsActor implies that the issue happened during
+// execution of Actor-specific logic (currently it is only method `ResponsibleCode`).
 type StepIssueCoordsActor struct{}
 
+// String implements fmt.Stringer.
 func (StepIssueCoordsActor) String() string {
 	return "actor"
 }
 
+// StepIssueCoordsAction implies that the issue happened during execution
+// of an action with the defined index (the positional number within the types.Step).
 type StepIssueCoordsAction struct {
 	ActionIndex uint
 }
 
+// String implements fmt.Stringer.
 func (i StepIssueCoordsAction) String() string {
 	return fmt.Sprintf("action#%d", i.ActionIndex)
 }
@@ -38,6 +48,7 @@ func (err StepIssue) Unwrap() error {
 	return err.Issue
 }
 
+// String implements fmt.Stringer.
 func (err StepIssue) String() string {
 	return fmt.Sprintf("%s: %v", format.NiceString(err.Coords), err.Issue)
 }

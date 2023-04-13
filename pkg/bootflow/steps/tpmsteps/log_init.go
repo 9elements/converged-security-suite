@@ -11,14 +11,17 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 )
 
+// LogInitStruct is the structure returned by LogInit.
 type LogInitStruct struct {
 	Locality uint8
 }
 
+// LogInit is a Step, which adds a "StartupLocality" log entry to the TPM EventLog.
 func LogInit(locality uint8) types.Step {
 	return LogInitStruct{Locality: locality}
 }
 
+// Actions implements types.Step.
 func (s LogInitStruct) Actions(ctx context.Context, state *types.State) types.Actions {
 	tpmInstance, err := tpm.GetFrom(state)
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
+// InitTPMStruct is the structured returned by InitTPM.
 type InitTPMStruct struct {
 	Locality uint8
 	WithLog  bool
@@ -14,6 +15,7 @@ type InitTPMStruct struct {
 
 var _ types.Step = (*InitTPMStruct)(nil)
 
+// Actions implements types.Step.
 func (s InitTPMStruct) Actions(ctx context.Context, state *types.State) types.Actions {
 	result := types.Actions{
 		tpmactions.NewTPMInit(s.Locality),

@@ -47,6 +47,7 @@ func (step *setActor) Actions(_ context.Context, state *types.State) types.Actio
 	}
 }
 
+// String implements fmt.Stringer.
 func (step *setActor) String() string {
 	return fmt.Sprintf("SetActor(%s)", format.NiceString(step.nextActor))
 }
