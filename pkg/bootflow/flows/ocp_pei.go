@@ -3,7 +3,6 @@ package flows
 import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actors"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/biosconds/amdconds"
-	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/commonconds"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/conditions/tpmconds"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/datasources"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/commonsteps"
@@ -26,7 +25,7 @@ var (
 // of PEI (Pre-EFI Initialization of BIOS) before ~2022.
 var OCPPEIv0 = types.NewFlow("OCPPEIv0", types.Steps{
 	commonsteps.SetActor(actors.PEI{}),
-	commonsteps.If(commonconds.Not(tpmconds.TPMIsInited{}), tpmsteps.InitTPM(0, false)),
+	commonsteps.If(tpmconds.TPMIsInited{}, nil, tpmsteps.InitTPM(0, false)),
 	tpmsteps.Measure(0, tpmeventlog.EV_S_CRTM_VERSION, datasources.PCDVariable("FirmwareVendorVersion")),
 	//tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.UEFIGUIDFirst([]guid.GUID{ffsConsts.GUIDDXEContainer, ffsConsts.GUIDDXE})),
 	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.MemRanges{{Offset: 0xFF562000 + 0xF44, Length: 0x20}}),
@@ -39,9 +38,9 @@ var OCPPEIv0 = types.NewFlow("OCPPEIv0", types.Steps{
 // of PEI (Pre-EFI Initialization of BIOS) after ~2022.
 var OCPPEIv1 = types.NewFlow("OCPPEIv1", types.Steps{
 	commonsteps.SetActor(actors.PEI{}),
-	commonsteps.If(commonconds.Not(tpmconds.TPMIsInited{}), tpmsteps.InitTPM(0, false)),
+	commonsteps.If(tpmconds.TPMIsInited{}, nil, tpmsteps.InitTPM(0, false)),
 	tpmsteps.Measure(0, tpmeventlog.EV_S_CRTM_VERSION, datasources.PCDVariable("FirmwareVendorVersion")),
-	commonsteps.If(amdconds.ManifestPresent{}, commonsteps.SetFlow(OCPPEIv1AMD)), // TODO: this is a weird divergence, needs investigation and explanation
+	commonsteps.If(amdconds.ManifestPresent{}, commonsteps.SetFlow(OCPPEIv1AMD), nil), // TODO: this is a weird divergence, needs investigation and explanation
 	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.UEFIGUIDFirst([]guid.GUID{guidOCPV1Vol0Intel})),
 	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.UEFIGUIDFirst([]guid.GUID{guidOCPV1Vol1Intel})),
 	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.UEFIGUIDFirst([]guid.GUID{guidOCPV1Vol2Intel})),

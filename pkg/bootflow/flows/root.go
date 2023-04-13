@@ -8,7 +8,7 @@ import (
 )
 
 var Root = types.NewFlow("Root", types.Steps{
-	commonsteps.If(intelconds.FITPresent{}, commonsteps.SetFlow(Intel)),
-	commonsteps.If(amdconds.ManifestPresent{}, commonsteps.SetFlow(AMD)),
+	commonsteps.If(intelconds.FITPresent{}, commonsteps.SetFlow(Intel), nil),
+	commonsteps.If(amdconds.ManifestPresent{}, commonsteps.SetFlow(AMD), nil),
 	commonsteps.Panic("unknown flow: neither AMD not Intel"),
 })

@@ -10,7 +10,7 @@ import (
 )
 
 var Intel = types.NewFlow("Intel", types.Steps{
-	commonsteps.If(intelconds.BPMPresent{}, commonsteps.SetFlow(IntelCBnT)),
+	commonsteps.If(intelconds.BPMPresent{}, commonsteps.SetFlow(IntelCBnT), nil),
 	commonsteps.SetFlow(IntelLegacyTXT),
 })
 
