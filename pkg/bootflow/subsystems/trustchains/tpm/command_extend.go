@@ -41,25 +41,35 @@ func (cmd CommandExtend) String() string {
 
 // apply implements Command.
 func (cmd *CommandExtend) Apply(_ context.Context, tpm *TPM) error {
-	h, err := cmd.HashAlgo.Hash()
+	hasher, err := acquireHasher(cmd.HashAlgo)
 	if err != nil {
 		return fmt.Errorf("invalid hash algo: %w", err)
 	}
-	hasher := h.New()
+	defer releaseHasher(hasher)
 
-	oldValue, err := tpm.PCRValues.Get(cmd.PCRIndex, cmd.HashAlgo)
+	pcrValue, err := tpm.PCRValues.Get(cmd.PCRIndex, cmd.HashAlgo)
 	if err != nil {
 		return fmt.Errorf("unable to get the PCR value: %w", err)
 	}
-	if _, err := hasher.Write(oldValue); err != nil {
+	if _, err := hasher.Write(pcrValue); err != nil {
 		return fmt.Errorf("unable to write into hasher %T the original value: %w", hasher, err)
 	}
 	if _, err := hasher.Write(cmd.Digest); err != nil {
 		return fmt.Errorf("unable to write into hasher %T the given value: %w", hasher, err)
 	}
-	newValue := hasher.Sum(nil)
-	if err := tpm.PCRValues.Set(cmd.PCRIndex, cmd.HashAlgo, newValue); err != nil {
-		return fmt.Errorf("unable to update the PCR value: %w", err)
+	{
+		// To avoid memory allocation we pass the existing slice as the buffer to write to.
+		//
+		// This works only if the length of the buffer is not smaller than the required size:
+		if len(pcrValue) != hasher.Size() {
+			return fmt.Errorf("internal error: should never happen: %d != %d", len(pcrValue), hasher.Size())
+		}
+		pcrValueResult := hasher.Sum(pcrValue[:0])
+
+		// Rechecking just in case that everything works as expected:
+		if err := assertSameSlice(pcrValue, pcrValueResult); err != nil {
+			return fmt.Errorf("internal error: should never happen: %w", err)
+		}
 	}
 	return nil
 }

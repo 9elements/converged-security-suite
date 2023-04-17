@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 )
 
@@ -82,4 +83,13 @@ func (s CommandLog) Commands() Commands {
 		result = append(result, entry.Command)
 	}
 	return result
+}
+
+// String implements fmt.Stringer
+func (s CommandLog) String() string {
+	var result strings.Builder
+	for idx, e := range s {
+		result.WriteString(fmt.Sprintf("%d. %s\n", idx, format.NiceString(e)))
+	}
+	return result.String()
 }

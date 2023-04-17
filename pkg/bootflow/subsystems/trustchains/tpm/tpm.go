@@ -46,6 +46,8 @@ func (tpm *TPM) Reset() {
 // but does not set the state to a correct one.
 //
 // Do no use this function unless you know what are you doing.
+//
+// TODO: try to get rid of this function (or at least make it private).
 func (tpm *TPM) DoNotUse_ResetNoInit() {
 	tpm.SupportedAlgos = tpm.SupportedAlgos[:0]
 	tpm.PCRValues = tpm.PCRValues[:0]
