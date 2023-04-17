@@ -6,12 +6,15 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"strings"
 
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/flows"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/amdpsp"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/intelpch"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
@@ -37,17 +40,25 @@ func main() {
 	// parsing arguments
 	flag.Var(&regs, "registers", "")
 	flag.Var(&logLevel, "log-level", "")
+	netPprofFlag := flag.String("net-pprof", "", "")
 	compareWithEventLogFlag := flag.String("compare-with-eventlog", "", "")
 	expectedPCR0Flag := flag.String("expected-pcr0", "", "")
 	printMeasuredBytesLimitFlag := flag.Uint("print-measured-bytes-limit", 0, "")
 	flag.Parse()
+	ctx := logger.CtxWithLogger(context.Background(), logrus.Default().WithLevel(logLevel))
+
+	if *netPprofFlag != "" {
+		go func() {
+			logger.FromCtx(ctx).Error(http.ListenAndServe(*netPprofFlag, nil))
+		}()
+	}
+
 	biosFirmwarePath := flag.Arg(0)
 	biosFirmware, err := os.ReadFile(biosFirmwarePath)
 	if err != nil {
 		panic(fmt.Errorf("unable to read BIOS firmware image '%s': %w", biosFirmwarePath, err))
 	}
 
-	ctx := logger.CtxWithLogger(context.Background(), logrus.Default().WithLevel(logLevel))
 	process := boot(ctx, biosFirmware, registers.Registers(regs))
 	printBootResults(ctx, process, *printMeasuredBytesLimitFlag)
 
@@ -117,13 +128,14 @@ func main() {
 		combinedCommandLog,
 		sanitizeCommandLog(combinedCommandLog),
 	} {
+		logger.FromCtx(ctx).Debugf("ReproducePCR0: CommandLog = %s", format.NiceStringWithIntend(commandLog))
 
 		for _, maxReorders := range []int{0, 1, 2, 3} {
 			settings := pcrbruteforcer.DefaultSettingsReproducePCR0()
 			settings.MaxDisabledMeasurements = 6 - maxReorders*2
 			settings.MaxReorders = maxReorders
 
-			logger.FromCtx(ctx).Infof("ReproducePCR0Settings = %#+v", settings)
+			logger.FromCtx(ctx).Debugf("ReproducePCR0Settings = %#+v", settings)
 
 			reproducePCR0Result, err = pcrbruteforcer.ReproduceExpectedPCR0(ctx, commandLog, tpm2.AlgSHA256, expectedPCR0, settings)
 			if err != nil {
