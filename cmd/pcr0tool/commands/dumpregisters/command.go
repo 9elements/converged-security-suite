@@ -1,6 +1,7 @@
 package dumpregisters
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -42,7 +43,7 @@ func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
 // start the execution of the command.
 //
 // `args` are the arguments left unused by verb itself and options.
-func (cmd Command) Execute(args []string) {
+func (cmd Command) Execute(ctx context.Context, args []string) {
 	if *cmd.txtPublicDump != "" && cmd.registers != nil {
 		panic(fmt.Errorf("cannot use flags -txt-public-dump and -registers together"))
 	}

@@ -1,6 +1,7 @@
 package printnodes
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -71,7 +72,7 @@ func (v *visitor) Visit(f fianoUEFI.Firmware) error {
 // start the execution of the command.
 //
 // `args` are the arguments left unused by verb itself and options.
-func (cmd Command) Execute(args []string) {
+func (cmd Command) Execute(ctx context.Context, args []string) {
 	if len(args) < 1 {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "error: no path to the firmare was specified\n")
 		usageAndExit()

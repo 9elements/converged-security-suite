@@ -1,6 +1,7 @@
 package diff
 
 import (
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"flag"
@@ -122,7 +123,7 @@ but ignore the overridden bytes. The value is represented in hex characters sepa
 // start the execution of the command.
 //
 // `args` are the arguments left unused by verb itself and options.
-func (cmd Command) Execute(args []string) {
+func (cmd Command) Execute(ctx context.Context, args []string) {
 	if len(args) != 2 {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "expected amount of arguments is two, but received: %d\n", len(args))
 		usageAndExit()
@@ -182,7 +183,7 @@ func (cmd Command) Execute(args []string) {
 		assertNoError(err)
 	}
 
-	measurements, _, debugInfo, err := pcr.GetMeasurements(firmwareGood, 0, measureOpts...)
+	measurements, _, debugInfo, err := pcr.GetMeasurements(ctx, firmwareGood, 0, measureOpts...)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "GetPCRMeasurements error: %v\n", err)
 	}

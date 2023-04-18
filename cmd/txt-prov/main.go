@@ -25,7 +25,7 @@ func main() {
 			Summary: true,
 		}))
 	cbnt.StrictOrderCheck = cli.ManifestStrictOrderCheck
-	fianoLog.DefaultLogger = log.DummyLogger{}
+	fianoLog.DefaultLogger = log.FianoLogger{}
 
 	// Run commands
 	err := ctx.Run(&context{
