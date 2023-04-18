@@ -34,6 +34,9 @@ type ActionCoordinates struct {
 
 // Step returns the Step.
 func (coords *ActionCoordinates) Step() Step {
+	if uint(len(coords.Flow.Steps)) <= coords.StepIndex {
+		return nil
+	}
 	return coords.Flow.Steps[coords.StepIndex]
 }
 
