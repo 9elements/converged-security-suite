@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"strings"
 )
@@ -53,8 +54,8 @@ func (state *State) Reset() {
 func (state *State) SetFlow(flow Flow) {
 	coords := &state.CurrentActionCoordinates
 	coords.Flow = flow
-	coords.StepIndex = 0
-	coords.ActionIndex = 0
+	coords.StepIndex = math.MaxUint   // which means "-1" (because no steps are executed in this flow, yet).
+	coords.ActionIndex = math.MaxUint // which means "-1" (because no actions are executed in this step, yet).
 }
 
 // GetCurrentActionCoordinates returns the Action is being performed.

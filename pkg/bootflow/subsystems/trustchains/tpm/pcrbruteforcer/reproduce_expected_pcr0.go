@@ -33,6 +33,10 @@ const (
 	minCombinationsPerRoutine = 1
 )
 
+var (
+	enabledSlowTracing = false
+)
+
 // ReproducePCR0Result represents the applied PCR bruteforce methods: check different localities, ACM_POLICY_STATUS, disabling measurements
 type ReproducePCR0Result struct {
 	Locality               uint8
@@ -101,6 +105,7 @@ func ReproduceExpectedPCR0(
 	expectedPCR0 tpm.Digest,
 	settings SettingsReproducePCR0,
 ) (*ReproducePCR0Result, error) {
+	logger.FromCtx(ctx).Debugf("expectedPCR0 == %s", expectedPCR0)
 	handler, err := newReproduceExpectedPCR0Handler(
 		measurements,
 		hashAlgo,
@@ -139,7 +144,10 @@ func (h *reproduceExpectedPCR0Handler) Execute(ctx context.Context) (*ReproduceP
 	return h.execute(ctx, []uint8{0, 3})
 }
 
-func (h *reproduceExpectedPCR0Handler) execute(ctx context.Context, localities []uint8) (*ReproducePCR0Result, error) {
+func (h *reproduceExpectedPCR0Handler) execute(
+	ctx context.Context,
+	localities []uint8,
+) (*ReproducePCR0Result, error) {
 	ctx, cancelFunc := context.WithCancel(ctx)
 	defer cancelFunc()
 
@@ -150,7 +158,7 @@ func (h *reproduceExpectedPCR0Handler) execute(ctx context.Context, localities [
 		wg.Add(1)
 		go func(tryLocality uint8) {
 			defer wg.Done()
-			ctx = beltctx.WithField(ctx, "locality", tryLocality)
+			ctx := beltctx.WithField(ctx, "locality", tryLocality)
 			defer func() {
 				errmon.ObserveRecoverCtx(ctx, recover())
 			}()
@@ -161,25 +169,25 @@ func (h *reproduceExpectedPCR0Handler) execute(ctx context.Context, localities [
 			_result, err := h.newJob(tryLocality).Execute(ctx)
 			elapsed := time.Since(startTime)
 
-			if _result == nil && err == nil {
-				logger.FromCtx(ctx).Debugf("reproduce pcr0 did not find an answer (locality: %v, elapsed: %v)", tryLocality, elapsed)
-				return
-			}
 			if err != nil {
 				logger.FromCtx(ctx).Errorf("Failed to bruteforce for locality: '%d': '%v'", tryLocality, err)
+				return
+			}
+			if _result == nil {
+				logger.FromCtx(ctx).Debugf("reproduce pcr0 did not find an answer (locality: %v, elapsed: %v)", tryLocality, elapsed)
 				return
 			}
 			logger.FromCtx(ctx).Debugf("reproduce pcr0 got an answer (locality: %v, elapsed: %v)", tryLocality, elapsed)
 
 			if c := atomic.AddUint64(&returnCount, 1); c != 1 {
-				logger.FromCtx(ctx).Errorf("received a final answer with different localities")
+				logger.FromCtx(ctx).Errorf("received the final answer using different localities")
 				return
 			}
 
-			logger.FromCtx(ctx).Debugf("received an answer (locality: %d): %v %v", tryLocality, _result, err)
+			result = _result
+			logger.FromCtx(ctx).Debugf("received an answer (locality: %d): result:%v; err:%v", tryLocality, result, err)
 			cancelFunc()
 
-			result = _result
 		}(tryLocality)
 	}
 	wg.Wait()
@@ -368,7 +376,7 @@ func (j *reproduceExpectedPCR0Job) tryDisabledMeasurementsCombination(
 		enabledMeasurements = append(enabledMeasurements, m)
 	}
 
-	success, orderSwaps, acmPSR, err := j.measurementsVerify(tpmInstance, j.expectedPCR0, enabledMeasurements, buf)
+	success, orderSwaps, acmPSR, err := j.measurementsVerify(ctx, tpmInstance, j.expectedPCR0, enabledMeasurements, buf)
 
 	// Inside measurementsVerify we worked with a subset of measurements which excludes
 	// the disabled measurements. But these indexes are wrong in context of full set of
@@ -383,6 +391,7 @@ func (j *reproduceExpectedPCR0Job) tryDisabledMeasurementsCombination(
 }
 
 func (j *reproduceExpectedPCR0Job) measurementsVerify(
+	ctx context.Context,
 	tpmInstance *tpm.TPM,
 	expectedHashValue tpm.Digest,
 	enabledMeasurements []*tpm.CommandLogEntry,
@@ -391,6 +400,7 @@ func (j *reproduceExpectedPCR0Job) measurementsVerify(
 	switch {
 	case len(enabledMeasurements) > 0 && isMeasurePCR0DATACmdLogEntry(enabledMeasurements[0]):
 		orderSwaps, acmPolicyStatus, err := j.measurementsVerifyWithBruteForceACMPolicyStatus(
+			ctx,
 			expectedHashValue,
 			enabledMeasurements,
 		)
@@ -404,6 +414,7 @@ func (j *reproduceExpectedPCR0Job) measurementsVerify(
 
 	default:
 		if success, orderSwaps := j.bruteforceOrder(
+			ctx,
 			tpmInstance,
 			expectedHashValue,
 			enabledMeasurements,
@@ -429,6 +440,7 @@ func ApplyOrderSwaps[T any](swaps OrderSwaps, s []T) {
 }
 
 func (j *reproduceExpectedPCR0Job) bruteforceOrder(
+	ctx context.Context,
 	tpmInstance *tpm.TPM,
 	expectedHashValue tpm.Digest,
 	measurements []*tpm.CommandLogEntry,
@@ -450,7 +462,7 @@ func (j *reproduceExpectedPCR0Job) bruteforceOrder(
 			measurements:      measurements,
 			alreadySwapped:    buf,
 			swapsLimit:        swapsLimit,
-		}).executeRecursive()
+		}).executeRecursive(ctx)
 		if success {
 			return success, orderSwaps
 		}
@@ -470,10 +482,12 @@ type orderBruteforcerJob struct {
 	swapsLimit          int
 }
 
-func (j *orderBruteforcerJob) executeRecursive() (bool, OrderSwaps) {
+func (j *orderBruteforcerJob) executeRecursive(
+	ctx context.Context,
+) (bool, OrderSwaps) {
 	availableForOrderSwap := len(j.measurements) - j.alreadySwappedCount
 	if j.swapsLimit == 0 || availableForOrderSwap < 2 {
-		success := bytes.Equal(j.parent.replayTPMCommands(j.tpmInstance, j.measurements), j.expectedHashValue)
+		success := bytes.Equal(j.parent.replayTPMCommands(ctx, j.tpmInstance, j.measurements), j.expectedHashValue)
 		return success, nil
 	}
 
@@ -517,7 +531,7 @@ func (j *orderBruteforcerJob) executeRecursive() (bool, OrderSwaps) {
 
 		j.alreadySwapped[idxA], j.alreadySwapped[idxB] = true, true
 		j.measurements[idxA], j.measurements[idxB] = j.measurements[idxB], j.measurements[idxA]
-		success, orderSwaps := j.executeRecursive()
+		success, orderSwaps := j.executeRecursive(ctx)
 		if success {
 			return success, append(orderSwaps, OrderSwap{
 				IdxA: idxA,
@@ -535,20 +549,17 @@ func (j *orderBruteforcerJob) executeRecursive() (bool, OrderSwaps) {
 }
 
 func isMeasurePCR0DATACmdLogEntry(logEntry *tpm.CommandLogEntry) bool {
-	if logEntry.CauseCoordinates.Flow.Steps == nil {
-		return false
-	}
-	_, ok := logEntry.CauseCoordinates.Flow.Steps[logEntry.CauseCoordinates.StepIndex].(intelsteps.MeasurePCR0DATA)
+	_, ok := logEntry.CauseCoordinates.Step().(intelsteps.MeasurePCR0DATA)
 	return ok
 }
 
 func (j *reproduceExpectedPCR0Job) replayTPMCommands(
+	ctx context.Context,
 	tpmInstance *tpm.TPM,
 	log []*tpm.CommandLogEntry,
 ) tpm.Digest {
 	tpmInstance.DoNotUse_ResetNoInit()
 	tpmInstance.SupportedAlgos = j.supportedAlgos
-	ctx := context.Background()
 	err := j.tpmInitCmd.Apply(ctx, tpmInstance)
 	if err != nil {
 		// this is caught by recover()
@@ -562,10 +573,16 @@ func (j *reproduceExpectedPCR0Job) replayTPMCommands(
 			panic(err)
 		}
 	}
-	return tpmInstance.PCRValues[0][j.hashAlgo]
+
+	replayedPCR0 := tpmInstance.PCRValues[0][j.hashAlgo]
+	if enabledSlowTracing {
+		logger.FromCtx(ctx).Tracef("replayedPCR == %s: %s %s", replayedPCR0, &j.tpmInitCmd, log)
+	}
+	return replayedPCR0
 }
 
 func (j *reproduceExpectedPCR0Job) measurementsVerifyWithBruteForceACMPolicyStatus(
+	ctx context.Context,
 	expectedHashValue tpm.Digest,
 	enabledMeasurements []*tpm.CommandLogEntry,
 ) (OrderSwaps, *registers.ACMPolicyStatus, error) {
@@ -633,17 +650,17 @@ func (j *reproduceExpectedPCR0Job) measurementsVerifyWithBruteForceACMPolicyStat
 	var orderSwapsResult OrderSwaps
 	orderSwapsSetCount := uint32(0)
 	check := func(_ctx any, data []byte) (bool, error) {
-		ctx := _ctx.(*bruteForceContext)
+		lctx := _ctx.(*bruteForceContext)
 		// check if this series of measurements lead to the expected pcr0
-		hasher := ctx.Hasher
-		measurements := ctx.Measurements
+		hasher := lctx.Hasher
+		measurements := lctx.Measurements
 
 		hasher.Reset()
 		hasher.Write(data)
 		hasher.Write(pcr0DataBytes[len(data):])
-		hasher.Sum(ctx.PCR0DataDigestPointer[:0])
+		hasher.Sum(lctx.PCR0DataDigestPointer[:0])
 
-		success, orderSwaps := j.bruteforceOrder(ctx.TPMInstance, j.expectedPCR0, measurements, ctx.Buf)
+		success, orderSwaps := j.bruteforceOrder(ctx, lctx.TPMInstance, j.expectedPCR0, measurements, lctx.Buf)
 		if success {
 			switch atomic.AddUint32(&orderSwapsSetCount, 1) {
 			case 1:

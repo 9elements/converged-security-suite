@@ -3,6 +3,7 @@ package bootengine
 import (
 	"context"
 	"fmt"
+	"math"
 	"runtime/debug"
 	"strings"
 
@@ -42,6 +43,7 @@ func stateNextStep(
 		return nil, nil, nil, nil, false
 	}
 
+	actCoords.StepIndex++
 	if actCoords.StepIndex >= uint(len(actCoords.Flow.Steps)) {
 		return nil, nil, nil, nil, false
 	}
@@ -49,7 +51,6 @@ func stateNextStep(
 	var stepIssues StepIssues
 
 	step := actCoords.Flow.Steps[actCoords.StepIndex]
-	actCoords.StepIndex++
 	actions := step.Actions(ctx, state)
 	for idx, action := range actions {
 		actCoords.ActionIndex = uint(idx)
@@ -75,6 +76,10 @@ func stateNextStep(
 				},
 				Issue: issue,
 			})
+		}
+		if actCoords.StepIndex == math.MaxUint {
+			// if the flow changed then break
+			break
 		}
 	}
 
