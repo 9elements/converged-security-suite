@@ -147,7 +147,11 @@ func getKeyManifest(fitEntries []fit.Entry) (*cbntkey.Manifest, *fit.EntryKeyMan
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntryKeyManifestRecord:
 			_, km2, err := fitEntry.ParseData()
-			if err != nil && km2 != nil {
+			if km2 == nil {
+				// TODO: add support for non-CBnT BtG
+				return nil, nil, fmt.Errorf("found a non-CBnT BootGuard manifest instead of the CBnT one")
+			}
+			if err != nil {
 				return nil, nil, err
 			}
 			return km2, fitEntry, nil
@@ -161,7 +165,11 @@ func getBootPolicyManifest(fitEntries []fit.Entry) (*cbntbootpolicy.Manifest, *f
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntryBootPolicyManifestRecord:
 			_, bpManifest2, err := fitEntry.ParseData()
-			if err != nil && bpManifest2 != nil {
+			if bpManifest2 == nil {
+				// TODO: add support for non-CBnT BtG
+				return nil, nil, fmt.Errorf("found a non-CBnT BootGuard manifest instead of the CBnT one")
+			}
+			if err != nil {
 				return nil, nil, err
 			}
 			return bpManifest2, fitEntry, nil
