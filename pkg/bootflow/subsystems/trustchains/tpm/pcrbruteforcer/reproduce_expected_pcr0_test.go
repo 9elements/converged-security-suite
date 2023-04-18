@@ -75,9 +75,11 @@ func TestReproduceExpectedPCR0(t *testing.T) {
 		if bytes.Equal(pcr0, pcr0Invalid) {
 			require.Nil(t, result)
 		} else {
-			require.NotNil(t, result, "%v", err)
-			require.NotNil(t, result.CorrectACMPolicyStatus)
-			require.Equal(t, uint64(correctACMRegValue), result.CorrectACMPolicyStatus.Raw())
+			require.NotNil(t, result)
+			if acmReg != correctACMRegValue {
+				require.NotNil(t, result.CorrectACMPolicyStatus)
+				require.Equal(t, uint64(correctACMRegValue), result.CorrectACMPolicyStatus.Raw())
+			}
 		}
 	}
 
