@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"flag"
 )
 
@@ -21,5 +22,5 @@ type Command interface {
 	// start the execution of the command.
 	//
 	// `args` are the arguments left unused by verb itself and options.
-	Execute(args []string)
+	Execute(ctx context.Context, args []string)
 }

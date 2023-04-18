@@ -1,6 +1,7 @@
 package pcr
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
@@ -16,6 +17,7 @@ type Firmware = *uefi.UEFI
 // GetMeasurements returns the measurements which should be performed
 // to calculate the requested PCR value based on this `firmware`.
 func GetMeasurements(
+	ctx context.Context,
 	firmware Firmware,
 	pcrID ID,
 	opts ...MeasureOption,
@@ -33,14 +35,14 @@ func GetMeasurements(
 		}
 	}
 
-	measurements, flow, debugInfo, err = getMeasurements(pcrID, firmware, config)
+	measurements, flow, debugInfo, err = getMeasurements(ctx, pcrID, firmware, config)
 
 	if measurements == nil {
 		return
 	}
 
 	if config.FindMissingFakeMeasurements {
-		missingRanges := findMissingFakeMeasurements(firmware, pcrID, measurements, opts...)
+		missingRanges := findMissingFakeMeasurements(ctx, firmware, pcrID, measurements, opts...)
 		if len(missingRanges) > 0 {
 			measurements = append(measurements,
 				NewRangesMeasurement(
@@ -54,6 +56,7 @@ func GetMeasurements(
 }
 
 func getMeasurements(
+	ctx context.Context,
 	pcrID ID,
 	firmware Firmware,
 	config MeasurementConfig,
@@ -70,7 +73,7 @@ func getMeasurements(
 	}
 
 	// Detect attestation flow
-	detectedFlow, detectFlowErr := DetectAttestationFlow(firmware, config.Registers, config.TPMDevice)
+	detectedFlow, detectFlowErr := DetectAttestationFlow(ctx, firmware, config.Registers, config.TPMDevice)
 	if detectedFlow != FlowAuto {
 		debugInfo["detectedAttestationFlow"] = detectedFlow.String()
 	}

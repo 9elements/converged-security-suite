@@ -2,8 +2,10 @@ package pcr
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
+	"github.com/facebookincubator/go-belt/tool/logger"
 	amd "github.com/linuxboot/fiano/pkg/amd/manifest"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
@@ -123,15 +125,24 @@ func IsCBnTFirmware(firmware Firmware) bool {
 }
 
 // IsAMDPSPFirmware checks if firmware belongs to AMD Platform security
-func IsAMDPSPFirmware(firmware Firmware) bool {
+func IsAMDPSPFirmware(
+	ctx context.Context,
+	firmware Firmware,
+) bool {
 	_, _, err := amd.FindEmbeddedFirmwareStructure(firmware)
+	logger.FromCtx(ctx).Debugf("FindEmbeddedFirmwareStructure err-result: %v", err)
 	return err == nil
 }
 
 // DetectMainAttestationFlow returns the PCR0 measurements flow assuming
 // no validation errors occurred.
-func DetectMainAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevice tpmdetection.Type) (Flow, error) {
-	if IsAMDPSPFirmware(firmware) {
+func DetectMainAttestationFlow(
+	ctx context.Context,
+	firmware Firmware,
+	regs registers.Registers,
+	tpmDevice tpmdetection.Type,
+) (Flow, error) {
+	if IsAMDPSPFirmware(ctx, firmware) {
 		// TODO: whether TPM is initialized in locality 0 or 3 depends on the APCB binary tokens
 		// Return the most common default
 		return FlowLegacyAMDLocality3, nil
@@ -178,8 +189,13 @@ func DetectMainAttestationFlow(firmware Firmware, regs registers.Registers, tpmD
 // DetectAttestationFlow return the PCR0 measurements flow.
 //
 // For example CBnT-0T falls back to TXT-disabled if BPM signature is invalid.
-func DetectAttestationFlow(firmware Firmware, regs registers.Registers, tpmDevice tpmdetection.Type) (Flow, error) {
-	flow, err := DetectMainAttestationFlow(firmware, regs, tpmDevice)
+func DetectAttestationFlow(
+	ctx context.Context,
+	firmware Firmware,
+	regs registers.Registers,
+	tpmDevice tpmdetection.Type,
+) (Flow, error) {
+	flow, err := DetectMainAttestationFlow(ctx, firmware, regs, tpmDevice)
 	if err != nil {
 		return flow, err
 	}
