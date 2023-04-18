@@ -27,13 +27,13 @@ func (verRegexp VersionRegexp) Check(
 
 	r, err := regexp.Compile(string(verRegexp))
 	if err != nil {
-		logger.FromCtx(ctx).Error("unable to compile regular expression '%s': %v", string(verRegexp), err)
+		logger.FromCtx(ctx).Errorf("unable to compile regular expression '%s': %v", string(verRegexp), err)
 		return false
 	}
 
 	biosInfo, err := biosImg.Info()
 	if err != nil {
-		logger.FromCtx(ctx).Error("unable to obtain BIOS info: %v", string(verRegexp), err)
+		logger.FromCtx(ctx).Errorf("unable to obtain BIOS info: %v", err)
 		return false
 	}
 
