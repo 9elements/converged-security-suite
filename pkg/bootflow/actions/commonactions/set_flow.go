@@ -27,27 +27,27 @@ func (step *setFlowFunc) Apply(_ context.Context, state *types.State) error {
 	return nil
 }
 
-type setFlow struct {
-	nextFlow types.Flow
+type SetFlowStruct struct {
+	NextFlow types.Flow
 }
 
-var _ types.Action = (*setFlowFunc)(nil)
+var _ types.Action = (*SetFlowStruct)(nil)
 
 // SetFlow sets the Flow.
 func SetFlow(flow types.Flow) types.Action {
-	return &setFlow{
-		nextFlow: flow,
+	return &SetFlowStruct{
+		NextFlow: flow,
 	}
 }
 
 // Apply implements types.Action.
-func (action *setFlow) Apply(_ context.Context, state *types.State) error {
-	state.SetFlow(action.nextFlow)
+func (action *SetFlowStruct) Apply(_ context.Context, state *types.State) error {
+	state.SetFlow(action.NextFlow)
 	return nil
 }
 
-func (action *setFlow) String() string {
-	nextSteps := action.nextFlow.Steps
+func (action *SetFlowStruct) String() string {
+	nextSteps := action.NextFlow.Steps
 	if len(nextSteps) == 0 {
 		return "SetFlow({})"
 	}
