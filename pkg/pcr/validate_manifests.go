@@ -17,29 +17,37 @@ func (v ValidateManifests) Validate(firmware Firmware) error {
 		return fmt.Errorf("unable to parse FIT entries: %w", err)
 	}
 
-	km, kmFIT, err := getKeyManifest(fitEntries)
+	km1, km2, kmFIT, err := getKeyManifest(fitEntries)
 	if err != nil {
 		return fmt.Errorf("unable to get Key Manifest: %w", err)
 	}
+	if km1 != nil {
+		// not supported, yet
+		return nil
+	}
 
-	if err := km.KeyAndSignature.Verify(kmFIT.DataSegmentBytes[:km.KeyManifestSignatureOffset]); err != nil {
+	if err := km2.KeyAndSignature.Verify(kmFIT.DataSegmentBytes[:km2.KeyManifestSignatureOffset]); err != nil {
 		return fmt.Errorf("unable to confirm KM signature: %w", err)
 	}
 
-	bpm, bpmFIT, err := getBootPolicyManifest(fitEntries)
+	bpm1, bpm2, bpmFIT, err := getBootPolicyManifest(fitEntries)
 	if err != nil {
 		return fmt.Errorf("unable to get Boot Policy Manifest: %w", err)
 	}
+	if bpm1 != nil {
+		// not supported, yet
+		return nil
+	}
 
-	if err := bpm.PMSE.KeySignature.Verify(bpmFIT.DataSegmentBytes[:bpm.KeySignatureOffset]); err != nil {
+	if err := bpm2.PMSE.KeySignature.Verify(bpmFIT.DataSegmentBytes[:bpm2.KeySignatureOffset]); err != nil {
 		return fmt.Errorf("unable to confirm KM signature: %w", err)
 	}
 
-	if err := km.ValidateBPMKey(bpm.PMSE.KeySignature); err != nil {
+	if err := km2.ValidateBPMKey(bpm2.PMSE.KeySignature); err != nil {
 		return fmt.Errorf("key chain is invalid: %w", err)
 	}
 
-	if err := bpm.ValidateIBB(firmware); err != nil {
+	if err := bpm2.ValidateIBB(firmware); err != nil {
 		return fmt.Errorf("IBB signature in BPM is not valid: %w", err)
 	}
 
