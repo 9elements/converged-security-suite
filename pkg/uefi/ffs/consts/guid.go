@@ -11,6 +11,9 @@ var (
 	// GUIDModuleTcg2Pie is the GUID of UEFI node "Tcg2Pie"
 	GUIDModuleTcg2Pie = *guid.MustParse("A0C98B77-CBA5-4BB8-993B-4AF6CE33ECE4")
 
+	// GUIDOCPPEI is the GUID of UEFI node "PEI" in OCP firmwares
+	GUIDOCPPEI = *guid.MustParse("61C0F511-A691-4F54-974F-B9A42172CE53")
+
 	// GUIDDXE is the GUID of UEFI node "DXE"
 	GUIDDXE = *guid.MustParse("5C60F367-A505-419A-859E-2A4FF6CA6FE5")
 

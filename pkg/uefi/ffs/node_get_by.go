@@ -54,18 +54,22 @@ func (node *Node) NameToRangesMap() map[string]pkgbytes.Ranges {
 	return rangeMap
 }
 
-type nodeVisitor struct {
-	Callback func(node Node) error
+type NodeVisitor struct {
+	Callback                 func(node Node) (bool, error)
+	FallbackToContainerRange bool
+
+	isSkipping bool
 
 	// isProcessedSection means we are currently scanning
 	// a processed area (so absolute offsets has no sense in here)
 	isProcessedSection bool
+	containerRange     *pkgbytes.Range
 
 	rangeMap map[string]pkgbytes.Ranges
 	countMap map[string]uint
 }
 
-func (v *nodeVisitor) Run(f fianoUEFI.Firmware) error {
+func (v *NodeVisitor) Run(f fianoUEFI.Firmware) error {
 	v.countMap = map[string]uint{}
 	node, ok := f.(*Node)
 	if !ok {
@@ -75,7 +79,7 @@ func (v *nodeVisitor) Run(f fianoUEFI.Firmware) error {
 	return node.Apply(v)
 }
 
-func (v *nodeVisitor) Visit(f fianoUEFI.Firmware) error {
+func (v *NodeVisitor) Visit(f fianoUEFI.Firmware) error {
 
 	/* Gathering additional information */
 
@@ -123,18 +127,37 @@ func (v *nodeVisitor) Visit(f fianoUEFI.Firmware) error {
 		}
 		v.countMap[name]++
 	}
+	if firmwareRange.Offset == math.MaxUint64 && v.FallbackToContainerRange && v.containerRange != nil {
+		firmwareRange = *v.containerRange
+	}
 
 	/* Calling the Callback */
 
-	err := v.Callback(Node{
-		Firmware: f,
-		Range:    firmwareRange,
-	})
-	if err != nil {
-		return err
+	if !v.isSkipping {
+		shouldContinue, err := v.Callback(Node{
+			Firmware: f,
+			Range:    firmwareRange,
+		})
+		if err != nil {
+			return err
+		}
+		if !shouldContinue {
+			v.isSkipping = true
+			defer func() {
+				v.isSkipping = false
+			}()
+		}
 	}
 
 	/* Continuing the traversal */
+
+	if !v.isProcessedSection && firmwareRange.Offset != math.MaxUint64 {
+		oldContainerRange := v.containerRange
+		v.containerRange = &firmwareRange
+		defer func() {
+			v.containerRange = oldContainerRange
+		}()
+	}
 
 	if f, ok := f.(*fianoUEFI.Section); ok {
 		// If the section is decompressed, then absolute offsets
@@ -151,9 +174,13 @@ func (v *nodeVisitor) Visit(f fianoUEFI.Firmware) error {
 				// The area was processed (most likely decompressed), and absolute
 				// offsets does not work here. Setting "isProcessedSection"
 				// for children:
-				vCopy := *v
-				vCopy.isProcessedSection = true
-				return f.ApplyChildren(&vCopy)
+				if !v.isProcessedSection {
+					v.isProcessedSection = true
+					defer func() {
+						v.isProcessedSection = false
+					}()
+				}
+				return f.ApplyChildren(v)
 			}
 		}
 	}

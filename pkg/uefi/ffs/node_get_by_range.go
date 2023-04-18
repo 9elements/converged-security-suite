@@ -6,13 +6,13 @@ import (
 
 // GetByRange returns nodes which overlaps the range `byteRange`.
 func (node *Node) GetByRange(byteRange pkgbytes.Range) (nodes []*Node, err error) {
-	err = (&nodeVisitor{
-		Callback: func(node Node) error {
+	err = (&NodeVisitor{
+		Callback: func(node Node) (bool, error) {
 			if !node.Intersect(byteRange) {
-				return nil
+				return true, nil
 			}
 			nodes = append(nodes, &node)
-			return nil
+			return true, nil
 		},
 	}).Run(node)
 	return

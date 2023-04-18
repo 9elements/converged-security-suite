@@ -56,10 +56,10 @@ func (cmd Command) Execute(args []string) {
 		return
 	}
 
-	dmiTable, err := dmidecode.DMITableFromFirmware(imageBytes)
+	dmiTable, err := dmidecode.DMITableFromFirmwareImage(imageBytes)
 	if errors.As(err, &dmidecode.ErrFindSMBIOSInFirmware{}) {
 		fianoUEFI.DisableDecompression = false
-		dmiTable, err = dmidecode.DMITableFromFirmware(imageBytes)
+		dmiTable, err = dmidecode.DMITableFromFirmwareImage(imageBytes)
 	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "unable to parse the image info: '%v'\n", err)

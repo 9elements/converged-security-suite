@@ -8,12 +8,13 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e
 	github.com/edsrzf/mmap-go v1.1.0
-	github.com/facebookincubator/go-belt v0.0.0-20221130102226-a78fd808461b
+	github.com/facebookincubator/go-belt v0.0.0-20230119144706-62080641a285
 	github.com/fearful-symmetry/gomsr v0.0.1
 	github.com/golang-collections/go-datastructures v0.0.0-20150211160725-59788d5eb259
 	github.com/google/go-attestation v0.4.3
 	github.com/google/go-tpm v0.3.3
 	github.com/google/uuid v1.3.0
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/klauspost/cpuid/v2 v2.2.3
 	github.com/linuxboot/fiano v1.1.4-0.20230131115913-85ddba13ba44
 	github.com/logrusorgru/aurora v2.0.3+incompatible
@@ -30,6 +31,8 @@ require (
 )
 
 require (
+	github.com/DataDog/gostackparse v0.6.0 // indirect
+	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/go-ng/slices v0.0.0-20220616195238-b8d239c57d65 // indirect
 	github.com/go-ng/sort v0.0.0-20220617173827-2cc7cd04f7c7 // indirect
@@ -38,11 +41,11 @@ require (
 	github.com/google/certificate-transparency-go v1.1.1 // indirect
 	github.com/google/go-tspi v0.2.1-0.20190423175329-115dea689aad // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/intel-go/cpuid v0.0.0-20220614022739-219e067757cb // indirect
+	github.com/intel-go/cpuid v0.0.0-20200819041909-2aa72927c3e2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
-	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d // indirect
+	golang.org/x/exp v0.0.0-20221114191408-850992195362 // indirect
 	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/term v0.4.0 // indirect
 	golang.org/x/text v0.6.0 // indirect

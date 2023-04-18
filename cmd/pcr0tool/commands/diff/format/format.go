@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/diff"
-	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
@@ -36,7 +35,6 @@ const (
 func AsText(
 	report diff.AnalysisReport,
 	debugInfo map[string]interface{},
-	measurements pcr.Measurements,
 	goodData []byte,
 	badData []byte,
 ) (output string, err error) {
@@ -50,10 +48,6 @@ func AsText(
 		return "", fmt.Errorf("unable to JSONize debugInfo: %w", err)
 	}
 	result.WriteString(fmt.Sprintln("debugInfo:", string(debugInfoBytes)))
-
-	for _, measurement := range measurements {
-		result.WriteString(fmt.Sprintln(measurement))
-	}
 
 	if len(report.Entries) < rangesThreshold {
 		for _, entry := range report.Entries {

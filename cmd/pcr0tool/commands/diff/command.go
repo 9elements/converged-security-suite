@@ -225,14 +225,14 @@ func (cmd Command) Execute(args []string) {
 	switch outputFormat {
 	case outputFormatTypeAnalyzedText:
 		output, err := format.AsText(
-			diff.Analyze(diffEntries, measurements, firmwareGood, firmwareBadData),
-			debugInfo, measurements, firmwareGoodData, firmwareBadData,
+			diff.Analyze(diffEntries, measurementsForDiffAnalysis(measurements), firmwareGood, firmwareBadData),
+			debugInfo, firmwareGoodData, firmwareBadData,
 		)
 		assertNoError(err)
 		fmt.Print(output)
 	case outputFormatTypeAnalyzedJSON:
 		outputAnalyzedJSON(
-			diff.Analyze(diffEntries, measurements, firmwareGood, firmwareBadData),
+			diff.Analyze(diffEntries, measurementsForDiffAnalysis(measurements), firmwareGood, firmwareBadData),
 			debugInfo, measurements,
 		)
 	case outputFormatTypeJSON:
@@ -240,15 +240,33 @@ func (cmd Command) Execute(args []string) {
 	}
 }
 
-// MeasurementsLaconic is a helper to print measurements in a laconic way
-type MeasurementsLaconic pcr.Measurements
-
-func (s MeasurementsLaconic) String() string {
-	var ids []string
-	for _, measurement := range s {
-		ids = append(ids, measurement.ID.String())
+func measurementsForDiffAnalysis(ms pcr.Measurements) diff.Measurements {
+	result := make(diff.Measurements, 0, len(ms))
+	for _, m := range ms {
+		result = append(result, measurementForDiffAnalysis(m))
 	}
-	return strings.Join(ids, ", ")
+	return result
+}
+
+func measurementForDiffAnalysis(m *pcr.Measurement) diff.Measurement {
+	result := diff.Measurement{
+		Description: m.ID.String(),
+		Chunks:      make(diff.DataChunks, 0, len(m.Data)),
+		CustomData:  m,
+	}
+	for _, chunk := range m.Data {
+		result.Chunks = append(result.Chunks, chunkForDiffAnalysis(chunk))
+	}
+	return result
+}
+
+func chunkForDiffAnalysis(chunk pcr.DataChunk) diff.DataChunk {
+	return diff.DataChunk{
+		Description: chunk.String(),
+		ForceBytes:  chunk.ForceData,
+		Reference:   chunk.Range,
+		CustomData:  chunk,
+	}
 }
 
 func outputAnalyzedJSON(

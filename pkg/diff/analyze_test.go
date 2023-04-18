@@ -3,7 +3,6 @@ package diff
 import (
 	"testing"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi/ffs"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 	"github.com/stretchr/testify/require"
@@ -53,9 +52,9 @@ func TestAnalysisReportAddOffset(t *testing.T) {
 			Offset: 4,
 			Length: 1,
 		}},
-		pcr.Measurements{{
-			Data: pcr.DataChunks{{
-				Range: pkgbytes.Range{
+		Measurements{{
+			Chunks: DataChunks{{
+				Reference: pkgbytes.Range{
 					Offset: 1,
 					Length: 8,
 				},
@@ -70,9 +69,9 @@ func TestAnalysisReportAddOffset(t *testing.T) {
 			Offset: 5,
 			Length: 1,
 		}},
-		pcr.Measurements{{
-			Data: pcr.DataChunks{{
-				Range: pkgbytes.Range{
+		Measurements{{
+			Chunks: DataChunks{{
+				Reference: pkgbytes.Range{
 					Offset: 2,
 					Length: 8,
 				},
