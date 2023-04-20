@@ -41,6 +41,16 @@ func (ValidatorActorsAreProtected) Validate(_ context.Context, _ *types.State, l
 			continue
 		}
 		prevActor = step.Actor
+		if step.ActorCode == nil {
+			result = append(result, Issue{
+				StepIdx: uint(stepIdx),
+				StepIssue: bootengine.StepIssue{
+					Coords: bootengine.StepIssueCoordsActor{},
+					Issue:  fmt.Errorf("actor %T has not defined the code", step.Actor),
+				},
+			})
+			continue
+		}
 		actorRefs := step.ActorCode.References()
 		if err := actorRefs.Resolve(); err != nil {
 			result = append(result, Issue{
