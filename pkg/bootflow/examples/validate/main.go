@@ -35,6 +35,7 @@ func main() {
 	flag.Var(&regs, "registers", "")
 	netPprofFlag := flag.String("net-pprof", "", "")
 	cpuProfileFlag := flag.String("cpu-profile", "", "")
+	injectBenignCorruptionFlag := flag.String("inject-benign-corruption", "", "output file")
 	flag.Parse()
 
 	ctx := context.Background()
@@ -112,6 +113,11 @@ func main() {
 	fmt.Printf("\nIssues:\n")
 	for _, v := range validator.All() {
 		issues := v.Validate(ctx, state, process.Log)
+		if _, ok := v.(validator.ValidatorFinalCoverageIsComplete); ok && *injectBenignCorruptionFlag != "" {
+			if err := injectBenignCorruption(*injectBenignCorruptionFlag, biosArtifact, issues); err != nil {
+				panic(fmt.Errorf("unable to inject a benign corruption: %w", err))
+			}
+		}
 		if len(issues) == 0 {
 			continue
 		}

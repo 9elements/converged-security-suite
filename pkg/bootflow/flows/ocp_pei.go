@@ -27,13 +27,28 @@ var OCPPEI = types.NewFlow("OCPPEI", types.Steps{
 	commonsteps.If(tpmconds.TPMIsInited{}, nil, tpmsteps.InitTPM(0, false)),
 	tpmsteps.Measure(0, tpmeventlog.EV_S_CRTM_VERSION, datasources.PCDVariable("FirmwareVendorVersion")),
 	commonsteps.If(
-		ocpconds.IsOCPv1{},
+		ocpconds.IsOCPv0{},
+		ocpV0Measurements,
 		ocpV1Measurements,
-		tpmsteps.Measure(0, tpmeventlog.EV_POST_CODE, datasources.UEFIGUIDFirst([]guid.GUID{ffsConsts.GUIDDXEContainer, ffsConsts.GUIDDXE})),
 	),
 	tpmsteps.Measure(0, tpmeventlog.EV_SEPARATOR, datasources.Bytes{0, 0, 0, 0}),
 	commonsteps.SetFlow(DXE),
 })
+
+var ocpV0Measurements = commonsteps.If(
+	amdconds.ManifestPresent{},
+	commonsteps.MergeSteps(ocpV0MeasurementsAMD),
+	commonsteps.MergeSteps(ocpV0MeasurementsIntel),
+)
+
+var ocpV0MeasurementsAMD = types.Steps{
+	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.MemRanges{{Offset: 0xFF562F44, Length: 0x20}}), // TODO: this was bruteforced on a specific firmware, replace with analytical way to find the ranges
+	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.MemRanges{{Offset: 0xFF563044, Length: 0x20}}), // TODO: this was bruteforced on a specific firmware, replace with analytical way to find the ranges
+}
+
+var ocpV0MeasurementsIntel = types.Steps{
+	tpmsteps.Measure(0, tpmeventlog.EV_POST_CODE, datasources.UEFIGUIDFirst([]guid.GUID{ffsConsts.GUIDDXEContainer, ffsConsts.GUIDDXE})),
+}
 
 var ocpV1Measurements = commonsteps.If(
 	amdconds.ManifestPresent{},

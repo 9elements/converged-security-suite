@@ -61,11 +61,23 @@ func (ValidatorFinalCoverageIsComplete) Validate(
 		StepIdx: uint(len(l) - 1),
 		StepIssue: bootengine.StepIssue{
 			Coords: nil,
-			Issue: fmt.Errorf(
-				"executable areas %s are not protected; protected areas are only: %s",
-				format.NiceString(nonMeasured),
-				format.NiceString(measured),
-			),
+			Issue: ErrNotFullCoverage{
+				Measured:    measured,
+				NonMeasured: nonMeasured,
+			},
 		},
 	}}
+}
+
+type ErrNotFullCoverage struct {
+	Measured    types.References
+	NonMeasured types.References
+}
+
+func (e ErrNotFullCoverage) Error() string {
+	return fmt.Sprintf(
+		"executable areas %s are not protected; protected areas are only: %s",
+		format.NiceString(e.NonMeasured),
+		format.NiceString(e.Measured),
+	)
 }
