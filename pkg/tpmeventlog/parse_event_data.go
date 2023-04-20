@@ -31,6 +31,7 @@ var eventDataParsers = map[pcr.ID]map[EventType]EventDataParserFunc{
 			}
 			return &EventDataParsed{TPMInitLocality: ptr(locality)}, nil
 		},
+		EV_POST_CODE:                   parseEventDataPCR0PostCode,
 		EV_EFI_PLATFORM_FIRMWARE_BLOB2: parseEventDataPCR0PlatformFirmwareBlob2,
 	},
 }
@@ -83,6 +84,13 @@ func ParseEventData(
 		return nil, fmt.Errorf("event type '%s' is not supported in PCR0, yet", ev.Type)
 	}
 	return fn(ev, imageSize)
+}
+
+func parseEventDataPCR0PostCode(
+	ev *Event,
+	imageSize uint64,
+) (*EventDataParsed, error) {
+	return parseEventDataPCR0PlatformFirmwareBlob2(ev, imageSize)
 }
 
 func parseEventDataPCR0PlatformFirmwareBlob2(
