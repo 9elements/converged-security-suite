@@ -1,9 +1,9 @@
-package pcr
+package tpmeventlog
 
 import (
 	"testing"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
+	pcr "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
 	"github.com/google/go-tpm/tpm2"
 	"github.com/stretchr/testify/require"
 )
@@ -48,54 +48,54 @@ func TestReplay(t *testing.T) {
 	//   0   | SHA256 | EV_S_CRTM_CONTENTS   | 00..0005 | nil
 	//   1   | SHA1   | EV_S_CRTM_CONTENTS   | 00..0006 | nil
 	//   1   | SHA1   | EV_EFI_VARIABLE_BOOT | 00..0007 | nil
-	eventLog := &tpmeventlog.TPMEventLog{
-		Events: []*tpmeventlog.Event{
+	eventLog := &TPMEventLog{
+		Events: []*Event{
 			{
 				PCRIndex: 0,
-				Type:     tpmeventlog.EV_NO_ACTION,
+				Type:     EV_NO_ACTION,
 				Data:     []byte("StartupLocality\x00\x01"), // TPM init locality is 1
-				Digest: &tpmeventlog.Digest{
+				Digest: &Digest{
 					HashAlgo: tpm2.AlgSHA1,
 					Digest:   makeMeasurementDigest(tpm2.AlgSHA1, 2), // on a real machine it it actually always makeMeasurementDigest(tpm2.AlgSHA1, 0)
 				},
 			},
 			{
 				PCRIndex: 0,
-				Type:     tpmeventlog.EV_NO_ACTION,
+				Type:     EV_NO_ACTION,
 				Data:     []byte("StartupLocality\x00\x01"), // TPM init locality is 1
-				Digest: &tpmeventlog.Digest{
+				Digest: &Digest{
 					HashAlgo: tpm2.AlgSHA256,
 					Digest:   makeMeasurementDigest(tpm2.AlgSHA256, 3), // on a real machine it it actually always makeMeasurementDigest(tpm2.AlgSHA256, 0)
 				},
 			},
 			{
 				PCRIndex: 0,
-				Type:     tpmeventlog.EV_S_CRTM_CONTENTS,
-				Digest: &tpmeventlog.Digest{
+				Type:     EV_S_CRTM_CONTENTS,
+				Digest: &Digest{
 					HashAlgo: tpm2.AlgSHA1,
 					Digest:   makeMeasurementDigest(tpm2.AlgSHA1, 4),
 				},
 			},
 			{
 				PCRIndex: 0,
-				Type:     tpmeventlog.EV_S_CRTM_CONTENTS,
-				Digest: &tpmeventlog.Digest{
+				Type:     EV_S_CRTM_CONTENTS,
+				Digest: &Digest{
 					HashAlgo: tpm2.AlgSHA256,
 					Digest:   makeMeasurementDigest(tpm2.AlgSHA256, 5),
 				},
 			},
 			{
 				PCRIndex: 1,
-				Type:     tpmeventlog.EV_S_CRTM_CONTENTS,
-				Digest: &tpmeventlog.Digest{
+				Type:     EV_S_CRTM_CONTENTS,
+				Digest: &Digest{
 					HashAlgo: tpm2.AlgSHA1,
 					Digest:   makeMeasurementDigest(tpm2.AlgSHA1, 6),
 				},
 			},
 			{
 				PCRIndex: 1,
-				Type:     tpmeventlog.EV_EFI_VARIABLE_BOOT,
-				Digest: &tpmeventlog.Digest{
+				Type:     EV_EFI_VARIABLE_BOOT,
+				Digest: &Digest{
 					HashAlgo: tpm2.AlgSHA1,
 					Digest:   makeMeasurementDigest(tpm2.AlgSHA1, 7),
 				},
@@ -126,7 +126,7 @@ func TestReplay(t *testing.T) {
 		// Validate that Replay returns an error for all non-yet-supported PCR values.
 		// This is to avoid returning wrong data to an user.
 
-		for pcrID := ID(2); ; pcrID++ {
+		for pcrID := pcr.ID(2); ; pcrID++ {
 			for _, hashAlgo := range []tpm2.Algorithm{tpm2.AlgSHA1} {
 				t.Run("not_supported/pcr%d", func(t *testing.T) {
 					_, err := Replay(eventLog, pcrID, hashAlgo, nil)
