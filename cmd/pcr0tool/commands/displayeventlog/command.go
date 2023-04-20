@@ -82,7 +82,7 @@ func (cmd Command) Execute(args []string) {
 	fmt.Print(format.EventLog(eventLog, filterPCRIndex, filterHashAlgo, "", cmd.format == flagFormatPlaintextMultiline))
 
 	if *cmd.calcPCR {
-		calculatedValue, err := pcr.Replay(eventLog, pcr.ID(*cmd.pcrIndex), tpmeventlog.TPMAlgorithm(*cmd.hashAlgo), nil)
+		calculatedValue, err := tpmeventlog.Replay(eventLog, pcr.ID(*cmd.pcrIndex), tpmeventlog.TPMAlgorithm(*cmd.hashAlgo), nil)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "unable to replay the PCR%d value: %v", *cmd.pcrIndex, err)
 			return
