@@ -25,6 +25,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 	"github.com/facebookincubator/go-belt/tool/logger"
 	"github.com/google/go-tpm/tpm2"
+	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 	"github.com/xaionaro-go/unhash/pkg/unhash"
 	"golang.org/x/exp/constraints"
 )
@@ -284,14 +285,31 @@ func tryHardToExplainUnexpectedDigests(
 			followupLogEntryExplainers []*logEntryExplainer
 		)
 		for found := range foundCh {
+			ranges := pkgbytes.Ranges{{Offset: uint64(found.StartPos), Length: uint64(found.EndPos) - uint64(found.StartPos)}}
+
 			logEntryExplainer := logEntryExplainersPerAlgo[hashAlgo][found.DigestIndex]
-			logEntryExplainer.SetMeasurement(fwImage, tpmInstance, nil, found.StartPos, found.EndPos)
+			logEntryExplainer.SetMeasurement(fwImage, tpmInstance, nil, nil, ranges)
 			measuredBytes := fwImage.Content[found.StartPos:found.EndPos]
-			if len(measuredBytes) == h.Size() {
-				// it looks like we measured a hash, let's investigate what this hash represents
-				followupDigests = append(followupDigests, measuredBytes)
-				followupLogEntryExplainers = append(followupLogEntryExplainers, logEntryExplainer)
+			if len(measuredBytes) != h.Size() {
+				continue
 			}
+
+			if logEntryExplainer.EventDataParsed != nil {
+				chunks := rangesToChunks(ctx, fwImage, logEntryExplainer.EventDataParsed.Ranges, nil)
+				b := chunks.RawBytes()
+
+				hasher := h.New()
+				hasher.Write(b)
+				dataHash := hasher.Sum(nil)
+				if bytes.Equal(dataHash, measuredBytes) {
+					logEntryExplainer.AddMeasurement(fwImage, digestAsTrustChain{}, dataconverters.NewHasher(h.New()), &biosimage.PhysMemMapper{}, logEntryExplainer.EventDataParsed.Ranges)
+					continue
+				}
+			}
+
+			// it looks like we measured a hash, let's investigate what this hash represents
+			followupDigests = append(followupDigests, measuredBytes)
+			followupLogEntryExplainers = append(followupLogEntryExplainers, logEntryExplainer)
 		}
 
 		if len(followupDigests) == 0 {
@@ -311,8 +329,10 @@ func tryHardToExplainUnexpectedDigests(
 		}()
 
 		for found := range foundCh {
+			ranges := pkgbytes.Ranges{{Offset: uint64(found.StartPos), Length: uint64(found.EndPos) - uint64(found.StartPos)}}
+
 			logEntryExplainer := followupLogEntryExplainers[found.DigestIndex]
-			logEntryExplainer.AddMeasurement(fwImage, digestAsTrustChain{}, dataconverters.NewHasher(h.New()), found.StartPos, found.EndPos)
+			logEntryExplainer.AddMeasurement(fwImage, digestAsTrustChain{}, dataconverters.NewHasher(h.New()), nil, ranges)
 		}
 	}
 }

@@ -118,8 +118,22 @@ func (e logEntryExplainer) guessMeasurementFromEventRanges(
 	ev *tpmeventlog.Event,
 	image *biosimage.BIOSImage,
 ) (*types.MeasuredData, []byte) {
+	return tryMeasurement(s, ev, rangesToChunks(
+		ctx,
+		image,
+		e.EventDataParsed.Ranges,
+		expectedMeasurement,
+	))
+}
+
+func rangesToChunks(
+	ctx context.Context,
+	image *biosimage.BIOSImage,
+	ranges pkgbytes.Ranges,
+	expectedMeasurement *types.MeasuredData,
+) types.UnionForcedBytesOrReferences {
 	var chunks types.UnionForcedBytesOrReferences
-	for _, r := range e.EventDataParsed.Ranges {
+	for _, r := range ranges {
 		var addressMapper types.AddressMapper
 		if isPhysAddr(r.Offset, image.Size()) {
 			addressMapper = biosimage.PhysMemMapper{}
@@ -146,7 +160,7 @@ func (e logEntryExplainer) guessMeasurementFromEventRanges(
 		}
 		chunks = append(chunks, chunk)
 	}
-	return tryMeasurement(s, ev, chunks)
+	return chunks
 }
 
 func tryMeasurement(
@@ -237,24 +251,24 @@ func (e *logEntryExplainer) SetMeasurement(
 	artifact types.SystemArtifact,
 	trustChain types.TrustChain,
 	dataConverter types.DataConverter,
-	startPos, endPos uint,
+	addrMapper types.AddressMapper,
+	ranges pkgbytes.Ranges,
 ) {
 	e.Measurement = e.Measurement[:0]
-	e.AddMeasurement(artifact, trustChain, dataConverter, startPos, endPos)
+	e.AddMeasurement(artifact, trustChain, dataConverter, addrMapper, ranges)
 }
 
 func (e *logEntryExplainer) AddMeasurement(
 	artifact types.SystemArtifact,
 	trustChain types.TrustChain,
 	dataConverter types.DataConverter,
-	startPos, endPos uint,
+	addrMapper types.AddressMapper,
+	ranges pkgbytes.Ranges,
 ) {
 	data := *types.NewReferenceData(&types.Reference{
-		Artifact: artifact,
-		Ranges: []pkgbytes.Range{{
-			Offset: uint64(startPos),
-			Length: uint64(endPos) - uint64(startPos),
-		}},
+		Artifact:      artifact,
+		AddressMapper: addrMapper,
+		Ranges:        ranges,
 	})
 	data.Converter = dataConverter
 	e.Measurement = append(e.Measurement, types.MeasuredData{
