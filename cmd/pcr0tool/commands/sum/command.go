@@ -2,8 +2,6 @@ package sum
 
 import (
 	"context"
-	"crypto/sha1"
-	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"

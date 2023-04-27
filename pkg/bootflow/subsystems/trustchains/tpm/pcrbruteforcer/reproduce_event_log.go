@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/dataconverters"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/txtpublic"
@@ -24,12 +25,15 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 	"github.com/facebookincubator/go-belt/tool/logger"
 	"github.com/google/go-tpm/tpm2"
+	"github.com/xaionaro-go/unhash/pkg/unhash"
+	"golang.org/x/exp/constraints"
 )
 
 // SettingsReproduceEventLog defines settings for internal bruteforce algorithms used in ReproduceEventLog
 type SettingsReproduceEventLog struct {
 	SettingsBruteforceACMPolicyStatus
 	DisabledEventsMaxDistance uint64
+	MaxDigestRangeGuesses     uint64
 }
 
 // DefaultSettingsReproduceEventLog returns recommended default PCR0 settings
@@ -37,6 +41,7 @@ func DefaultSettingsReproduceEventLog() SettingsReproduceEventLog {
 	return SettingsReproduceEventLog{
 		SettingsBruteforceACMPolicyStatus: DefaultSettingsBruteforceACMPolicyStatus(),
 		DisabledEventsMaxDistance:         2, // arbitrary value based on previous experience, hoping to handle within a second; TODO: add benchmarks
+		MaxDigestRangeGuesses:             100000000,
 	}
 }
 
@@ -88,7 +93,10 @@ func ReproduceEventLog(
 
 	txtPublicRegisters, _ := txtpublic.Get(calculated.CurrentState)
 
-	var updatedACMPolicyStatusValue *registers.ACMPolicyStatus
+	var (
+		updatedACMPolicyStatusValue *registers.ACMPolicyStatus
+		logEntryExplainers          []*logEntryExplainer
+	)
 
 	result := make([]ReproduceEventLogEntry, 0, len(measurementsCalculated))
 	for idx := 0; idx < len(measurementsCalculated); idx++ {
@@ -99,12 +107,15 @@ func ReproduceEventLog(
 		coords := coords[idx]
 
 		if evC == nil && evE != nil {
+			logEntryExplainer := newLogEntryExplainer(ctx, calculated.CurrentState, m, evE)
+			logEntryExplainers = append(logEntryExplainers, logEntryExplainer)
 			issues = append(
 				issues,
-				fmt.Errorf(
-					"unexpected entry in EventLog of type %s and digest %X on evIdx==%d; log entry analysis: %s",
-					evE.Type, evE.Digest.Digest, idx, explainLogEntry(ctx, calculated.CurrentState, m, evE),
-				),
+				IssueUnexpectedLogEntry{
+					Index:             idx,
+					Event:             evE,
+					LogEntryExplainer: logEntryExplainer,
+				},
 			)
 			result = append(result, ReproduceEventLogEntry{
 				Expected: evE,
@@ -175,14 +186,20 @@ func ReproduceEventLog(
 				Status:            ReproduceEventLogEntryStatusMatch,
 			})
 		default:
+			logEntryExplainer := newLogEntryExplainer(ctx, calculated.CurrentState, m, evE)
+			logEntryExplainers = append(logEntryExplainers, logEntryExplainer)
 			// I do not know how to remediate this problem.
 			issues = append(
 				issues,
-				fmt.Errorf(
-					"measurement '%s' does not match the digest reported in EventLog: calculated:%s != given:0x%X; log entry analysis: %s",
-					m, mD, evE.Digest.Digest, explainLogEntry(ctx, calculated.CurrentState, m, evE),
-				),
+				IssueLoggedDigestDoesNotMatch{
+					Index:             idx,
+					Measurement:       m,
+					CalculatedDigest:  mD,
+					Event:             evE,
+					LogEntryExplainer: logEntryExplainer,
+				},
 			)
+
 			result = append(result, ReproduceEventLogEntry{
 				Measurement:       m,
 				Calculated:        evC,
@@ -193,7 +210,133 @@ func ReproduceEventLog(
 		}
 	}
 
+	tryHardToExplainUnexpectedDigests(ctx, calculated, logEntryExplainers, settings)
+
 	return result, updatedACMPolicyStatusValue, issues, nil
+}
+
+func tryHardToExplainUnexpectedDigests(
+	ctx context.Context,
+	calculated *bootengine.BootProcess,
+	logEntryExplainers []*logEntryExplainer,
+	settings SettingsReproduceEventLog,
+) {
+	fwImage, err := biosimage.Get(calculated.CurrentState)
+	if err != nil {
+		logger.FromCtx(ctx).Errorf("unable to get the BIOS image from the calculated state: %v", err)
+		return
+	}
+
+	tpmInstance, err := tpm.GetFrom(calculated.CurrentState)
+	if err != nil {
+		logger.FromCtx(ctx).Errorf("unable to get the simulated TPM the calculated state: %v", err)
+		return
+	}
+
+	digestsPerAlgo := map[tpm2.Algorithm][]unhash.Digest{}
+	logEntryExplainersPerAlgo := map[tpm2.Algorithm][]*logEntryExplainer{}
+	for _, logEntryExplainer := range logEntryExplainers {
+		if logEntryExplainer.Measurement != nil {
+			// already explained, no work to be done
+			continue
+		}
+		hashAlgo := logEntryExplainer.Event.Digest.HashAlgo
+		h, err := hashAlgo.Hash()
+		if err != nil {
+			logger.FromCtx(ctx).Warnf("unable to get hasher for algo %s", hashAlgo)
+			continue
+		}
+		digest := logEntryExplainer.Event.Digest.Digest
+		if len(digest) != h.Size() {
+			logger.FromCtx(ctx).Warnf("digest size is invalid: actual:%d, expected:%d", len(digest), h.Size())
+			continue
+		}
+		if isZeroSlice(digest) {
+			continue
+		}
+		digestsPerAlgo[hashAlgo] = append(digestsPerAlgo[hashAlgo], digest)
+		logEntryExplainersPerAlgo[hashAlgo] = append(logEntryExplainersPerAlgo[hashAlgo], logEntryExplainer)
+	}
+
+	for hashAlgo, digests := range digestsPerAlgo {
+		h, err := hashAlgo.Hash()
+		if err != nil {
+			logger.FromCtx(ctx).Warnf("unable to get hasher for algo %s", hashAlgo)
+			continue
+		}
+		unhashSettings := unhash.DefaultSearchInBinaryBlobSettings(fwImage.Content, h.New())
+		unhashSettings.MaxGuesses = settings.MaxDigestRangeGuesses
+
+		foundCh := make(chan unhash.FoundDigestSourceResult)
+		go func() {
+			unhash.FindPieceOfBinaryForDigest(
+				ctx,
+				unhash.FindDigestSourceAllDigests(ctx, foundCh, digests...),
+				fwImage.Content,
+				h.New,
+				unhashSettings,
+			)
+			close(foundCh)
+		}()
+
+		var (
+			followupDigests            []unhash.Digest
+			followupLogEntryExplainers []*logEntryExplainer
+		)
+		for found := range foundCh {
+			logEntryExplainer := logEntryExplainersPerAlgo[hashAlgo][found.DigestIndex]
+			logEntryExplainer.SetMeasurement(fwImage, tpmInstance, nil, found.StartPos, found.EndPos)
+			measuredBytes := fwImage.Content[found.StartPos:found.EndPos]
+			if len(measuredBytes) == h.Size() {
+				// it looks like we measured a hash, let's investigate what this hash represents
+				followupDigests = append(followupDigests, measuredBytes)
+				followupLogEntryExplainers = append(followupLogEntryExplainers, logEntryExplainer)
+			}
+		}
+
+		if len(followupDigests) == 0 {
+			continue
+		}
+
+		foundCh = make(chan unhash.FoundDigestSourceResult)
+		go func() {
+			unhash.FindPieceOfBinaryForDigest(
+				ctx,
+				unhash.FindDigestSourceAllDigests(ctx, foundCh, followupDigests...),
+				fwImage.Content,
+				h.New,
+				unhashSettings,
+			)
+			close(foundCh)
+		}()
+
+		for found := range foundCh {
+			logEntryExplainer := followupLogEntryExplainers[found.DigestIndex]
+			logEntryExplainer.AddMeasurement(fwImage, digestAsTrustChain{}, dataconverters.NewHasher(h.New()), found.StartPos, found.EndPos)
+		}
+	}
+}
+
+type digestAsTrustChain struct{}
+
+var _ types.TrustChain = digestAsTrustChain{}
+
+func (digestAsTrustChain) IsInitialized() bool {
+	return true
+}
+
+func (digestAsTrustChain) String() string {
+	return "digest"
+}
+
+func isZeroSlice[E constraints.Ordered](s []E) bool {
+	var zeroValue E
+	for _, cmp := range s {
+		if cmp != zeroValue {
+			return false
+		}
+	}
+	return true
 }
 
 func isPCRxDataMeasurement(

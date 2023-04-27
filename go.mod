@@ -21,7 +21,7 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/marcoguerri/go-tpm-tcti v0.0.0-20210425104733-8e8c8fe68e60
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	github.com/tidwall/pretty v1.2.1
 	github.com/ulikunitz/xz v0.5.11
 	github.com/xaionaro-facebook/go-dmidecode v0.0.0-20220413144237-c42d5bef2498
@@ -30,6 +30,8 @@ require (
 	golang.org/x/crypto v0.5.0
 	gopkg.in/yaml.v3 v3.0.1
 )
+
+require golang.org/x/sync v0.1.0 // indirect
 
 require (
 	github.com/DataDog/gostackparse v0.6.0 // indirect
@@ -45,7 +47,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
-	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d // indirect
+	github.com/xaionaro-go/unhash v0.0.0-20230427202706-0195a574c620
+	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
 	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/term v0.4.0 // indirect
 	golang.org/x/text v0.6.0 // indirect

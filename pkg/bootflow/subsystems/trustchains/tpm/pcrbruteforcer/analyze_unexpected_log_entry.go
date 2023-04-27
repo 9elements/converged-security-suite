@@ -27,21 +27,21 @@ const (
 	PhysAddrBase = tpmeventlog.PhysAddrBase
 )
 
-type logEntryExplanation struct {
+type logEntryExplainer struct {
 	Event           *tpmeventlog.Event
-	Measurement     *types.MeasuredData
+	Measurement     types.MeasuredDataSlice
 	RelatedNodes    []diff.NodeInfo
 	EventDataParsed *tpmeventlog.EventDataParsed
 	DigestGuesses   [][]byte
 }
 
-func (e logEntryExplanation) String() string {
+func (e logEntryExplainer) String() string {
 	var details []string
 
-	switch {
-	case e.Measurement != nil:
-		details = append(details, fmt.Sprintf("reproduced the digest using measurement: %s", e.Measurement))
-	case e.EventDataParsed != nil:
+	if e.Measurement != nil {
+		details = append(details, fmt.Sprintf("reproduced the digest using measurement: %s", strings.ReplaceAll(e.Measurement.String(), "\n", "; ")))
+	}
+	if e.EventDataParsed != nil {
 		if len(e.EventDataParsed.Ranges) > 0 {
 			details = append(details, fmt.Sprintf("mentioned byte ranges: %v", e.EventDataParsed.Ranges))
 		}
@@ -54,7 +54,7 @@ func (e logEntryExplanation) String() string {
 		details = append(details, fmt.Sprintf("related UEFI nodes: %s", e.RelatedNodes))
 	}
 	for _, digest := range e.DigestGuesses {
-		details = append(details, fmt.Sprintf("possible digest: %X", digest))
+		details = append(details, fmt.Sprintf("digest guessed from Data field: %X", digest))
 	}
 
 	if len(details) == 0 {
@@ -64,7 +64,7 @@ func (e logEntryExplanation) String() string {
 	return strings.Join(details, "; ")
 }
 
-func (e logEntryExplanation) guessMeasurement(
+func (e logEntryExplainer) guessMeasurement(
 	ctx context.Context,
 	s *types.State,
 	expectedMeasurement *types.MeasuredData,
@@ -104,14 +104,14 @@ func (e logEntryExplanation) guessMeasurement(
 	return
 }
 
-func (e logEntryExplanation) guessMeasurementFromEventRawData(
+func (e logEntryExplainer) guessMeasurementFromEventRawData(
 	s *types.State,
 	ev *tpmeventlog.Event,
 ) (*types.MeasuredData, []byte) {
 	return tryMeasurement(s, ev, types.UnionForcedBytesOrReferences{{ForcedBytes: ev.Data}})
 }
 
-func (e logEntryExplanation) guessMeasurementFromEventRanges(
+func (e logEntryExplainer) guessMeasurementFromEventRanges(
 	ctx context.Context,
 	s *types.State,
 	expectedMeasurement *types.MeasuredData,
@@ -187,7 +187,7 @@ func isPhysAddr(addr, imageSize uint64) bool {
 	return addr >= (PhysAddrBase-imageSize) && addr < PhysAddrBase
 }
 
-func (e *logEntryExplanation) calculateRelatedNodes(
+func (e *logEntryExplainer) calculateRelatedNodes(
 	image *biosimage.BIOSImage,
 ) {
 	fw, err := image.Parse()
@@ -233,26 +233,60 @@ func (e *logEntryExplanation) calculateRelatedNodes(
 	e.RelatedNodes = diff.GetNodesInfo(allNodes)
 }
 
-func explainLogEntry(
+func (e *logEntryExplainer) SetMeasurement(
+	artifact types.SystemArtifact,
+	trustChain types.TrustChain,
+	dataConverter types.DataConverter,
+	startPos, endPos uint,
+) {
+	e.Measurement = e.Measurement[:0]
+	e.AddMeasurement(artifact, trustChain, dataConverter, startPos, endPos)
+}
+
+func (e *logEntryExplainer) AddMeasurement(
+	artifact types.SystemArtifact,
+	trustChain types.TrustChain,
+	dataConverter types.DataConverter,
+	startPos, endPos uint,
+) {
+	data := *types.NewReferenceData(&types.Reference{
+		Artifact: artifact,
+		Ranges: []pkgbytes.Range{{
+			Offset: uint64(startPos),
+			Length: uint64(endPos) - uint64(startPos),
+		}},
+	})
+	data.Converter = dataConverter
+	e.Measurement = append(e.Measurement, types.MeasuredData{
+		Data:       data,
+		TrustChain: trustChain,
+	})
+}
+
+func newLogEntryExplainer(
 	ctx context.Context,
 	s *types.State,
 	expectedMeasurement *types.MeasuredData,
 	ev *tpmeventlog.Event,
-) logEntryExplanation {
-	result := logEntryExplanation{Event: ev}
+) *logEntryExplainer {
+	result := logEntryExplainer{Event: ev}
 
 	image, err := biosimage.Get(s)
 	if err != nil {
 		// TODO: print the error
-		return result
+		return &result
 	}
 
 	result.EventDataParsed, _ = tpmeventlog.ParseEventData(ev, image.Size())
 	//if err != nil {
 	//	TODO: print the error
 	//}
-	result.Measurement, result.DigestGuesses = result.guessMeasurement(ctx, s, expectedMeasurement, ev, image)
+	measurement, digestGuesses := result.guessMeasurement(ctx, s, expectedMeasurement, ev, image)
+	if measurement != nil {
+		result.Measurement = append(result.Measurement, *measurement)
+	}
+	result.DigestGuesses = digestGuesses
 
 	result.calculateRelatedNodes(image)
-	return result
+	return &result
 }
