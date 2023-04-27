@@ -39,10 +39,10 @@ var (
 
 // ReproducePCR0Result represents the applied PCR bruteforce methods: check different localities, ACM_POLICY_STATUS, disabling measurements
 type ReproducePCR0Result struct {
-	Locality               uint8
-	CorrectACMPolicyStatus *registers.ACMPolicyStatus
-	DisabledMeasurements   []*tpm.CommandLogEntry
-	OrderSwaps             OrderSwaps
+	Locality             uint8
+	ACMPolicyStatus      *registers.ACMPolicyStatus
+	DisabledMeasurements []*tpm.CommandLogEntry
+	OrderSwaps           OrderSwaps
 }
 
 // SettingsBruteforceACMPolicyStatus defines settings of how to reproduce Intel ACM Policy Status.
@@ -336,10 +336,10 @@ func (j *reproduceExpectedPCR0Job) Execute(
 
 		if isSuccess {
 			return &ReproducePCR0Result{
-				Locality:               j.tpmInitCmd.Locality,
-				CorrectACMPolicyStatus: actualACMPolicyStatus,
-				DisabledMeasurements:   disabledMeasurements,
-				OrderSwaps:             orderSwaps,
+				Locality:             j.tpmInitCmd.Locality,
+				ACMPolicyStatus:      actualACMPolicyStatus,
+				DisabledMeasurements: disabledMeasurements,
+				OrderSwaps:           orderSwaps,
 			}, nil
 		}
 

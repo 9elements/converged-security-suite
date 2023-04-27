@@ -117,8 +117,8 @@ func TestReproduceExpectedPCR0(t *testing.T) {
 			return
 		}
 
-		require.NotNil(t, result.CorrectACMPolicyStatus)
-		require.Equal(t, uint64(correctACMRegValue), result.CorrectACMPolicyStatus.Raw())
+		require.NotNil(t, result.ACMPolicyStatus)
+		require.Equal(t, uint64(correctACMRegValue), result.ACMPolicyStatus.Raw())
 	}
 
 	t.Run("test_uncorrupted", func(t *testing.T) { testACM(t, pcr0Correct, correctACMRegValue) })

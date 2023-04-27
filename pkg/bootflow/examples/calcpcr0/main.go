@@ -80,7 +80,7 @@ func main() {
 			panic(err)
 		}
 
-		printReproducePCR0Result(ctx, expectedPCR0, commandLog, reproducePCR0Result, tpm2.AlgSHA256)
+		printReproducePCR0Result(ctx, expectedPCR0, commandLog, reproducePCR0Result, tpm2.AlgSHA256, registers.Registers(regs))
 	}
 
 	var combinedCommandLog tpm.CommandLog
@@ -142,7 +142,7 @@ func main() {
 				panic(err)
 			}
 
-			printReproducePCR0Result(ctx, expectedPCR0, commandLog, reproducePCR0Result, tpm2.AlgSHA256)
+			printReproducePCR0Result(ctx, expectedPCR0, commandLog, reproducePCR0Result, tpm2.AlgSHA256, registers.Registers(regs))
 			if reproducePCR0Result != nil {
 				return
 			}
@@ -291,14 +291,15 @@ func printReproducePCR0Result(
 	commandLog tpm.CommandLog,
 	result *pcrbruteforcer.ReproducePCR0Result,
 	hashAlgo tpm.Algorithm,
+	regs registers.Registers,
 ) {
 	if result == nil {
 		return
 	}
 	fmt.Printf("\nReproduce PCR0 result:\n")
 	fmt.Printf("\tLocality: %d\n", result.Locality)
-	if result.CorrectACMPolicyStatus != nil {
-		fmt.Printf("\tCorrectedACMPolicyStatus: %#+v\n", result.CorrectACMPolicyStatus)
+	if result.ACMPolicyStatus != nil && *result.ACMPolicyStatus != regs.Find(registers.AcmPolicyStatusRegisterID) {
+		fmt.Printf("\tCorrectedACMPolicyStatus: %016X (given: %016X)\n", *result.ACMPolicyStatus, regs.Find(registers.AcmPolicyStatusRegisterID))
 	}
 
 	resultCommandLog := make(tpm.CommandLog, 0, len(commandLog))
