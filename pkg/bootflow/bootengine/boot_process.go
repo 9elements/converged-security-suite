@@ -28,6 +28,25 @@ func NewBootProcess(state *types.State) *BootProcess {
 	}
 }
 
+// safeWrapper executes a custom function and returns any panic
+// as an error.
+func safeWrapper[T any](
+	fn func() T,
+) (returnValue T, issue error) {
+	defer func() {
+		if r := recover(); r != nil {
+			stackTrace := debug.Stack()
+			if e, ok := r.(error); ok {
+				issue = fmt.Errorf("got a panic trying to get %T: %w:\n%s", returnValue, e, stackTrace)
+			} else {
+				issue = fmt.Errorf("got a panic trying to get %T: %v:\n%s", returnValue, r, stackTrace)
+			}
+		}
+	}()
+	returnValue = fn()
+	return
+}
+
 func stateNextStep(
 	ctx context.Context,
 	state *types.State,
@@ -51,30 +70,36 @@ func stateNextStep(
 	var stepIssues StepIssues
 
 	step := actCoords.Flow.Steps[actCoords.StepIndex]
-	actions := step.Actions(ctx, state)
+	actions, panicIssue := safeWrapper(func() types.Actions {
+		return step.Actions(ctx, state)
+	})
+	if panicIssue != nil {
+		stepIssues = append(stepIssues, StepIssue{
+			Coords: StepIssueCoordsActions{},
+			Issue:  panicIssue,
+		})
+	}
+
 	for idx, action := range actions {
 		actCoords.ActionIndex = uint(idx)
 		state.CurrentAction = action
-		issue := func() (issue error) {
-			defer func() {
-				if r := recover(); r != nil {
-					stackTrace := debug.Stack()
-					if e, ok := r.(error); ok {
-						issue = fmt.Errorf("got a panic: %w:\n%s", e, stackTrace)
-					} else {
-						issue = fmt.Errorf("got a panic: %v:\n%s", r, stackTrace)
-					}
-				}
-			}()
-			issue = action.Apply(ctx, state)
-			return
-		}()
+		issue, panicIssue := safeWrapper(func() error {
+			return action.Apply(ctx, state)
+		})
 		if issue != nil {
 			stepIssues = append(stepIssues, StepIssue{
 				Coords: StepIssueCoordsAction{
 					ActionIndex: uint(idx),
 				},
 				Issue: issue,
+			})
+		}
+		if panicIssue != nil {
+			stepIssues = append(stepIssues, StepIssue{
+				Coords: StepIssueCoordsAction{
+					ActionIndex: uint(idx),
+				},
+				Issue: panicIssue,
 			})
 		}
 		if actCoords.StepIndex == math.MaxUint {
@@ -85,7 +110,16 @@ func stateNextStep(
 
 	var actorCode *types.Data
 	if state.CurrentActor != nil {
-		if actorCodeSource := state.CurrentActor.ResponsibleCode(); actorCodeSource != nil {
+		actorCodeSource, panicIssue := safeWrapper(func() types.DataSource {
+			return state.CurrentActor.ResponsibleCode()
+		})
+		if panicIssue != nil {
+			stepIssues = append(stepIssues, StepIssue{
+				Coords: StepIssueCoordsActor{},
+				Issue:  panicIssue,
+			})
+		}
+		if actorCodeSource != nil {
 			var err error
 			actorCode, err = actorCodeSource.Data(ctx, state)
 			if err != nil {

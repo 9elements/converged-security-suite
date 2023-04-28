@@ -32,6 +32,15 @@ func (i StepIssueCoordsAction) String() string {
 	return fmt.Sprintf("action#%d", i.ActionIndex)
 }
 
+// StepIssueCoordsAction implies that the issue happened during
+// getting Actions from the Step.
+type StepIssueCoordsActions struct{}
+
+// String implements fmt.Stringer.
+func (i StepIssueCoordsActions) String() string {
+	return fmt.Sprintf("step->actions")
+}
+
 // StepIssue is an error returned by a Step.
 type StepIssue struct {
 	Coords StepIssueCoords
