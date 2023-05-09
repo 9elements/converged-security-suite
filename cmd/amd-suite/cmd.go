@@ -7,8 +7,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/amd/apcb"
-	"github.com/9elements/converged-security-suite/v2/pkg/amd/psb"
+	"github.com/linuxboot/fiano/pkg/amd/apcb"
+	"github.com/linuxboot/fiano/pkg/amd/psb"
 
 	amd_manifest "github.com/linuxboot/fiano/pkg/amd/manifest"
 )
@@ -100,7 +100,7 @@ var cli struct {
 }
 
 func (s *outputFirmwareCmd) Run(ctx *context) error {
-	amdFw, err := psb.ParseAMDFirmwareFile(s.FwPath)
+	amdFw, err := parseAMDFirmwareFile(s.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
@@ -119,7 +119,7 @@ func (s *outputFirmwareCmd) Run(ctx *context) error {
 }
 
 func (s *showKeysCmd) Run(ctx *context) error {
-	amdFw, err := psb.ParseAMDFirmwareFile(s.FwPath)
+	amdFw, err := parseAMDFirmwareFile(s.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
@@ -139,7 +139,7 @@ func (v *validatePSPEntriesCmd) Run(ctx *context) error {
 		return err
 	}
 
-	amdFw, err := psb.ParseAMDFirmwareFile(v.FwPath)
+	amdFw, err := parseAMDFirmwareFile(v.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
@@ -170,7 +170,7 @@ func (v *validatePSPEntriesCmd) Run(ctx *context) error {
 }
 
 func (v *validateRTMCmd) Run(ctx *context) error {
-	amdFw, err := psb.ParseAMDFirmwareFile(v.FwPath)
+	amdFw, err := parseAMDFirmwareFile(v.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
@@ -186,7 +186,7 @@ func (v *validateRTMCmd) Run(ctx *context) error {
 func dumpHelper(fwPath string, entry string, resultFile string,
 	dump func(amdFw *amd_manifest.AMDFirmware, entryID uint32, w io.Writer) (int, error),
 ) error {
-	amdFw, err := psb.ParseAMDFirmwareFile(fwPath)
+	amdFw, err := parseAMDFirmwareFile(fwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
@@ -230,7 +230,7 @@ func (v *dumpBIOSEntryCmd) Run(ctx *context) error {
 func patchHelper(fwPath string, entry string, entryFile string, resultFile string,
 	patch func(amdFw *amd_manifest.AMDFirmware, entryID uint32, r io.Reader, w io.Writer) (int, error),
 ) error {
-	amdFw, err := psb.ParseAMDFirmwareFile(fwPath)
+	amdFw, err := parseAMDFirmwareFile(fwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
@@ -283,7 +283,7 @@ func (v *patchBIOSEntryCmd) Run(ctx *context) error {
 }
 
 func (v *outputAPCBSecurityTokensCmd) Run(ctx *context) error {
-	amdFw, err := psb.ParseAMDFirmwareFile(v.FwPath)
+	amdFw, err := parseAMDFirmwareFile(v.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
 	}
