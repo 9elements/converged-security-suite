@@ -38,7 +38,7 @@ type StepIssueCoordsActions struct{}
 
 // String implements fmt.Stringer.
 func (i StepIssueCoordsActions) String() string {
-	return fmt.Sprintf("step->actions")
+	return "step->actions"
 }
 
 // StepIssue is an error returned by a Step.

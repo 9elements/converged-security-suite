@@ -23,6 +23,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bruteforcer"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
+	"github.com/facebookincubator/go-belt/tool/experimental/errmon"
 	"github.com/facebookincubator/go-belt/tool/logger"
 	"github.com/google/go-tpm/tpm2"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
@@ -270,7 +271,7 @@ func tryHardToExplainUnexpectedDigests(
 
 		foundCh := make(chan unhash.FoundDigestSourceResult)
 		go func() {
-			unhash.FindPieceOfBinaryForDigest(
+			_, _, err := unhash.FindPieceOfBinaryForDigest(
 				ctx,
 				unhash.FindDigestSourceAllDigests(ctx, foundCh, digests...),
 				fwImage.Content,
@@ -278,6 +279,7 @@ func tryHardToExplainUnexpectedDigests(
 				unhashSettings,
 			)
 			close(foundCh)
+			errmon.ObserveErrorCtx(ctx, err)
 		}()
 
 		var (
@@ -318,7 +320,7 @@ func tryHardToExplainUnexpectedDigests(
 
 		foundCh = make(chan unhash.FoundDigestSourceResult)
 		go func() {
-			unhash.FindPieceOfBinaryForDigest(
+			_, _, err := unhash.FindPieceOfBinaryForDigest(
 				ctx,
 				unhash.FindDigestSourceAllDigests(ctx, foundCh, followupDigests...),
 				fwImage.Content,
@@ -326,6 +328,7 @@ func tryHardToExplainUnexpectedDigests(
 				unhashSettings,
 			)
 			close(foundCh)
+			errmon.ObserveErrorCtx(ctx, err)
 		}()
 
 		for found := range foundCh {
