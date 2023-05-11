@@ -7,6 +7,6 @@ import (
 )
 
 // DXE represents the steps of the DXE
-var DXE = types.NewFlow("DXE", types.Steps{
+var DXE = NewFlow("DXE", types.Steps{
 	commonsteps.SetActor(actors.DXE{}),
 })

@@ -12,12 +12,12 @@ import (
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
-var Intel = types.NewFlow("Intel", types.Steps{
+var Intel = NewFlow("Intel", types.Steps{
 	commonsteps.If(intelconds.BPMPresent{}, commonsteps.SetFlow(IntelCBnT), nil),
-	commonsteps.SetFlow(IntelLegacyTXT),
+	commonsteps.SetFlow(IntelLegacyTXTEnabled),
 })
 
-var IntelCBnT = types.NewFlow("IntelCBnT", types.Steps{
+var IntelCBnT = NewFlow("IntelCBnT", types.Steps{
 	commonsteps.SetActor(intelactors.PCH{}),
 	intelsteps.VerifyACM(IntelCBnTFailure),
 	intelsteps.VerifyKM(IntelCBnTFailure),
@@ -29,16 +29,25 @@ var IntelCBnT = types.NewFlow("IntelCBnT", types.Steps{
 	commonsteps.SetFlow(PEI),
 })
 
-var IntelCBnTFailure = types.NewFlow("IntelCBnTFailure", types.Steps{
-	commonsteps.SetFlow(PEI),
+var IntelCBnTFailure = NewFlow("IntelCBnTFailure", types.Steps{
+	commonsteps.SetFlow(IntelLegacyTXTDisabled),
 })
 
-var IntelLegacyTXT = types.NewFlow("IntelLegacyTXT", types.Steps{
-	intelsteps.VerifyACM(PEI),
+var IntelLegacyTXTEnabled = NewFlow("IntelLegacyTXTEnabled", types.Steps{
+	commonsteps.SetActor(intelactors.PCH{}),
+	intelsteps.VerifyACM(IntelLegacyTXTDisabled),
 	commonsteps.SetActor(intelactors.ACM{}),
 	tpmsteps.InitTPM(3, true),
 	intelsteps.MeasureACMDate{},
 	intelsteps.MeasureFITData(fit.EntryTypeBIOSStartupModuleEntry),
 	tpmsteps.Measure(0, tpmeventlog.EV_SEPARATOR, datasources.Bytes{0, 0, 0, 0}),
+	commonsteps.SetFlow(PEI),
+})
+
+var IntelLegacyTXTEnabledTPM12 = NewFlow("IntelLegacyTXTEnabledTPM12", types.Steps{
+	commonsteps.Panic("legacy TXT flow for TPM1.2 is not implemented"),
+})
+
+var IntelLegacyTXTDisabled = NewFlow("IntelLegacyTXTDisabled", types.Steps{
 	commonsteps.SetFlow(PEI),
 })

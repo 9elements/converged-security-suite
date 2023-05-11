@@ -22,7 +22,7 @@ var (
 	guidOCPV1Vol2Intel = *guid.MustParse("013B9639-D6D5-410F-B7A9-F9173C56ECDA")
 )
 
-var OCPPEI = types.NewFlow("OCPPEI", types.Steps{
+var OCPPEI = NewFlow("OCPPEI", types.Steps{
 	commonsteps.SetActor(actors.PEI{}),
 	commonsteps.If(tpmconds.TPMIsInited{}, nil, tpmsteps.InitTPM(0, false)),
 	tpmsteps.Measure(0, tpmeventlog.EV_S_CRTM_VERSION, datasources.PCDVariable("FirmwareVendorVersion")),
