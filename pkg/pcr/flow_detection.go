@@ -243,15 +243,26 @@ func isCBnT(fitEntries []fit.Entry) (bool, error) {
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntryKeyManifestRecord:
-			data, data2, err := fitEntry.ParseData()
-			if data == nil && data2 == nil {
+			_, kmV2, err := fitEntry.ParseData()
+			// kmV2 is a key manifest of version 2 (which is assumed to correspond to the CBnT version)
+			if err != nil {
 				return false, fmt.Errorf("unable to parse KeyManifest policy record: %w", err)
 			}
-			if data != nil {
+			if kmV2 == nil {
+				// Is a pre-CBnT manifest
 				return false, nil
 			}
 			keyManifestFound = true
 		case *fit.EntryBootPolicyManifestRecord:
+			_, bpmV2, err := fitEntry.ParseData()
+			// bpmV2 is a boot policy manifest of version 2 (which is assumed to correspond to the CBnT version)
+			if err != nil {
+				return false, fmt.Errorf("unable to parse BootPolicyManifest: %w", err)
+			}
+			if bpmV2 == nil {
+				// Is a pre-CBnT manifest
+				return false, nil
+			}
 			bootPolicyFound = true
 		}
 	}

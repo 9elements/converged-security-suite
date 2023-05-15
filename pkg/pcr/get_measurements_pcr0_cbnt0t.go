@@ -6,6 +6,8 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/bg/bgbootpolicy"
+	"github.com/linuxboot/fiano/pkg/intel/metadata/bg/bgkey"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntbootpolicy"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntkey"
@@ -71,33 +73,65 @@ func MeasurePCR0Data(config MeasurementConfig, imageSize uint64, fitEntries []fi
 		Length: uint64(len(acmEntry.GetRSASig())),
 	}
 
-	keyManifest, keyManifestFITEntry, err := getKeyManifest(fitEntries)
+	kmV1, kmV2, keyManifestFITEntry, err := getKeyManifest(fitEntries)
+	// kmV1 and kmV2 are key manifests of version 1 (assumably pre-CBnT) and 2 (assumably CBnT).
 	if err != nil {
 		return nil, err
 	}
 	kmOffset := keyManifestFITEntry.Headers.Address.Offset(imageSize)
-	data.kmSignature = pkgbytes.Range{
-		Offset: kmOffset + keyManifest.KeyAndSignatureOffset() + keyManifest.KeyAndSignature.SignatureOffset() + keyManifest.KeyAndSignature.Signature.DataOffset(),
-		Length: uint64(len(keyManifest.KeyAndSignature.Signature.Data)),
+	if kmV1 != nil {
+		data.kmSignature = pkgbytes.Range{
+			Offset: kmOffset + kmV1.KeyAndSignatureOffset() + kmV1.KeyAndSignature.SignatureOffset() + kmV1.KeyAndSignature.Signature.DataOffset(),
+			Length: uint64(len(kmV1.KeyAndSignature.Signature.Data)),
+		}
+	} else {
+		data.kmSignature = pkgbytes.Range{
+			Offset: kmOffset + kmV2.KeyAndSignatureOffset() + kmV2.KeyAndSignature.SignatureOffset() + kmV2.KeyAndSignature.Signature.DataOffset(),
+			Length: uint64(len(kmV2.KeyAndSignature.Signature.Data)),
+		}
 	}
 
-	bpManifest, bpManifestFITEntry, err := getBootPolicyManifest(fitEntries)
+	bpmV1, bpmV2, bpManifestFITEntry, err := getBootPolicyManifest(fitEntries)
+	// bpmV1 and bpmV2 are boot policy manifests of version 1 (assumably pre-CBnT) and 2 (assumably CBnT).
 	if err != nil {
 		return nil, err
 	}
 	bpmOffset := bpManifestFITEntry.Headers.Address.Offset(imageSize)
-	data.bpmSignature = pkgbytes.Range{
-		Offset: bpmOffset + uint64(bpManifest.KeySignatureOffset) + bpManifest.PMSE.SignatureOffset() + bpManifest.PMSE.Signature.DataOffset(),
-		Length: uint64(len(bpManifest.PMSE.Signature.Data)),
-	}
 
-	digests := bpManifest.SE[0].DigestList.List
-	if len(digests) == 0 {
-		return nil, fmt.Errorf("IBBDigest list is empty")
+	var (
+		offsetToTheFirstDigest uint64
+		digests                []cbnt.HashStructure
+	)
+	if bpmV1 != nil {
+		data.bpmSignature = pkgbytes.Range{
+			Offset: bpmOffset + uint64(bpmV1.PMSEOffset()+bpmV1.PMSE.KeySignatureOffset()) + bpmV1.PMSE.SignatureOffset() + bpmV1.PMSE.Signature.DataOffset(),
+			Length: uint64(len(bpmV1.PMSE.Signature.Data)),
+		}
+		digests = []cbnt.HashStructure{{
+			HashAlg:    cbnt.Algorithm(bpmV1.SE[0].Digest.HashAlg),
+			HashBuffer: bpmV1.SE[0].Digest.HashBuffer,
+		}}
+		if len(digests) == 0 {
+			return nil, fmt.Errorf("IBBDigest list is empty")
+		}
+		// Note: +2 - skip array size field to get the first element
+		offsetToTheFirstDigest = bpmOffset + bpmV1.SEOffset() +
+			bpmV1.SE[0].DigestOffset() + 2
+	} else {
+		data.bpmSignature = pkgbytes.Range{
+			Offset: bpmOffset + uint64(bpmV2.KeySignatureOffset) + bpmV2.PMSE.SignatureOffset() + bpmV2.PMSE.Signature.DataOffset(),
+			Length: uint64(len(bpmV2.PMSE.Signature.Data)),
+		}
+
+		digests = bpmV2.SE[0].DigestList.List
+		if len(digests) == 0 {
+			return nil, fmt.Errorf("IBBDigest list is empty")
+		}
+		// Note: +2 - skip array size field to get the first element
+		offsetToTheFirstDigest = bpmOffset + bpmV2.SEOffset() +
+			bpmV2.SE[0].DigestListOffset() + (bpmV2.SE[0].DigestList.ListOffset() + 2)
+
 	}
-	// Note: +2 - skip array size field to get the first element
-	offsetToTheFirstDigest := bpmOffset + bpManifest.SEOffset() +
-		bpManifest.SE[0].DigestListOffset() + (bpManifest.SE[0].DigestList.ListOffset() + 2)
 	if config.PCR0DataIbbDigestHashAlgorithm == cbnt.AlgUnknown || config.PCR0DataIbbDigestHashAlgorithm == cbnt.AlgNull {
 		// take the fist element as stated in the doc above
 		data.ibbDigest = pkgbytes.Range{
@@ -142,37 +176,38 @@ func getACM(fitEntries []fit.Entry) (*fit.EntrySACMData, *fit.EntrySACM, error) 
 	return nil, nil, fmt.Errorf("ACM FIT entry is not found")
 }
 
-func getKeyManifest(fitEntries []fit.Entry) (*cbntkey.Manifest, *fit.EntryKeyManifestRecord, error) {
+func getKeyManifest(fitEntries []fit.Entry) (*bgkey.Manifest, *cbntkey.Manifest, *fit.EntryKeyManifestRecord, error) {
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntryKeyManifestRecord:
-			_, km2, err := fitEntry.ParseData()
-			if err != nil && km2 != nil {
-				return nil, nil, err
+			kmV1, kmV2, err := fitEntry.ParseData()
+			if err != nil {
+				return nil, nil, nil, err
 			}
-			return km2, fitEntry, nil
+			return kmV1, kmV2, fitEntry, nil
 		}
 	}
-	return nil, nil, fmt.Errorf("key manifest FIT entry is not found")
+	return nil, nil, nil, fmt.Errorf("key manifest FIT entry is not found")
 }
 
-func getBootPolicyManifest(fitEntries []fit.Entry) (*cbntbootpolicy.Manifest, *fit.EntryBootPolicyManifestRecord, error) {
+func getBootPolicyManifest(fitEntries []fit.Entry) (*bgbootpolicy.Manifest, *cbntbootpolicy.Manifest, *fit.EntryBootPolicyManifestRecord, error) {
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntryBootPolicyManifestRecord:
-			_, bpManifest2, err := fitEntry.ParseData()
-			if err != nil && bpManifest2 != nil {
-				return nil, nil, err
+			bpmV1, bpmV2, err := fitEntry.ParseData()
+			// bpmV1 and bpmV2 are boot policy manifests of version 1 (assumably pre-CBnT) and 2 (assumably CBnT).
+			if err != nil {
+				return nil, nil, nil, err
 			}
-			return bpManifest2, fitEntry, nil
+			return bpmV1, bpmV2, fitEntry, nil
 		}
 	}
-	return nil, nil, fmt.Errorf("boot policy manifest FIT entry is not found")
+	return nil, nil, nil, fmt.Errorf("boot policy manifest FIT entry is not found")
 }
 
 // MeasureKeyManifest returns a measurement containing CBnT key cbnt.
 func MeasureKeyManifest(imageSize uint64, fitEntries []fit.Entry) (*Measurement, error) {
-	_, kmFITEntry, err := getKeyManifest(fitEntries)
+	_, _, kmFITEntry, err := getKeyManifest(fitEntries)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get key manifest (KM): %w", err)
 	}
@@ -190,7 +225,7 @@ func MeasureKeyManifest(imageSize uint64, fitEntries []fit.Entry) (*Measurement,
 
 // MeasureBootPolicy returns a measurement containing CBnT key cbnt.
 func MeasureBootPolicy(imageSize uint64, fitEntries []fit.Entry) (*Measurement, error) {
-	_, bpmFITEntry, err := getBootPolicyManifest(fitEntries)
+	_, _, bpmFITEntry, err := getBootPolicyManifest(fitEntries)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get boot policy manifest (BPM): %w", err)
 	}
@@ -208,7 +243,7 @@ func MeasureBootPolicy(imageSize uint64, fitEntries []fit.Entry) (*Measurement, 
 
 // MeasureIBB returns a measurement containing IBB according to BPM.
 func MeasureIBB(fitEntries []fit.Entry, firmwareSize uint64) (*Measurement, error) {
-	bpManifest, _, err := getBootPolicyManifest(fitEntries)
+	bpManifest1, bpManifest2, _, err := getBootPolicyManifest(fitEntries)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get boot policy manifest (BPM): %w", err)
 	}
@@ -216,7 +251,12 @@ func MeasureIBB(fitEntries []fit.Entry, firmwareSize uint64) (*Measurement, erro
 	result := Measurement{
 		ID: MeasurementIDIBBFake,
 	}
-	ibbRanges := bpManifest.IBBDataRanges(firmwareSize)
+	var ibbRanges pkgbytes.Ranges
+	if bpManifest1 != nil {
+		ibbRanges = bpManifest1.IBBDataRanges(firmwareSize)
+	} else {
+		ibbRanges = bpManifest2.IBBDataRanges(firmwareSize)
+	}
 	for _, _range := range ibbRanges {
 		result.Data = append(result.Data, DataChunk{
 			Range: _range,
