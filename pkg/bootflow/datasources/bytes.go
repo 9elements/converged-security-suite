@@ -8,7 +8,7 @@ import (
 )
 
 // Bytes is just a static set of bytes, which implements types.DataSource.
-type Bytes []byte
+type Bytes types.RawBytes
 
 var _ types.DataSource = (Bytes)(nil)
 

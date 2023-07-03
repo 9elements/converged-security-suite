@@ -27,7 +27,7 @@ func (b RawBytes) ReadAt(p []byte, offset int64) (n int, err error) {
 		return 0, io.EOF
 	}
 
-	copy(b, b[offset:])
+	copy(p, b[offset:])
 	n = xmath.Min(
 		int(int64(len(b))-offset),
 		len(b),
@@ -116,12 +116,12 @@ func NewData[T NewDataInput](in T) *Data {
 }
 
 // ForcedBytes returns the bytes provided by SystemArtifacts of type RawBytes.
-func (d *Data) ForcedBytes() []byte {
+func (d *Data) ForcedBytes() RawBytes {
 	return d.References.ForcedBytes()
 }
 
 // ConvertedBytes returns the final/converted bytes defined by Data.
-func (d *Data) ConvertedBytes() []byte {
+func (d *Data) ConvertedBytes() ConvertedBytes {
 	return d.RawBytes().ConvertBy(d.Converter)
 }
 

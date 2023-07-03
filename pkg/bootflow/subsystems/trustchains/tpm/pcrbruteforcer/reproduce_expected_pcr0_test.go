@@ -28,8 +28,8 @@ type fataler interface {
 }
 
 func TestReproduceExpectedPCR0(t *testing.T) {
-	ctx := logger.CtxWithLogger(context.Background(), logrus.Default().WithLevel(logger.LevelDebug))
-	enabledSlowTracing = false
+	ctx := logger.CtxWithLogger(context.Background(), logrus.Default().WithLevel(logger.LevelTrace))
+	enabledSlowTracing = true
 
 	const correctACMRegValue = 0x0000000200108681
 

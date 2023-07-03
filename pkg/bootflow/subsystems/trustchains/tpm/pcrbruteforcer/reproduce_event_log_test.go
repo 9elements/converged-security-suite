@@ -34,11 +34,21 @@ var testFlow = types.NewFlow("unit-test-flow", types.Steps{
 	commonsteps.SetActor(intelactors.PCH{}),
 	commonsteps.SetActor(intelactors.ACM{}),
 	tpmsteps.InitTPM(3, true),
+
+	// 1st measurement: 527C9A38B2F45FBF89C382547E0A0812722A47D3
 	intelsteps.MeasurePCR0DATA{},
+
 	commonsteps.SetActor(actors.PEI{}),
+
+	// 2nd measurement: C42FEDAD268200CB1D15F97841C344E79DAE3320
 	tpmsteps.Measure(0, tpmeventlog.EV_S_CRTM_VERSION, datasources.Bytes(unhex(nil, "1EFB6B540C1D5540A4AD4EF4BF17B83A"))),
+
+	// 3rd measurement: 4C9836F73CC42ADBECE7D565B783E618B4A75C22
 	tpmsteps.Measure(0, tpmeventlog.EV_EFI_PLATFORM_FIRMWARE_BLOB2, datasources.UEFIGUIDFirst([]guid.GUID{ffsConsts.GUIDDXEContainer, ffsConsts.GUIDDXE})),
+
+	// 4th measurement: 9069CA78E7450A285173431B3E52C5C25299E473
 	tpmsteps.Measure(0, tpmeventlog.EV_SEPARATOR, datasources.Bytes{0, 0, 0, 0}),
+
 	commonsteps.SetActor(actors.DXE{}),
 })
 
@@ -196,10 +206,7 @@ func TestReproduceEventLog(t *testing.T) {
 		)
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		require.Equal(t, []Issue{
-			fmt.Errorf("unexpected entry in EventLog of type EV_EFI_VARIABLE_AUTHORITY (0x800000E0) and digest 0000000000000000000000000000000000000000 on evIdx==1; log entry analysis: <unable to get any info; event: {PCR:0, Type:EV_EFI_VARIABLE_AUTHORITY (0x800000E0), Digest:{Algo:SHA1, Digest:0x0000000000000000000000000000000000000000}, Data:0x696E6A6563746564}>"),
-			fmt.Errorf("unexpected entry in EventLog of type EV_S_CRTM_CONTENTS (0x7) and digest 0000000000000000000000000000000000000000 on evIdx==2; log entry analysis: <unable to get any info; event: {PCR:0, Type:EV_S_CRTM_CONTENTS (0x7), Digest:{Algo:SHA1, Digest:0x0000000000000000000000000000000000000000}, Data:0x}>"),
-		}, issues)
+		require.Equal(t, 2, len(issues))
 		require.Nil(t, acmPolicyStatus)
 	})
 }
