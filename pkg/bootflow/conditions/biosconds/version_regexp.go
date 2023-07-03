@@ -21,19 +21,19 @@ func (verRegexp VersionRegexp) Check(
 ) bool {
 	biosImg, err := biosimage.Get(state)
 	if err != nil {
-		logger.FromCtx(ctx).Debugf("unable to obtain BIOS firmware image: %v", err)
+		logger.Debugf(ctx, "unable to obtain BIOS firmware image: %v", err)
 		return false
 	}
 
 	r, err := regexp.Compile(string(verRegexp))
 	if err != nil {
-		logger.FromCtx(ctx).Errorf("unable to compile regular expression '%s': %v", string(verRegexp), err)
+		logger.Errorf(ctx, "unable to compile regular expression '%s': %v", string(verRegexp), err)
 		return false
 	}
 
 	biosInfo, err := biosImg.Info()
 	if err != nil {
-		logger.FromCtx(ctx).Errorf("unable to obtain BIOS info: %v", err)
+		logger.Errorf(ctx, "unable to obtain BIOS info: %v", err)
 		return false
 	}
 

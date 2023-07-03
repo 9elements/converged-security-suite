@@ -90,7 +90,7 @@ func TestReproduceExpectedPCR0(t *testing.T) {
 		process.Finish(ctx)
 		require.NoError(t, process.Log.Error())
 
-		logger.FromCtx(ctx).Debugf("%s", tpmInstance.CommandLog)
+		logger.Debugf(ctx, "%s", tpmInstance.CommandLog)
 
 		settings := DefaultSettingsReproducePCR0()
 		settings.EnableACMPolicyCombinatorialStrategy = true

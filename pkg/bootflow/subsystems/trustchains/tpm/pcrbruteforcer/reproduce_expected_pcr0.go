@@ -105,7 +105,7 @@ func ReproduceExpectedPCR0(
 	expectedPCR0 tpm.Digest,
 	settings SettingsReproducePCR0,
 ) (*ReproducePCR0Result, error) {
-	logger.FromCtx(ctx).Debugf("expectedPCR0 == %s", expectedPCR0)
+	logger.Debugf(ctx, "expectedPCR0 == %s", expectedPCR0)
 	handler, err := newReproduceExpectedPCR0Handler(
 		measurements,
 		hashAlgo,
@@ -163,29 +163,29 @@ func (h *reproduceExpectedPCR0Handler) execute(
 				errmon.ObserveRecoverCtx(ctx, recover())
 			}()
 
-			logger.FromCtx(ctx).Debugf("reproduce pcr0 starting bruteforce... (locality: %v)", tryLocality)
+			logger.Debugf(ctx, "reproduce pcr0 starting bruteforce... (locality: %v)", tryLocality)
 
 			startTime := time.Now()
 			_result, err := h.newJob(tryLocality).Execute(ctx)
 			elapsed := time.Since(startTime)
 
 			if err != nil {
-				logger.FromCtx(ctx).Errorf("Failed to bruteforce for locality: '%d': '%v'", tryLocality, err)
+				logger.Errorf(ctx, "Failed to bruteforce for locality: '%d': '%v'", tryLocality, err)
 				return
 			}
 			if _result == nil {
-				logger.FromCtx(ctx).Debugf("reproduce pcr0 did not find an answer (locality: %v, elapsed: %v)", tryLocality, elapsed)
+				logger.Debugf(ctx, "reproduce pcr0 did not find an answer (locality: %v, elapsed: %v)", tryLocality, elapsed)
 				return
 			}
-			logger.FromCtx(ctx).Debugf("reproduce pcr0 got an answer (locality: %v, elapsed: %v)", tryLocality, elapsed)
+			logger.Debugf(ctx, "reproduce pcr0 got an answer (locality: %v, elapsed: %v)", tryLocality, elapsed)
 
 			if c := atomic.AddUint64(&returnCount, 1); c != 1 {
-				logger.FromCtx(ctx).Errorf("received the final answer using different localities")
+				logger.Errorf(ctx, "received the final answer using different localities")
 				return
 			}
 
 			result = _result
-			logger.FromCtx(ctx).Debugf("received an answer (locality: %d): result:%v; err:%v", tryLocality, result, err)
+			logger.Debugf(ctx, "received an answer (locality: %d): result:%v; err:%v", tryLocality, result, err)
 			cancelFunc()
 
 		}(tryLocality)
@@ -576,7 +576,7 @@ func (j *reproduceExpectedPCR0Job) replayTPMCommands(
 
 	replayedPCR0 := tpmInstance.PCRValues[0][j.hashAlgo]
 	if enabledSlowTracing {
-		logger.FromCtx(ctx).Tracef("replayedPCR == %s: %s %s", replayedPCR0, &j.tpmInitCmd, log)
+		logger.Tracef(ctx, "replayedPCR == %s: %s %s", replayedPCR0, &j.tpmInitCmd, log)
 	}
 	return replayedPCR0
 }

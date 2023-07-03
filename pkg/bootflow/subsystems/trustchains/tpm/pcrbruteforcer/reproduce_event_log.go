@@ -85,9 +85,9 @@ func ReproduceEventLog(
 		eventLogExpected,
 		hashAlgo,
 	)
-	logger.FromCtx(ctx).Tracef("measurementsCalculated == %v", measurementsCalculated)
-	logger.FromCtx(ctx).Tracef("eventsCalculated == %v", eventsCalculated)
-	logger.FromCtx(ctx).Tracef("eventsExpected == %v", eventsExpected)
+	logger.Tracef(ctx, "measurementsCalculated == %v", measurementsCalculated)
+	logger.Tracef(ctx, "eventsCalculated == %v", eventsCalculated)
+	logger.Tracef(ctx, "eventsExpected == %v", eventsExpected)
 	issues = append(issues, alignIssues...)
 	if err != nil {
 		return nil, nil, issues, err
@@ -140,7 +140,7 @@ func ReproduceEventLog(
 			return nil, nil, issues, fmt.Errorf("not supported: do not know how to handle the case when a measurement has no event log entry associated")
 		}
 
-		logger.FromCtx(ctx).Tracef("digest cmp: %X ? %s", evE.Digest.Digest, mD)
+		logger.Tracef(ctx, "digest cmp: %X ? %s", evE.Digest.Digest, mD)
 		if bytes.Equal(evE.Digest.Digest, mD) {
 			result = append(result, ReproduceEventLogEntry{
 				Measurement:       m,
@@ -225,13 +225,13 @@ func tryHardToExplainUnexpectedDigests(
 ) {
 	fwImage, err := biosimage.Get(calculated.CurrentState)
 	if err != nil {
-		logger.FromCtx(ctx).Errorf("unable to get the BIOS image from the calculated state: %v", err)
+		logger.Errorf(ctx, "unable to get the BIOS image from the calculated state: %v", err)
 		return
 	}
 
 	tpmInstance, err := tpm.GetFrom(calculated.CurrentState)
 	if err != nil {
-		logger.FromCtx(ctx).Errorf("unable to get the simulated TPM the calculated state: %v", err)
+		logger.Errorf(ctx, "unable to get the simulated TPM the calculated state: %v", err)
 		return
 	}
 
@@ -245,12 +245,12 @@ func tryHardToExplainUnexpectedDigests(
 		hashAlgo := logEntryExplainer.Event.Digest.HashAlgo
 		h, err := hashAlgo.Hash()
 		if err != nil {
-			logger.FromCtx(ctx).Warnf("unable to get hasher for algo %s", hashAlgo)
+			logger.Warnf(ctx, "unable to get hasher for algo %s", hashAlgo)
 			continue
 		}
 		digest := logEntryExplainer.Event.Digest.Digest
 		if len(digest) != h.Size() {
-			logger.FromCtx(ctx).Warnf("digest size is invalid: actual:%d, expected:%d", len(digest), h.Size())
+			logger.Warnf(ctx, "digest size is invalid: actual:%d, expected:%d", len(digest), h.Size())
 			continue
 		}
 		if isZeroSlice(digest) {
@@ -263,7 +263,7 @@ func tryHardToExplainUnexpectedDigests(
 	for hashAlgo, digests := range digestsPerAlgo {
 		h, err := hashAlgo.Hash()
 		if err != nil {
-			logger.FromCtx(ctx).Warnf("unable to get hasher for algo %s", hashAlgo)
+			logger.Warnf(ctx, "unable to get hasher for algo %s", hashAlgo)
 			continue
 		}
 		unhashSettings := unhash.DefaultSearchInBinaryBlobSettings(fwImage.Content, h.New())
@@ -495,8 +495,8 @@ func alignLogsAndMeasurements(
 		err = fmt.Errorf("internal error (should never happen): len(measurementsCalculatedUnaligned) != len(eventsCalculatedUnaligned): %d != %d", len(measurementsCalculatedUnaligned), len(eventsCalculatedUnaligned))
 		return
 	}
-	logger.FromCtx(ctx).Tracef("measurementsCalculatedUnaligned == %v", measurementsCalculatedUnaligned)
-	logger.FromCtx(ctx).Tracef("eventsCalculatedUnaligned == %v", eventsCalculatedUnaligned)
+	logger.Tracef(ctx, "measurementsCalculatedUnaligned == %v", measurementsCalculatedUnaligned)
+	logger.Tracef(ctx, "eventsCalculatedUnaligned == %v", eventsCalculatedUnaligned)
 
 	eventsCalculatedAligned, eventsExpectedAligned, measurementDigestsAligned, issues, err = alignLogs(
 		settings,
@@ -576,7 +576,7 @@ func alignLogAndMeasurements(
 		if _, ok := measuredDataMap[m.Action]; ok {
 			return nil, nil, nil, fmt.Errorf("internal error: should never happen: measuredDataMap[%s] is already set", m.DataSource)
 		}
-		logger.FromCtx(ctx).Tracef("measuredDataMap[%v (%#+v)] = %v", m.Action, m.Action, calculated.CurrentState.MeasuredData[idx])
+		logger.Tracef(ctx, "measuredDataMap[%v (%#+v)] = %v", m.Action, m.Action, calculated.CurrentState.MeasuredData[idx])
 		measuredDataMap[m.Action] = &calculated.CurrentState.MeasuredData[idx]
 	}
 
@@ -603,7 +603,7 @@ func alignLogAndMeasurements(
 				continue
 			}
 			measurement := measuredDataMap[logEntry.CauseAction]
-			logger.FromCtx(ctx).Tracef("tpm.CommandExtend: measuredDataMap[%v (%#v)]: %v", logEntry.CauseAction, logEntry.CauseAction, measurement)
+			logger.Tracef(ctx, "tpm.CommandExtend: measuredDataMap[%v (%#v)]: %v", logEntry.CauseAction, logEntry.CauseAction, measurement)
 			stepResult.measurements = append(stepResult.measurements, measurement)
 		case *tpm.CommandEventLogAdd:
 			logEntry := &tpmEventLog[tpmEventLogIdx]
@@ -627,8 +627,8 @@ func alignLogAndMeasurements(
 			return nil, nil, nil, fmt.Errorf("internal error: stepMeasurements[0] == nil at idx:%d", idx)
 		}
 
-		logger.FromCtx(ctx).Tracef("stepResult[%d]: stepMeasurements == %v", idx, stepMeasurements)
-		logger.FromCtx(ctx).Tracef("stepResult[%d]: stepEvents == %v", idx, stepEvents)
+		logger.Tracef(ctx, "stepResult[%d]: stepMeasurements == %v", idx, stepMeasurements)
+		logger.Tracef(ctx, "stepResult[%d]: stepEvents == %v", idx, stepEvents)
 		if len(stepMeasurements) == 0 && len(stepEvents) == 0 {
 			continue
 		}
@@ -655,8 +655,8 @@ func alignLogAndMeasurements(
 		default:
 			panic("internal error: should be impossible, all the cases should be covered above in the code")
 		}
-		logger.FromCtx(ctx).Tracef("stepResult[%d]: measurements <- %v", idx, measurements)
-		logger.FromCtx(ctx).Tracef("stepResult[%d]: eventLog <- %v", idx, log)
+		logger.Tracef(ctx, "stepResult[%d]: measurements <- %v", idx, measurements)
+		logger.Tracef(ctx, "stepResult[%d]: eventLog <- %v", idx, log)
 	}
 
 	if len(measurements) != len(log) {

@@ -49,7 +49,7 @@ func main() {
 
 	if *netPprofFlag != "" {
 		go func() {
-			logger.FromCtx(ctx).Error(http.ListenAndServe(*netPprofFlag, nil))
+			logger.Error(ctx, http.ListenAndServe(*netPprofFlag, nil))
 		}()
 	}
 
@@ -128,14 +128,14 @@ func main() {
 		combinedCommandLog,
 		sanitizeCommandLog(combinedCommandLog),
 	} {
-		logger.FromCtx(ctx).Debugf("ReproducePCR0: CommandLog = %s", format.NiceStringWithIntend(commandLog))
+		logger.Debugf(ctx, "ReproducePCR0: CommandLog = %s", format.NiceStringWithIntend(commandLog))
 
 		for _, maxReorders := range []int{0, 1, 2, 3} {
 			settings := pcrbruteforcer.DefaultSettingsReproducePCR0()
 			settings.MaxDisabledMeasurements = 6 - maxReorders*2
 			settings.MaxReorders = maxReorders
 
-			logger.FromCtx(ctx).Debugf("ReproducePCR0Settings = %#+v", settings)
+			logger.Debugf(ctx, "ReproducePCR0Settings = %#+v", settings)
 
 			reproducePCR0Result, err = pcrbruteforcer.ReproduceExpectedPCR0(ctx, commandLog, tpm2.AlgSHA256, expectedPCR0, settings)
 			if err != nil {
@@ -361,14 +361,14 @@ func printReproducePCR0Result(
 	if !containsInitCmd {
 		err := dummyTPM.TPMInit(ctx, result.Locality, nil)
 		if err != nil {
-			logger.FromCtx(ctx).Error(err)
+			logger.Error(ctx, err)
 			return
 		}
 	}
 	resultCommandLog.Commands().Apply(ctx, dummyTPM)
 	replayedPCR0, err := dummyTPM.PCRValues.Get(0, hashAlgo)
 	if err != nil {
-		logger.FromCtx(ctx).Error(err)
+		logger.Error(ctx, err)
 		return
 	}
 	if !bytes.Equal(replayedPCR0, expectedPCR0) {

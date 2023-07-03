@@ -72,7 +72,7 @@ func (ACMDate) Data(ctx context.Context, state *types.State) (*types.Data, error
 	}
 
 	if errors != nil {
-		logger.FromCtx(ctx).Debugf("errors: %v", errors.Error())
+		logger.Debugf(ctx, "errors: %v", errors.Error())
 	}
 
 	return result, nil

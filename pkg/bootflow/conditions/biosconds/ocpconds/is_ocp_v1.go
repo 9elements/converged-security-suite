@@ -23,35 +23,35 @@ var _ types.Condition = (*IsOCPv1)(nil)
 func (IsOCPv1) Check(ctx context.Context, s *types.State) bool {
 	biosImg, err := biosimage.Get(s)
 	if err != nil {
-		logger.FromCtx(ctx).Tracef("unable to get BIOS image: %v", err)
+		logger.Tracef(ctx, "unable to get BIOS image: %v", err)
 		return false
 	}
 
 	uefi, err := biosImg.Parse()
 	if err != nil {
-		logger.FromCtx(ctx).Tracef("unable to parse BIOS image: %v", err)
+		logger.Tracef(ctx, "unable to parse BIOS image: %v", err)
 		return false
 	}
 
 	sourceGUID := ffsConsts.GUIDAmiTpm20PlatformPei
 	nodes, err := uefi.GetByGUID(sourceGUID)
 	if err != nil {
-		logger.FromCtx(ctx).Tracef("unable to find GUID '%s': %v", sourceGUID, err)
+		logger.Tracef(ctx, "unable to find GUID '%s': %v", sourceGUID, err)
 		return false
 	}
 	if len(nodes) == 0 {
-		logger.FromCtx(ctx).Tracef("found zero objects with GUID '%s'", sourceGUID)
+		logger.Tracef(ctx, "found zero objects with GUID '%s'", sourceGUID)
 		return false
 	}
 	if len(nodes) > 1 {
-		logger.FromCtx(ctx).Tracef("found too many objects with GUID '%s': expected:1, found:%d", sourceGUID, len(nodes))
+		logger.Tracef(ctx, "found too many objects with GUID '%s': expected:1, found:%d", sourceGUID, len(nodes))
 		return false
 	}
 
 	amiTPM20 := nodes[0]
 	v := &visitorFindPE32orTE{}
 	if err := amiTPM20.ApplyChildren(v); err != nil || v.Found == nil {
-		logger.FromCtx(ctx).Tracef("unable to find PE32 or TE in '%s': err:%v, found:%v", sourceGUID, err, v.Found)
+		logger.Tracef(ctx, "unable to find PE32 or TE in '%s': err:%v, found:%v", sourceGUID, err, v.Found)
 		return false
 	}
 
@@ -60,7 +60,7 @@ func (IsOCPv1) Check(ctx context.Context, s *types.State) bool {
 	if !foundMagic {
 		foundMagic = bytes.Contains(v.Found.Buf(), ocpVendorVersionV1[len(ocpVendorVersionV1)-4:])
 	}
-	logger.FromCtx(ctx).Tracef("is_found_magic:%v", foundMagic)
+	logger.Tracef(ctx, "is_found_magic:%v", foundMagic)
 	return foundMagic
 }
 

@@ -130,7 +130,7 @@ func IsAMDPSPFirmware(
 	firmware Firmware,
 ) bool {
 	_, _, err := amd.FindEmbeddedFirmwareStructure(firmware)
-	logger.FromCtx(ctx).Debugf("FindEmbeddedFirmwareStructure err-result: %v", err)
+	logger.Debugf(ctx, "FindEmbeddedFirmwareStructure err-result: %v", err)
 	return err == nil
 }
 
