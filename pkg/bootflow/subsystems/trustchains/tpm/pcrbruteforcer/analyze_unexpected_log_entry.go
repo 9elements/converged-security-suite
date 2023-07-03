@@ -108,7 +108,7 @@ func (e logEntryExplainer) guessMeasurementFromEventRawData(
 	s *types.State,
 	ev *tpmeventlog.Event,
 ) (*types.MeasuredData, []byte) {
-	return tryMeasurement(s, ev, types.UnionForcedBytesOrReferences{{ForcedBytes: ev.Data}})
+	return tryMeasurement(s, ev, types.References{*types.NewReference(types.RawBytes(ev.Data))})
 }
 
 func (e logEntryExplainer) guessMeasurementFromEventRanges(
@@ -131,34 +131,45 @@ func rangesToChunks(
 	image *biosimage.BIOSImage,
 	ranges pkgbytes.Ranges,
 	expectedMeasurement *types.MeasuredData,
-) types.UnionForcedBytesOrReferences {
-	var chunks types.UnionForcedBytesOrReferences
+) types.References {
+	var chunks types.References
 	for _, r := range ranges {
 		var addressMapper types.AddressMapper
 		if isPhysAddr(r.Offset, image.Size()) {
 			addressMapper = biosimage.PhysMemMapper{}
 		}
-		chunk := types.UnionForcedBytesOrReference{}
+
+		var chunk *types.Reference
+
+		// If this measurement measures some pre-hardcoded value instead of
+		// actually measuring the BIOS image, then re-used the hardcoded value:
 		if expectedMeasurement != nil {
-			expectedForcedBytes := expectedMeasurement.Data.UnionForcedBytesOrReferences[len(chunks)].ForcedBytes
-			if expectedForcedBytes != nil {
-				chunk.ForcedBytes = expectedForcedBytes
+			art := expectedMeasurement.Data.References[len(chunks)].Artifact
+			if b, ok := art.(types.RawBytes); ok {
+				chunk = types.NewReference(b)
 			}
 		}
+
+		// An actual measurement:
 		if r.Length > 0 {
-			chunk.Reference = &types.Reference{
-				Artifact:      image,
-				AddressMapper: addressMapper,
-				Ranges: []pkgbytes.Range{
-					r,
+			if chunk != nil {
+				logger.Error(ctx, "has RawBytes and a Range at the same time, supposed to be impossible; dropping the ForcedBytes part")
+			}
+			chunk = &types.Reference{
+				Artifact: image,
+				MappedRanges: types.MappedRanges{
+					AddressMapper: addressMapper,
+					Ranges:        []pkgbytes.Range{r},
 				},
 			}
 		}
-		if chunk.ForcedBytes == nil && chunk.Reference == nil {
-			logger.FromCtx(ctx).Warnf("chunk.ForcedBytes == nil && chunk.Reference == nil")
+
+		if chunk == nil {
+			logger.Warn(ctx, "neither RawBytes nor Range are set, skipping the chunk")
 			continue
 		}
-		chunks = append(chunks, chunk)
+
+		chunks = append(chunks, *chunk)
 	}
 	return chunks
 }
@@ -166,7 +177,7 @@ func rangesToChunks(
 func tryMeasurement(
 	s *types.State,
 	ev *tpmeventlog.Event,
-	chunks types.UnionForcedBytesOrReferences,
+	chunks types.References,
 ) (*types.MeasuredData, []byte) {
 	h, err := ev.Digest.HashAlgo.Hash()
 	if err != nil {
@@ -178,9 +189,8 @@ func tryMeasurement(
 	}
 
 	d := types.Data{
-		UnionForcedBytesOrReferences: chunks,
-
-		Converter: dataconverters.NewHasherFactory(h.New),
+		References: chunks,
+		Converter:  dataconverters.NewHasherFactory(h.New),
 	}
 	measurement := &types.MeasuredData{
 		Data:       d,
@@ -265,10 +275,12 @@ func (e *logEntryExplainer) AddMeasurement(
 	addrMapper types.AddressMapper,
 	ranges pkgbytes.Ranges,
 ) {
-	data := *types.NewReferenceData(&types.Reference{
-		Artifact:      artifact,
-		AddressMapper: addrMapper,
-		Ranges:        ranges,
+	data := *types.NewData(&types.Reference{
+		Artifact: artifact,
+		MappedRanges: types.MappedRanges{
+			AddressMapper: addrMapper,
+			Ranges:        ranges,
+		},
 	})
 	data.Converter = dataConverter
 	e.Measurement = append(e.Measurement, types.MeasuredData{

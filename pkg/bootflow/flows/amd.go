@@ -58,7 +58,7 @@ var AMDGenoaVerificationFailureV2 = NewFlow("AMDGenoaVerificationFailureV2", typ
 
 var AMDGenoaLocality0V2 = NewFlow("AMDGenoaLocality0V2", types.Steps{
 	commonsteps.If(commonconds.Not(tpmconds.TPMIsInited{}), tpmsteps.InitTPM(0, false), nil),
-	tpmsteps.Measure(0, tpmeventlog.EV_NO_ACTION, (*datasources.StaticData)(types.NewForcedData([]byte{0x8d, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x50}))), // TODO: investigate what this is, most likely this is "amdsteps.MeasureMP0C2PMsgRegisters".
+	tpmsteps.Measure(0, tpmeventlog.EV_NO_ACTION, (*datasources.StaticData)(types.NewData(types.RawBytes{0x8d, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x50}))), // TODO: investigate what this is, most likely this is "amdsteps.MeasureMP0C2PMsgRegisters".
 	amdsteps.MeasureEmbeddedFirmwareStructure{},
 	amdsteps.MeasureBIOSDirectory{},
 	amdsteps.MeasureBIOSStaticEntries{},

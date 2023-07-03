@@ -3,16 +3,52 @@ package types
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"reflect"
 	"sort"
 	"strings"
 	"sync"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
+	"github.com/go-ng/slices"
+	"github.com/go-ng/xmath"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
 
 // RawBytes are the initial (not yet hashed or converted other way) bytes.
 type RawBytes []byte
+
+var _ SystemArtifact = (RawBytes)(nil)
+var _ SystemArtifactEqualer = (RawBytes)(nil)
+
+// ReadAt implements SystemArtifact.
+func (b RawBytes) ReadAt(p []byte, offset int64) (n int, err error) {
+	if offset >= int64(len(b)) {
+		return 0, io.EOF
+	}
+
+	copy(b, b[offset:])
+	n = xmath.Min(
+		int(int64(len(b))-offset),
+		len(b),
+	)
+	return
+}
+
+// Equal implements SystemArtifactEqualer.
+func (b RawBytes) Equal(in SystemArtifact) bool {
+	cmp, ok := in.(RawBytes)
+	if !ok {
+		return false
+	}
+
+	return slices.EqualHeaders(b, cmp)
+}
+
+// Size implements SystemArtifact.
+func (b RawBytes) Size() uint64 {
+	return uint64(len(b))
+}
 
 // RawBytes implements RawBytesGetter.
 func (b RawBytes) RawBytes() RawBytes {
@@ -41,142 +77,47 @@ func (d ConvertedBytes) String() string {
 	return fmt.Sprintf("0x%X", []byte(d))
 }
 
-// UnionForcedBytesOrReference is an union of ForcedBytes and a Reference.
-// Go does not support union-s, so a `struct` is used here instead.
-//
-// If `ForcedBytes` is not-nil then `ForcedBytes` is used, otherwise `Reference`.
-type UnionForcedBytesOrReference struct {
-	ForcedBytes RawBytes
-	Reference   *Reference
-}
-
-// Value returns the value stored in union `ForcedBytesOrReference`.
-//
-// It then can be type-switched as `[]byte` and `Reference`.
-func (u *UnionForcedBytesOrReference) Value() RawBytesGetter {
-	if u.ForcedBytes == nil {
-		return u.Reference
-	}
-	if u.Reference != nil {
-		panic("UnionForcedBytesOrReference is supposed to be an union, but both ForcedBytes and Reference are set")
-	}
-	return u.ForcedBytes
-}
-
-// String implements fmt.Stringer.
-func (u UnionForcedBytesOrReference) String() string {
-	if u.ForcedBytes != nil {
-		return fmt.Sprintf("{ForcedBytes: 0x%X}", u.ForcedBytes)
-	}
-	return fmt.Sprintf("{Ref: %s}", u.Reference.String())
-}
-
-// RawBytes implements RawBytesGetter.
-func (u *UnionForcedBytesOrReference) RawBytes() RawBytes {
-	return u.Value().RawBytes()
-}
-
-// UnionForcedBytesOrReferences is a slice of unions 'UnionForcedBytesOrReference'.
-type UnionForcedBytesOrReferences []UnionForcedBytesOrReference
-
-// RawBytes concatenates all RawBytes values together.
-func (s UnionForcedBytesOrReferences) RawBytes() RawBytes {
-	var result RawBytes
-	for _, u := range s {
-		result = append(result, u.RawBytes()...)
-	}
-	return result
-}
-
-// ForcedBytes concatenates all ForcedByte values together.
-func (s UnionForcedBytesOrReferences) ForcedBytes() RawBytes {
-	size := 0
-	isSet := false
-	for _, u := range s {
-		size += len(u.ForcedBytes)
-		isSet = isSet || u.ForcedBytes != nil
-	}
-	if !isSet {
-		return nil
-	}
-	result := make([]byte, size)
-	ptr := result
-	for _, u := range s {
-		copy(ptr, u.ForcedBytes)
-		ptr = ptr[len(u.ForcedBytes):]
-	}
-	return result
-}
-
-// References returns all references.
-func (s UnionForcedBytesOrReferences) References() References {
-	var result References
-	for _, u := range s {
-		if u.ForcedBytes != nil {
-			continue
-		}
-		result = append(result, *u.Reference)
-	}
-	return result
-}
-
-// String implements fmt.Stringer.
-func (s UnionForcedBytesOrReferences) String() string {
-	if len(s) == 0 {
-		return "{}"
-	}
-
-	if s.ForcedBytes() == nil {
-		return fmt.Sprintf("{Refs: %s}", s.References())
-	}
-	if s.References() == nil {
-		return fmt.Sprintf("{ForcedBytes: 0x%X}", s.ForcedBytes())
-	}
-
-	var result strings.Builder
-	result.WriteRune('[')
-	for idx, u := range s {
-		if idx != 0 {
-			result.WriteString(", ")
-		}
-		result.WriteString(u.String())
-	}
-	result.WriteRune(']')
-	return result.String()
-}
-
 // Data is byte-data (given directly or by a reference to a SystemArtifact).
 type Data struct {
-	UnionForcedBytesOrReferences
+	References
 	Converter DataConverter `faker:"data_converter"`
 }
 
-func NewForcedData(b RawBytes) *Data {
-	return &Data{
-		UnionForcedBytesOrReferences: []UnionForcedBytesOrReference{{
-			ForcedBytes: b,
-		}},
+// NewDataInput is just an interface for function NewData.
+type NewDataInput interface {
+	RawBytes | *Reference | References
+}
+
+// NewData returns a new instance of Data structure, given the
+// actual data to be referenced to.
+//
+// The returned value is always not nil.
+func NewData[T NewDataInput](in T) *Data {
+	if in == nil {
+		return &Data{}
+	}
+
+	switch in := any(in).(type) {
+	case RawBytes:
+		return &Data{
+			References: References{*NewReference(in)},
+		}
+	case *Reference:
+		return &Data{
+			References: References{*in},
+		}
+	case References:
+		return &Data{
+			References: in,
+		}
+	default:
+		panic(fmt.Sprintf("supposed to be impossible: %T", in))
 	}
 }
 
-func NewReferenceData(ref *Reference) *Data {
-	return &Data{
-		UnionForcedBytesOrReferences: []UnionForcedBytesOrReference{{
-			Reference: ref,
-		}},
-	}
-}
-
-func NewReferencesData(refs References) *Data {
-	var result UnionForcedBytesOrReferences
-	for idx := range refs {
-		result = append(result, UnionForcedBytesOrReference{
-			Reference: &refs[idx],
-		})
-	}
-	return &Data{
-		UnionForcedBytesOrReferences: result,
-	}
+// ForcedBytes returns the bytes provided by SystemArtifacts of type RawBytes.
+func (d *Data) ForcedBytes() []byte {
+	return d.References.ForcedBytes()
 }
 
 // ConvertedBytes returns the final/converted bytes defined by Data.
@@ -238,14 +179,55 @@ func compareReferenceType(a, b Reference) int {
 	}
 }
 
+// SystemArtifactEqualer is a comparer of a system artifact,
+// semantically similar to bytes.Compare (but for artifacts, instead of bytes).
+type SystemArtifactEqualer interface {
+	Equal(SystemArtifact) bool
+}
+
+// EqualSystemArtifacts returns true if system artifacts are equal.
+func EqualSystemArtifacts(s0, s1 SystemArtifact) bool {
+	if s0 == nil && s1 == nil {
+		return true
+	}
+	if s0 == nil || s1 == nil {
+		return false
+	}
+	if reflect.TypeOf(s0) != reflect.TypeOf(s1) {
+		return false
+	}
+	if c0, ok := s0.(SystemArtifactEqualer); ok {
+		return c0.Equal(s1)
+	}
+	return s0 == s1
+}
+
+// ForcedBytes returns a concatenation of data of all bytes defined by SystemArtifacts of type RawBytes.
+func (s References) ForcedBytes() RawBytes {
+	var buf bytes.Buffer
+	for _, ref := range s {
+		if b, ok := ref.Artifact.(RawBytes); ok {
+			if _, err := buf.Write(b); err != nil {
+				panic(err)
+			}
+		}
+	}
+	if buf.Len() == 0 {
+		return nil
+	}
+	return buf.Bytes()
+}
+
 // BySystemArtifact filters references to only those, who refers to the given SystemArtifact.
 func (s References) BySystemArtifact(sa SystemArtifact) References {
 	var result References
+
 	for _, ref := range s {
-		if ref.Artifact == sa {
+		if EqualSystemArtifacts(ref.Artifact, sa) {
 			result = append(result, ref)
 		}
 	}
+
 	return result
 }
 
@@ -315,7 +297,7 @@ func (s *References) SortAndMerge() {
 	*s = (*s)[:outIdx]
 }
 
-// Bytes returns a concatenation of data of all the referenced byte ranges.
+// RawBytes returns a concatenation of data of all the referenced byte ranges.
 func (s References) RawBytes() RawBytes {
 	var buf bytes.Buffer
 	for _, ref := range s {
@@ -393,11 +375,44 @@ type AddressMapper interface {
 	Unresolve(SystemArtifact, ...pkgbytes.Range) (pkgbytes.Ranges, error)
 }
 
+// MappedRanges are ranges, which is mapped (for example ranges in virtual memory).
+type MappedRanges struct {
+	AddressMapper AddressMapper `faker:"address_mapper"`
+	Ranges        pkgbytes.Ranges
+}
+
 // Reference is a reference to a bytes data in a SystemArtifact.
 type Reference struct {
-	Artifact      SystemArtifact `faker:"system_artifact"`
-	AddressMapper AddressMapper  `faker:"address_mapper"`
-	Ranges        pkgbytes.Ranges
+	Artifact SystemArtifact `faker:"system_artifact"`
+	MappedRanges
+}
+
+// NewReferenceInput is the input for NewReference function.
+//
+// Currently we support only RawBytes.
+type NewReferenceInput interface {
+	RawBytes
+}
+
+// Reference returns a Reference given a data to reference to.
+//
+// The returned value is always not nil.
+func NewReference[T NewReferenceInput](in T) *Reference {
+	switch in := any(in).(type) {
+	case RawBytes:
+		return &Reference{
+			Artifact: in,
+			MappedRanges: MappedRanges{
+				AddressMapper: nil,
+				Ranges: pkgbytes.Ranges{{
+					Offset: 0,
+					Length: in.Size(),
+				}},
+			},
+		}
+	default:
+		panic(fmt.Sprintf("supposed to be impossible: %T", in))
+	}
 }
 
 // ResolvedRanges returns Ranges, already resolved using AddressMapper.
@@ -501,7 +516,7 @@ type MeasuredDataSlice []MeasuredData
 func (s MeasuredDataSlice) References() References {
 	var result References
 	for _, d := range s {
-		result = append(result, d.References()...)
+		result = append(result, d.References...)
 	}
 	return result
 }

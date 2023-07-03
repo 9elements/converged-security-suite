@@ -32,13 +32,15 @@ func (d FITFirst) Data(_ context.Context, state *types.State) (*types.Data, erro
 			offset := fitEntry.GetEntryBase().Headers.Address.Pointer()
 			length := len(fitEntry.GetEntryBase().DataSegmentBytes)
 
-			return types.NewReferenceData(&types.Reference{
-				Artifact:      biosFW,
-				AddressMapper: biosimage.PhysMemMapper{},
-				Ranges: pkgbytes.Ranges{{
-					Offset: offset,
-					Length: uint64(length),
-				}},
+			return types.NewData(&types.Reference{
+				Artifact: biosFW,
+				MappedRanges: types.MappedRanges{
+					AddressMapper: biosimage.PhysMemMapper{},
+					Ranges: pkgbytes.Ranges{{
+						Offset: offset,
+						Length: uint64(length),
+					}},
+				},
 			}), nil
 		}
 	}
@@ -69,11 +71,13 @@ func (d FITAll) Data(_ context.Context, state *types.State) (*types.Data, error)
 	}
 
 	ref := types.Reference{
-		Artifact:      biosFW,
-		AddressMapper: biosimage.PhysMemMapper{},
-		Ranges:        []pkgbytes.Range{},
+		Artifact: biosFW,
+		MappedRanges: types.MappedRanges{
+			AddressMapper: biosimage.PhysMemMapper{},
+			Ranges:        []pkgbytes.Range{},
+		},
 	}
-	result := types.NewReferenceData(&ref)
+	result := types.NewData(&ref)
 	for _, fitEntry := range fitEntries {
 		if fitEntry.GetEntryBase().Headers.Type() == fit.EntryType(d) {
 			offset := fitEntry.GetEntryBase().Headers.Address.Pointer()

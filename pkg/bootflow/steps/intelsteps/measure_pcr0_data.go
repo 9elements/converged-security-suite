@@ -43,12 +43,14 @@ func (MeasurePCR0DATA) Actions(ctx context.Context, s *types.State) types.Action
 
 	var pcr0DATA pcr0DATA
 	pcr0DATA.acmPolicyStatus = types.Reference{
-		Artifact:      txtRegisters,
-		AddressMapper: nil,
-		Ranges: []pkgbytes.Range{{
-			Offset: registers.ACMPolicyStatus(0).Address() - registers.TxtPublicSpace,
-			Length: uint64(registers.ACMPolicyStatus(0).BitSize() / 8),
-		}},
+		Artifact: txtRegisters,
+		MappedRanges: types.MappedRanges{
+			AddressMapper: nil,
+			Ranges: []pkgbytes.Range{{
+				Offset: registers.ACMPolicyStatus(0).Address() - registers.TxtPublicSpace,
+				Length: uint64(registers.ACMPolicyStatus(0).BitSize() / 8),
+			}},
+		},
 	}
 
 	acmEntry, acmFIT, err := intelFW.ACM()
@@ -63,20 +65,24 @@ func (MeasurePCR0DATA) Actions(ctx context.Context, s *types.State) types.Action
 	// From Intel CBnT doc: "SVN field of ACM header (offset 28) indicates..."
 	// Offset 28 == TxtSVN
 	pcr0DATA.acmHeaderSVN = types.Reference{
-		Artifact:      intelFW.SystemArtifact(),
-		AddressMapper: biosimage.PhysMemMapper{},
-		Ranges: []pkgbytes.Range{{
-			Offset: acmAddr + acmEntry.GetCommon().TXTSVNBinaryOffset(),
-			Length: uint64(binary.Size(acmEntry.GetTXTSVN())),
-		}},
+		Artifact: intelFW.SystemArtifact(),
+		MappedRanges: types.MappedRanges{
+			AddressMapper: biosimage.PhysMemMapper{},
+			Ranges: []pkgbytes.Range{{
+				Offset: acmAddr + acmEntry.GetCommon().TXTSVNBinaryOffset(),
+				Length: uint64(binary.Size(acmEntry.GetTXTSVN())),
+			}},
+		},
 	}
 	pcr0DATA.acmSignature = types.Reference{
-		Artifact:      intelFW.SystemArtifact(),
-		AddressMapper: biosimage.PhysMemMapper{},
-		Ranges: []pkgbytes.Range{{
-			Offset: acmAddr + acmEntry.RSASigBinaryOffset(),
-			Length: uint64(len(acmEntry.GetRSASig())),
-		}},
+		Artifact: intelFW.SystemArtifact(),
+		MappedRanges: types.MappedRanges{
+			AddressMapper: biosimage.PhysMemMapper{},
+			Ranges: []pkgbytes.Range{{
+				Offset: acmAddr + acmEntry.RSASigBinaryOffset(),
+				Length: uint64(len(acmEntry.GetRSASig())),
+			}},
+		},
 	}
 
 	keyManifest, keyManifestFITEntry, err := intelFW.KeyManifest()
@@ -87,12 +93,14 @@ func (MeasurePCR0DATA) Actions(ctx context.Context, s *types.State) types.Action
 	}
 	kmAddr := keyManifestFITEntry.Headers.Address.Pointer()
 	pcr0DATA.kmSignature = types.Reference{
-		Artifact:      intelFW.SystemArtifact(),
-		AddressMapper: biosimage.PhysMemMapper{},
-		Ranges: []pkgbytes.Range{{
-			Offset: kmAddr + keyManifest.KeyAndSignatureOffset() + keyManifest.KeyAndSignature.SignatureOffset() + keyManifest.KeyAndSignature.Signature.DataOffset(),
-			Length: uint64(len(keyManifest.KeyAndSignature.Signature.Data)),
-		}},
+		Artifact: intelFW.SystemArtifact(),
+		MappedRanges: types.MappedRanges{
+			AddressMapper: biosimage.PhysMemMapper{},
+			Ranges: []pkgbytes.Range{{
+				Offset: kmAddr + keyManifest.KeyAndSignatureOffset() + keyManifest.KeyAndSignature.SignatureOffset() + keyManifest.KeyAndSignature.Signature.DataOffset(),
+				Length: uint64(len(keyManifest.KeyAndSignature.Signature.Data)),
+			}},
+		},
 	}
 
 	bpManifest, bpManifestFITEntry, err := intelFW.BootPolicyManifest()
@@ -103,12 +111,14 @@ func (MeasurePCR0DATA) Actions(ctx context.Context, s *types.State) types.Action
 	}
 	bpmAddr := bpManifestFITEntry.Headers.Address.Pointer()
 	pcr0DATA.bpmSignature = types.Reference{
-		Artifact:      intelFW.SystemArtifact(),
-		AddressMapper: biosimage.PhysMemMapper{},
-		Ranges: []pkgbytes.Range{{
-			Offset: bpmAddr + uint64(bpManifest.KeySignatureOffset) + bpManifest.PMSE.SignatureOffset() + bpManifest.PMSE.Signature.DataOffset(),
-			Length: uint64(len(bpManifest.PMSE.Signature.Data)),
-		}},
+		Artifact: intelFW.SystemArtifact(),
+		MappedRanges: types.MappedRanges{
+			AddressMapper: biosimage.PhysMemMapper{},
+			Ranges: []pkgbytes.Range{{
+				Offset: bpmAddr + uint64(bpManifest.KeySignatureOffset) + bpManifest.PMSE.SignatureOffset() + bpManifest.PMSE.Signature.DataOffset(),
+				Length: uint64(len(bpManifest.PMSE.Signature.Data)),
+			}},
+		},
 	}
 
 	digests := bpManifest.SE[0].DigestList.List
@@ -133,12 +143,14 @@ func (MeasurePCR0DATA) Actions(ctx context.Context, s *types.State) types.Action
 		for idx := range digests {
 			if digests[idx].HashAlg == hashAlgo {
 				pcr0DATA.ibbDigest = types.Reference{
-					Artifact:      intelFW.SystemArtifact(),
-					AddressMapper: biosimage.PhysMemMapper{},
-					Ranges: []pkgbytes.Range{{
-						Offset: offsetToCurrentDigest + (digests[idx].HashBufferOffset() + 2),
-						Length: uint64(len(digests[idx].HashBuffer)),
-					}},
+					Artifact: intelFW.SystemArtifact(),
+					MappedRanges: types.MappedRanges{
+						AddressMapper: biosimage.PhysMemMapper{},
+						Ranges: []pkgbytes.Range{{
+							Offset: offsetToCurrentDigest + (digests[idx].HashBufferOffset() + 2),
+							Length: uint64(len(digests[idx].HashBuffer)),
+						}},
+					},
 				}
 				found = true
 				break
@@ -174,7 +186,7 @@ func (d pcr0DATA) compileActions() types.Actions {
 	if err != nil {
 		panic(fmt.Errorf("d.hashAlgo.Hash() return an error: should never happen: %w", err))
 	}
-	data := types.NewReferencesData(types.References{
+	data := types.NewData(types.References{
 		d.acmPolicyStatus,
 		d.acmHeaderSVN,
 		d.acmSignature,

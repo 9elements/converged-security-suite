@@ -78,9 +78,11 @@ func (ds UEFIFiles) Data(_ context.Context, state *types.State) (*types.Data, er
 		return &types.Data{}, nil
 	}
 
-	return types.NewReferenceData(&types.Reference{
-		Artifact:      imgRaw,
-		AddressMapper: addrMapper,
-		Ranges:        ranges,
+	return types.NewData(&types.Reference{
+		Artifact: imgRaw,
+		MappedRanges: types.MappedRanges{
+			AddressMapper: addrMapper,
+			Ranges:        ranges,
+		},
 	}), nil
 }

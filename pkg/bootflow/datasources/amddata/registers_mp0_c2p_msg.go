@@ -42,9 +42,12 @@ func (RegistersMP0C2PMsg) Data(ctx context.Context, s *types.State) (*types.Data
 		}
 	}
 
-	return types.NewReferenceData(&types.Reference{
+	return types.NewData(&types.Reference{
 		Artifact: rs,
-		Ranges:   ranges,
+		MappedRanges: types.MappedRanges{
+			AddressMapper: nil,
+			Ranges:        ranges,
+		},
 	}), nil
 }
 

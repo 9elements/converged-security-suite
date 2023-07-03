@@ -241,8 +241,8 @@ func printBootResults(
 	for idx, measuredData := range state.MeasuredData {
 		fmt.Printf("\t%d: %v\n", idx, measuredData)
 		if printMeasuredBytesLimit > 0 {
-			refs := make(types.References, len(measuredData.References()))
-			copy(refs, measuredData.References())
+			refs := make(types.References, len(measuredData.References))
+			copy(refs, measuredData.References)
 			err := refs.Resolve()
 			if err != nil {
 				panic(err)

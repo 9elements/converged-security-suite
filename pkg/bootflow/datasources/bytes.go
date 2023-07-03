@@ -14,7 +14,7 @@ var _ types.DataSource = (Bytes)(nil)
 
 // Data implements DataSource.
 func (d Bytes) Data(context.Context, *types.State) (*types.Data, error) {
-	return types.NewForcedData(types.RawBytes(d)), nil
+	return types.NewData(types.RawBytes(d)), nil
 }
 
 // String implements fmt.Stringer.

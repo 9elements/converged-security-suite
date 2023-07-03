@@ -32,11 +32,13 @@ func (ACMDate) Data(ctx context.Context, state *types.State) (*types.Data, error
 	var errors *multierror.Error
 	found := false
 	ref := types.Reference{
-		Artifact:      biosFW,
-		AddressMapper: biosimage.PhysMemMapper{},
-		Ranges:        []pkgbytes.Range{},
+		Artifact: biosFW,
+		MappedRanges: types.MappedRanges{
+			AddressMapper: biosimage.PhysMemMapper{},
+			Ranges:        []pkgbytes.Range{},
+		},
 	}
-	result := types.NewReferenceData(&ref)
+	result := types.NewData(&ref)
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntrySACM: // startup AC module entry

@@ -31,10 +31,12 @@ func (IBB) Data(ctx context.Context, s *types.State) (*types.Data, error) {
 	addrMapper := biosimage.PhysMemMapper{}
 	ranges = addrMapper.UnresolveFullImageOffset(intelFW.SystemArtifact(), ranges...)
 
-	return types.NewReferenceData(&types.Reference{
-		Artifact:      intelFW.SystemArtifact(),
-		AddressMapper: addrMapper,
-		Ranges:        ranges,
+	return types.NewData(&types.Reference{
+		Artifact: intelFW.SystemArtifact(),
+		MappedRanges: types.MappedRanges{
+			AddressMapper: addrMapper,
+			Ranges:        ranges,
+		},
 	}), nil
 }
 

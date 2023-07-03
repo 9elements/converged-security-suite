@@ -50,7 +50,7 @@ func (v VolumeOfType) Data(ctx context.Context, s *types.State) (*types.Data, er
 	}
 
 	var ranges pkgbytes.Ranges
-	for _, ref := range d.References() {
+	for _, ref := range d.References {
 		if ref.Artifact != biosImg {
 			return nil, fmt.Errorf("reference %s is not referencing to the BIOSImage", format.NiceString(ref))
 		}
@@ -89,9 +89,11 @@ func (v VolumeOfType) Data(ctx context.Context, s *types.State) (*types.Data, er
 
 	addrMapper := biosimage.PhysMemMapper{}
 	ranges = addrMapper.UnresolveFullImageOffset(biosImg, ranges...)
-	return types.NewReferenceData(&types.Reference{
-		Artifact:      biosImg,
-		AddressMapper: addrMapper,
-		Ranges:        ranges,
+	return types.NewData(&types.Reference{
+		Artifact: biosImg,
+		MappedRanges: types.MappedRanges{
+			AddressMapper: addrMapper,
+			Ranges:        ranges,
+		},
 	}), nil
 }

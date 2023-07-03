@@ -71,10 +71,12 @@ func (ds UEFIGUIDFirst) Data(_ context.Context, state *types.State) (*types.Data
 		return nil, fmt.Errorf("no volumes with GUIDs %s found", ds.guids())
 	}
 
-	return types.NewReferenceData(&types.Reference{
-		Artifact:      imgRaw,
-		AddressMapper: addrMapper,
-		Ranges:        ranges,
+	return types.NewData(&types.Reference{
+		Artifact: imgRaw,
+		MappedRanges: types.MappedRanges{
+			AddressMapper: addrMapper,
+			Ranges:        ranges,
+		},
 	}), nil
 }
 

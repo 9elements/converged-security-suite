@@ -23,7 +23,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
-	"github.com/facebookincubator/go-belt/beltctx"
+	"github.com/facebookincubator/go-belt"
 	"github.com/facebookincubator/go-belt/tool/experimental/errmon"
 	"github.com/facebookincubator/go-belt/tool/logger"
 )
@@ -158,7 +158,7 @@ func (h *reproduceExpectedPCR0Handler) execute(
 		wg.Add(1)
 		go func(tryLocality uint8) {
 			defer wg.Done()
-			ctx := beltctx.WithField(ctx, "locality", tryLocality)
+			ctx := belt.WithField(ctx, "locality", tryLocality)
 			defer func() {
 				errmon.ObserveRecoverCtx(ctx, recover())
 			}()
@@ -599,7 +599,7 @@ func (j *reproduceExpectedPCR0Job) measurementsVerifyWithBruteForceACMPolicyStat
 	action := enabledMeasurements[0].CauseAction.(*tpmactions.TPMExtend)
 	dataSource := action.DataSource.(*datasources.StaticData)
 	pcr0DataBytes := dataSource.RawBytes()
-	acmPolicyStatusRef := dataSource.References()[0]
+	acmPolicyStatusRef := dataSource.References[0]
 
 	acmPolicyStatusOrig := acmPolicyStatusRef.RawBytes()
 	if len(acmPolicyStatusOrig) != 8 {

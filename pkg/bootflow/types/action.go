@@ -42,5 +42,8 @@ func (coords *ActionCoordinates) Step() Step {
 
 // IsSameStep returns true if the Flow and StepIndex are the same.
 func (coords *ActionCoordinates) IsSameStep(cmp ActionCoordinates) bool {
+	// A Flow consists of Steps.
+	// A Step consists of Actions.
+	// So here we need to have the same Flow and StepIndex, but we do not require the same Action
 	return coords.Flow.Name == cmp.Flow.Name && coords.StepIndex == cmp.StepIndex
 }

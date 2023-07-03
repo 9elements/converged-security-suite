@@ -31,10 +31,12 @@ func (EmbeddedFirmware) Data(ctx context.Context, s *types.State) (*types.Data, 
 	addrMapper := biosimage.PhysMemMapper{}
 	ranges = addrMapper.UnresolveFullImageOffset(amdAccessor.Image, ranges...)
 
-	return types.NewReferenceData(&types.Reference{
-		Artifact:      amdAccessor.Image,
-		AddressMapper: addrMapper,
-		Ranges:        ranges,
+	return types.NewData(&types.Reference{
+		Artifact: amdAccessor.Image,
+		MappedRanges: types.MappedRanges{
+			AddressMapper: addrMapper,
+			Ranges:        ranges,
+		},
 	}), nil
 }
 

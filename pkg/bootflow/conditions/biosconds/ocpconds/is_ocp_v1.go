@@ -65,7 +65,7 @@ func (IsOCPv1) Check(ctx context.Context, s *types.State) bool {
 }
 
 // FirmwareVendorVersion returns the well-known PCD Firmware Vendor Version string.
-func (IsOCPv1) FirmwareVendorVersion() []byte {
+func (IsOCPv1) FirmwareVendorVersion() types.RawBytes {
 	r := make([]byte, len(ocpVendorVersionV1))
 	copy(r, ocpVendorVersionV1)
 	return r

@@ -51,7 +51,7 @@ func (ValidatorActorsAreProtected) Validate(_ context.Context, _ *types.State, l
 			})
 			continue
 		}
-		actorRefs := step.ActorCode.References()
+		actorRefs := step.ActorCode.References.Exclude() // a copy
 		if err := actorRefs.Resolve(); err != nil {
 			result = append(result, Issue{
 				StepIdx: uint(stepIdx),

@@ -178,7 +178,7 @@ func ReproduceEventLog(
 			}
 			var buf [8]byte
 			binary.LittleEndian.PutUint64(buf[:], uint64(correctedACMPolicyStatus))
-			issues = append(issues, fmt.Errorf("changed ACM_POLICY_STATUS from %X to %X", m.References().BySystemArtifact(txtPublicRegisters).RawBytes(), buf))
+			issues = append(issues, fmt.Errorf("changed ACM_POLICY_STATUS from %X to %X", m.References.BySystemArtifact(txtPublicRegisters).RawBytes(), buf))
 			updatedACMPolicyStatusValue = &correctedACMPolicyStatus
 			result = append(result, ReproduceEventLogEntry{
 				Measurement:       m,
@@ -380,7 +380,7 @@ func getACMPolicyStatusRefFromMeasurement(
 	// We assume this is a PCR0_DATA/PCR7_DATA measurement if it measures ACM_POLICY_STATUS registers
 	// (and no other registers but ACM_POLICY_STATUS).
 
-	refs := m.References().BySystemArtifact(txtPublicRegisters)
+	refs := m.References.BySystemArtifact(txtPublicRegisters)
 	if len(refs) != 1 {
 		return nil
 	}

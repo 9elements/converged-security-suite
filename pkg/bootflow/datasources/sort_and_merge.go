@@ -32,7 +32,7 @@ func (m SortAndMergeType) Data(ctx context.Context, s *types.State) (*types.Data
 		return nil, fmt.Errorf("data source SortAndMerge does not support Converter")
 	}
 
-	refs := d.References()
+	refs := d.References
 	refs.SortAndMerge()
-	return types.NewReferencesData(refs), nil
+	return types.NewData(refs), nil
 }

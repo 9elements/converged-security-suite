@@ -27,8 +27,8 @@ func (c Concat) Data(ctx context.Context, s *types.State) (*types.Data, error) {
 			return nil, fmt.Errorf("data source Concat does not support Converter")
 		}
 
-		refs = append(refs, d.References()...)
+		refs = append(refs, d.References...)
 	}
 
-	return types.NewReferencesData(refs), nil
+	return types.NewData(refs), nil
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/9elements/converged-security-suite/v2/testdata/firmware"
-	"github.com/facebookincubator/go-belt/beltctx"
+	"github.com/facebookincubator/go-belt"
 	"github.com/facebookincubator/go-belt/pkg/field"
 	"github.com/facebookincubator/go-belt/tool/logger"
 	"github.com/facebookincubator/go-belt/tool/logger/implementation/logrus"
@@ -28,8 +28,8 @@ type fataler interface {
 }
 
 func TestReproduceExpectedPCR0(t *testing.T) {
-	ctx := logger.CtxWithLogger(context.Background(), logrus.Default().WithLevel(logger.LevelTrace))
-	enabledSlowTracing = true
+	ctx := logger.CtxWithLogger(context.Background(), logrus.Default().WithLevel(logger.LevelDebug))
+	enabledSlowTracing = false
 
 	const correctACMRegValue = 0x0000000200108681
 
@@ -71,7 +71,7 @@ func TestReproduceExpectedPCR0(t *testing.T) {
 	pcr0ReorderedContributions := unhex(t, "8B6F10F7D4425BACB22ADF41176AFA546036FC72")
 
 	testACM := func(t *testing.T, pcr0 []byte, acmReg uint64) {
-		ctx := beltctx.WithFields(ctx, field.Map[any]{
+		ctx := belt.WithFields(ctx, field.Map[any]{
 			"test_name":     t.Name(),
 			"expected_pcr0": fmt.Sprintf("%X", pcr0),
 			"acm_reg":       fmt.Sprintf("%X", acmReg),
