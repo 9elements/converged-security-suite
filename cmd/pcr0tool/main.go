@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands"
 	bruteforceacmpolicystatus "github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/bruteforce_acm_policy_status"
@@ -46,7 +47,13 @@ func setupFlag() {
 	flag.Usage = func() {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "syntax: pcr0tool <command> [options] {arguments}\n")
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\nPossible commands:\n")
-		for commandName, command := range knownCommands {
+		var verbs []string
+		for commandName := range knownCommands {
+			verbs = append(verbs, commandName)
+		}
+		sort.Strings(verbs)
+		for _, commandName := range verbs {
+			command := knownCommands[commandName]
 			_, _ = fmt.Fprintf(flag.CommandLine.Output(), "    pcr0tool %-36s%s\n",
 				fmt.Sprintf("%s %s", commandName, command.Usage()), command.Description())
 		}
