@@ -5,15 +5,15 @@ import (
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
-	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 )
 
 // TPMEvent is a representation of `TPM2_PCR_Event`.
 type TPMEvent struct {
 	DataSource types.DataSource
-	PCRIndex   pcrtypes.ID
+	PCRIndex   pcr.ID
 	Type       tpmeventlog.EventType
 	EventData  []byte
 }
@@ -22,7 +22,7 @@ var _ types.Action = (*TPMEvent)(nil)
 
 // NewTPMEvent returns a new instance of TPMEvent
 func NewTPMEvent(
-	pcrIndex pcrtypes.ID,
+	pcrIndex pcr.ID,
 	dataSource types.DataSource,
 	evType tpmeventlog.EventType,
 	eventData []byte,

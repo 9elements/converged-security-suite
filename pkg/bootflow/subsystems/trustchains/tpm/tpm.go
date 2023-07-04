@@ -3,6 +3,7 @@ package tpm
 import (
 	"context"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 	"github.com/google/go-tpm/tpm2"
@@ -18,7 +19,7 @@ const (
 var _ types.SubSystem = (*TPM)(nil)
 
 // Algorithm is just a type-alias.
-type Algorithm = tpm2.Algorithm
+type Algorithm = pcr.Algorithm
 
 // TPM is a TrustChain implementation which represents
 // measured boot backed by a Trusted Platform Module (TPM).

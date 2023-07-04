@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
-	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 	tpm1 "github.com/google/go-tpm/tpm"
 	"github.com/google/go-tpm/tpm2"
@@ -13,7 +13,7 @@ import (
 )
 
 // ReadPCRFromTPM reads PCR value from TPM.
-func ReadPCRFromTPM(pcrIndex pcrtypes.ID, alg tpm2.Algorithm) ([]byte, error) {
+func ReadPCRFromTPM(pcrIndex pcr.ID, alg tpm2.Algorithm) ([]byte, error) {
 	if pcrIndex >= amountOfPCRs {
 		return nil, fmt.Errorf("invalid PCR index: %d (should be less than %d)", pcrIndex, amountOfPCRs)
 	}

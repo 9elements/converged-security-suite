@@ -5,15 +5,15 @@ import (
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
-	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
 	"github.com/google/go-tpm/tpm2"
 )
 
 // TPMExtend is a representation of `TPM2_PCR_Extend`.
 type TPMExtend struct {
 	DataSource types.DataSource
-	PCRIndex   pcrtypes.ID
+	PCRIndex   pcr.ID
 	HashAlgo   tpm2.Algorithm
 }
 
@@ -21,7 +21,7 @@ var _ types.Action = (*TPMExtend)(nil)
 
 // NewTPMExtend returns a new instance of TPMEvent.
 func NewTPMExtend(
-	pcrIndex pcrtypes.ID,
+	pcrIndex pcr.ID,
 	dataSource types.DataSource,
 	hashAlgo tpm2.Algorithm,
 ) *TPMExtend {

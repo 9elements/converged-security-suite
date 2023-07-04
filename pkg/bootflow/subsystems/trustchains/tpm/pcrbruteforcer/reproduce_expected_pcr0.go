@@ -21,7 +21,6 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
 	"github.com/9elements/converged-security-suite/v2/pkg/bruteforcer"
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
-	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/facebookincubator/go-belt"
 	"github.com/facebookincubator/go-belt/tool/experimental/errmon"
@@ -826,37 +825,6 @@ type combinatorialSearch struct {
 
 func newCombinatorialSearch(limit int, expected []byte) *combinatorialSearch {
 	return &combinatorialSearch{limit, expected}
-}
-
-type pcr0DataFastMeasurement struct {
-	Data              []byte
-	RegisterHashCache *registerHashCache
-}
-
-var _ pcr.MeasureEvent = &pcr0DataFastMeasurement{}
-
-func (*pcr0DataFastMeasurement) GetID() pcr.MeasurementID {
-	return pcr.MeasurementIDPCR0DATA
-}
-func (m *pcr0DataFastMeasurement) CompileMeasurableData(image []byte) []byte {
-	return m.Data
-}
-func (m *pcr0DataFastMeasurement) Calculate(image []byte, hashFunc hash.Hash) ([]byte, error) {
-	reg := binary.LittleEndian.Uint64(m.Data)
-	cachedHash := m.RegisterHashCache.Get(reg)
-	if cachedHash != nil {
-		return cachedHash, nil
-	}
-
-	_, err := hashFunc.Write(m.Data)
-	if err != nil {
-		return nil, err
-	}
-
-	defer hashFunc.Reset()
-	hashValue := hashFunc.Sum(nil)
-	m.RegisterHashCache.Set(reg, hashValue)
-	return hashValue, nil
 }
 
 func (cs *combinatorialSearch) Process(

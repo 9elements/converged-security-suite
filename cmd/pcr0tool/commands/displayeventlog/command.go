@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/displayeventlog/format"
-	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 )
 
@@ -45,6 +45,10 @@ func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
 	flag.Var(&cmd.format, "format", "select output format, allowed values: plaintext-oneline, plaintext-multiline")
 }
 
+func ptr[T any](in T) *T {
+	return &in
+}
+
 // Execute is the main function here. It is responsible to
 // start the execution of the command.
 //
@@ -75,7 +79,7 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 	var filterPCRIndex *pcr.ID
 	var filterHashAlgo *tpmeventlog.TPMAlgorithm
 	if *cmd.pcrIndex != -1 {
-		filterPCRIndex = format.PCRIndexPtr(pcr.ID(*cmd.pcrIndex))
+		filterPCRIndex = ptr(pcr.ID(*cmd.pcrIndex))
 	}
 	if *cmd.hashAlgo != 0 {
 		filterHashAlgo = format.HashAlgoPtr(tpmeventlog.TPMAlgorithm(*cmd.hashAlgo))

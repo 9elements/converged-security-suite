@@ -2,29 +2,14 @@ package diff
 
 import (
 	"context"
-	"encoding/hex"
-	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
-	"math"
-	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"strings"
-
-	"github.com/google/go-tpm/tpm2"
-	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
-	fianoUEFI "github.com/linuxboot/fiano/pkg/uefi"
 
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands"
-	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/diff/format"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
-	"github.com/9elements/converged-security-suite/v2/pkg/diff"
-	"github.com/9elements/converged-security-suite/v2/pkg/ostools"
-	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
-	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
-	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/flows"
 )
 
 func assertNoError(err error) {
@@ -59,36 +44,12 @@ func parseOutputFormatType(s string) outputFormatType {
 	return outputFormatTypeUnknown
 }
 
-func parseByteSet(s string) ([]byte, error) {
-	if s == `` {
-		return nil, nil
-	}
-	var ignoreByteSet []byte
-	for _, char := range strings.Split(s, `,`) {
-		decoded, err := hex.DecodeString(char)
-		if err != nil {
-			return nil, fmt.Errorf("unable to decode HEX value '%s'", char)
-			os.Exit(1)
-		}
-		if len(decoded) != 1 {
-			return nil, fmt.Errorf("unexpected length of a character '%s' (%d != 1)", char, len(decoded))
-		}
-		ignoreByteSet = append(ignoreByteSet, decoded[0])
-	}
-	return ignoreByteSet, nil
-}
-
 // Command is the implementation of `commands.Command`.
 type Command struct {
-	forceScanArea *string
-	ignoreByteSet *string
-	outputFormat  *string
-	flow          *string
-	netPprof      *string
-	deepAnalysis  *bool
-	registers     helpers.FlagRegisters
-	hashFunc      *string
-	tpmDevice     *string
+	outputFormat *string
+	flow         *string
+	netPprof     *string
+	registers    helpers.FlagRegisters
 }
 
 // Usage prints the syntax of arguments for this command
@@ -104,19 +65,10 @@ func (cmd Command) Description() string {
 // SetupFlagSet is called to allow the command implementation
 // to setup which option flags it has.
 func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
-	cmd.forceScanArea = flag.String("force-scan-area", "",
-		`Force the scan area instead of following the PCR0 calculation. Values: "" (follow the PCR0 calculation), "bios_region"`)
-	cmd.ignoreByteSet = flag.String("ignore-byte-set", "", `Define a set of bytes to ignore while the comparison. 
-It makes sense to use this option together with "-force-scan-area bios_region" to scan the whole image, 
-but ignore the overridden bytes. The value is represented in hex characters separated by comma, for example: "00,ff". Default: ""`)
 	cmd.outputFormat = flag.String("output-format", "analyzed-text", `Values: "analyzed-text", "analyzed-json", "json"`)
-	cmd.flow = flag.String("flow", "auto", "values: "+commands.FlowCommandLineValues())
-	cmd.deepAnalysis = flag.Bool("deep-analysis", false,
-		`Also perform slow procedures to find more byte ranges which could affect the PCR0 calculation. This is experimental feature! Values: "true", "false"`)
+	cmd.flow = flag.String("flow", flows.Root.Name, "values: "+commands.FlowCommandLineValues())
 	cmd.netPprof = flag.String("net-pprof", "", `start listening for "net/http/pprof", example value: "127.0.0.1:6060"`)
 	flag.Var(&cmd.registers, "registers", "[optional] file that contains registers as a json array (use value '/dev' to use registers of the local machine)")
-	cmd.hashFunc = flag.String("hash-func", "", `which hash function use to hash measurements and to extend the PCR0; values: "sha1", "sha256"`)
-	cmd.tpmDevice = flag.String("tpm-device", "", "[optional] tpm device used for measurements, values: "+commands.TPMTypeCommandLineValues())
 }
 
 // Execute is the main function here. It is responsible to
@@ -124,6 +76,10 @@ but ignore the overridden bytes. The value is represented in hex characters sepa
 //
 // `args` are the arguments left unused by verb itself and options.
 func (cmd Command) Execute(ctx context.Context, args []string) {
+	panic("not implemented, yet")
+}
+
+/*
 	if len(args) != 2 {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "expected amount of arguments is two, but received: %d\n", len(args))
 		usageAndExit()
@@ -135,18 +91,18 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 		usageAndExit()
 	}
 
-	flow, err := pcr.FlowFromString(*cmd.flow)
-	if err != nil {
-		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "unknown attestation flow: '%s'\n", *cmd.flow)
+	state := types.NewState()
+	state.IncludeSubSystem(tpm.NewTPM())
+	state.IncludeSubSystem(intelpch.NewPCH())
+	state.IncludeSubSystem(amdpsp.NewPSP())
+
+	flow, ok := flows.GetFlowByName(*cmd.flow)
+	if !ok {
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "unknown boot flow: '%s'\n", *cmd.flow)
 		usageAndExit()
 	}
 
-	var measureOpts []pcr.MeasureOption
-	measureOpts = append(measureOpts, pcr.SetFlow(flow))
-
-	if *cmd.deepAnalysis {
-		measureOpts = append(measureOpts, pcr.SetFindMissingFakeMeasurements(true))
-	}
+	state.SetFlow(flow)
 
 	if *cmd.netPprof != "" {
 		go func() {
@@ -154,34 +110,24 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 		}()
 	}
 
-	ignoreByteSet, err := parseByteSet(*cmd.ignoreByteSet)
-	assertNoError(err)
-
-	measureOpts = append(measureOpts, pcr.SetRegisters(cmd.registers))
-
-	if len(*cmd.tpmDevice) > 0 {
-		tpmDevice, err := tpmdetection.FromString(*cmd.tpmDevice)
-		if err != nil {
-			usageAndExit()
-		}
-		measureOpts = append(measureOpts, pcr.SetTPMDevice(tpmDevice))
-	}
-
-	switch strings.ToLower(*cmd.hashFunc) {
-	case "sha1":
-		measureOpts = append(measureOpts, pcr.SetIBBHashDigest(tpm2.AlgSHA1))
-	case "sha256":
-		measureOpts = append(measureOpts, pcr.SetIBBHashDigest(tpm2.AlgSHA256))
-	}
+	state.IncludeSystemArtifact(txtpublic.New(registers.Registers(cmd.registers)))
+	state.IncludeSystemArtifact(amdregisters.New(registers.Registers(cmd.registers)))
 
 	firmwareGood, err := uefi.ParseUEFIFirmwareFile(args[0])
 	assertNoError(err)
 	firmwareGoodData := firmwareGood.Buf()
 
+	state.IncludeSystemArtifact(biosimage.NewFromParsed(firmwareGood))
+
 	firmwareBadData, err := ostools.FileToBytes(args[1])
 	if firmwareBadData == nil {
 		assertNoError(err)
 	}
+
+	process := bootengine.NewBootProcess(state)
+	process.Finish(ctx)
+
+	_ = process.Log.Error()
 
 	measurements, _, debugInfo, err := pcr.GetMeasurements(ctx, firmwareGood, 0, measureOpts...)
 	if err != nil {
@@ -302,3 +248,4 @@ func outputJSON(
 
 	fmt.Printf("%s\n", diffJSON)
 }
+*/

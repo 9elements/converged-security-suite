@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm/pcr"
 	"github.com/google/go-attestation/attest"
 	"github.com/google/go-tpm/tpm2"
-
-	pcr "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
 )
 
 // TPMEventLog is a parsed EventLog.

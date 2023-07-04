@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	pcr "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm/pcr"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 	"github.com/linuxboot/fiano/pkg/guid"
 )
