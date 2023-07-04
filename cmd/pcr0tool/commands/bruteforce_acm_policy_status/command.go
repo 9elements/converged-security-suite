@@ -17,6 +17,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/datasources"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/flows"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/steps/intelsteps"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/amdpsp"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/intelpch"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
@@ -52,7 +53,7 @@ func (cmd Command) Usage() string {
 
 // Description explains what this verb commands to do
 func (cmd Command) Description() string {
-	return "[Intel CBnT specific] brute forces the ACM policy status value to get the expected PCR0"
+	return "[Intel CBnT specific] brute forces the ACM policy status value to get the expected PCR0 SHA1"
 }
 
 func usageAndExit() {
@@ -68,6 +69,14 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 	if len(args) != 1 {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "expected amount of arguments is one, but received: %d\n", len(args))
 		usageAndExit()
+	}
+
+	expectedHash, err := hex.DecodeString(*cmd.expectedPCR0Flag)
+	if err != nil {
+		panic(err)
+	}
+	if len(expectedHash) != sha1.Size {
+		panic(fmt.Sprintf("value of -expected-pcr0 should have length %d bytes", sha1.Size))
 	}
 
 	flow, ok := flows.GetFlowByName(*cmd.flow)
@@ -105,7 +114,22 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 		panic(err)
 	}
 
-	// == now let's bruteforce the PCR0 first measurement ==
+	// == now let's bruteforce the first PCR0 measurement ==
+
+	// filter out only SHA1 init and extend TPM commands (to bruteforce faster)
+
+	var commandLog tpm.CommandLog
+	for _, entry := range tpmInstance.CommandLog {
+		switch cmd := entry.Command.(type) {
+		case *tpm.CommandInit:
+			commandLog = append(commandLog, entry)
+		case *tpm.CommandExtend:
+			if cmd.PCRIndex != 0 {
+				continue
+			}
+			commandLog = append(commandLog, entry)
+		}
+	}
 
 	// find the first measurement:
 
@@ -113,7 +137,7 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 		firstMeasurementData []byte
 		commandIdx           int
 	)
-	for idx, entry := range tpmInstance.CommandLog {
+	for idx, entry := range commandLog {
 		cmd, ok := entry.Command.(*tpm.CommandExtend)
 		if !ok {
 			continue
@@ -124,11 +148,11 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 		if cmd.HashAlgo != tpm2.AlgSHA1 {
 			continue
 		}
-		step := entry.Step().(types.StaticStep)
-		if len(step) != 1 {
-			panic(fmt.Errorf("unexpected length: %d (expected: 1)", len(step)))
+		_, ok = entry.Step().(intelsteps.MeasurePCR0DATA)
+		if !ok {
+			panic(fmt.Errorf("not a CBnT flow: the first PCR0 measurement should be PCR0_DATA, but got %T", entry.Step()))
 		}
-		firstMeasurementData = step[0].(*tpmactions.TPMEvent).DataSource.(datasources.Bytes)
+		firstMeasurementData = entry.CauseAction.(*tpmactions.TPMExtend).DataSource.(*datasources.StaticData).RawBytes()
 		commandIdx = idx
 		break
 	}
@@ -137,32 +161,30 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 	}
 
 	// brute force it:
-	expectedHash, err := hex.DecodeString(*cmd.expectedPCR0Flag)
-	if err != nil {
-		panic(err)
-	}
 	type contextT struct {
 		sha1Hasher  hash.Hash
 		tpm         *tpm.TPM
 		tpmCommands tpm.Commands
 	}
+	firstMeasurementTail := firstMeasurementData[8:]
 	combination, err := bruteforcer.BruteForce(
-		firstMeasurementData, // initialData
-		8,                    // itemSize
-		0,                    // minDistance
-		2,                    // maxDistance
+		firstMeasurementData[:8], // initialData
+		8,                        // itemSize
+		0,                        // minDistance
+		2,                        // maxDistance
 		func() (interface{}, error) { // initFunc
 			return &contextT{
 				sha1Hasher:  sha1.New(),
 				tpm:         tpm.NewTPM(),
-				tpmCommands: tpmInstance.CommandLog.Commands(),
+				tpmCommands: commandLog.Commands(),
 			}, nil
 		},
-		func(_ctx interface{}, data []byte) bool { // checkFunc
+		func(_ctx interface{}, acmPolicyStatus []byte) bool { // checkFunc
 			ctx := _ctx.(*contextT)
 
 			ctx.sha1Hasher.Reset()
-			ctx.sha1Hasher.Write(data)
+			ctx.sha1Hasher.Write(acmPolicyStatus)
+			ctx.sha1Hasher.Write(firstMeasurementTail)
 			newDigest := ctx.sha1Hasher.Sum(nil)
 
 			ctx.tpmCommands[commandIdx].(*tpm.CommandExtend).Digest = newDigest[:]
@@ -179,6 +201,10 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 	if err != nil {
 		panic(err)
 	}
+	if combination == nil {
+		fmt.Printf("unable to brute force\n")
+		return
+	}
 
 	// printing the result
 	result := make([]byte, 8)
@@ -186,8 +212,4 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 	bruteforcer.ApplyBitFlipsBytes(combination, result)
 	fmt.Printf("COMBINATION: %v\n", combination)
 	fmt.Printf("RESULT: 0x%X\n", result)
-
-	tpmMeasurements := process.Log.GetDataMeasuredWith(tpmInstance)
-	bruteforcer.ApplyBitFlipsBytes(combination, tpmMeasurements[0].Data.ForcedBytes())
-	fmt.Printf("resulting measurements:\n%v", tpmMeasurements)
 }
