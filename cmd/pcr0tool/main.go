@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -14,6 +15,8 @@ import (
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/printnodes"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/sum"
 	"github.com/9elements/converged-security-suite/v2/pkg/log"
+	"github.com/facebookincubator/go-belt/tool/logger"
+	"github.com/facebookincubator/go-belt/tool/logger/implementation/logrus"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 	fianoLog "github.com/linuxboot/fiano/pkg/log"
 )
@@ -33,6 +36,8 @@ func usageAndExit() {
 	os.Exit(2) // the standard Go's exit-code on invalid flags
 }
 
+var logLevel = logger.LevelWarning
+
 func setupFlag() {
 	flag.Usage = func() {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "syntax: pcr0tool <command> [options] {arguments}\n")
@@ -44,6 +49,7 @@ func setupFlag() {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\n")
 	}
 
+	flag.Var(&logLevel, "log-level", "")
 	flag.Parse()
 	if flag.NArg() < 1 {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "error: no command specified\n\n")
@@ -53,9 +59,10 @@ func setupFlag() {
 
 func main() {
 	cbnt.StrictOrderCheck = false // some firmwares have incorrect elements order, should parse them anyway
-	fianoLog.DefaultLogger = log.DummyLogger{}
-
 	setupFlag()
+
+	ctx := logger.CtxWithLogger(context.Background(), logrus.Default().WithLevel(logLevel))
+	fianoLog.DefaultLogger = log.NewFianoLogger(logger.FromCtx(ctx), logger.LevelTrace)
 
 	commandName := flag.Arg(0)
 	command := knownCommands[commandName]
@@ -75,6 +82,6 @@ func main() {
 	flag.Usage = flagSet.Usage // so a the "command" could just call `flag.Usage()` to print it's usage
 
 	command.SetupFlagSet(flagSet)
-	_ = flagSet.Parse(os.Args[2:])
-	command.Execute(flagSet.Args())
+	_ = flagSet.Parse(os.Args[len(os.Args)-flag.NArg()+1:])
+	command.Execute(ctx, flagSet.Args())
 }

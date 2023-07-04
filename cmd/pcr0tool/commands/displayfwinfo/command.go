@@ -1,6 +1,7 @@
 package displayfwinfo
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -39,7 +40,7 @@ func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
 // start the execution of the command.
 //
 // `args` are the arguments left unused by verb itself and options.
-func (cmd Command) Execute(args []string) {
+func (cmd Command) Execute(ctx context.Context, args []string) {
 	if len(args) < 1 {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "error: no path to the firmware was specified\n")
 		usageAndExit()
@@ -56,10 +57,10 @@ func (cmd Command) Execute(args []string) {
 		return
 	}
 
-	dmiTable, err := dmidecode.DMITableFromFirmware(imageBytes)
+	dmiTable, err := dmidecode.DMITableFromFirmwareImage(imageBytes)
 	if errors.As(err, &dmidecode.ErrFindSMBIOSInFirmware{}) {
 		fianoUEFI.DisableDecompression = false
-		dmiTable, err = dmidecode.DMITableFromFirmware(imageBytes)
+		dmiTable, err = dmidecode.DMITableFromFirmwareImage(imageBytes)
 	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "unable to parse the image info: '%v'\n", err)

@@ -21,14 +21,9 @@ func init() {
 	// PEIM files as well.
 	fianoUEFI.SupportedFiles[fianoUEFI.FVFileTypePEIM] = true
 
-	// Enable optimizations. Otherwise we consume ~10 times more CPU and RAM.
+	// Enable optimizations.
 	// * ReadOnly forces to do not duplicate buffers.
-	// * DisableDecompression forces to do not decompress sections, which is
-	//   not required anyway for our purposes, since we are interested in
-	//   data before decompression (otherwise one bitflip might lead to
-	//   a huge hamming distance).
 	fianoUEFI.ReadOnly = true
-	fianoUEFI.DisableDecompression = true
 }
 
 // UEFI is a PCR0-measurements-aware extension over

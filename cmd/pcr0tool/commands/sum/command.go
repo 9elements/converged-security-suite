@@ -1,6 +1,7 @@
 package sum
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -11,10 +12,8 @@ import (
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
 	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
-	"github.com/9elements/converged-security-suite/v2/pkg/pcrbruteforcer"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
-	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
 	"github.com/google/go-tpm/tpm2"
 )
@@ -32,12 +31,11 @@ func assertNoError(err error) {
 
 // Command is the implementation of `commands.Command`.
 type Command struct {
-	isQuiet             *bool
-	flow                *string
-	hashFunc            *string
-	registers           helpers.FlagRegisters
-	tpmDevice           *string
-	compareWithEventLog *string
+	isQuiet   *bool
+	flow      *string
+	hashFunc  *string
+	registers helpers.FlagRegisters
+	tpmDevice *string
 
 	printMeasurementLengthLimit *uint
 
@@ -63,7 +61,6 @@ func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
 	cmd.hashFunc = flag.String("hash-func", "sha1", `which hash function use to hash measurements and to extend the PCR0; values: "sha1", "sha256"`)
 	flag.Var(&cmd.registers, "registers", "[optional] file that contains registers as a json array (use value '/dev' to use registers of the local machine)")
 	cmd.tpmDevice = flag.String("tpm-device", "", "[optional] tpm device used for measurements, values: "+commands.TPMTypeCommandLineValues())
-	cmd.compareWithEventLog = flag.String("compare-with-eventlog", "", "[optional] compare expected measurements with a TPM EventLog")
 	cmd.printMeasurementLengthLimit = flag.Uint("print-measurement-length-limit", 20, "length limit of measured data to be printed")
 	cmd.decrementACMPolicyStatus = flag.Uint("decrement-acm-policy-status", 0, "[advanced] decrement Intel ACM Policy Status value")
 }
@@ -72,7 +69,7 @@ func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
 // start the execution of the command.
 //
 // `args` are the arguments left unused by verb itself and options.
-func (cmd Command) Execute(args []string) {
+func (cmd Command) Execute(ctx context.Context, args []string) {
 	if len(args) < 1 {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "error: no path to the firmare was specified\n")
 		usageAndExit()
@@ -133,7 +130,7 @@ func (cmd Command) Execute(args []string) {
 	firmware, err := uefi.ParseUEFIFirmwareFile(imagePath)
 	assertNoError(err)
 
-	measurements, flow, debugInfo, err := pcr.GetMeasurements(firmware, 0, measureOpts...)
+	measurements, flow, debugInfo, err := pcr.GetMeasurements(ctx, firmware, 0, measureOpts...)
 	var pcrLogger pcr.Printfer
 	if !*cmd.isQuiet {
 		debugInfoBytes, err := json.MarshalIndent(debugInfo, "", "  ")
@@ -160,27 +157,4 @@ func (cmd Command) Execute(args []string) {
 		fmt.Printf("Resulting PCR0: ")
 	}
 	fmt.Printf("%X\n", result)
-
-	if *cmd.compareWithEventLog != "" {
-		fmt.Println()
-
-		f, err := os.Open(*cmd.compareWithEventLog)
-		assertNoError(err)
-		tpmEventLog, err := tpmeventlog.Parse(f)
-		assertNoError(err)
-		match, updatedACMPolicyStatus, issues, err := pcrbruteforcer.ReproduceEventLog(tpmEventLog, hashAlgo, measurements, firmware.Buf(), pcrbruteforcer.DefaultSettingsReproduceEventLog())
-		fmt.Printf("comparing with TPM EventLog result:\n\tmatch: %v\n\tupdated ACM Policy Status: %v\n\terr: %v\n\tissues:\n%s\n",
-			match, updatedACMPolicyStatus, err, formatIssues(issues, "\t\t"))
-	}
-}
-
-func formatIssues(issues []pcrbruteforcer.Issue, indent string) string {
-	if len(issues) == 0 {
-		return indent + "NONE"
-	}
-	var result strings.Builder
-	for _, issue := range issues {
-		result.WriteString(fmt.Sprintf("%s* %s\n", indent, issue.Error()))
-	}
-	return result.String()
 }

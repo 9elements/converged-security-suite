@@ -46,14 +46,20 @@ var (
 	guidSMBiosStaticData = *guid.MustParse(`DAF4BF89-CE71-4917-B522-C89D32FBC59F`)
 )
 
-// DMITableFromFirmware returns a DMI table parsed from the image.
-func DMITableFromFirmware(imageBytes []byte) (*DMITable, error) {
+// DMITableFromFirmwareImage returns a DMI table parsed from the image.
+func DMITableFromFirmwareImage(imageBytes []byte) (*DMITable, error) {
 	// SMBIOS static data could be stored in a compressed section, thus
 	// decompression is required
 	fw, err := uefi.ParseUEFIFirmwareBytes(imageBytes)
 	if err != nil {
 		return nil, ErrParseFirmware{Err: err}
 	}
+
+	return DMITableFromFirmware(fw)
+}
+
+// DMITableFromFirmware returns a DMI table parsed from the image.
+func DMITableFromFirmware(fw *uefi.UEFI) (*DMITable, error) {
 	nodes, err := fw.GetByGUID(guidSMBiosStaticData)
 	if err != nil {
 		return nil, ErrFindSMBIOSInFirmware{Err: err}
