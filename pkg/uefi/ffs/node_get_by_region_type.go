@@ -6,20 +6,20 @@ import (
 
 // GetByRegionType returns UEFI tree nodes of the requested flash region type.
 func (node *Node) GetByRegionType(regionType fianoUEFI.FlashRegionType) (nodes []*Node, err error) {
-	err = (&nodeVisitor{
-		Callback: func(node Node) error {
+	err = (&NodeVisitor{
+		Callback: func(node Node) (bool, error) {
 			region, ok := node.Firmware.(fianoUEFI.Region)
 			if !ok {
 				// is not a region, skip
-				return nil
+				return true, nil
 			}
 
 			if region.Type() != regionType {
 				// is of wrong type
-				return nil
+				return true, nil
 			}
 			nodes = append(nodes, &node)
-			return nil
+			return true, nil
 		},
 	}).Run(node)
 	return

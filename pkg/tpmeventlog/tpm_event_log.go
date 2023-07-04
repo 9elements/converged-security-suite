@@ -1,6 +1,7 @@
 package tpmeventlog
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/google/go-attestation/attest"
@@ -27,10 +28,26 @@ type Event struct {
 	Digest   *Digest
 }
 
+// String implements fmt.Stringer
+func (ev *Event) String() string {
+	if ev == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("{PCR:%d, Type:%s, Digest:%s, Data:0x%X}", ev.PCRIndex, ev.Type, ev.Digest, ev.Data)
+}
+
 // Digest is the digest reported by an Event.
 type Digest struct {
 	HashAlgo TPMAlgorithm
 	Digest   []byte
+}
+
+// String implements fmt.Stringer
+func (digest *Digest) String() string {
+	if digest == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("{Algo:%s, Digest:0x%X}", digest.HashAlgo, digest.Digest)
 }
 
 const (

@@ -6,14 +6,14 @@ import (
 
 // GetByGUID returns UEFI tree nodes with guid `guid`.
 func (node *Node) GetByGUID(guid fianoGUID.GUID) (nodes []*Node, err error) {
-	err = (&nodeVisitor{
-		Callback: func(node Node) error {
+	err = (&NodeVisitor{
+		Callback: func(node Node) (bool, error) {
 			guidCmp := node.GUID()
 			if guidCmp == nil || *guidCmp != guid {
-				return nil
+				return true, nil
 			}
 			nodes = append(nodes, &node)
-			return nil
+			return true, nil
 		},
 	}).Run(node)
 	return

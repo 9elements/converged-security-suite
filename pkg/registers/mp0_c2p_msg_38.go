@@ -40,6 +40,7 @@ func (r MP0C2PMsg38) Raw() uint32 {
 }
 
 // Address returns 0 as MP0_C2P_MSG_37 is not bound to memory
+// TODO: Fix this. If the register is returned from DMI tables then it has an address.
 func (r MP0C2PMsg38) Address() uint64 {
 	return 0
 }
