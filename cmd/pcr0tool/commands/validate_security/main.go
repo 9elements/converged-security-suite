@@ -62,7 +62,7 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 
 	flag.Parse()
 
-	biosFirmwarePath := flag.Arg(0)
+	biosFirmwarePath := args[0]
 	biosFirmware, err := os.ReadFile(biosFirmwarePath)
 	if err != nil {
 		panic(fmt.Errorf("unable to read BIOS firmware image '%s': %w", biosFirmwarePath, err))

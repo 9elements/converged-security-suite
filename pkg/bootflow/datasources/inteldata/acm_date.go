@@ -31,14 +31,13 @@ func (ACMDate) Data(ctx context.Context, state *types.State) (*types.Data, error
 
 	var errors *multierror.Error
 	found := false
-	ref := types.Reference{
+	ref := &types.Reference{
 		Artifact: biosFW,
 		MappedRanges: types.MappedRanges{
 			AddressMapper: biosimage.PhysMemMapper{},
 			Ranges:        []pkgbytes.Range{},
 		},
 	}
-	result := types.NewData(&ref)
 	for _, fitEntry := range fitEntries {
 		switch fitEntry := fitEntry.(type) {
 		case *fit.EntrySACM: // startup AC module entry
@@ -75,7 +74,7 @@ func (ACMDate) Data(ctx context.Context, state *types.State) (*types.Data, error
 		logger.Debugf(ctx, "errors: %v", errors.Error())
 	}
 
-	return result, nil
+	return types.NewData(ref), nil
 }
 
 // String implements fmt.Stringer.
