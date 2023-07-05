@@ -1,11 +1,11 @@
 package helpers
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
+	"github.com/hashicorp/go-multierror"
 	"gopkg.in/yaml.v3"
 )
 
@@ -41,19 +41,33 @@ func (f *FlagRegisters) Set(in string) error {
 			return fmt.Errorf("unable to parse file '%s': %w", in, err)
 		}
 
-		// ===
-		// TODO: Remove the JSON format, it is added only for backward compatibility
-		//       In year like 2025 this should be deleted.
-		err = json.Unmarshal(contents, (*registers.Registers)(f))
+		var mErr error
+		err = yaml.Unmarshal(contents, (*registers.Registers)(f))
 		if err == nil {
 			return nil
 		}
-		// ===
+		mErr = multierror.Append(mErr, err)
 
-		err = yaml.Unmarshal(contents, (*registers.Registers)(f))
-		if err != nil {
-			return fmt.Errorf("unable to unmarshal YAML from file '%s': %w", in, err)
+		err = parseBinaryTXTPublicSpace(contents, (*registers.Registers)(f))
+		if err == nil {
+			return nil
 		}
-		return nil
+		mErr = multierror.Append(mErr, err)
+
+		return fmt.Errorf("do not know how to parse '%s': %w", in, mErr)
 	}
+}
+
+func parseBinaryTXTPublicSpace(contents []byte, regs *registers.Registers) error {
+	if len(contents) != 1<<16 {
+		return fmt.Errorf("expected TXT public space is %d; but the content has size %d", 1<<16, len(contents))
+	}
+
+	newRegs, err := registers.ReadTXTRegisters(registers.TXTConfigSpace(contents))
+	if err != nil {
+		return fmt.Errorf("unable to read the TXT registers: %w", err)
+	}
+
+	*regs = newRegs
+	return nil
 }
