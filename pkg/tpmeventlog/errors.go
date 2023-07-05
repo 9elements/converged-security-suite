@@ -3,7 +3,7 @@ package tpmeventlog
 import (
 	"fmt"
 
-	pcr "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm/pcr"
 )
 
 // ErrRead means unable to read from the io.Reader

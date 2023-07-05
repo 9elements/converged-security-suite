@@ -70,14 +70,13 @@ func (d FITAll) Data(_ context.Context, state *types.State) (*types.Data, error)
 		return nil, fmt.Errorf("unable to parse FIT table: %w", err)
 	}
 
-	ref := types.Reference{
+	ref := &types.Reference{
 		Artifact: biosFW,
 		MappedRanges: types.MappedRanges{
 			AddressMapper: biosimage.PhysMemMapper{},
 			Ranges:        []pkgbytes.Range{},
 		},
 	}
-	result := types.NewData(&ref)
 	for _, fitEntry := range fitEntries {
 		if fitEntry.GetEntryBase().Headers.Type() == fit.EntryType(d) {
 			offset := fitEntry.GetEntryBase().Headers.Address.Pointer()
@@ -90,7 +89,7 @@ func (d FITAll) Data(_ context.Context, state *types.State) (*types.Data, error)
 		}
 	}
 
-	return result, nil
+	return types.NewData(ref), nil
 }
 
 // String implements fmt.Stringer.

@@ -129,40 +129,43 @@ func (d *Data) ConvertedBytes() ConvertedBytes {
 type References []Reference
 
 var (
-	objToStringCacheMutex sync.Mutex
-	objToStringCache      = map[any]string{}
+	typeStringCacheMutex sync.Mutex
+	typeToStringCache    = map[reflect.Type]string{}
 )
 
 func compareReferenceType(a, b Reference) int {
 	// TODO: find less fragile and faster way to order artifacts and address mappers
 
-	objToStringCacheMutex.Lock()
-	defer objToStringCacheMutex.Unlock()
+	typeStringCacheMutex.Lock()
+	defer typeStringCacheMutex.Unlock()
 
 	var c0, c1 string
-	if a.Artifact != b.Artifact {
-		c0, c1 = objToStringCache[a.Artifact], objToStringCache[b.Artifact]
+	if !EqualSystemArtifacts(a.Artifact, b.Artifact) {
+		aT, bT := reflect.TypeOf(a.Artifact), reflect.TypeOf(b.Artifact)
+		c0, c1 = typeToStringCache[aT], typeToStringCache[bT]
 		if c0 == "" {
 			c0 = fmt.Sprintf("%T", a.Artifact)
-			objToStringCache[a.Artifact] = c0
+			typeToStringCache[aT] = c0
 		}
 		if c1 == "" {
 			c1 = fmt.Sprintf("%T", b.Artifact)
-			objToStringCache[b.Artifact] = c1
+			typeToStringCache[bT] = c1
 		}
-		if c0 == c1 {
+		if c0 == c1 && c0 != "types.RawBytes" {
 			panic("the code is written in assumption of one instance per artifact type")
+			// types.RawBytes could be used multiple times
 		}
 	}
 	if a.AddressMapper != a.AddressMapper {
-		c0, c1 = objToStringCache[a.AddressMapper], objToStringCache[b.AddressMapper]
+		aT, bT := reflect.TypeOf(a.AddressMapper), reflect.TypeOf(b.AddressMapper)
+		c0, c1 = typeToStringCache[aT], typeToStringCache[bT]
 		if c0 == "" {
 			c0 = fmt.Sprintf("%T", a.AddressMapper)
-			objToStringCache[a.AddressMapper] = c0
+			typeToStringCache[aT] = c0
 		}
 		if c1 == "" {
 			c1 = fmt.Sprintf("%T", b.AddressMapper)
-			objToStringCache[b.AddressMapper] = c1
+			typeToStringCache[bT] = c1
 		}
 		if c0 == c1 {
 			panic("the code is written in assumption of one instance per address mapper type")
@@ -280,7 +283,7 @@ func (s *References) SortAndMerge() {
 		outIdx = 0
 	)
 	for _, ref := range *s {
-		if ref.Artifact == curRef.Artifact && ref.AddressMapper == curRef.AddressMapper {
+		if EqualSystemArtifacts(ref.Artifact, curRef.Artifact) && ref.AddressMapper == curRef.AddressMapper {
 			curRef.Ranges = append(curRef.Ranges, ref.Ranges...)
 			continue
 		}
@@ -492,6 +495,7 @@ type MeasuredData struct {
 	Data
 	DataSource DataSource `faker:"data_source"`
 	Actor      Actor      `faker:"actor"`
+	Step       Step       `faker:"step"`
 	Action     Action     `faker:"action"`
 	TrustChain TrustChain `faker:"trust_chain"`
 }

@@ -1,4 +1,4 @@
-package tpm
+package pcr
 
 import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"

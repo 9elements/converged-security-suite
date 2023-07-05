@@ -3,7 +3,7 @@ package diff
 import (
 	"testing"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/uefi/ffs"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 	"github.com/stretchr/testify/require"
 )
@@ -24,34 +24,14 @@ func TestHammingDistance(t *testing.T) {
 	})
 }
 
-type dummyFirmware []byte
-
-func (f dummyFirmware) Buf() []byte {
-	return f
-}
-
-func (f dummyFirmware) GetByRange(byteRange pkgbytes.Range) (nodes []*ffs.Node, err error) {
-	for i := uint64(0); i < byteRange.Length; i++ {
-		nodes = append(nodes, &ffs.Node{
-			Range: pkgbytes.Range{
-				Offset: i,
-				Length: 1,
-			},
-		})
-	}
-	return
-}
-func (f dummyFirmware) NameToRangesMap() map[string]pkgbytes.Ranges {
-	return map[string]pkgbytes.Ranges{}
-}
-
 //nolint:typecheck
 func TestAnalysisReportAddOffset(t *testing.T) {
-	report0 := Analyze(
+	report0, err := Analyze(
 		pkgbytes.Ranges{{
 			Offset: 4,
 			Length: 1,
 		}},
+		noMapper{},
 		Measurements{{
 			Chunks: DataChunks{{
 				Reference: pkgbytes.Range{
@@ -60,15 +40,17 @@ func TestAnalysisReportAddOffset(t *testing.T) {
 				},
 			}},
 		}},
-		dummyFirmware([]byte{0, 0, 0, 0, 1, 0, 0, 0, 0, 0}),
-		make([]byte, 10),
+		biosimage.New([]byte{0, 0, 0, 0, 1, 0, 0, 0, 0, 0}),
+		biosimage.New(make([]byte, 10)),
 	)
+	require.NoError(t, err)
 
-	report1 := Analyze(
+	report1, err := Analyze(
 		pkgbytes.Ranges{{
 			Offset: 5,
 			Length: 1,
 		}},
+		noMapper{},
 		Measurements{{
 			Chunks: DataChunks{{
 				Reference: pkgbytes.Range{
@@ -77,9 +59,10 @@ func TestAnalysisReportAddOffset(t *testing.T) {
 				},
 			}},
 		}},
-		dummyFirmware([]byte{0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0}),
-		make([]byte, 11),
+		biosimage.New([]byte{0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0}),
+		biosimage.New(make([]byte, 11)),
 	)
+	require.NoError(t, err)
 	report1.AddOffset(-1)
 
 	require.Equal(t,

@@ -1,14 +1,11 @@
-package main
+package validatesecurity
 
 import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
-	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"runtime/pprof"
 
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine"
@@ -23,58 +20,62 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/txtpublic"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
-	"github.com/linuxboot/fiano/pkg/uefi"
 )
 
-func main() {
-	cbnt.StrictOrderCheck = false
-	uefi.DisableDecompression = false
-	var regs helpers.FlagRegisters
-	// parsing arguments
-	flag.Var(&regs, "registers", "")
-	netPprofFlag := flag.String("net-pprof", "", "")
-	cpuProfileFlag := flag.String("cpu-profile", "", "")
-	injectBenignCorruptionFlag := flag.String("inject-benign-corruption", "", "output file")
+// Command is the implementation of `commands.Command`.
+type Command struct {
+	registers                  helpers.FlagRegisters
+	injectBenignCorruptionFlag *string
+}
+
+// SetupFlagSet is called to allow the command implementation
+// to setup which option flags it has.
+func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
+	flag.Var(&cmd.registers, "registers", "[optional] file that contains registers as a json array (use value '/dev' to use registers of the local machine)")
+	cmd.injectBenignCorruptionFlag = flag.String("inject-benign-corruption", "", "output file")
+}
+
+// Usage prints the syntax of arguments for this command
+func (cmd Command) Usage() string {
+	return "<firmware>"
+}
+
+// Description explains what this verb commands to do
+func (cmd Command) Description() string {
+	return "executes available security validators against the provided firmware image"
+}
+
+func usageAndExit() {
+	flag.Usage()
+	os.Exit(2)
+}
+
+// Execute is the main function here. It is responsible to
+// start the execution of the command.
+//
+// `args` are the arguments left unused by verb itself and options.
+func (cmd Command) Execute(ctx context.Context, args []string) {
+	if len(args) != 1 {
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "expected amount of arguments is one, but received: %d\n", len(args))
+		usageAndExit()
+	}
+
 	flag.Parse()
 
-	ctx := context.Background()
-
-	if *netPprofFlag != "" && *cpuProfileFlag != "" {
-		log.Fatalf("options '-net-pprof' and '-cpu-profile' cannot be both used at the same time")
-	}
-	if *netPprofFlag != "" {
-		go func() {
-			log.Println(http.ListenAndServe(*netPprofFlag, nil))
-		}()
-	}
-	if *cpuProfileFlag != "" {
-		f, err := os.Create(*cpuProfileFlag)
-		if err != nil {
-			log.Fatalf("could not create the CPU profile file '%s': %v", *cpuProfileFlag, err)
-		}
-		defer f.Close()
-		if err := pprof.StartCPUProfile(f); err != nil {
-			log.Fatalf("could not start the CPU profiling: %v", err)
-		}
-		defer pprof.StopCPUProfile()
-	}
-
-	biosFirmwarePath := flag.Arg(0)
+	biosFirmwarePath := args[0]
 	biosFirmware, err := os.ReadFile(biosFirmwarePath)
 	if err != nil {
 		panic(fmt.Errorf("unable to read BIOS firmware image '%s': %w", biosFirmwarePath, err))
 	}
 	biosArtifact := biosimage.New(biosFirmware)
 
-	// the main part
 	state := types.NewState()
 	state.IncludeSubSystem(tpm.NewTPM())
 	state.IncludeSubSystem(intelpch.NewPCH())
 	state.IncludeSubSystem(amdpsp.NewPSP())
 	state.IncludeSystemArtifact(biosArtifact)
-	state.IncludeSystemArtifact(txtpublic.New(registers.Registers(regs)))
-	state.IncludeSystemArtifact(amdregisters.New(registers.Registers(regs)))
+	state.IncludeSystemArtifact(txtpublic.New(registers.Registers(cmd.registers)))
+	state.IncludeSystemArtifact(amdregisters.New(registers.Registers(cmd.registers)))
 	state.SetFlow(flows.Root)
 	process := bootengine.NewBootProcess(state)
 	process.Finish(context.Background())
@@ -113,8 +114,8 @@ func main() {
 	fmt.Printf("\nIssues:\n")
 	for _, v := range validator.All() {
 		issues := v.Validate(ctx, state, process.Log)
-		if _, ok := v.(validator.ValidatorFinalCoverageIsComplete); ok && *injectBenignCorruptionFlag != "" {
-			if err := injectBenignCorruption(*injectBenignCorruptionFlag, biosArtifact, issues); err != nil {
+		if _, ok := v.(validator.ValidatorFinalCoverageIsComplete); ok && *cmd.injectBenignCorruptionFlag != "" {
+			if err := injectBenignCorruption(*cmd.injectBenignCorruptionFlag, biosArtifact, issues); err != nil {
 				panic(fmt.Errorf("unable to inject a benign corruption: %w", err))
 			}
 		}

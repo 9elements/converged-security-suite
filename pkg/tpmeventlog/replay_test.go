@@ -3,7 +3,7 @@ package tpmeventlog
 import (
 	"testing"
 
-	pcr "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm/pcr"
 	"github.com/google/go-tpm/tpm2"
 	"github.com/stretchr/testify/require"
 )

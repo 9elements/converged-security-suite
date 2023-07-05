@@ -167,6 +167,7 @@ func (state *State) AddMeasuredData(
 		Data:       data,
 		DataSource: dataSource,
 		Actor:      state.CurrentActor,
+		Step:       state.CurrentActionCoordinates.Step(),
 		Action:     state.CurrentAction,
 		TrustChain: trustChain,
 	})

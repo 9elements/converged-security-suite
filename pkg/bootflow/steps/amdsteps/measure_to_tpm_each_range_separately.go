@@ -7,8 +7,8 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/commonactions"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/tpmactions"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/datasources"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
-	pcrtypes "github.com/9elements/converged-security-suite/v2/pkg/pcr/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 )
@@ -16,7 +16,7 @@ import (
 func measureToTPMEachRangeSeparately(
 	ctx context.Context,
 	s *types.State,
-	pcrID pcrtypes.ID,
+	pcrID pcr.ID,
 	dataSource types.DataSource,
 	eventType tpmeventlog.EventType,
 	comment string,
@@ -32,7 +32,7 @@ func measureToTPMEachRangeSeparately(
 	for refIdx, ref := range data.References {
 		for rangeIdx, r := range ref.Ranges {
 			actions = append(actions, tpmactions.NewTPMEvent(
-				pcrtypes.ID(0),
+				pcr.ID(0),
 				(*datasources.StaticData)(types.NewData(&types.Reference{
 					Artifact: ref.Artifact,
 					MappedRanges: types.MappedRanges{

@@ -13,18 +13,25 @@ import (
 	"os"
 	"strings"
 
-	"github.com/google/go-tpm/tpm2"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 	fianoUEFI "github.com/linuxboot/fiano/pkg/uefi"
 
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/diff/format"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/flows"
+	bfformat "github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/amdpsp"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/intelpch"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/amdregisters"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/txtpublic"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/diff"
 	"github.com/9elements/converged-security-suite/v2/pkg/ostools"
-	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
-	"github.com/9elements/converged-security-suite/v2/pkg/tpmdetection"
-	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
+	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 )
 
 func assertNoError(err error) {
@@ -59,25 +66,6 @@ func parseOutputFormatType(s string) outputFormatType {
 	return outputFormatTypeUnknown
 }
 
-func parseByteSet(s string) ([]byte, error) {
-	if s == `` {
-		return nil, nil
-	}
-	var ignoreByteSet []byte
-	for _, char := range strings.Split(s, `,`) {
-		decoded, err := hex.DecodeString(char)
-		if err != nil {
-			return nil, fmt.Errorf("unable to decode HEX value '%s'", char)
-			os.Exit(1)
-		}
-		if len(decoded) != 1 {
-			return nil, fmt.Errorf("unexpected length of a character '%s' (%d != 1)", char, len(decoded))
-		}
-		ignoreByteSet = append(ignoreByteSet, decoded[0])
-	}
-	return ignoreByteSet, nil
-}
-
 // Command is the implementation of `commands.Command`.
 type Command struct {
 	forceScanArea *string
@@ -85,10 +73,7 @@ type Command struct {
 	outputFormat  *string
 	flow          *string
 	netPprof      *string
-	deepAnalysis  *bool
 	registers     helpers.FlagRegisters
-	hashFunc      *string
-	tpmDevice     *string
 }
 
 // Usage prints the syntax of arguments for this command
@@ -98,25 +83,38 @@ func (cmd Command) Usage() string {
 
 // Description explains what this verb commands to do
 func (cmd Command) Description() string {
-	return "find the reason of different PCR0 values between two firmware images"
+	return "find a corruption in a firmware which causes different PCR values"
 }
 
 // SetupFlagSet is called to allow the command implementation
 // to setup which option flags it has.
 func (cmd *Command) SetupFlagSet(flag *flag.FlagSet) {
-	cmd.forceScanArea = flag.String("force-scan-area", "",
-		`Force the scan area instead of following the PCR0 calculation. Values: "" (follow the PCR0 calculation), "bios_region"`)
+	cmd.forceScanArea = flag.String("force-scan-area", "", `Force the scan area instead of following the PCR0 calculation. Values: "" (follow the PCR0 calculation), "bios_region"`)
 	cmd.ignoreByteSet = flag.String("ignore-byte-set", "", `Define a set of bytes to ignore while the comparison. 
 It makes sense to use this option together with "-force-scan-area bios_region" to scan the whole image, 
 but ignore the overridden bytes. The value is represented in hex characters separated by comma, for example: "00,ff". Default: ""`)
 	cmd.outputFormat = flag.String("output-format", "analyzed-text", `Values: "analyzed-text", "analyzed-json", "json"`)
-	cmd.flow = flag.String("flow", "auto", "values: "+commands.FlowCommandLineValues())
-	cmd.deepAnalysis = flag.Bool("deep-analysis", false,
-		`Also perform slow procedures to find more byte ranges which could affect the PCR0 calculation. This is experimental feature! Values: "true", "false"`)
+	cmd.flow = flag.String("flow", flows.Root.Name, "values: "+commands.FlowCommandLineValues())
 	cmd.netPprof = flag.String("net-pprof", "", `start listening for "net/http/pprof", example value: "127.0.0.1:6060"`)
 	flag.Var(&cmd.registers, "registers", "[optional] file that contains registers as a json array (use value '/dev' to use registers of the local machine)")
-	cmd.hashFunc = flag.String("hash-func", "", `which hash function use to hash measurements and to extend the PCR0; values: "sha1", "sha256"`)
-	cmd.tpmDevice = flag.String("tpm-device", "", "[optional] tpm device used for measurements, values: "+commands.TPMTypeCommandLineValues())
+}
+
+func parseByteSet(s string) ([]byte, error) {
+	if s == `` {
+		return nil, nil
+	}
+	var ignoreByteSet []byte
+	for _, char := range strings.Split(s, `,`) {
+		decoded, err := hex.DecodeString(char)
+		if err != nil {
+			return nil, fmt.Errorf("unable to decode HEX value '%s'", char)
+		}
+		if len(decoded) != 1 {
+			return nil, fmt.Errorf("unexpected length of a character '%s' (%d != 1)", char, len(decoded))
+		}
+		ignoreByteSet = append(ignoreByteSet, decoded[0])
+	}
+	return ignoreByteSet, nil
 }
 
 // Execute is the main function here. It is responsible to
@@ -135,18 +133,18 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 		usageAndExit()
 	}
 
-	flow, err := pcr.FlowFromString(*cmd.flow)
-	if err != nil {
-		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "unknown attestation flow: '%s'\n", *cmd.flow)
+	state := types.NewState()
+	state.IncludeSubSystem(tpm.NewTPM())
+	state.IncludeSubSystem(intelpch.NewPCH())
+	state.IncludeSubSystem(amdpsp.NewPSP())
+
+	flow, ok := flows.GetFlowByName(*cmd.flow)
+	if !ok {
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "unknown boot flow: '%s'\n", *cmd.flow)
 		usageAndExit()
 	}
 
-	var measureOpts []pcr.MeasureOption
-	measureOpts = append(measureOpts, pcr.SetFlow(flow))
-
-	if *cmd.deepAnalysis {
-		measureOpts = append(measureOpts, pcr.SetFindMissingFakeMeasurements(true))
-	}
+	state.SetFlow(flow)
 
 	if *cmd.netPprof != "" {
 		go func() {
@@ -154,140 +152,170 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 		}()
 	}
 
-	ignoreByteSet, err := parseByteSet(*cmd.ignoreByteSet)
+	state.IncludeSystemArtifact(txtpublic.New(registers.Registers(cmd.registers)))
+	state.IncludeSystemArtifact(amdregisters.New(registers.Registers(cmd.registers)))
+
+	firmwareGoodData, err := ostools.FileToBytes(args[0])
 	assertNoError(err)
-
-	measureOpts = append(measureOpts, pcr.SetRegisters(cmd.registers))
-
-	if len(*cmd.tpmDevice) > 0 {
-		tpmDevice, err := tpmdetection.FromString(*cmd.tpmDevice)
-		if err != nil {
-			usageAndExit()
-		}
-		measureOpts = append(measureOpts, pcr.SetTPMDevice(tpmDevice))
-	}
-
-	switch strings.ToLower(*cmd.hashFunc) {
-	case "sha1":
-		measureOpts = append(measureOpts, pcr.SetIBBHashDigest(tpm2.AlgSHA1))
-	case "sha256":
-		measureOpts = append(measureOpts, pcr.SetIBBHashDigest(tpm2.AlgSHA256))
-	}
-
-	firmwareGood, err := uefi.ParseUEFIFirmwareFile(args[0])
-	assertNoError(err)
-	firmwareGoodData := firmwareGood.Buf()
+	firmwareGood := biosimage.New(firmwareGoodData)
 
 	firmwareBadData, err := ostools.FileToBytes(args[1])
-	if firmwareBadData == nil {
-		assertNoError(err)
-	}
+	assertNoError(err)
+	firmwareBad := biosimage.New(firmwareBadData)
 
-	measurements, _, debugInfo, err := pcr.GetMeasurements(ctx, firmwareGood, 0, measureOpts...)
-	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "GetPCRMeasurements error: %v\n", err)
-	}
-	if measurements == nil {
-		os.Exit(1)
-	}
+	state.IncludeSystemArtifact(firmwareGood)
+	process := bootengine.NewBootProcess(state)
+	process.Finish(ctx)
+	err = process.Log.Error()
+	assertNoError(err)
 
-	var scanRanges pkgbytes.Ranges
+	measurements := process.CurrentState.MeasuredData
+
+	// we use mem ranges instead of ranges in a file, because two files
+	// might be unaligned one to another.
+	var memRanges pkgbytes.Ranges
+
 	switch *cmd.forceScanArea {
 	case `bios_region`:
-		nodes, err := firmwareGood.GetByRegionType(fianoUEFI.RegionTypeBIOS)
+		firmwareGoodUEFI, err := firmwareGood.Parse()
+		assertNoError(err)
+		nodes, err := firmwareGoodUEFI.GetByRegionType(fianoUEFI.RegionTypeBIOS)
 		if err != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "Unable to find bios_region, error: %v\n", err)
 			os.Exit(1)
 		}
+		var fileRanges pkgbytes.Ranges
 		for _, r := range nodes {
 			if r.Offset == math.MaxUint64 {
 				_, _ = fmt.Fprintf(os.Stderr, "Unable to detect the offset of the node\n")
 				continue
 			}
-			scanRanges = append(scanRanges, r.Range)
+			fileRanges = append(fileRanges, r.Range)
 		}
+		memRanges, err = biosimage.PhysMemMapper{}.Unresolve(firmwareGood, fileRanges...)
+		assertNoError(err)
 	case ``:
-		chunks := measurements.Data()
-		for idx := range chunks {
-			if chunks[idx].Range.Length == 0 {
-				continue
+		biosRefs := measurements.References().BySystemArtifact(firmwareGood)
+		for _, ref := range biosRefs {
+			ranges := ref.MappedRanges.Ranges
+			if ref.MappedRanges.AddressMapper != (biosimage.PhysMemMapper{}) {
+				resolvedRanges, err := ref.ResolvedRanges()
+				assertNoError(err)
+				ranges, err = biosimage.PhysMemMapper{}.Unresolve(firmwareGood, resolvedRanges...)
+				assertNoError(err)
 			}
-			scanRanges = append(scanRanges, chunks[idx].Range)
+			for _, r := range ranges {
+				if r.Length == 0 {
+					continue
+				}
+				memRanges = append(memRanges, r)
+			}
 		}
 	}
-	if len(scanRanges) == 0 {
+	if len(memRanges) == 0 {
 		_, _ = fmt.Fprintf(os.Stderr, "Nothing to compare :(\n")
 		os.Exit(1)
 	}
-	debugInfo["scanRanges"] = scanRanges
+	debugInfo := map[string]any{}
+	debugInfo["scanRanges"] = memRanges
 
-	diffEntries := diff.Diff(scanRanges, firmwareGoodData, firmwareBadData, ignoreByteSet)
+	ignoreByteSet, err := parseByteSet(*cmd.ignoreByteSet)
+	assertNoError(err)
+	diffEntries, err := diff.Diff(memRanges, biosimage.PhysMemMapper{}, firmwareGood, firmwareBad, ignoreByteSet)
+	assertNoError(err)
 
 	switch outputFormat {
 	case outputFormatTypeAnalyzedText:
-		output, err := format.AsText(
-			diff.Analyze(diffEntries, measurementsForDiffAnalysis(measurements), firmwareGood, firmwareBadData),
-			debugInfo, firmwareGoodData, firmwareBadData,
-		)
+		report, err := diff.Analyze(diffEntries, biosimage.PhysMemMapper{}, measurementsForDiffAnalysis(measurements, firmwareGood), firmwareGood, firmwareBad)
+		assertNoError(err)
+		output, err := format.AsText(report, debugInfo, firmwareGood, firmwareBad)
 		assertNoError(err)
 		fmt.Print(output)
 	case outputFormatTypeAnalyzedJSON:
+		report, err := diff.Analyze(diffEntries, biosimage.PhysMemMapper{}, measurementsForDiffAnalysis(measurements, firmwareGood), firmwareGood, firmwareBad)
+		assertNoError(err)
 		outputAnalyzedJSON(
-			diff.Analyze(diffEntries, measurementsForDiffAnalysis(measurements), firmwareGood, firmwareBadData),
+			report,
 			debugInfo, measurements,
 		)
 	case outputFormatTypeJSON:
 		outputJSON(diffEntries, debugInfo, measurements)
+	default:
+		panic(outputFormat)
 	}
 }
 
-func measurementsForDiffAnalysis(ms pcr.Measurements) diff.Measurements {
+func measurementsForDiffAnalysis(
+	ms types.MeasuredDataSlice,
+	filterSystemArtifact types.SystemArtifact,
+) diff.Measurements {
 	result := make(diff.Measurements, 0, len(ms))
 	for _, m := range ms {
-		result = append(result, measurementForDiffAnalysis(m))
+		result = append(result, measurementForDiffAnalysis(m, filterSystemArtifact))
 	}
 	return result
 }
 
-func measurementForDiffAnalysis(m *pcr.Measurement) diff.Measurement {
+func measurementForDiffAnalysis(
+	m types.MeasuredData,
+	filterSystemArtifact types.SystemArtifact,
+) diff.Measurement {
 	result := diff.Measurement{
-		Description: m.ID.String(),
-		Chunks:      make(diff.DataChunks, 0, len(m.Data)),
+		Description: bfformat.NiceString(m.Step),
+		Chunks:      make(diff.DataChunks, 0, len(m.References)),
 		CustomData:  m,
 	}
-	for _, chunk := range m.Data {
-		result.Chunks = append(result.Chunks, chunkForDiffAnalysis(chunk))
+	for _, ref := range m.References {
+		if !types.EqualSystemArtifacts(ref.Artifact, filterSystemArtifact) {
+			continue
+		}
+		result.Chunks = append(result.Chunks, chunksForDiffAnalysis(ref)...)
 	}
 	return result
 }
 
-func chunkForDiffAnalysis(chunk pcr.DataChunk) diff.DataChunk {
-	return diff.DataChunk{
-		Description: chunk.String(),
-		ForceBytes:  chunk.ForceData,
-		Reference:   chunk.Range,
-		CustomData:  chunk,
+func chunksForDiffAnalysis(ref types.Reference) diff.DataChunks {
+	switch art := ref.Artifact.(type) {
+	case types.RawBytes:
+		return diff.DataChunks{{
+			Description: ref.String(),
+			ForceBytes:  art,
+			CustomData:  ref,
+		}}
+	case *biosimage.BIOSImage:
+		var chunks diff.DataChunks
+		for _, r := range ref.Ranges {
+			chunks = append(chunks, diff.DataChunk{
+				Description:   ref.String(),
+				Reference:     r,
+				AddressMapper: biosimage.PhysMemMapper{},
+				CustomData:    ref,
+			})
+		}
+		return chunks
+	default:
+		panic(fmt.Sprintf("supposed to be impossible: %T", art))
 	}
 }
 
 func outputAnalyzedJSON(
 	report diff.AnalysisReport,
 	debugInfo map[string]interface{},
-	measurements pcr.Measurements,
+	measurements types.MeasuredDataSlice,
 ) {
 	jsonData, err := json.MarshalIndent(struct {
 		Report       diff.AnalysisReport
 		DebugInfo    map[string]interface{}
-		Measurements pcr.Measurements
+		Measurements types.MeasuredDataSlice
 	}{report, debugInfo, measurements}, ``, ` `)
 	assertNoError(err)
 	fmt.Printf("%s", jsonData)
 }
 
 func outputJSON(
-	diffRanges []pkgbytes.Range,
+	diffRanges diff.Ranges,
 	debugInfo map[string]interface{},
-	measurements []*pcr.Measurement,
+	measurements types.MeasuredDataSlice,
 ) {
 	diffJSON, err := json.MarshalIndent(&struct {
 		DebugInfo    interface{}

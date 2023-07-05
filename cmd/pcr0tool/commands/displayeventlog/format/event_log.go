@@ -6,14 +6,9 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 
-	"github.com/9elements/converged-security-suite/v2/pkg/pcr"
+	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 )
-
-// PCRIndexPtr is just a replacement for ugly &[]pcr.ID{in}[0]
-func PCRIndexPtr(in pcr.ID) *pcr.ID {
-	return &in
-}
 
 // HashAlgoPtr is just a replacement for ugly &[]tpmeventlog.TPMAlgorithm{in}[0]
 func HashAlgoPtr(in tpmeventlog.TPMAlgorithm) *tpmeventlog.TPMAlgorithm {
