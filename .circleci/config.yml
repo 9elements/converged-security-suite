@@ -6,32 +6,32 @@ jobs:
   build:
     docker:
       # specify the version
-      - image: golang:1.18
+      - image: golang:1.19
 
     working_directory: /go/src/github.com/9elements/converged-security-suite
     steps:
       - checkout
-      - run: apt update && apt install -y golint
+      - run: go install golang.org/x/lint/golint@latest
       # specify any bash command here prefixed with `run: `
-      - run: if [ "$(gofmt -l .)" != "" ]; then exit 1; fi
-      - run: golint -set_exit_status ./cmd/txt-suite
-      - run: golint -set_exit_status ./cmd/txt-prov
-      - run: golint -set_exit_status ./cmd/bg-prov
-      - run: golint -set_exit_status ./cmd/bg-suite
+      - run: if [ "$(go fmt -l .)" != "" ]; then exit 1; fi
+      - run: $(go env GOPATH)/bin/golint -set_exit_status ./cmd/txt-suite
+      - run: $(go env GOPATH)/bin/golint -set_exit_status ./cmd/txt-prov
+      - run: $(go env GOPATH)/bin/golint -set_exit_status ./cmd/bg-prov
+      - run: $(go env GOPATH)/bin/golint -set_exit_status ./cmd/bg-suite
       - run: go mod download
       - run: go mod verify
       - run: CGO_ENABLED=0 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-suite cmd/txt-suite/*.go
       - run: CGO_ENABLED=0 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o txt-prov cmd/txt-prov/*.go
       - run: CGO_ENABLED=0 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o bg-prov cmd/bg-prov/*.go
       - run: CGO_ENABLED=0 go build -ldflags '-X main.gitcommit=${CIRCLE_SHA1} -X main.gittag=${CIRCLE_TAG} -w -extldflags "-static"' -o bg-suite cmd/bg-suite/*.go
+      - run: go test ./pkg/bootflow/...
       - run: go test ./pkg/check/
-      - run: apt install -y libtspi-dev && go test ./pkg/diff/
+      - run: go test ./pkg/diff/
       - run: go test ./pkg/errors/
       - run: go test ./pkg/hwapi/
       - run: go test ./pkg/mathtools/
       - run: go test ./pkg/ostools/
       - run: go test ./pkg/pcd/
-      - run: go test ./pkg/pcr/
       - run: go test ./pkg/provisioning/txt
       - run: go test ./pkg/provisioning/bootguard
       - run: go test ./pkg/registers
