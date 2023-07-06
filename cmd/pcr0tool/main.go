@@ -14,6 +14,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/displayfwinfo"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpfit"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters"
+	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/pcrread"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/printnodes"
 	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/sum"
 	validatesecurity "github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/validate_security"
@@ -33,6 +34,7 @@ var knownCommands = map[string]commands.Command{
 	"dump_registers":               &dumpregisters.Command{},
 	"printnodes":                   &printnodes.Command{},
 	"validate_security":            &validatesecurity.Command{},
+	"pcrread":                      &pcrread.Command{},
 	"sum":                          &sum.Command{},
 }
 
