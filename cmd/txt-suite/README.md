@@ -46,7 +46,7 @@ systemctl stop tpm2-abrmd.service
 **4. Execute the txt-suite.**
 
 ```bash
-sudo chmod +x txt-suite && sudo ./txt-suite
+sudo chmod +x txt-suite && sudo ./txt-suite exec-tests
 ```
 
 How to Compile
@@ -99,34 +99,27 @@ Can have the values (*SHA1*, *SHA256*, *SHA384*, *SM3*, *NULL*) as the LCP2 hash
 Run it as root:
 
 ```bash
-./txt-suite -config platform.config
+./txt-suite exec-tests --config platform.config
 ```
 
 Commandline arguments
 ```bash
-Usage of ./txt-suite:
-  -all
-        Run all the tests of the suite
-  -cbnt
-        Run CBnT specific tests
-  -config string
-        Give a path/filename to configuration file
-  -i    Interactive mode. Errors will stop the testing.
-  -l    Lists all test
-  -log string
-        Give a path/filename for test result output in JSON format. e.g.: /path/to/filename.json
-  -m    Output test implementation state as Markdown
-  -t string
-        Select test number 1 - 50. e.g.: -t=1,2,3,4,...
-  -tboot
-        Test if tboot hypervisor runs correctly
-  -tpm string
-        Select TPM-Path. e.g.: -tpm=/dev/tpmX, with X as number of the TPM module
-  -txtready
-        Run TXTReady specific tests
-  -uefi
-        Test if platform is UEFI boot enabled
-  -v    Shows Version, copyright info and license
+Usage: txt-suite <command>
+
+Intel TXT Test Suite
+
+Flags:
+  -h, --help                           Show context-sensitive help.
+      --manifest-strict-order-check    Enable checking of manifest elements order
+  -t, --tpm-dev=STRING                 Select TPM-Path. e.g.:--tpmdev=/dev/tpmX, with X as number of the TPM module
+
+Commands:
+  exec-tests    Executes tests given be TestNo or TestSet
+  list          Lists all tests
+  markdown      Output test implementation state as Markdown
+  version       Prints the version of the program
+
+Run "txt-suite <command> --help" for more information on a command.
 ```
 
 API Usage
