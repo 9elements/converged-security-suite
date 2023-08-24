@@ -28,7 +28,8 @@ Developer notes
 ---------------
 
 If you need to update a Boot Policy Manifest or a Key Manifest then please
-read an [instruction](./pkg/intel/metadata/manifest/README.md).
+read an
+[instruction](https://github.com/linuxboot/fiano/blob/main/pkg/intel/metadata/README.md).
 
 Funding
 --------------
