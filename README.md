@@ -11,6 +11,10 @@ The Converged Security Suite implements all necessary tools for Intel platform s
 | Intel Boot Guard 2.0 | Supported | Supported |
 | Intel Platform Firmware Resilience | N/A | Partly Supported |
 
+Documentation
+-------------
+[Intel Manifest](https://www.intel.com/content/www/us/en/developer/articles/technical/software-security-guidance/resources/key-usage-in-integrated-firmware-images.html)
+
 Build Status
 ------------
 [![CircleCI](https://circleci.com/gh/9elements/converged-security-suite.svg?style=svg)](https://circleci.com/gh/9elements/converged-security-suite)
