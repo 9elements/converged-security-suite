@@ -888,6 +888,7 @@ func (b *BootGuard) BPMKeyMatchKMHash() (bool, error) {
 	return true, nil
 }
 
+// StrictSaneBPMSecurityProps verifies that BPM contains security properties more strictly
 func (b *BootGuard) StrictSaneBPMSecurityProps() (bool, error) {
 	switch b.Version {
 	case bgheader.Version10:
@@ -987,5 +988,26 @@ func (b *BootGuard) ValidateMEAgainstManifests(fws *FirmwareStatus6) (bool, erro
 			return false, fmt.Errorf("km KMID doesn't match me configuration")
 		}
 	}
+	return true, nil
+}
+
+// Validate if HFSTS1 is sane
+func (b *BootGuard) ValidateHFSTS1(fws *FirmwareStatus1) (bool, error) {
+	if fws.WorkingState != 0x05 {
+		return false, fmt.Errorf("HFSTS1 working state is not 0x05")
+	}
+
+	if fws.FPTBad {
+		return false, fmt.Errorf("FPT bad")
+	}
+
+	if fws.MfgMode {
+		return false, fmt.Errorf("ME is in manufacturing mode")
+	}
+
+	if fws.ErrorCode != 0 {
+		return false, fmt.Errorf("HFSTS1 error code is not 0")
+	}
+
 	return true, nil
 }
