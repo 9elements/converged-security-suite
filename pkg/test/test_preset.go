@@ -61,7 +61,7 @@ func ParsePreSet(filepath string) (*PreSet, error) {
 		preset.LCPHash = tpm2.AlgSHA384
 	} else if config.LCP2Hash == "SM3" {
 		// SM3 is not implemented
-		//config.LCPHash = tpm2.AlgSM3
+		// config.LCPHash = tpm2.AlgSM3
 	} else if config.LCP2Hash == "NULL" {
 		preset.LCPHash = tpm2.AlgNull
 	} else {
