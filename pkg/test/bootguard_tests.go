@@ -234,7 +234,11 @@ func BootGuardBPM(hw hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, 
 	if !secure || err != nil {
 		return false, fmt.Errorf("bpm crypto parameters are insecure"), err
 	}
-	secure, err = b.SaneBPMSecurityProps()
+	if p.Strict {
+		secure, err = b.StrictSaneBPMSecurityProps()
+	} else {
+		secure, err = b.SaneBPMSecurityProps()
+	}
 	if !secure || err != nil {
 		return false, fmt.Errorf("bpm hasn't sane security properties"), err
 	}
@@ -326,9 +330,17 @@ func BootGuardSaneMEConfig(hw hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool
 	if err != nil {
 		return false, err, nil
 	}
-	valid, err := bootguard.SaneMEBootGuardProvisioning(b.Version, fws, bgi)
-	if !valid || err != nil {
-		return false, fmt.Errorf("provisiong boot guard configuraton in me isn't safe"), err
+
+	if p.Strict {
+		valid, err := bootguard.StrictSaneBootGuardProvisioning(b.Version, hfsts6, bgi)
+		if !valid || err != nil {
+			return false, fmt.Errorf("provisiong boot guard configuraton in me isn't safe"), err
+		}
+	} else {
+		valid, err := bootguard.SaneMEBootGuardProvisioning(b.Version, hfsts6, bgi)
+		if !valid || err != nil {
+			return false, fmt.Errorf("provisiong boot guard configuraton in me isn't safe"), err
+		}
 	}
 	return true, nil, nil
 }

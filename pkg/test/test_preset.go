@@ -17,6 +17,7 @@ type PreSet struct {
 	LCPHash            tpm2.Algorithm
 	Firmware           []byte
 	HostBridgeDeviceID uint16
+	Strict             bool
 }
 
 // PreSetJSON configuration input
