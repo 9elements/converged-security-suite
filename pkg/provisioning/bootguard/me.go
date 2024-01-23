@@ -1,9 +1,9 @@
 package bootguard
 
 import (
-	"encoding/binary"
 	"fmt"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/common/bgheader"
 )
@@ -14,7 +14,6 @@ const (
 	IntelSPSDeviceID  = 22
 	IntelBus          = 0
 	IntelFunction     = 0
-	hfsts6Offset      = 0x6c
 
 	// Boot Guard MSR
 	BootGuardACMInfoMSR = 0x13a
@@ -25,28 +24,6 @@ const (
 	EnforcementPolicyShutdownImmediately     = 3
 	EnforcementPolicyShutdownInThirtyMinutes = 1
 )
-
-type FirmwareStatus6 struct {
-	ForceACMBootPolicy                bool
-	CPUDebugDisabled                  bool
-	BSPInitDisabled                   bool
-	ProtectBIOSEnvironment            bool
-	BypassBootPolicy                  bool
-	BootPolicyInvalid                 bool
-	ErrorEnforcementPolicy            uint32
-	MeasuredBootPolicy                bool
-	VerifiedBootPolicy                bool
-	ACMSVN                            uint32
-	KMSVN                             uint32
-	BPMSVN                            uint32
-	KMID                              uint32
-	BootPolicyManifestExecutionStatus bool
-	Error                             bool
-	BootGuardDisable                  bool
-	FPFDisable                        bool
-	FPFLock                           bool
-	TXTSupported                      bool
-}
 
 type BGInfo struct {
 	NEMEnabled              bool
@@ -59,51 +36,6 @@ type BGInfo struct {
 	BootGuardCapability     bool
 	ServerTXTCapability     bool
 	NoResetSecretProtection bool
-}
-
-// GetMEInfo reads bootguard provisioning information from Intel ME
-func GetMEInfo(hw hwapi.LowLevelHardwareInterfaces) (*FirmwareStatus6, error) {
-	var err error
-	hfsts6 := make([]byte, 4)
-	if err := hw.PCIEnumerateVisibleDevices(
-		func(d hwapi.PCIDevice) (abort bool) {
-			if (d.Device == IntelCSMEDeviceID && d.Function == IntelFunction) ||
-				(d.Device == IntelSPSDeviceID && d.Function == IntelFunction) {
-				hfsts6, err = hw.PCIReadConfigSpace(d, hfsts6Offset, len(hfsts6))
-				if err != nil {
-					return true
-				}
-				return true
-			}
-			return false
-		}); err != nil {
-		return nil, fmt.Errorf("couldn't enumerate PCI devices")
-	}
-	if err != nil {
-		return nil, fmt.Errorf("couldn't find Intel ME device for runtime checks")
-	}
-	var firmwareStatus FirmwareStatus6
-	configSpace := binary.LittleEndian.Uint32(hfsts6)
-	firmwareStatus.ForceACMBootPolicy = (configSpace>>0)&1 != 0
-	firmwareStatus.CPUDebugDisabled = (configSpace>>1)&1 != 0
-	firmwareStatus.BSPInitDisabled = (configSpace>>2)&1 != 0
-	firmwareStatus.ProtectBIOSEnvironment = (configSpace>>3)&1 != 0
-	firmwareStatus.BypassBootPolicy = (configSpace>>4)&1 != 0
-	firmwareStatus.BootPolicyInvalid = (configSpace>>5)&1 != 0
-	firmwareStatus.ErrorEnforcementPolicy = (configSpace >> 6) & 3
-	firmwareStatus.MeasuredBootPolicy = (configSpace>>8)&1 != 0
-	firmwareStatus.VerifiedBootPolicy = (configSpace>>9)&1 != 0
-	firmwareStatus.ACMSVN = (configSpace >> 10) & 15
-	firmwareStatus.KMSVN = (configSpace >> 14) & 15
-	firmwareStatus.BPMSVN = (configSpace >> 18) & 15
-	firmwareStatus.KMID = (configSpace >> 22) & 15
-	firmwareStatus.BootPolicyManifestExecutionStatus = (configSpace>>26)&1 != 0
-	firmwareStatus.Error = (configSpace>>27)&1 != 0
-	firmwareStatus.BootGuardDisable = (configSpace>>28)&1 != 0
-	firmwareStatus.FPFDisable = (configSpace>>29)&1 != 0
-	firmwareStatus.FPFLock = (configSpace>>30)&1 != 0
-	firmwareStatus.TXTSupported = (configSpace>>31)&1 != 0
-	return &firmwareStatus, nil
 }
 
 // GetBGInfo reads Boot Guard msr during runtime
@@ -167,5 +99,45 @@ func SaneMEBootGuardProvisioning(v bgheader.BootGuardVersion, fws *FirmwareStatu
 	if !bgi.BootGuardCapability {
 		return false, fmt.Errorf("missing boot guard microcode updates in FIT")
 	}
+	return true, nil
+}
+
+func ValidTXTRegister(hw hwapi.LowLevelHardwareInterfaces) (bool, error) {
+	txtSpace, err := tools.FetchTXTRegs(hw)
+	if err != nil {
+		return false, fmt.Errorf("couldn't fetch TXT regs: %v", err)
+	}
+
+	ACMStatus, err := tools.ReadACMStatus(txtSpace)
+	if err != nil {
+		return false, fmt.Errorf("couldn't read ACM status: %v", err)
+	}
+
+	if !ACMStatus.Valid {
+		return false, fmt.Errorf("ACM status is invalid")
+	}
+
+	if !ACMStatus.ACMStarted {
+		return false, fmt.Errorf("ACM isn't started")
+	}
+
+	ACMStatusPolicy, err := tools.ReadACMPolicyStatusRaw(txtSpace)
+	if err != nil {
+		return false, fmt.Errorf("couldn't read ACM policy status: %v", err)
+	}
+
+	if ((ACMStatusPolicy >> 6) & 0x1) != 0 {
+		return false, fmt.Errorf("HAP Bit is set")
+	}
+
+	Bootstatus, err := tools.ReadBootStatusRaw(txtSpace)
+	if err != nil {
+		return false, fmt.Errorf("couldn't read bootstatus: %v", err)
+	}
+
+	if ((Bootstatus >> 31) & 0x1) != 1 {
+		return false, fmt.Errorf("BootGuard did not startup successfully")
+	}
+
 	return true, nil
 }

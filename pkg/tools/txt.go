@@ -446,3 +446,18 @@ func ReadACMPolicyStatusRaw(data []byte) (uint64, error) {
 	}
 	return u64, nil
 }
+
+// ReadBootStatusRaw decodes the raw boot status register bits
+func ReadBootStatusRaw(data []byte) (uint64, error) {
+	var u64 uint64
+	buf := bytes.NewReader(data)
+	_, err := buf.Seek(txtBootStatus, io.SeekStart)
+	if err != nil {
+		return 0, err
+	}
+	err = binary.Read(buf, binary.LittleEndian, &u64)
+	if err != nil {
+		return 0, err
+	}
+	return u64, nil
+}

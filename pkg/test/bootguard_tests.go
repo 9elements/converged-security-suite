@@ -84,6 +84,15 @@ var (
 		SpecificiationTitle:     IntelBootGuardSpecificationTitle,
 		SpecificationDocumentID: IntelBootGuardSpecificationDocumentID,
 	}
+	testbootguardtxt = Test{
+		Name:                    "[RUNTIME] BtG/TXT registers are sane",
+		Required:                true,
+		function:                BootGuardTXT,
+		Status:                  Implemented,
+		SpecificationChapter:    "",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
+	}
 
 	// TestsMemory exposes the slice for memory related txt tests
 	TestsBootGuard = [...]*Test{
@@ -94,6 +103,7 @@ var (
 		&testbootguardibb,
 		&testbootguardvalidateme,
 		&testbootguardsanemeconfig,
+		&testbootguardtxt,
 	}
 )
 
@@ -294,11 +304,11 @@ func BootGuardValidateME(hw hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, 
 	if b == nil || err != nil {
 		return false, fmt.Errorf("couldn't parse KM and BPM"), err
 	}
-	fws, err := bootguard.GetMEInfo(hw)
+	hfsts6, err := bootguard.GetHFSTS6(hw)
 	if err != nil {
 		return false, err, nil
 	}
-	valid, err := b.ValidateMEAgainstManifests(fws)
+	valid, err := b.ValidateMEAgainstManifests(hfsts6)
 	if !valid || err != nil {
 		return false, fmt.Errorf("bootguard km/bpm doesn't match ME BootGuard configuration"), err
 	}
@@ -322,10 +332,12 @@ func BootGuardSaneMEConfig(hw hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool
 	if b == nil || err != nil {
 		return false, fmt.Errorf("couldn't parse KM"), err
 	}
-	fws, err := bootguard.GetMEInfo(hw)
+
+	hfsts6, err := bootguard.GetHFSTS6(hw)
 	if err != nil {
-		return false, err, nil
+		return false, fmt.Errorf("couldn't read HFSTS6: %v", err), nil
 	}
+
 	bgi, err := bootguard.GetBGInfo(hw)
 	if err != nil {
 		return false, err, nil
@@ -342,5 +354,15 @@ func BootGuardSaneMEConfig(hw hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool
 			return false, fmt.Errorf("provisiong boot guard configuraton in me isn't safe"), err
 		}
 	}
+	return true, nil, nil
+}
+
+// BootGuardTXT checks TXT requirements for safe BootGuard configuration
+func BootGuardTXT(hw hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
+	valid, err := bootguard.ValidTXTRegister(hw)
+	if !valid || err != nil {
+		return false, fmt.Errorf("txt regs aren't valid"), err
+	}
+
 	return true, nil, nil
 }
