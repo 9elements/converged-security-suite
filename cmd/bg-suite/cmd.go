@@ -20,14 +20,11 @@ type context struct {
 	logpath     string
 }
 
-type listCmd struct {
-}
+type listCmd struct{}
 
-type markdownCmd struct {
-}
+type markdownCmd struct{}
 
-type versionCmd struct {
-}
+type versionCmd struct{}
 
 type execTestsCmd struct {
 	Set         string `required default:"all" help:"Select subset of tests. Options: all, single"`
@@ -127,7 +124,7 @@ func getTests() []*test.Test {
 }
 
 func run(testGroup string, tests []*test.Test, preset *test.PreSet, interactive bool) bool {
-	var result = false
+	result := false
 	f := bufio.NewWriter(os.Stdout)
 
 	hwAPI := hwapi.GetAPI()
@@ -167,7 +164,7 @@ func run(testGroup string, tests []*test.Test, preset *test.PreSet, interactive 
 			}
 		}
 		data, _ := json.MarshalIndent(t, "", "")
-		os.WriteFile(logfile, data, 0664)
+		os.WriteFile(logfile, data, 0o664)
 	}
 
 	for index := range tests {
