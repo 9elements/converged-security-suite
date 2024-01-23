@@ -126,6 +126,14 @@ func GetBGInfo(hw hwapi.LowLevelHardwareInterfaces) (*BGInfo, error) {
 	return &bgi, nil
 }
 
+func StrictSaneBootGuardProvisioning(v bgheader.BootGuardVersion, fws *FirmwareStatus6, bgi *BGInfo) (bool, error) {
+	if fws.ErrorEnforcementPolicy != EnforcementPolicyShutdownImmediately {
+		return false, fmt.Errorf("enforcement policy isn't set to immediate shutdown")
+	}
+
+	return SaneMEBootGuardProvisioning(v, fws, bgi)
+}
+
 // SaneMEBootGuardProvisioning validates during runtime ME bootguard provisioning
 func SaneMEBootGuardProvisioning(v bgheader.BootGuardVersion, fws *FirmwareStatus6, bgi *BGInfo) (bool, error) {
 	if fws.BypassBootPolicy {
