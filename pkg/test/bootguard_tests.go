@@ -84,6 +84,15 @@ var (
 		SpecificiationTitle:     IntelBootGuardSpecificationTitle,
 		SpecificationDocumentID: IntelBootGuardSpecificationDocumentID,
 	}
+	testbootguardtxt = Test{
+		Name:                    "[RUNTIME] BtG/TXT registers are sane",
+		Required:                true,
+		function:                BootGuardTXT,
+		Status:                  Implemented,
+		SpecificationChapter:    "",
+		SpecificiationTitle:     IntelTXTSpecificationTitle,
+		SpecificationDocumentID: IntelTXTSpecificationDocumentID,
+	}
 
 	// TestsMemory exposes the slice for memory related txt tests
 	TestsBootGuard = [...]*Test{
@@ -94,6 +103,7 @@ var (
 		&testbootguardibb,
 		&testbootguardvalidateme,
 		&testbootguardsanemeconfig,
+		&testbootguardtxt,
 	}
 )
 
@@ -234,7 +244,11 @@ func BootGuardBPM(hw hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, 
 	if !secure || err != nil {
 		return false, fmt.Errorf("bpm crypto parameters are insecure"), err
 	}
-	secure, err = b.SaneBPMSecurityProps()
+	if p.Strict {
+		secure, err = b.StrictSaneBPMSecurityProps()
+	} else {
+		secure, err = b.SaneBPMSecurityProps()
+	}
 	if !secure || err != nil {
 		return false, fmt.Errorf("bpm hasn't sane security properties"), err
 	}
@@ -290,11 +304,11 @@ func BootGuardValidateME(hw hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, 
 	if b == nil || err != nil {
 		return false, fmt.Errorf("couldn't parse KM and BPM"), err
 	}
-	fws, err := bootguard.GetMEInfo(hw)
+	hfsts6, err := bootguard.GetHFSTS6(hw)
 	if err != nil {
 		return false, err, nil
 	}
-	valid, err := b.ValidateMEAgainstManifests(fws)
+	valid, err := b.ValidateMEAgainstManifests(hfsts6)
 	if !valid || err != nil {
 		return false, fmt.Errorf("bootguard km/bpm doesn't match ME BootGuard configuration"), err
 	}
@@ -318,17 +332,37 @@ func BootGuardSaneMEConfig(hw hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool
 	if b == nil || err != nil {
 		return false, fmt.Errorf("couldn't parse KM"), err
 	}
-	fws, err := bootguard.GetMEInfo(hw)
+
+	hfsts6, err := bootguard.GetHFSTS6(hw)
 	if err != nil {
-		return false, err, nil
+		return false, fmt.Errorf("couldn't read HFSTS6: %v", err), nil
 	}
+
 	bgi, err := bootguard.GetBGInfo(hw)
 	if err != nil {
 		return false, err, nil
 	}
-	valid, err := bootguard.SaneMEBootGuardProvisioning(b.Version, fws, bgi)
-	if !valid || err != nil {
-		return false, fmt.Errorf("provisiong boot guard configuraton in me isn't safe"), err
+
+	if p.Strict {
+		valid, err := bootguard.StrictSaneBootGuardProvisioning(b.Version, hfsts6, bgi)
+		if !valid || err != nil {
+			return false, fmt.Errorf("provisiong boot guard configuraton in me isn't safe"), err
+		}
+	} else {
+		valid, err := bootguard.SaneMEBootGuardProvisioning(b.Version, hfsts6, bgi)
+		if !valid || err != nil {
+			return false, fmt.Errorf("provisiong boot guard configuraton in me isn't safe"), err
+		}
 	}
+	return true, nil, nil
+}
+
+// BootGuardTXT checks TXT requirements for safe BootGuard configuration
+func BootGuardTXT(hw hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
+	valid, err := bootguard.ValidTXTRegister(hw)
+	if !valid || err != nil {
+		return false, fmt.Errorf("txt regs aren't valid"), err
+	}
+
 	return true, nil, nil
 }

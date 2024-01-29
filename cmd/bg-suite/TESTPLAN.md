@@ -7,3 +7,4 @@ Id | Test | Implemented | Document | Chapter
 04 | Verifies BPM and IBBs match firmware image       | :white_check_mark:     | Document 557867 / 575623     |                                                         
 05 | [RUNTIME] Validates Intel ME specific configuration against KM/BPM in firmware image | :white_check_mark:     | Document 557867 / 575623     |                                                         
 06 | [RUNTIME] Verifies Intel ME Boot Guard configuration is sane and safe | :white_check_mark:     | Document 557867 / 575623     |                                                         
+07 | [RUNTIME] BtG/TXT registers are sane             | :white_check_mark:     | Document 315168-017          |                                                         
