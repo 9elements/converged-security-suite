@@ -9,7 +9,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e
 	github.com/edsrzf/mmap-go v1.1.0
-	github.com/facebookincubator/go-belt v0.0.0-20230703220829-b6b46c95ec1f
+	github.com/facebookincubator/go-belt v0.0.0-20230703220935-39cd348f1a38
 	github.com/fearful-symmetry/gomsr v0.0.1
 	github.com/go-ng/slices v0.0.0-20230703171042-6195d35636a2
 	github.com/go-ng/xmath v0.0.0-20230704233441-028f5ea62335

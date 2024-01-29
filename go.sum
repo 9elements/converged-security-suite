@@ -111,8 +111,8 @@ github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.m
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
 github.com/envoyproxy/protoc-gen-validate v0.0.14/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
-github.com/facebookincubator/go-belt v0.0.0-20230703220829-b6b46c95ec1f h1:FW/+mUF6GAsdTz/ulSMpcBE204rnOTrPmMyd4d7pPDE=
-github.com/facebookincubator/go-belt v0.0.0-20230703220829-b6b46c95ec1f/go.mod h1:GX1P3GiO+6E2SxTZaI3z1cqlTGfE1GnKxEsxBVemVnY=
+github.com/facebookincubator/go-belt v0.0.0-20230703220935-39cd348f1a38 h1:6bNfYFYry8V+BHinBMDEPPnd19unWa76lQhsx88xU6k=
+github.com/facebookincubator/go-belt v0.0.0-20230703220935-39cd348f1a38/go.mod h1:GX1P3GiO+6E2SxTZaI3z1cqlTGfE1GnKxEsxBVemVnY=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fearful-symmetry/gomsr v0.0.1 h1:m208RzdTApWVbv8a9kf78rdPLQe+BY9AxRb/nSbHxSA=
 github.com/fearful-symmetry/gomsr v0.0.1/go.mod h1:Qb/0Y7zwobP7v8Sji+M5mlL4N7Voyz5WaKXXRFPnLio=
