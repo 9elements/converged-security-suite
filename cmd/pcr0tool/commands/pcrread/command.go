@@ -71,7 +71,7 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 		}
 	}
 	if hashAlgo == tpm2.AlgUnknown {
-		panic(fmt.Errorf("algo '%s' is unknown", *cmd.hashAlgo))
+		log.Fatalf("algo '%s' is unknown", *cmd.hashAlgo)
 	}
 	pcr, err := tpm.ReadPCRFromTPM(pcr.ID(pcrIndex), hashAlgo)
 	assertNoError(err)

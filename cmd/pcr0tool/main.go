@@ -32,9 +32,9 @@ var knownCommands = map[string]commands.Command{
 	"display_fwinfo":               &displayfwinfo.Command{},
 	"dump_fit":                     &dumpfit.Command{},
 	"dump_registers":               &dumpregisters.Command{},
+	"pcrread":                      &pcrread.Command{},
 	"printnodes":                   &printnodes.Command{},
 	"validate_security":            &validatesecurity.Command{},
-	"pcrread":                      &pcrread.Command{},
 	"sum":                          &sum.Command{},
 }
 
