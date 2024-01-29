@@ -20,21 +20,20 @@ type context struct {
 	logpath     string
 }
 
-type listCmd struct {
-}
+type listCmd struct{}
 
-type markdownCmd struct {
-}
+type markdownCmd struct{}
 
-type versionCmd struct {
-}
+type versionCmd struct{}
 
 type execTestsCmd struct {
-	Set         string `required default:"all" help:"Select subset of tests. Options: all"`
-	Interactive bool   `optional short:"i" help:"Interactive mode. Errors will stop the testing."`
-	Config      string `optional short:"c" help:"Path/Filename to config file."`
-	Log         string `optional help:"Give a path/filename for test result output inJSON format. e.g.: /path/to/filename.json"`
-	Firmware    string `optional short:"f" help:"Path/Filename to firmware to test with."`
+	Set         string `required:"" default:"all" help:"Select subset of tests. Options: all, single"`
+	Strict      bool   `required:"" default:"false" short:"s" help:"Enable strict mode. This enables more tests and checks."`
+	Interactive bool   `optional:"" short:"i" help:"Interactive mode. Errors will stop the testing."`
+	Config      string `optional:"" short:"c" help:"Path/Filename to config file."`
+	Log         string `optional:"" help:"Give a path/filename for test result output inJSON format. e.g.: /path/to/filename.json"`
+	Firmware    string `optional:"" short:"f" help:"Path/Filename to firmware to test with."`
+	Number      int    `optional:"" default:"-1" short:"n" help:"Test number to run."`
 }
 
 var cli struct {
@@ -42,10 +41,10 @@ var cli struct {
 
 	FilePath string `short:"t" help:"Select firmware image filepath"`
 
-	ExecTests execTestsCmd `cmd help:"Executes tests given be TestNo or TestSet"`
-	List      listCmd      `cmd help:"Lists all tests"`
-	Markdown  markdownCmd  `cmd help:"Output test implementation state as Markdown"`
-	Version   versionCmd   `cmd help:"Prints the version of the program"`
+	ExecTests execTestsCmd `cmd:"" help:"Executes tests given be TestNo or TestSet"`
+	List      listCmd      `cmd:"" help:"Lists all tests"`
+	Markdown  markdownCmd  `cmd:"" help:"Output test implementation state as Markdown"`
+	Version   versionCmd   `cmd:"" help:"Prints the version of the program"`
 }
 
 func (e *execTestsCmd) Run(ctx *context) error {
@@ -57,11 +56,20 @@ func (e *execTestsCmd) Run(ctx *context) error {
 	preset := test.PreSet{
 		Firmware:           data,
 		HostBridgeDeviceID: 0x00,
+		Strict:             e.Strict,
 	}
 	switch e.Set {
 	case "all":
 		fmt.Println("For more information about the documents and chapters, run: bg-suite -m")
 		ret = run("All", getTests(), &preset, e.Interactive)
+	case "single":
+		if e.Number < 0 {
+			return fmt.Errorf("no test number given")
+		}
+		if e.Number >= len(getTests()) {
+			return fmt.Errorf("test number out of range")
+		}
+		ret = run("Single", []*test.Test{getTests()[e.Number]}, &preset, e.Interactive)
 	default:
 		return fmt.Errorf("no valid test set given")
 	}
@@ -116,7 +124,7 @@ func getTests() []*test.Test {
 }
 
 func run(testGroup string, tests []*test.Test, preset *test.PreSet, interactive bool) bool {
-	var result = false
+	result := false
 	f := bufio.NewWriter(os.Stdout)
 
 	hwAPI := hwapi.GetAPI()
@@ -156,7 +164,13 @@ func run(testGroup string, tests []*test.Test, preset *test.PreSet, interactive 
 			}
 		}
 		data, _ := json.MarshalIndent(t, "", "")
-		os.WriteFile(logfile, data, 0664)
+		err := os.WriteFile(logfile, data, 0o664)
+		if err != nil {
+			fmt.Println("Error writing log file")
+		}
+
+		// If not interactive, we just print the results and return
+		result = true
 	}
 
 	for index := range tests {

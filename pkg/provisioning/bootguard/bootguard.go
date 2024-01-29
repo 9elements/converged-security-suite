@@ -888,6 +888,34 @@ func (b *BootGuard) BPMKeyMatchKMHash() (bool, error) {
 	return true, nil
 }
 
+// StrictSaneBPMSecurityProps verifies that BPM contains security properties more strictly
+func (b *BootGuard) StrictSaneBPMSecurityProps() (bool, error) {
+	switch b.Version {
+	case bgheader.Version10:
+		flags := b.VData.BGbpm.SE[0].Flags
+		if !flags.AuthorityMeasure() {
+			return false, fmt.Errorf("pcr-7 data should extended for OS security")
+		}
+		if !flags.TPMFailureLeavesHierarchiesEnabled() {
+			return false, fmt.Errorf("tpm failure should lead to default measurements from PCR0 to PCR7")
+		}
+	case bgheader.Version20:
+		bgFlags := b.VData.CBNTbpm.SE[0].Flags
+		if !bgFlags.AuthorityMeasure() {
+			return false, fmt.Errorf("pcr-7 data should extended for OS security")
+		}
+		if !bgFlags.TPMFailureLeavesHierarchiesEnabled() {
+			return false, fmt.Errorf("tpm failure should lead to default measurements from PCR0 to PCR7")
+		}
+		txtFlags := b.VData.CBNTbpm.TXTE.ControlFlags
+		if txtFlags.MemoryScrubbingPolicy() != cbntbootpolicy.MemoryScrubbingPolicySACM {
+			return false, fmt.Errorf("S-ACM memory scrubbing should be used over the BIOS")
+		}
+	}
+
+	return b.SaneBPMSecurityProps()
+}
+
 // SaneBPMSecurityProps verifies that BPM contains security properties set accordingly to spec
 func (b *BootGuard) SaneBPMSecurityProps() (bool, error) {
 	switch b.Version {
@@ -895,12 +923,6 @@ func (b *BootGuard) SaneBPMSecurityProps() (bool, error) {
 		flags := b.VData.BGbpm.SE[0].Flags
 		if !flags.DMAProtection() {
 			return false, fmt.Errorf("dma protection should be enabled for bootguard")
-		}
-		if !flags.AuthorityMeasure() {
-			return false, fmt.Errorf("pcr-7 data should extended for OS security")
-		}
-		if !flags.TPMFailureLeavesHierarchiesEnabled() {
-			return false, fmt.Errorf("tpm failure should lead to default measurements from PCR0 to PCR7")
 		}
 		if b.VData.BGbpm.SE[0].PBETValue.PBETValue() == 0 {
 			return false, fmt.Errorf("firmware shall not allowed to run infinitely after incident happened")
@@ -912,19 +934,10 @@ func (b *BootGuard) SaneBPMSecurityProps() (bool, error) {
 				return false, fmt.Errorf("dma protection should be enabled for bootguard")
 			}
 		}
-		if !bgFlags.AuthorityMeasure() {
-			return false, fmt.Errorf("pcr-7 data should extended for OS security")
-		}
-		if !bgFlags.TPMFailureLeavesHierarchiesEnabled() {
-			return false, fmt.Errorf("tpm failure should lead to default measurements from PCR0 to PCR7")
-		}
-		if b.VData.BGbpm.SE[0].PBETValue.PBETValue() == 0 {
+		if b.VData.CBNTbpm.SE[0].PBETValue.PBETValue() == 0 {
 			return false, fmt.Errorf("firmware shall not allowed to run infinitely after incident happened")
 		}
 		txtFlags := b.VData.CBNTbpm.TXTE.ControlFlags
-		if txtFlags.MemoryScrubbingPolicy() != cbntbootpolicy.MemoryScrubbingPolicySACM {
-			return false, fmt.Errorf("S-ACM memory scrubbing should be used over the BIOS")
-		}
 		if !txtFlags.IsSACMRequestedToExtendStaticPCRs() {
 			return false, fmt.Errorf("S-ACM shall always extend static PCRs")
 		}
@@ -965,7 +978,7 @@ func (b *BootGuard) ValidateMEAgainstManifests(fws *FirmwareStatus6) (bool, erro
 			return false, fmt.Errorf("km KMID doesn't match me configuration")
 		}
 	case bgheader.Version20:
-		if fws.BPMSVN != uint32(b.VData.CBNTbpm.BPMSVN) {
+		if fws.BPMSVN > uint32(b.VData.CBNTbpm.BPMSVN) {
 			return false, fmt.Errorf("bpm svn doesn't match me configuration")
 		}
 		if fws.KMSVN != uint32(b.VData.CBNTkm.KMSVN) {
@@ -975,5 +988,26 @@ func (b *BootGuard) ValidateMEAgainstManifests(fws *FirmwareStatus6) (bool, erro
 			return false, fmt.Errorf("km KMID doesn't match me configuration")
 		}
 	}
+	return true, nil
+}
+
+// Validate if HFSTS1 is sane
+func (b *BootGuard) ValidateHFSTS1(fws *FirmwareStatus1) (bool, error) {
+	if fws.WorkingState != 0x05 {
+		return false, fmt.Errorf("HFSTS1 working state is not 0x05")
+	}
+
+	if fws.FPTBad {
+		return false, fmt.Errorf("FPT bad")
+	}
+
+	if fws.MfgMode {
+		return false, fmt.Errorf("ME is in manufacturing mode")
+	}
+
+	if fws.ErrorCode != 0 {
+		return false, fmt.Errorf("HFSTS1 error code is not 0")
+	}
+
 	return true, nil
 }

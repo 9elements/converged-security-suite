@@ -19,84 +19,84 @@ type context struct {
 }
 
 type outputFirmwareCmd struct {
-	FwPath string `required name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
+	FwPath string `required:"" name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
 }
 
 type showKeysCmd struct {
-	FwPath   string `required name:"fwpath"    help:"Path to UEFI firmware image." type:"path"`
-	PSPLevel uint   `required name:"psp-level" help:"PSP Directory Level to use"`
+	FwPath   string `required:"" name:"fwpath"    help:"Path to UEFI firmware image." type:"path"`
+	PSPLevel uint   `required:"" name:"psp-level" help:"PSP Directory Level to use"`
 }
 
 type outputAPCBSecurityTokensCmd struct {
-	FwPath    string `required name:"fwpath"     help:"Path to UEFI firmware image." type:"path"`
-	BIOSLevel uint   `required name:"bios-level" help:"PSP Directory Level to use"`
+	FwPath    string `required:"" name:"fwpath"     help:"Path to UEFI firmware image." type:"path"`
+	BIOSLevel uint   `required:"" name:"bios-level" help:"PSP Directory Level to use"`
 }
 
 type setAPCBSecurityTokenCmd struct {
-	FwPath       string            `required name:"fwpath"     help:"Path to UEFI firmware image." type:"path"`
-	BIOSLevel    uint              `required name:"bios-level" help:"PSP Directory Level to use"`
-	TokenID      apcb.TokenID      `required name:"token-id"   help:"The ID of the token"`
-	PriorityMask apcb.PriorityMask `required name:"priority-mask"`
-	BoardMask    uint16            `required name:"board-mask"`
-	Value        uint32            `required name:"value"      help:"the value to be set"`
+	FwPath       string            `required:"" name:"fwpath"     help:"Path to UEFI firmware image." type:"path"`
+	BIOSLevel    uint              `required:"" name:"bios-level" help:"PSP Directory Level to use"`
+	TokenID      apcb.TokenID      `required:"" name:"token-id"   help:"The ID of the token"`
+	PriorityMask apcb.PriorityMask `required:"" name:"priority-mask"`
+	BoardMask    uint16            `required:"" name:"board-mask"`
+	Value        uint32            `required:"" name:"value"      help:"the value to be set"`
 }
 
 type validatePSPEntriesCmd struct {
-	FwPath        string   `required name:"fwpath"                    help:"Path to UEFI firmware image." type:"path"`
-	KeyDBPSPLevel uint     `required name:"keydb-psp-level"           help:"PSP Directory Level to use for key database"`
-	Directory     string   `required name:"directory"                 help:"Directory to check items in: PSPDirectoryLevel1|PSPDirectoryLevel2|BIOSDirectoryLevel1|BIOSDirectoryLevel2"`
-	PSPEntries    []string `arg required name:"psp-entries-hex-codes" help:"Hex codes of PSP entries to validate" type:"list"`
+	FwPath        string   `required:"" name:"fwpath"                    help:"Path to UEFI firmware image." type:"path"`
+	KeyDBPSPLevel uint     `required:"" name:"keydb-psp-level"           help:"PSP Directory Level to use for key database"`
+	Directory     string   `required:"" name:"directory"                 help:"Directory to check items in: PSPDirectoryLevel1|PSPDirectoryLevel2|BIOSDirectoryLevel1|BIOSDirectoryLevel2"`
+	PSPEntries    []string `arg:"" required:"" name:"psp-entries-hex-codes" help:"Hex codes of PSP entries to validate" type:"list"`
 }
 
 type validateRTMCmd struct {
-	FwPath    string `required name:"fwpath"     help:"Path to UEFI firmware image." type:"path"`
-	BIOSLevel uint   `required name:"bios-level" help:"BIOS Directory Level to use"`
+	FwPath    string `required:"" name:"fwpath"     help:"Path to UEFI firmware image." type:"path"`
+	BIOSLevel uint   `required:"" name:"bios-level" help:"BIOS Directory Level to use"`
 }
 
 type dumpPSPEntryCmd struct {
-	FwPath    string `required name:"fwpath"     help:"Path to UEFI firmware image." type:"path"`
-	PSPLevel  uint   `required name:"psp-level"  help:"PSP Directory Level to use"`
-	EntryFile string `required name:"entry-path" help:"Path to entry file." type:"path"`
-	Entry     string `arg name:"entry-hex-code"  help:"Hex code of the entry to dump" type:"string"`
+	FwPath    string `required:"" name:"fwpath"     help:"Path to UEFI firmware image." type:"path"`
+	PSPLevel  uint   `required:"" name:"psp-level"  help:"PSP Directory Level to use"`
+	EntryFile string `required:"" name:"entry-path" help:"Path to entry file." type:"path"`
+	Entry     string `arg:"" name:"entry-hex-code"  help:"Hex code of the entry to dump" type:"string"`
 }
 
 type dumpBIOSEntryCmd struct {
-	FwPath    string `required name:"fwpath"     help:"Path to UEFI firmware image." type:"path"`
-	BIOSLevel uint   `required name:"bios-level" help:"PSP Directory Level to use"`
-	EntryFile string `required name:"entry-path" help:"Path to entry file." type:"path"`
-	Instance  uint8  `optional name:"instance"   help:"Path to entry file."`
-	Entry     string `arg name:"entry-hex-code"  help:"Hex code of the entry to dump" type:"string"`
+	FwPath    string `required:"" name:"fwpath"     help:"Path to UEFI firmware image." type:"path"`
+	BIOSLevel uint   `required:"" name:"bios-level" help:"PSP Directory Level to use"`
+	EntryFile string `required:"" name:"entry-path" help:"Path to entry file." type:"path"`
+	Instance  uint8  `optional:"" name:"instance"   help:"Path to entry file."`
+	Entry     string `arg:"" name:"entry-hex-code"  help:"Hex code of the entry to dump" type:"string"`
 }
 
 type patchPSPEntryCmd struct {
-	FwPath               string `required name:"fwpath"              help:"Path to UEFI firmware image." type:"path"`
-	EntryFile            string `required name:"modified-entry-path" help:"Path to modified entry file." type:"path"`
-	ModifiedFirmwareFile string `required name:"modified-fwpath"     help:"Path to UEFI firmware modified image." type:"path"`
-	PSPLevel             uint   `required name:"psp-level"           help:"PSP Directory Level to use"`
-	Entry                string `arg required name:"entry-hex-code"  help:"Hex code of entry to patch" type:"string"`
+	FwPath               string `required:"" name:"fwpath"              help:"Path to UEFI firmware image." type:"path"`
+	EntryFile            string `required:"" name:"modified-entry-path" help:"Path to modified entry file." type:"path"`
+	ModifiedFirmwareFile string `required:"" name:"modified-fwpath"     help:"Path to UEFI firmware modified image." type:"path"`
+	PSPLevel             uint   `required:"" name:"psp-level"           help:"PSP Directory Level to use"`
+	Entry                string `arg:"" required:"" name:"entry-hex-code"  help:"Hex code of entry to patch" type:"string"`
 }
 
 type patchBIOSEntryCmd struct {
-	FwPath               string `required name:"fwpath"              help:"Path to UEFI firmware image." type:"path"`
-	EntryFile            string `required name:"modified-entry-path" help:"Path to modified entry file." type:"path"`
-	ModifiedFirmwareFile string `required name:"modified-fwpath"     help:"Path to UEFI firmware modified image." type:"path"`
-	BIOSLevel            uint   `required name:"bios-level"          help:"BIOS Directory Level to use"`
-	Instance             uint8  `optional name:"instance"            help:"Path to entry file."`
-	Entry                string `arg required name:"entry-hex-code"  help:"Hex code of entry to patch" type:"string"`
+	FwPath               string `required:"" name:"fwpath"              help:"Path to UEFI firmware image." type:"path"`
+	EntryFile            string `required:"" name:"modified-entry-path" help:"Path to modified entry file." type:"path"`
+	ModifiedFirmwareFile string `required:"" name:"modified-fwpath"     help:"Path to UEFI firmware modified image." type:"path"`
+	BIOSLevel            uint   `required:"" name:"bios-level"          help:"BIOS Directory Level to use"`
+	Instance             uint8  `optional:"" name:"instance"            help:"Path to entry file."`
+	Entry                string `arg:"" required:"" name:"entry-hex-code"  help:"Hex code of entry to patch" type:"string"`
 }
 
 var cli struct {
 	Debug                     bool                        `help:"Enable debug mode"`
-	ShowKeys                  showKeysCmd                 `cmd help:"Shows all key known to the system, together with their origin"`
-	ValidatePSPEntries        validatePSPEntriesCmd       `cmd help:"Validates signatures of PSP entries"`
-	ValidateRTM               validateRTMCmd              `cmd help: Validated the signature of the extended RTM volume, which includes RTM and BIOS Directory Table`
-	OutputFirmware            outputFirmwareCmd           `cmd help:"Outputs information about the firmware and PSP/BIOS structure"`
-	DumpPSPEntry              dumpPSPEntryCmd             `cmd help:"Dump an entry from PSP Directory to a file on the filesystem"`
-	DumpBIOSEntry             dumpBIOSEntryCmd            `cmd help:"Dump an entry from BIOS Directory to a file on the filesystem"`
-	PatchPSPEntry             patchPSPEntryCmd            `cmd help:"take a path on the filesystem pointing to a dump of an PSP entry and re-apply it to the firmware"`
-	PatchBIOSEntry            patchBIOSEntryCmd           `cmd help:"take a path on the filesystem pointing to a dump of an BIOS entry and re-apply it to the firmware"`
-	OutputSecurityTokensEntry outputAPCBSecurityTokensCmd `cmd help:"output security tokens of all APCB (including backup) entries in specified BIOS directory"`
-	SetSecurityToken          setAPCBSecurityTokenCmd     `cmd help:"sets a APCB security token"`
+	ShowKeys                  showKeysCmd                 `cmd:"" help:"Shows all key known to the system, together with their origin"`
+	ValidatePSPEntries        validatePSPEntriesCmd       `cmd:"" help:"Validates signatures of PSP entries"`
+	ValidateRTM               validateRTMCmd              `cmd:"" help:"Validated the signature of the extended RTM volume, which includes RTM and BIOS Directory Table:"`
+	OutputFirmware            outputFirmwareCmd           `cmd:"" help:"Outputs information about the firmware and PSP/BIOS structure"`
+	DumpPSPEntry              dumpPSPEntryCmd             `cmd:"" help:"Dump an entry from PSP Directory to a file on the filesystem"`
+	DumpBIOSEntry             dumpBIOSEntryCmd            `cmd:"" help:"Dump an entry from BIOS Directory to a file on the filesystem"`
+	PatchPSPEntry             patchPSPEntryCmd            `cmd:"" help:"take a path on the filesystem pointing to a dump of an PSP entry and re-apply it to the firmware"`
+	PatchBIOSEntry            patchBIOSEntryCmd           `cmd:"" help:"take a path on the filesystem pointing to a dump of an BIOS entry and re-apply it to the firmware"`
+	OutputSecurityTokensEntry outputAPCBSecurityTokensCmd `cmd:"" help:"output security tokens of all APCB (including backup) entries in specified BIOS directory"`
+	SetSecurityToken          setAPCBSecurityTokenCmd     `cmd:"" help:"sets a APCB security token"`
 }
 
 func (s *outputFirmwareCmd) Run(ctx *context) error {
