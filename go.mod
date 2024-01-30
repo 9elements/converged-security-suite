@@ -1,6 +1,6 @@
 module github.com/9elements/converged-security-suite/v2
 
-go 1.19
+go 1.21
 
 require (
 	github.com/9elements/go-linux-lowlevel-hw v0.0.0-20220518111144-a82949f8ff5b
