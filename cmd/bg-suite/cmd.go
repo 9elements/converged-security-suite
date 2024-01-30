@@ -39,8 +39,6 @@ type execTestsCmd struct {
 var cli struct {
 	ManifestStrictOrderCheck bool `help:"Enable checking of manifest elements order"`
 
-	FilePath string `short:"t" help:"Select firmware image filepath"`
-
 	ExecTests execTestsCmd `cmd:"" help:"Executes tests given be TestNo or TestSet"`
 	List      listCmd      `cmd:"" help:"Lists all tests"`
 	Markdown  markdownCmd  `cmd:"" help:"Output test implementation state as Markdown"`
