@@ -6,7 +6,7 @@ jobs:
   build:
     docker:
       # specify the version
-      - image: golang:1.19
+      - image: golang:1.21
 
     working_directory: /go/src/github.com/9elements/converged-security-suite
     steps:
@@ -60,7 +60,7 @@ jobs:
   create_deb_rpm:
     docker:
       # specify the version
-      - image: golang:1.18
+      - image: golang:1.21
 
     working_directory: /go/src/github.com/9elements/converged-security-suite
     steps:
@@ -103,7 +103,7 @@ jobs:
   build_arm:
     docker:
       # specify the version
-      - image: golang:1.18
+      - image: golang:1.21
 
     working_directory: /go/src/github.com/9elements/converged-security-suite
     steps:
@@ -118,7 +118,7 @@ jobs:
   build_arm64:
     docker:
       # specify the version
-      - image: golang:1.18
+      - image: golang:1.21
 
     working_directory: /go/src/github.com/9elements/converged-security-suite
     steps:
@@ -133,7 +133,7 @@ jobs:
   build_ppc64le:
     docker:
       # specify the version
-      - image: golang:1.18
+      - image: golang:1.21
 
     working_directory: /go/src/github.com/9elements/converged-security-suite
     steps:
