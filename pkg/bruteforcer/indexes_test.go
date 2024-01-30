@@ -20,11 +20,11 @@ func TestGetCombinationID(t *testing.T) {
 }
 
 func TestSetGetCombinationID(t *testing.T) {
-	rand.Seed(0)
+	r := rand.New(rand.NewSource(0))
 	iter := NewUniqueUnorderedCombinationIterator(10, 70)
 	amountOfCombinations := uint64(binomialCoefficient(70, 10))
 	for i := 0; i < 100; i++ {
-		combinationID := rand.Uint64() % amountOfCombinations
+		combinationID := r.Uint64() % amountOfCombinations
 		iter.SetCombinationID(combinationID)
 		require.Equal(t, combinationID, iter.GetCombinationID())
 		iter.Next()
