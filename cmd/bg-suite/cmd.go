@@ -186,6 +186,7 @@ func run(testGroup string, tests []*test.Test, preset *test.PreSet, interactive 
 			fmt.Printf("%-20s", a.Bold(a.Green(tests[index].Result)))
 		} else {
 			fmt.Printf("%-20s", a.Bold(a.Red(tests[index].Result)))
+			result = false
 		}
 		if tests[index].ErrorText != "" {
 			fmt.Printf(" (%s)", tests[index].ErrorText)
