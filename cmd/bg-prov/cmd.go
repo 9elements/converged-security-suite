@@ -183,45 +183,50 @@ type generateKMCmdv2 struct {
 }
 
 type generateBPMCmdv1 struct {
-	BPM         string                 `arg required name:"bpm" help:"Path to the newly generated Boot Policy Manifest binary file." type:"path"`
-	BIOS        string                 `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
-	Config      string                 `flag optional name:"config" help:"Path to the JSON config file." type:"path"`
-	SVN         bg.SVN                 `flag optional name:"svn" help:"Boot Policy Manifest Security Version Number"`
-	ACMSVN      bg.SVN                 `flag optional name:"acmsvn" help:"Authorized ACM Security Version Number"`
-	NEMS        bgbootpolicy.Size4K    `flag optional name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
-	PBET        bgbootpolicy.PBETValue `flag optional name:"pbet" help:"Protect BIOS Environment Timer (PBET) value."`
-	IBBSegFlags bgbootpolicy.SEFlags   `flag optional name:"ibbflags" help:"IBB Control flags"`
-	MCHBAR      uint64                 `flag optional name:"mchbar" help:"MCHBAR address"`
-	VDTBAR      uint64                 `flag optional name:"vdtbar" help:"VTDPVC0BAR address"`
-	PMRLBase    uint32                 `flag optional name:"dmabase0" help:"Low DMA protected range base"`
-	PMRLLimit   uint32                 `flag optional name:"dmasize0" help:"Low DMA protected range limit"`
-	EntryPoint  uint32                 `flag optional name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
-	IbbHash     string                 `flag optional name:"ibbhash" help:"IBB Hash Algorithm. Valid options: SHA1, SHA256, SHA384, SM3"`
-	IbbSegFlag  uint16                 `flag optional name:"ibbsegflag" help:"Reducted"`
+	BPM    string `arg:"" required:"" name:"bpm" help:"Path to the newly generated Boot Policy Manifest binary file." type:"path"`
+	BIOS   string `arg:"" required:"" name:"bios" help:"Path to the full BIOS binary file." type:"path"`
+	Config string `flag:"" optional:"" name:"config" help:"Path to the JSON config file." type:"path"`
+	// CBnT Manifest Header args
+	Revision uint8               `flag:"" optional:"" name:"revision" help:"Platform Manufacturer’s BPM revision number."`
+	SVN      bg.SVN              `flag:"" optional:"" name:"svn" help:"Boot Policy Manifest Security Version Number"`
+	ACMSVN   bg.SVN              `flag:"" optional:"" name:"acmsvn" help:"Authorized ACM Security Version Number"`
+	NEMS     bgbootpolicy.Size4K `flag:"" optional:"" name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
+	// IBB args
+	PBET        bgbootpolicy.PBETValue `flag:"" optional:"" name:"pbet" help:"Protect BIOS Environment Timer (PBET) value."`
+	IBBSegFlags bgbootpolicy.SEFlags   `flag:"" optional:"" name:"ibbflags" help:"IBB Control flags"`
+	MCHBAR      uint64                 `flag:"" optional:"" name:"mchbar" help:"MCHBAR address"`
+	VDTBAR      uint64                 `flag:"" optional:"" name:"vdtbar" help:"VTDPVC0BAR address"`
+	PMRLBase    uint32                 `flag:"" optional:"" name:"dmabase0" help:"Low DMA protected range base"`
+	PMRLLimit   uint32                 `flag:"" optional:"" name:"dmasize0" help:"Low DMA protected range limit"`
+	EntryPoint  uint32                 `flag:"" optional:"" name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
+	IbbHash     string                 `flag:"" optional:"" name:"ibbhash" help:"IBB Hash Algorithm. Valid options: SHA256, SHA384, SM3"`
+	IbbSegFlag  uint16                 `flag:"" optional:"" name:"ibbsegflag" help:"Reducted"`
 
 	Out string `flag:"" optional:"" name:"out" help:"Path to write applied config to"`
 	Cut bool   `flag:"" optional:"" name:"cut" help:"Cuts the signature before writing to binary."`
 }
 
 type generateBPMCmdv2 struct {
-	BPM         string                   `arg required name:"bpm" help:"Path to the newly generated Boot Policy Manifest binary file." type:"path"`
-	BIOS        string                   `arg required name:"bios" help:"Path to the full BIOS binary file." type:"path"`
-	Config      string                   `flag optional name:"config" help:"Path to the JSON config file." type:"path"`
-	Revision    uint8                    `flag optional name:"revision" help:"Platform Manufacturer’s BPM revision number."`
-	SVN         cbnt.SVN                 `flag optional name:"svn" help:"Boot Policy Manifest Security Version Number"`
-	ACMSVN      cbnt.SVN                 `flag optional name:"acmsvn" help:"Authorized ACM Security Version Number"`
-	NEMS        cbntbootpolicy.Size4K    `flag optional name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
-	PBET        cbntbootpolicy.PBETValue `flag optional name:"pbet" help:"Protect BIOS Environment Timer (PBET) value."`
-	IBBSegFlags cbntbootpolicy.SEFlags   `flag optional name:"ibbflags" help:"IBB Control flags"`
-	MCHBAR      uint64                   `flag optional name:"mchbar" help:"MCHBAR address"`
-	VDTBAR      uint64                   `flag optional name:"vdtbar" help:"VTDPVC0BAR address"`
-	DMABase0    uint32                   `flag optional name:"dmabase0" help:"Low DMA protected range base"`
-	DMASize0    uint32                   `flag optional name:"dmasize0" help:"Low DMA protected range limit"`
-	DMABase1    uint64                   `flag optional name:"dmabase1" help:"High DMA protected range base."`
-	DMASize1    uint64                   `flag optional name:"dmasize1" help:"High DMA protected range limit."`
-	EntryPoint  uint32                   `flag optional name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
-	IbbHash     []string                 `flag optional name:"ibbhash" help:"IBB Hash Algorithm. Valid options: SHA256, SHA384, SM3"`
-	IbbSegFlag  uint16                   `flag optional name:"ibbsegflag" help:"Reducted"`
+	BPM    string `arg:"" required:"" name:"bpm" help:"Path to the newly generated Boot Policy Manifest binary file." type:"path"`
+	BIOS   string `arg:"" required:"" name:"bios" help:"Path to the full BIOS binary file." type:"path"`
+	Config string `flag:"" optional:"" name:"config" help:"Path to the JSON config file." type:"path"`
+	// CBnT Manifest Header args
+	Revision uint8                 `flag:"" optional:"" name:"revision" help:"Platform Manufacturer’s BPM revision number."`
+	SVN      cbnt.SVN              `flag:"" optional:"" name:"svn" help:"Boot Policy Manifest Security Version Number"`
+	ACMSVN   cbnt.SVN              `flag:"" optional:"" name:"acmsvn" help:"Authorized ACM Security Version Number"`
+	NEMS     cbntbootpolicy.Size4K `flag:"" optional:"" name:"nems" help:"Size of data region need by IBB expressed in 4K pages. E.g., value of 1 = 4096 bytes; 2 = 8092 bytes, etc. Must not be zero"`
+	// IBB args
+	PBET        cbntbootpolicy.PBETValue `flag:"" optional:"" name:"pbet" help:"Protect BIOS Environment Timer (PBET) value."`
+	IBBSegFlags cbntbootpolicy.SEFlags   `flag:"" optional:"" name:"ibbflags" help:"IBB Control flags"`
+	MCHBAR      uint64                   `flag:"" optional:"" name:"mchbar" help:"MCHBAR address"`
+	VDTBAR      uint64                   `flag:"" optional:"" name:"vdtbar" help:"VTDPVC0BAR address"`
+	DMABase0    uint32                   `flag:"" optional:"" name:"dmabase0" help:"Low DMA protected range base"`
+	DMASize0    uint32                   `flag:"" optional:"" name:"dmasize0" help:"Low DMA protected range limit"`
+	DMABase1    uint64                   `flag:"" optional:"" name:"dmabase1" help:"High DMA protected range base."`
+	DMASize1    uint64                   `flag:"" optional:"" name:"dmasize1" help:"High DMA protected range limit."`
+	EntryPoint  uint32                   `flag:"" optional:"" name:"entrypoint" help:"IBB (Startup BIOS) entry point"`
+	IbbHash     []string                 `flag:"" optional:"" name:"ibbhash" help:"IBB Hash Algorithm. Valid options: SHA256, SHA384, SM3"`
+	IbbSegFlag  uint16                   `flag:"" optional:"" name:"ibbsegflag" help:"Reducted"`
 	// TXT args
 	SinitMin          uint8                           `flag:"" optional:"" name:"sinitmin" help:"OEM authorized SinitMinSvn value"`
 	TXTFlags          cbntbootpolicy.TXTControlFlags  `flag:"" optional:"" name:"txtflags" help:"TXT Element control flags"`
@@ -414,7 +419,7 @@ func (g *generateKMCmdv1) Run(ctx *context) error {
 	if g.Config != "" {
 		err := b.ReadJSON(g.Config)
 		if err != nil {
-			return err
+			return fmt.Errorf("unable to read JSON config file: %w", err)
 		}
 	} else {
 		var err error
@@ -942,12 +947,15 @@ func (t *templateCmdv2) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	bBPM, err := bootguard.WriteBPM()
+
+	f, err := os.OpenFile(t.Path, os.O_RDWR|os.O_CREATE, 0o644)
 	if err != nil {
 		return err
 	}
-	if err = os.WriteFile(t.Path, bBPM, 0o600); err != nil {
-		return fmt.Errorf("unable to write BPM to file: %w", err)
+	defer f.Close()
+
+	if err := bootguard.WriteJSON(f); err != nil {
+		return err
 	}
 	return nil
 }
@@ -981,13 +989,17 @@ func (t *templateCmdv1) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	bBPM, err := bootguard.WriteBPM()
+
+	f, err := os.OpenFile(t.Path, os.O_RDWR|os.O_CREATE, 0o644)
 	if err != nil {
 		return err
 	}
-	if err = os.WriteFile(t.Path, bBPM, 0o600); err != nil {
-		return fmt.Errorf("unable to write BPM to file: %w", err)
+	defer f.Close()
+
+	if err := bootguard.WriteJSON(f); err != nil {
+		return err
 	}
+
 	return nil
 }
 
