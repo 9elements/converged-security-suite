@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/test"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
@@ -27,13 +30,12 @@ type markdownCmd struct{}
 type versionCmd struct{}
 
 type execTestsCmd struct {
-	Set         string `required:"" default:"all" help:"Select subset of tests. Options: all, single"`
+	Set         string `required:"" default:"all" help:"Select subset of tests. Options: all, static, runtime, or choose tests by number e.g. --set=1,3,4"`
 	Strict      bool   `required:"" default:"false" short:"s" help:"Enable strict mode. This enables more tests and checks."`
 	Interactive bool   `optional:"" short:"i" help:"Interactive mode. Errors will stop the testing."`
 	Config      string `optional:"" short:"c" help:"Path/Filename to config file."`
 	Log         string `optional:"" help:"Give a path/filename for test result output inJSON format. e.g.: /path/to/filename.json"`
 	Firmware    string `optional:"" short:"f" help:"Path/Filename to firmware to test with."`
-	Number      int    `optional:"" default:"-1" short:"n" help:"Test number to run."`
 }
 
 var cli struct {
@@ -60,16 +62,32 @@ func (e *execTestsCmd) Run(ctx *context) error {
 	case "all":
 		fmt.Println("For more information about the documents and chapters, run: bg-suite -m")
 		ret = run("All", getTests(), &preset, e.Interactive)
-	case "single":
-		if e.Number < 0 {
-			return fmt.Errorf("no test number given")
-		}
-		if e.Number >= len(getTests()) {
-			return fmt.Errorf("test number out of range")
-		}
-		ret = run("Single", []*test.Test{getTests()[e.Number]}, &preset, e.Interactive)
+	case "static":
+		ret = run("Static", getStaticTest(), &preset, e.Interactive)
+	case "runtime":
+		ret = run("Runtime", getRuntimeTest(), &preset, e.Interactive)
 	default:
-		return fmt.Errorf("no valid test set given")
+		var tests []*test.Test
+
+		// Regex to detect if the set is a list of numbers
+		numbers := regexp.MustCompile(`^(\d+)(,\d+)*$`)
+		num := numbers.FindAllString(e.Set, -1)
+		if num == nil {
+			return fmt.Errorf("no valid test set given")
+		}
+
+		num = strings.Split(e.Set, ",")
+
+		// Add Tests to the list
+		for i := range num {
+			testno, err := strconv.ParseUint(num[i], 10, 64)
+			if err != nil {
+				return fmt.Errorf("no valid test set given")
+			}
+			tests = append(tests, getTests()[testno])
+		}
+
+		ret = run("Custom Set", tests, &preset, e.Interactive)
 	}
 	if !ret {
 		return fmt.Errorf("tests ran with errors")
@@ -117,6 +135,26 @@ func getTests() []*test.Test {
 	var tests []*test.Test
 	for i := range test.TestsBootGuard {
 		tests = append(tests, test.TestsBootGuard[i])
+	}
+	return tests
+}
+
+func getStaticTest() []*test.Test {
+	var tests []*test.Test
+	for i := range test.TestsBootGuard {
+		if !strings.HasPrefix(test.TestsBootGuard[i].Name, "[RUNTIME]") {
+			tests = append(tests, test.TestsBootGuard[i])
+		}
+	}
+	return tests
+}
+
+func getRuntimeTest() []*test.Test {
+	var tests []*test.Test
+	for i := range test.TestsBootGuard {
+		if strings.HasPrefix(test.TestsBootGuard[i].Name, "[RUNTIME]") {
+			tests = append(tests, test.TestsBootGuard[i])
+		}
 	}
 	return tests
 }
