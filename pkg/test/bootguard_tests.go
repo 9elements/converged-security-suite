@@ -113,7 +113,7 @@ func BootGuardFIT(hw hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, 
 	if err != nil {
 		return false, fmt.Errorf("couldn't parse FIT"), err
 	}
-	var hasACM, hasBPM, hasKM, hasStartupModuleEntry bool
+	var hasACM, hasBPM, hasKM bool
 	for _, entry := range entries {
 		switch entry.(type) {
 		case *fit.EntrySACM:
@@ -122,8 +122,6 @@ func BootGuardFIT(hw hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, 
 			hasBPM = true
 		case *fit.EntryKeyManifestRecord:
 			hasKM = true
-		case *fit.EntryBIOSStartupModuleEntry:
-			hasStartupModuleEntry = true
 		}
 	}
 	if !hasACM {
@@ -134,9 +132,6 @@ func BootGuardFIT(hw hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, 
 	}
 	if !hasKM {
 		return false, fmt.Errorf("couldn't find KM in FIT"), nil
-	}
-	if !hasStartupModuleEntry {
-		return false, fmt.Errorf("couldn't find any BIOS Startup Module Entry in FIT"), nil
 	}
 	return true, nil, nil
 }

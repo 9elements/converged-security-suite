@@ -10,6 +10,8 @@ import (
 	"os"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
+	"github.com/9elements/converged-security-suite/v2/pkg/uefi/consts"
+	"github.com/linuxboot/fiano/pkg/cbfs"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/bg"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/bg/bgbootpolicy"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/bg/bgkey"
@@ -328,7 +330,7 @@ func (b *BootGuard) WriteBPM() ([]byte, error) {
 	case bgheader.Version10:
 		_, err = b.VData.BGbpm.WriteTo(buf)
 	case bgheader.Version20:
-		_, err = b.VData.BGbpm.WriteTo(buf)
+		_, err = b.VData.CBNTbpm.WriteTo(buf)
 	default:
 		fmt.Println("WriteBPM: can't identify bootguard header")
 	}
@@ -453,7 +455,7 @@ func (b *BootGuard) SignKM(signAlgo string, privkey crypto.PrivateKey) ([]byte, 
 }
 
 // SignBPM signs an unsigned KM with signAlgo and private key as input
-func (b *BootGuard) SignBPM(signAlgo string, privkey crypto.PrivateKey) ([]byte, error) {
+func (b *BootGuard) SignBPM(signAlgo, hashAlgo string, privkey crypto.PrivateKey) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	switch b.Version {
 	case bgheader.Version10:
@@ -476,20 +478,24 @@ func (b *BootGuard) SignBPM(signAlgo string, privkey crypto.PrivateKey) ([]byte,
 		if err != nil {
 			return nil, err
 		}
+		hashAlgo, err := cbnt.GetAlgFromString(hashAlgo)
+		if err != nil {
+			return nil, err
+		}
 		b.VData.CBNTbpm.PMSE = *cbntbootpolicy.NewSignature()
 		b.VData.CBNTbpm.RehashRecursive()
 		_, err = b.VData.CBNTbpm.WriteTo(buf)
 		if err != nil {
 			return nil, err
 		}
-		unsignedBPM := buf.Bytes()[:b.VData.CBNTbpm.PMSE.KeySignatureOffset()]
-		if err = b.VData.CBNTbpm.PMSE.SetSignature(signAlgo, b.VData.CBNTbpm.PMSE.Key.KeyAlg, privkey.(crypto.Signer), unsignedBPM); err != nil {
+		unsignedBPM := buf.Bytes()[:b.VData.CBNTbpm.KeySignatureOffset]
+		if err = b.VData.CBNTbpm.PMSE.SetSignature(signAlgo, hashAlgo, privkey.(crypto.Signer), unsignedBPM); err != nil {
 			return nil, err
 		}
 	default:
 		fmt.Println("SignBPM: can't identify bootguard header")
 	}
-	return b.WriteKM()
+	return b.WriteBPM()
 }
 
 // VerifyKM verifies a signed KM
@@ -762,18 +768,18 @@ func (b *BootGuard) GetIBBsDigest(image []byte, hashAlgo string) (digest []byte,
 	return digest, nil
 }
 
-// GenerateBPM generates a Boot Policy Manifest with the given config and firmware image
-func (b *BootGuard) GenerateBPMFromImage(biosFilepath string) (*BootGuard, error) {
+// CreateIBBDigest generates a Boot Policy Manifest with the given config and firmware image
+func (b *BootGuard) CreateIBBDigest(biosFilepath string) error {
 	data, err := os.ReadFile(biosFilepath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read file '%s': %w", biosFilepath, err)
+		return fmt.Errorf("unable to read file '%s': %w", biosFilepath, err)
 	}
 	switch b.Version {
 	case bgheader.Version10:
 		hashAlgo := b.VData.BGbpm.SE[0].Digest.HashAlg.String()
 		d, err := b.GetIBBsDigest(data, hashAlgo)
 		if err != nil {
-			return nil, fmt.Errorf("unable to getIBBsDigest for %v: %w", hashAlgo, err)
+			return fmt.Errorf("unable to getIBBsDigest for %v: %w", hashAlgo, err)
 		}
 		b.VData.BGbpm.SE[0].Digest.HashBuffer = make([]byte, len(d))
 		copy(b.VData.BGbpm.SE[0].Digest.HashBuffer, d)
@@ -781,7 +787,7 @@ func (b *BootGuard) GenerateBPMFromImage(biosFilepath string) (*BootGuard, error
 		for iterator, item := range b.VData.CBNTbpm.SE[0].DigestList.List {
 			d, err := b.GetIBBsDigest(data, item.HashAlg.String())
 			if err != nil {
-				return nil, fmt.Errorf("unable to getIBBsDigest for %v: %w", item.HashAlg, err)
+				return fmt.Errorf("unable to getIBBsDigest for %v: %w", item.HashAlg, err)
 			}
 			b.VData.CBNTbpm.SE[0].DigestList.List[iterator].HashBuffer = make([]byte, len(d))
 			copy(b.VData.CBNTbpm.SE[0].DigestList.List[iterator].HashBuffer, d)
@@ -789,7 +795,7 @@ func (b *BootGuard) GenerateBPMFromImage(biosFilepath string) (*BootGuard, error
 	default:
 		fmt.Println("can't identify bootguard header")
 	}
-	return b, nil
+	return nil
 }
 
 // BPMCryptoSecure verifies that BPM uses sane crypto algorithms
@@ -924,8 +930,14 @@ func (b *BootGuard) SaneBPMSecurityProps() (bool, error) {
 		if !flags.DMAProtection() {
 			return false, fmt.Errorf("dma protection should be enabled for bootguard")
 		}
+		if !flags.AuthorityMeasure() {
+			return false, fmt.Errorf("pcr-7 data should extended for OS security")
+		}
 		if b.VData.BGbpm.SE[0].PBETValue.PBETValue() == 0 {
 			return false, fmt.Errorf("firmware shall not allowed to run infinitely after incident happened")
+		}
+		if len(b.VData.BGbpm.SE[0].IBBSegments) < 1 {
+			return false, fmt.Errorf("no ibb segments measured")
 		}
 	case bgheader.Version20:
 		bgFlags := b.VData.CBNTbpm.SE[0].Flags
@@ -934,12 +946,18 @@ func (b *BootGuard) SaneBPMSecurityProps() (bool, error) {
 				return false, fmt.Errorf("dma protection should be enabled for bootguard")
 			}
 		}
+		if !bgFlags.AuthorityMeasure() {
+			return false, fmt.Errorf("pcr-7 data should extended for OS security")
+		}
 		if b.VData.CBNTbpm.SE[0].PBETValue.PBETValue() == 0 {
 			return false, fmt.Errorf("firmware shall not allowed to run infinitely after incident happened")
 		}
 		txtFlags := b.VData.CBNTbpm.TXTE.ControlFlags
 		if !txtFlags.IsSACMRequestedToExtendStaticPCRs() {
 			return false, fmt.Errorf("S-ACM shall always extend static PCRs")
+		}
+		if len(b.VData.CBNTbpm.SE[0].IBBSegments) < 1 {
+			return false, fmt.Errorf("no ibb segments measured")
 		}
 	}
 	return true, nil
@@ -991,23 +1009,94 @@ func (b *BootGuard) ValidateMEAgainstManifests(fws *FirmwareStatus6) (bool, erro
 	return true, nil
 }
 
-// Validate if HFSTS1 is sane
-func (b *BootGuard) ValidateHFSTS1(fws *FirmwareStatus1) (bool, error) {
-	if fws.WorkingState != 0x05 {
-		return false, fmt.Errorf("HFSTS1 working state is not 0x05")
+// CreateIBBSegments takes a firmware image, searches files for
+// additional IBBSegment, supports coreboot and UEFI EDK2
+func (b *BootGuard) CreateIBBSegments(seElement uint8, flags uint16, imagepath string) error {
+	image, err := os.Open(imagepath)
+	if err != nil {
+		return err
 	}
-
-	if fws.FPTBad {
-		return false, fmt.Errorf("FPT bad")
+	defer image.Close()
+	stat, err := image.Stat()
+	if err != nil {
+		return err
 	}
-
-	if fws.MfgMode {
-		return false, fmt.Errorf("ME is in manufacturing mode")
+	type ibbElement struct {
+		Reserved [2]byte
+		Flags    uint16
+		Base     uint32
+		Size     uint32
 	}
+	var ibbElements []ibbElement
+	img, err := cbfs.NewImage(image)
+	if err != nil {
+		// To be sure the image file is closed before reading from it again
+		image.Close()
+		img, err := os.ReadFile(imagepath)
+		if err != nil {
+			return err
+		}
+		fitentries, err := fit.GetEntries(img)
+		if err != nil {
+			return err
+		}
+		var ibbCount uint8
+		for _, entry := range fitentries {
+			if entry.GetEntryBase().Headers.Type() == fit.EntryTypeBIOSStartupModuleEntry {
+				ibbCount++
+			}
+		}
+		ibbElements = make([]ibbElement, ibbCount)
+		for idx, entry := range fitentries {
+			if entry.GetEntryBase().Headers.Type() == fit.EntryTypeBIOSStartupModuleEntry {
+				ibbElements[idx].Base = uint32(entry.GetEntryBase().Headers.Address.Pointer())
+				ibbElements[idx].Size = entry.GetEntryBase().Headers.Size.Uint32() << 4
+				ibbElements[idx].Flags = flags
+			}
+		}
+	} else {
+		// From here we consider it is a coreboot image
+		flashBase := consts.BasePhysAddr - stat.Size()
+		cbfsbaseaddr := img.Area.Offset
+		var ibbCount uint8
+		for _, seg := range img.Segs {
+			switch seg.GetFile().Name {
+			case
+				"fspt.bin",
+				"fallback/verstage",
+				"bootblock":
+				ibbCount++
+			}
+		}
+		ibbElements = make([]ibbElement, ibbCount)
+		for idx, seg := range img.Segs {
+			switch seg.GetFile().Name {
+			case
+				"fspt.bin",
+				"fallback/verstage",
+				"bootblock":
 
-	if fws.ErrorCode != 0 {
-		return false, fmt.Errorf("HFSTS1 error code is not 0")
+				ibbElements[idx].Base = uint32(flashBase) + cbfsbaseaddr + seg.GetFile().RecordStart + seg.GetFile().SubHeaderOffset
+				ibbElements[idx].Size = seg.GetFile().Size
+				ibbElements[idx].Flags = flags
+			}
+		}
 	}
-
-	return true, nil
+	switch b.Version {
+	case bgheader.Version10:
+		b.VData.BGbpm.SE[seElement].IBBSegments = make([]bgbootpolicy.IBBSegment, len(ibbElements))
+		for idx, ibb := range ibbElements {
+			b.VData.BGbpm.SE[seElement].IBBSegments[idx].Base = ibb.Base
+			b.VData.BGbpm.SE[seElement].IBBSegments[idx].Size = ibb.Size
+			b.VData.BGbpm.SE[seElement].IBBSegments[idx].Flags = ibb.Flags
+		}
+	case bgheader.Version20:
+		b.VData.CBNTbpm.SE[seElement].IBBSegments = make([]cbntbootpolicy.IBBSegment, len(ibbElements))
+		for idx, ibb := range ibbElements {
+			b.VData.CBNTbpm.SE[seElement].IBBSegments[idx].Base = ibb.Base
+			b.VData.CBNTbpm.SE[seElement].IBBSegments[idx].Size = ibb.Size
+			b.VData.CBNTbpm.SE[seElement].IBBSegments[idx].Flags = ibb.Flags
+		}
+	}
+	return nil
 }
