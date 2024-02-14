@@ -1,0 +1,82 @@
+name: Build and Test
+on:
+    push:
+      tags:
+        - v*
+      branches:
+        - main
+    pull_request:
+jobs:
+    build:
+        strategy:
+            matrix:
+                go-arch: [amd64, arm64]
+        runs-on: ubuntu-latest
+        env:
+            CGO_ENABLED: 0
+            GOARCH: ${{ matrix.go-arch }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Build txt-suite
+              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o txt-suite cmd/txt-suite/*.go
+            - name: Build txt-prov
+              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o txt-prov cmd/txt-prov/*.go
+            - name: Build bg-suite
+              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o bg-suite cmd/bg-suite/*.go
+            - name: Build bg-prov
+              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o bg-prov cmd/bg-prov/*.go
+            - name: Build pcr0tool
+              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o pcr0tool cmd/pcr0tool/*.go
+            - name: Build amd-suite
+              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o amd-suite cmd/amd-suite/*.go
+            - name: Save artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: artifacts-${{ matrix.go-arch }}
+                  path: |
+                    ./txt-suite
+                    ./txt-prov
+                    ./bg-suite
+                    ./bg-prov
+                    ./pcr0tool
+                    ./amd-suite
+            
+
+    test:
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: go test
+              run: go test -v ./pkg/...
+
+    generateTemplates:
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Install dependencies
+              run: sudo apt-get install jq
+            - name: Download Artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  name: artifacts-amd64
+                  path: ./artifacts
+            - name: Make artifacts executable
+              run: chmod +x ./artifacts/*
+            - name: Generate Template-v-1 (bg-prov)
+              run: |
+                ./artifacts/bg-prov template-v-1 --svn=1 --acmsvn=1 --nems=2 \
+                --pbet=12 --ibbflags=1 --mchbar=123456 --vdtbar=120000 --dmabase0=130000 \
+                --dmasize0=2048 --entrypoint=140000 --ibbhash=SHA256 config.json
+                cat ./config.json | jq
+
+            - name: Generate Template-v-2 (bg-prov)
+              run: |
+                ./artifacts/bg-prov template-v-1 --svn=1 --acmsvn=1 --nems=2 \
+                --pbet=12 --ibbflags=1 --mchbar=123456 --vdtbar=120000 --dmabase0=130000 \
+                --dmasize0=2048 --entrypoint=140000 --ibbhash=SHA256 config.json
+                cat ./config.json | jq
