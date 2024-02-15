@@ -1,0 +1,19 @@
+# Configuration for commitlint
+---
+# Basic set of roules taken from https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional
+extends:
+  - "@commitlint/config-conventional"
+# Override type-enum to just use types, which are relevant to this project
+rules:
+  type-enum:
+    - 2
+    - always
+    - - build
+      - chore
+      - ci
+      - docs
+      - feat
+      - fix
+      - refactor
+      - revert
+      - test
