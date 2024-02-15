@@ -1,4 +1,4 @@
-name: golangci-lint
+name: linter
 on:
   push:
     tags:
@@ -18,3 +18,11 @@ jobs:
         with:
           version: latest
           working-directory: pkg
+
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@v5
