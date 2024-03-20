@@ -52,6 +52,45 @@ jobs:
             - name: go test
               run: go test -v ./pkg/...
 
+    ValidationTestBootguard:
+      needs: build
+      runs-on: ubuntu-latest
+
+      steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download file
+        run: |
+          wget "https://download.asrock.com/BIOS/4677/W790%20WS(4.04)ROM.zip"
+          unzip W790\ WS\(4.04\)ROM.zip
+          mv W790-WS_4.04.ROM firmware.bin
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts-amd64
+          path: ./artifacts
+
+      - name: Make artifacts executable
+        run: chmod +x ./artifacts/*
+
+      - name: Check FIT
+        run: |
+          ./artifacts/bg-prov fit-show ./firmware.bin >> fit.log
+
+      - name: Check FIT entries
+        run: |
+          cat fit.log | grep -s "KeyManifestRecord"
+          cat fit.log | grep -s "BootPolicyManifestRecord"
+
+      - name: Extract and Verify BPM and KM
+        run: |
+          ./artifacts/bg-prov bpm-export ./firmware.bin bpm.bin
+          ./artifacts/bg-prov km-export ./firmware.bin km.bin
+          ./artifacts/bg-prov bpm-verify ./bpm.bin
+          ./artifacts/bg-prov km-verify ./km.bin
+
     generateTemplates:
         needs: build
         runs-on: ubuntu-latest
