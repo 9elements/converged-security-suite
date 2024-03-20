@@ -5,6 +5,7 @@ on:
         - v*
       branches:
         - main
+        - feat/addBtGTests
     pull_request:
 jobs:
     build:
@@ -51,6 +52,33 @@ jobs:
               uses: actions/checkout@v4
             - name: go test
               run: go test -v ./pkg/...
+
+    integrationBtG:
+      needs: build
+      runs-on: ubuntu-latest
+
+      steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download file
+        run: |
+          wget https://download.lenovo.com/pccbbs/mobiles/n2yur17w.iso
+
+      - name: Check PWD
+        run: |
+          pwd
+
+      - name: Mount Image
+        id: mount-image
+        uses: damianperera/mount-image-action@v1
+        with:
+              imagePath: ./n2yur17w.iso
+              mountPoint: /mnt/firmwareImage
+
+      - name: Check Image
+        run: |
+          ls -l /mnt/firmwareImage
 
     generateTemplates:
         needs: build
