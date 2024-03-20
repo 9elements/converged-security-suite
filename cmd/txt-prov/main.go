@@ -1,14 +1,17 @@
 package main
 
 import (
+	"github.com/9elements/converged-security-suite/v2/internal"
 	"github.com/9elements/converged-security-suite/v2/pkg/log"
 	"github.com/alecthomas/kong"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 	fianoLog "github.com/linuxboot/fiano/pkg/log"
 )
 
-const programName = "txt-prov"
-const programDesc = "Intel TXT provisioning tool"
+const (
+	programName = "txt-prov"
+	programDesc = "Intel TXT provisioning tool"
+)
 
 var (
 	gitcommit string
@@ -28,7 +31,8 @@ func main() {
 	fianoLog.DefaultLogger = log.FianoLogger{}
 
 	// Run commands
-	err := ctx.Run(&context{
-		debug: cli.Debug})
+	err := ctx.Run(&internal.Context{
+		Debug: cli.Debug,
+	})
 	ctx.FatalIfErrorf(err)
 }

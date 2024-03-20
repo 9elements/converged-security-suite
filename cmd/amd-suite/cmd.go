@@ -10,13 +10,9 @@ import (
 	"github.com/linuxboot/fiano/pkg/amd/apcb"
 	"github.com/linuxboot/fiano/pkg/amd/psb"
 
+	"github.com/9elements/converged-security-suite/v2/internal"
 	amd_manifest "github.com/linuxboot/fiano/pkg/amd/manifest"
 )
-
-// Context for kong command line parser
-type context struct {
-	debug bool
-}
 
 type outputFirmwareCmd struct {
 	FwPath string `required:"" name:"fwpath" help:"Path to UEFI firmware image." type:"path"`
@@ -99,7 +95,7 @@ var cli struct {
 	SetSecurityToken          setAPCBSecurityTokenCmd     `cmd:"" help:"sets a APCB security token"`
 }
 
-func (s *outputFirmwareCmd) Run(ctx *context) error {
+func (s *outputFirmwareCmd) Run(ctx *internal.Context) error {
 	amdFw, err := parseAMDFirmwareFile(s.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
@@ -118,7 +114,7 @@ func (s *outputFirmwareCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (s *showKeysCmd) Run(ctx *context) error {
+func (s *showKeysCmd) Run(ctx *internal.Context) error {
 	amdFw, err := parseAMDFirmwareFile(s.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
@@ -133,7 +129,7 @@ func (s *showKeysCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (v *validatePSPEntriesCmd) Run(ctx *context) error {
+func (v *validatePSPEntriesCmd) Run(ctx *internal.Context) error {
 	directory, err := psb.DirectoryTypeFromString(v.Directory)
 	if err != nil {
 		return err
@@ -169,7 +165,7 @@ func (v *validatePSPEntriesCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (v *validateRTMCmd) Run(ctx *context) error {
+func (v *validateRTMCmd) Run(ctx *internal.Context) error {
 	amdFw, err := parseAMDFirmwareFile(v.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
@@ -215,13 +211,13 @@ func dumpHelper(fwPath string, entry string, resultFile string,
 	return nil
 }
 
-func (v *dumpPSPEntryCmd) Run(ctx *context) error {
+func (v *dumpPSPEntryCmd) Run(ctx *internal.Context) error {
 	return dumpHelper(v.FwPath, v.Entry, v.EntryFile, func(amdFw *amd_manifest.AMDFirmware, entryID uint32, w io.Writer) (int, error) {
 		return psb.DumpPSPEntry(amdFw, v.PSPLevel, amd_manifest.PSPDirectoryTableEntryType(entryID), w)
 	})
 }
 
-func (v *dumpBIOSEntryCmd) Run(ctx *context) error {
+func (v *dumpBIOSEntryCmd) Run(ctx *internal.Context) error {
 	return dumpHelper(v.FwPath, v.Entry, v.EntryFile, func(amdFw *amd_manifest.AMDFirmware, entryID uint32, w io.Writer) (int, error) {
 		return psb.DumpBIOSEntry(amdFw, v.BIOSLevel, amd_manifest.BIOSDirectoryTableEntryType(entryID), v.Instance, w)
 	})
@@ -270,19 +266,19 @@ func patchHelper(fwPath string, entry string, entryFile string, resultFile strin
 	return nil
 }
 
-func (v *patchPSPEntryCmd) Run(ctx *context) error {
+func (v *patchPSPEntryCmd) Run(ctx *internal.Context) error {
 	return patchHelper(v.FwPath, v.Entry, v.EntryFile, v.ModifiedFirmwareFile, func(amdFw *amd_manifest.AMDFirmware, entryID uint32, r io.Reader, w io.Writer) (int, error) {
 		return psb.PatchPSPEntry(amdFw, v.PSPLevel, amd_manifest.PSPDirectoryTableEntryType(entryID), r, w)
 	})
 }
 
-func (v *patchBIOSEntryCmd) Run(ctx *context) error {
+func (v *patchBIOSEntryCmd) Run(ctx *internal.Context) error {
 	return patchHelper(v.FwPath, v.Entry, v.EntryFile, v.ModifiedFirmwareFile, func(amdFw *amd_manifest.AMDFirmware, entryID uint32, r io.Reader, w io.Writer) (int, error) {
 		return psb.PatchBIOSEntry(amdFw, v.BIOSLevel, amd_manifest.BIOSDirectoryTableEntryType(entryID), v.Instance, r, w)
 	})
 }
 
-func (v *outputAPCBSecurityTokensCmd) Run(ctx *context) error {
+func (v *outputAPCBSecurityTokensCmd) Run(ctx *internal.Context) error {
 	amdFw, err := parseAMDFirmwareFile(v.FwPath)
 	if err != nil {
 		return fmt.Errorf("could not parse firmware image: %w", err)
@@ -332,7 +328,7 @@ func (v *outputAPCBSecurityTokensCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (v *setAPCBSecurityTokenCmd) Run(ctx *context) error {
+func (v *setAPCBSecurityTokenCmd) Run(ctx *internal.Context) error {
 	b, err := ioutil.ReadFile(v.FwPath)
 	if err != nil {
 		return fmt.Errorf("unable to read the image '%s': %w", v.FwPath, err)

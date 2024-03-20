@@ -7,6 +7,7 @@ import (
 	"os"
 	"sort"
 
+	"github.com/9elements/converged-security-suite/v2/internal"
 	"github.com/9elements/converged-security-suite/v2/pkg/test"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/google/go-tpm/tpm2"
@@ -16,20 +17,11 @@ import (
 	a "github.com/logrusorgru/aurora"
 )
 
-type context struct {
-	tpmdev      *hwapi.TPM
-	interactive bool
-	logpath     string
-}
+type listCmd struct{}
 
-type listCmd struct {
-}
+type markdownCmd struct{}
 
-type markdownCmd struct {
-}
-
-type versionCmd struct {
-}
+type versionCmd struct{}
 
 type execTestsCmd struct {
 	Set         string `required:"" default:"all" help:"Select subset of tests. Options: all, uefi, txtready, tboot, cbnt, legacy"`
@@ -49,7 +41,7 @@ var cli struct {
 	Version   versionCmd   `cmd:"" help:"Prints the version of the program"`
 }
 
-func (e *execTestsCmd) Run(ctx *context) error {
+func (e *execTestsCmd) Run(ctx *internal.Context) error {
 	ret := false
 	preset := new(test.PreSet)
 	if e.Config != "" {
@@ -89,7 +81,7 @@ func (e *execTestsCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (l *listCmd) Run(ctx *context) error {
+func (l *listCmd) Run(ctx *internal.Context) error {
 	tests := getTests()
 	for i := range tests {
 		fmt.Printf("Test No: %v, %v\n", i, tests[i].Name)
@@ -97,7 +89,7 @@ func (l *listCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (m *markdownCmd) Run(ctx *context) error {
+func (m *markdownCmd) Run(ctx *internal.Context) error {
 	var teststate string
 	tests := getTests()
 
@@ -120,7 +112,7 @@ func (m *markdownCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (v *versionCmd) Run(ctx *context) error {
+func (v *versionCmd) Run(ctx *internal.Context) error {
 	tools.ShowVersion(programDesc, gittag, gitcommit)
 	return nil
 }
@@ -146,7 +138,7 @@ func getTests() []*test.Test {
 }
 
 func run(testGroup string, tests []*test.Test, preset *test.PreSet, interactive bool) bool {
-	var result = false
+	result := false
 	f := bufio.NewWriter(os.Stdout)
 
 	hwAPI := hwapi.GetAPI()
@@ -186,7 +178,7 @@ func run(testGroup string, tests []*test.Test, preset *test.PreSet, interactive 
 			}
 		}
 		data, _ := json.MarshalIndent(t, "", "")
-		os.WriteFile(logfile, data, 0664)
+		os.WriteFile(logfile, data, 0o664)
 	}
 
 	for index := range tests {

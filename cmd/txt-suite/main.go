@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/9elements/converged-security-suite/v2/internal"
 	"github.com/9elements/converged-security-suite/v2/pkg/log"
 	"github.com/alecthomas/kong"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
@@ -39,6 +40,6 @@ func main() {
 		}))
 	cbnt.StrictOrderCheck = cli.ManifestStrictOrderCheck
 	fianoLog.DefaultLogger = log.FianoLogger{}
-	err := ctx.Run(&context{})
+	err := ctx.Run(&internal.Context{})
 	ctx.FatalIfErrorf(err)
 }

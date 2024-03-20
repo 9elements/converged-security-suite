@@ -14,8 +14,8 @@ require (
 	github.com/go-ng/slices v0.0.0-20230703171042-6195d35636a2
 	github.com/go-ng/xmath v0.0.0-20230704233441-028f5ea62335
 	github.com/golang-collections/go-datastructures v0.0.0-20150211160725-59788d5eb259
-	github.com/google/go-attestation v0.4.3
-	github.com/google/go-tpm v0.3.3
+	github.com/google/go-attestation v0.5.1
+	github.com/google/go-tpm v0.9.0
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/linuxboot/fiano v1.2.0
@@ -41,8 +41,8 @@ require (
 	github.com/go-ng/xatomic v0.0.0-20230519181013-85c0ec87e55f // indirect
 	github.com/go-ng/xsort v0.0.0-20220617174223-1d146907bccc // indirect
 	github.com/godbus/dbus/v5 v5.0.4 // indirect
-	github.com/google/certificate-transparency-go v1.1.1 // indirect
-	github.com/google/go-tspi v0.2.1-0.20190423175329-115dea689aad // indirect
+	github.com/google/certificate-transparency-go v1.1.2 // indirect
+	github.com/google/go-tspi v0.3.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/intel-go/cpuid v0.0.0-20220614022739-219e067757cb // indirect
 	github.com/jedib0t/go-pretty/v6 v6.4.6 // indirect
@@ -53,7 +53,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/term v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )

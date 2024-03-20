@@ -6,41 +6,34 @@ import (
 
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 
+	"github.com/9elements/converged-security-suite/v2/internal"
 	"github.com/9elements/converged-security-suite/v2/pkg/provisioning/txt"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 )
 
-// Context for kong command line parser
-// We need a TPM device in most commands.
-type context struct {
-	debug bool
-}
-
-type versionCmd struct {
-}
+type versionCmd struct{}
 
 type auxDeleteCmd struct {
 	Config string `arg:"" required:"" name:"config" default:"lcp.config" help:"Filename of LCP config file in JSON format"`
 	Out    string `flag:"" optional:"" name:"out" help:"Filename to write binary PS index LCP Policy into"`
 }
 
-type auxDefineCmd struct {
-}
+type auxDefineCmd struct{}
 
-type psDeleteCmd struct {
-}
-type psDefineCmd struct {
-}
-type psUpdateCmd struct {
-	Config string `arg:"" required:"" name:"config" default:"lcp.config" help:"Filename of LCP config file in JSON format" type:"path"`
-	Out    string `flag:"" optional:"" name:"output" help:"Filename to write binary PS index LCP Policy into" type:"path"`
-}
+type (
+	psDeleteCmd struct{}
+	psDefineCmd struct{}
+	psUpdateCmd struct {
+		Config string `arg:"" required:"" name:"config" default:"lcp.config" help:"Filename of LCP config file in JSON format" type:"path"`
+		Out    string `flag:"" optional:"" name:"output" help:"Filename to write binary PS index LCP Policy into" type:"path"`
+	}
+)
+
 type platProvCmd struct {
 	Config string `arg:"" required:"" name:"config" default:"lcp.config" help:"Filename of LCP config file in JSON format" type:"path"`
 	Out    string `flag:"" optional:"" name:"output" help:"Filename to write binary PS index LCP Policy into" type:"path"`
 }
-type showCmd struct {
-}
+type showCmd struct{}
 
 var cli struct {
 	Debug                    bool `help:"Enable debug mode"`
@@ -56,12 +49,12 @@ var cli struct {
 	Show         showCmd      `cmd:"" help:"Show current provisioned PS & AUX index in NVRAM on stdout"`
 }
 
-func (v *versionCmd) Run(ctx *context) error {
+func (v *versionCmd) Run(ctx *internal.Context) error {
 	tools.ShowVersion(programName, gittag, gitcommit)
 	return nil
 }
 
-func (a *auxDeleteCmd) Run(ctx *context) error {
+func (a *auxDeleteCmd) Run(ctx *internal.Context) error {
 	// Set Aux Delete bit in LCP Policy and writes it to PS index in TPM NVRAM
 	tpm, err := hwapi.NewTPM()
 	if err != nil {
@@ -95,7 +88,7 @@ func (a *auxDeleteCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (a *auxDefineCmd) Run(ctx *context) error {
+func (a *auxDefineCmd) Run(ctx *internal.Context) error {
 	// Define AUX index in TPM NVRAM
 	tpm, err := hwapi.NewTPM()
 	if err != nil {
@@ -120,7 +113,8 @@ func (a *auxDefineCmd) Run(ctx *context) error {
 	}
 	return nil
 }
-func (p *psDeleteCmd) Run(ctx *context) error {
+
+func (p *psDeleteCmd) Run(ctx *internal.Context) error {
 	// Delete PS index in TPM NVRAM
 	tpm, err := hwapi.NewTPM()
 	if err != nil {
@@ -142,7 +136,8 @@ func (p *psDeleteCmd) Run(ctx *context) error {
 	}
 	return nil
 }
-func (p *psDefineCmd) Run(ctx *context) error {
+
+func (p *psDefineCmd) Run(ctx *internal.Context) error {
 	// Define PS index in TPM NVRAM
 	tpm, err := hwapi.NewTPM()
 	if err != nil {
@@ -171,7 +166,8 @@ func (p *psDefineCmd) Run(ctx *context) error {
 	}
 	return nil
 }
-func (p *psUpdateCmd) Run(ctx *context) error {
+
+func (p *psUpdateCmd) Run(ctx *internal.Context) error {
 	// Writes new LCP Policy to PS index in TPM NVRAM
 	tpm, err := hwapi.NewTPM()
 	if err != nil {
@@ -202,7 +198,8 @@ func (p *psUpdateCmd) Run(ctx *context) error {
 	}
 	return nil
 }
-func (p *platProvCmd) Run(ctx *context) error {
+
+func (p *platProvCmd) Run(ctx *internal.Context) error {
 	// Provision PS & AUX index in TPM NVRAM with LCP Policy
 	tpm, err := hwapi.NewTPM()
 	if err != nil {
@@ -236,7 +233,8 @@ func (p *platProvCmd) Run(ctx *context) error {
 	}
 	return nil
 }
-func (s *showCmd) Run(ctx *context) error {
+
+func (s *showCmd) Run(ctx *internal.Context) error {
 	// Show PS & AUX index content from TPM NVRAM
 	tpm, err := hwapi.NewTPM()
 	if err != nil {

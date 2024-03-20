@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/9elements/converged-security-suite/v2/internal"
 	"github.com/9elements/converged-security-suite/v2/pkg/test"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 
@@ -17,11 +18,6 @@ import (
 
 	a "github.com/logrusorgru/aurora"
 )
-
-type context struct {
-	interactive bool
-	logpath     string
-}
 
 type listCmd struct{}
 
@@ -47,7 +43,7 @@ var cli struct {
 	Version   versionCmd   `cmd:"" help:"Prints the version of the program"`
 }
 
-func (e *execTestsCmd) Run(ctx *context) error {
+func (e *execTestsCmd) Run(ctx *internal.Context) error {
 	ret := false
 	data, err := os.ReadFile(e.Firmware)
 	if err != nil {
@@ -95,7 +91,7 @@ func (e *execTestsCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (l *listCmd) Run(ctx *context) error {
+func (l *listCmd) Run(ctx *internal.Context) error {
 	tests := getTests()
 	for i := range tests {
 		fmt.Printf("Test No: %v, %v\n", i, tests[i].Name)
@@ -103,7 +99,7 @@ func (l *listCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (m *markdownCmd) Run(ctx *context) error {
+func (m *markdownCmd) Run(ctx *internal.Context) error {
 	var teststate string
 	tests := getTests()
 
@@ -126,7 +122,7 @@ func (m *markdownCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (v *versionCmd) Run(ctx *context) error {
+func (v *versionCmd) Run(ctx *internal.Context) error {
 	tools.ShowVersion(programDesc, gittag, gitcommit)
 	return nil
 }

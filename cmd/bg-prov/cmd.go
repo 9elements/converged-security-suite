@@ -17,13 +17,10 @@ import (
 
 	"github.com/linuxboot/fiano/pkg/uefi"
 
+	"github.com/9elements/converged-security-suite/v2/internal"
 	"github.com/9elements/converged-security-suite/v2/pkg/provisioning/bootguard"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 )
-
-type context struct {
-	Debug bool
-}
 
 type versionCmd struct{}
 
@@ -301,12 +298,12 @@ type verifyBPMSigCmd struct {
 	BPM string `arg:"" required:"" name:"bpm" help:"Path to the Boot Policy Manifest binary file." type:"path"`
 }
 
-func (v *versionCmd) Run(ctx *context) error {
+func (v *versionCmd) Run(ctx *internal.Context) error {
 	tools.ShowVersion(programName, gittag, gitcommit)
 	return nil
 }
 
-func (kmp *kmPrintCmd) Run(ctx *context) error {
+func (kmp *kmPrintCmd) Run(ctx *internal.Context) error {
 	file, err := os.Open(kmp.Path)
 	if err != nil {
 		return err
@@ -320,7 +317,7 @@ func (kmp *kmPrintCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (bpmp *bpmPrintCmd) Run(ctx *context) error {
+func (bpmp *bpmPrintCmd) Run(ctx *internal.Context) error {
 	file, err := os.Open(bpmp.Path)
 	if err != nil {
 		return err
@@ -334,7 +331,7 @@ func (bpmp *bpmPrintCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (acmp *acmPrintCmd) Run(ctx *context) error {
+func (acmp *acmPrintCmd) Run(ctx *internal.Context) error {
 	file, err := os.Open(acmp.Path)
 	if err != nil {
 		return err
@@ -348,7 +345,7 @@ func (acmp *acmPrintCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (biosp *biosPrintCmd) Run(ctx *context) error {
+func (biosp *biosPrintCmd) Run(ctx *internal.Context) error {
 	data, err := os.ReadFile(biosp.Path)
 	if err != nil {
 		return err
@@ -365,7 +362,7 @@ func (biosp *biosPrintCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (acme *acmExportCmd) Run(ctx *context) error {
+func (acme *acmExportCmd) Run(ctx *internal.Context) error {
 	data, err := os.ReadFile(acme.BIOS)
 	if err != nil {
 		return err
@@ -381,7 +378,7 @@ func (acme *acmExportCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (kme *kmExportCmd) Run(ctx *context) error {
+func (kme *kmExportCmd) Run(ctx *internal.Context) error {
 	data, err := os.ReadFile(kme.BIOS)
 	if err != nil {
 		return err
@@ -397,7 +394,7 @@ func (kme *kmExportCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (bpme *bpmExportCmd) Run(ctx *context) error {
+func (bpme *bpmExportCmd) Run(ctx *internal.Context) error {
 	data, err := os.ReadFile(bpme.BIOS)
 	if err != nil {
 		return err
@@ -413,7 +410,7 @@ func (bpme *bpmExportCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (g *generateKMCmdv1) Run(ctx *context) error {
+func (g *generateKMCmdv1) Run(ctx *internal.Context) error {
 	var b bootguard.BootGuard
 	b.Version = bgheader.Version10
 	if g.Config != "" {
@@ -481,7 +478,7 @@ func (g *generateKMCmdv1) Run(ctx *context) error {
 	return nil
 }
 
-func (g *generateKMCmdv2) Run(ctx *context) error {
+func (g *generateKMCmdv2) Run(ctx *internal.Context) error {
 	var b bootguard.BootGuard
 	b.Version = bgheader.Version20
 	if g.Config != "" {
@@ -551,7 +548,7 @@ func (g *generateKMCmdv2) Run(ctx *context) error {
 	return nil
 }
 
-func (g *generateBPMCmdv1) Run(ctx *context) error {
+func (g *generateBPMCmdv1) Run(ctx *internal.Context) error {
 	var b bootguard.BootGuard
 	b.Version = bgheader.Version10
 	if g.Config != "" {
@@ -610,7 +607,7 @@ func (g *generateBPMCmdv1) Run(ctx *context) error {
 	return nil
 }
 
-func (g *generateBPMCmdv2) Run(ctx *context) error {
+func (g *generateBPMCmdv2) Run(ctx *internal.Context) error {
 	var b bootguard.BootGuard
 	b.Version = bgheader.Version20
 	if g.Config != "" {
@@ -689,7 +686,7 @@ func (g *generateBPMCmdv2) Run(ctx *context) error {
 	return nil
 }
 
-func (g *generateACMCmdv0) Run(ctx *context) error {
+func (g *generateACMCmdv0) Run(ctx *internal.Context) error {
 	var sACM fit.EntrySACM
 	var sACMData *fit.EntrySACMData
 	if g.ConfigIn != "" {
@@ -764,7 +761,7 @@ func (g *generateACMCmdv0) Run(ctx *context) error {
 	return nil
 }
 
-func (g *generateACMCmdv3) Run(ctx *context) error {
+func (g *generateACMCmdv3) Run(ctx *internal.Context) error {
 	var sACM fit.EntrySACM
 	var sACMData *fit.EntrySACMData
 	if g.ConfigIn != "" {
@@ -839,7 +836,7 @@ func (g *generateACMCmdv3) Run(ctx *context) error {
 	return nil
 }
 
-func (s *signKMCmd) Run(ctx *context) error {
+func (s *signKMCmd) Run(ctx *internal.Context) error {
 	encKey, err := os.ReadFile(s.Key)
 	if err != nil {
 		return err
@@ -867,7 +864,7 @@ func (s *signKMCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (s *signBPMCmd) Run(ctx *context) error {
+func (s *signBPMCmd) Run(ctx *internal.Context) error {
 	encKey, err := os.ReadFile(s.Key)
 	if err != nil {
 		return err
@@ -895,7 +892,7 @@ func (s *signBPMCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (t *templateCmdv2) Run(ctx *context) error {
+func (t *templateCmdv2) Run(ctx *internal.Context) error {
 	var vdata bootguard.VersionedData
 	vdata.CBNTbpm = cbntbootpolicy.NewManifest()
 	vdata.CBNTkm = cbntkey.NewManifest()
@@ -960,7 +957,7 @@ func (t *templateCmdv2) Run(ctx *context) error {
 	return nil
 }
 
-func (t *templateCmdv1) Run(ctx *context) error {
+func (t *templateCmdv1) Run(ctx *internal.Context) error {
 	var vdata bootguard.VersionedData
 	var err error
 
@@ -1003,7 +1000,7 @@ func (t *templateCmdv1) Run(ctx *context) error {
 	return nil
 }
 
-func (rc *readConfigCmd) Run(ctx *context) error {
+func (rc *readConfigCmd) Run(ctx *internal.Context) error {
 	f, err := os.Create(rc.Config)
 	if err != nil {
 		return err
@@ -1015,7 +1012,7 @@ func (rc *readConfigCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (s *stitchingKMCmd) Run(ctx *context) error {
+func (s *stitchingKMCmd) Run(ctx *internal.Context) error {
 	file, err := os.Open(s.KM)
 	if err != nil {
 		return err
@@ -1046,7 +1043,7 @@ func (s *stitchingKMCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (s *stitchingBPMCmd) Run(ctx *context) error {
+func (s *stitchingBPMCmd) Run(ctx *internal.Context) error {
 	file, err := os.Open(s.BPM)
 	if err != nil {
 		return err
@@ -1077,7 +1074,7 @@ func (s *stitchingBPMCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (s *stitchingCmd) Run(ctx *context) error {
+func (s *stitchingCmd) Run(ctx *internal.Context) error {
 	var err error
 	var bpm, km, acm, me []byte
 	if s.BPM != "" {
@@ -1134,7 +1131,7 @@ func (s *stitchingCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (k *keygenCmd) Run(ctx *context) error {
+func (k *keygenCmd) Run(ctx *internal.Context) error {
 	kmPubFile, err := os.Create(k.Path + "km_pub.pem")
 	if err != nil {
 		return err
@@ -1180,7 +1177,7 @@ func (k *keygenCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (p printFITCmd) Run(ctx *context) error {
+func (p printFITCmd) Run(ctx *internal.Context) error {
 	img, err := os.ReadFile(p.BIOS)
 	if err != nil {
 		return err
@@ -1193,7 +1190,7 @@ func (p printFITCmd) Run(ctx *context) error {
 	return nil
 }
 
-func (v *verifyKMSigCmd) Run(ctx *context) error {
+func (v *verifyKMSigCmd) Run(ctx *internal.Context) error {
 	file, err := os.Open(v.KM)
 	if err != nil {
 		return err
@@ -1206,7 +1203,7 @@ func (v *verifyKMSigCmd) Run(ctx *context) error {
 	return bg.VerifyKM()
 }
 
-func (b *verifyBPMSigCmd) Run(ctx *context) error {
+func (b *verifyBPMSigCmd) Run(ctx *internal.Context) error {
 	file, err := os.Open(b.BPM)
 	if err != nil {
 		return err

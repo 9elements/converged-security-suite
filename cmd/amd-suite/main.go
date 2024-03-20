@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/9elements/converged-security-suite/v2/internal"
 	"github.com/9elements/converged-security-suite/v2/pkg/log"
 	"github.com/alecthomas/kong"
 	"github.com/facebookincubator/go-belt/tool/logger"
@@ -8,8 +9,10 @@ import (
 	fianoLog "github.com/linuxboot/fiano/pkg/log"
 )
 
-const programName = "amd-suite"
-const programDesc = "AMD PSP and PSB management tool"
+const (
+	programName = "amd-suite"
+	programDesc = "AMD PSP and PSB management tool"
+)
 
 var (
 	gitcommit string
@@ -28,7 +31,8 @@ func main() {
 	fianoLog.DefaultLogger = log.NewFianoLogger(dummy.New(), logger.LevelTrace)
 
 	// Run commands
-	err := ctx.Run(&context{
-		debug: cli.Debug})
+	err := ctx.Run(&internal.Context{
+		Debug: cli.Debug,
+	})
 	ctx.FatalIfErrorf(err)
 }
