@@ -7,6 +7,8 @@ import (
 	"github.com/google/go-tpm/tpmutil"
 
 	"github.com/google/go-tpm/tpm2"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // DeletePSIndexTPM20 deletes the PS index on TPM 2.0
@@ -52,7 +54,7 @@ func DeletePSIndexTPM20(rw io.ReadWriter, passHash []byte) error {
 	if err != nil {
 		return fmt.Errorf("NVUndefineSpaceSpecial() failed: %v", err)
 	}
-	fmt.Println("PS index deleted successfully")
+	log.Info("PS index deleted successfully")
 	return nil
 }
 

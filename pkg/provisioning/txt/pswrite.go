@@ -9,6 +9,8 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/google/go-tpm/tpm2"
 	"github.com/google/go-tpm/tpmutil"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // WritePSIndexTPM20 writes the LCP Policy2 into the PS index of TPM 2.0
@@ -55,7 +57,7 @@ func WritePSIndexTPM20(rw io.ReadWriter, lcppol *tools.LCPPolicy2, passHash []by
 	if err != nil {
 		return fmt.Errorf("NVWrite in writePSPolicy failed: %v", err)
 	}
-	fmt.Println("PS index updated successfully")
+	log.Info("PS index updated successfully")
 	return nil
 }
 

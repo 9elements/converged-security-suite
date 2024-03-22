@@ -11,6 +11,7 @@ import (
 	"github.com/linuxboot/fiano/pkg/amd/psb"
 
 	amd_manifest "github.com/linuxboot/fiano/pkg/amd/manifest"
+	log "github.com/sirupsen/logrus"
 )
 
 // Context for kong command line parser
@@ -129,7 +130,7 @@ func (s *showKeysCmd) Run(ctx *context) error {
 		return fmt.Errorf("could not extract keys from the firmware image: %w", err)
 	}
 
-	fmt.Println(keySet.String())
+	log.Infof("%s", keySet.String())
 	return nil
 }
 
@@ -164,7 +165,7 @@ func (v *validatePSPEntriesCmd) Run(ctx *context) error {
 	}
 
 	for _, validation := range signatureValidations {
-		fmt.Println(validation.String())
+		log.Infof("%s", validation.String())
 	}
 	return nil
 }
@@ -179,7 +180,7 @@ func (v *validateRTMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(signatureValidation.String())
+	log.Infof("%s", signatureValidation.String())
 	return nil
 }
 
@@ -203,7 +204,7 @@ func dumpHelper(fwPath string, entry string, resultFile string,
 	defer func() {
 		err := f.Close()
 		if err != nil {
-			fmt.Printf("could not close file %s after dumping entry %x", resultFile, id)
+			log.Errorf("could not close file %s after dumping entry %x", resultFile, id)
 		}
 	}()
 
@@ -211,7 +212,7 @@ func dumpHelper(fwPath string, entry string, resultFile string,
 	if err != nil {
 		return err
 	}
-	fmt.Println("Entry size / Number of written bytes ", n)
+	log.Infof("Entry size / Number of written bytes %d", n)
 	return nil
 }
 
@@ -246,7 +247,7 @@ func patchHelper(fwPath string, entry string, entryFile string, resultFile strin
 	}
 	defer func() {
 		if err := inFile.Close(); err != nil {
-			fmt.Printf("could not close modified entry file %s: %v", entryFile, err)
+			log.Errorf("could not close modified entry file %s: %v", entryFile, err)
 		}
 	}()
 
@@ -257,7 +258,7 @@ func patchHelper(fwPath string, entry string, entryFile string, resultFile strin
 	defer func() {
 		err := outFile.Close()
 		if err != nil {
-			fmt.Printf("could not close file %s after dumping entry %x", resultFile, id)
+			log.Errorf("could not close file %s after dumping entry %x", resultFile, id)
 		}
 	}()
 
@@ -266,7 +267,7 @@ func patchHelper(fwPath string, entry string, entryFile string, resultFile strin
 		return err
 	}
 
-	fmt.Println("Firmware size / Number of written bytes ", n)
+	log.Infof("Firmware size / Number of written bytes %d", n)
 	return nil
 }
 
@@ -321,12 +322,12 @@ func (v *outputAPCBSecurityTokensCmd) Run(ctx *context) error {
 				tokenID = fmt.Sprintf("0x%X", token.ID)
 			}
 
-			fmt.Println("============")
-			fmt.Printf("Token ID: %s\n", tokenID)
-			fmt.Printf("Priority Mask: %s\n", token.PriorityMask)
-			fmt.Printf("Board Mask: 0x%X\n", token.BoardMask)
-			fmt.Printf("Value: 0x%X\n", token.NumValue())
-			fmt.Println("============")
+			log.Info("============")
+			log.Infof("Token ID: %s", tokenID)
+			log.Infof("Priority Mask: %s", token.PriorityMask)
+			log.Infof("Board Mask: 0x%X", token.BoardMask)
+			log.Infof("Value: 0x%X", token.NumValue())
+			log.Info("============")
 		}
 	}
 	return nil
@@ -355,10 +356,10 @@ func (v *setAPCBSecurityTokenCmd) Run(ctx *context) error {
 		if err != nil {
 			return fmt.Errorf("unable to UpsertToken: %w", err)
 		}
-		fmt.Printf("successfully UPSERT-ed to %#+v\n", entry)
+		log.Infof("successfully UPSERT-ed to %#+v", entry)
 	}
 
-	err = ioutil.WriteFile(v.FwPath, b, 0)
+	err = os.WriteFile(v.FwPath, b, 0)
 	if err != nil {
 		return fmt.Errorf("unable to write to file '%s': %w", v.FwPath, err)
 	}

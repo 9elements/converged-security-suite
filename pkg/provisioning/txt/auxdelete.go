@@ -5,6 +5,8 @@ import (
 	"io"
 
 	tools "github.com/9elements/converged-security-suite/v2/pkg/tools"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // DeleteAUXindexTPM20 deletes the AUX index on TPM 2.0
@@ -16,7 +18,7 @@ func DeleteAUXindexTPM20(rw io.ReadWriter, pol *tools.LCPPolicy2, passHash []byt
 	if err != nil {
 		return err
 	}
-	fmt.Println("AUX index deletion in progress, please reboot machine")
+	log.Info("AUX index deletion in progress, please reboot machine")
 	return nil
 }
 
