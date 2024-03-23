@@ -16,9 +16,9 @@ import (
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 	fianoUEFI "github.com/linuxboot/fiano/pkg/uefi"
 
-	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands"
-	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/diff/format"
-	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
+	"github.com/9elements/converged-security-suite/v2/cmd/exp/pcr0tool/commands"
+	"github.com/9elements/converged-security-suite/v2/cmd/exp/pcr0tool/commands/diff/format"
+	"github.com/9elements/converged-security-suite/v2/cmd/exp/pcr0tool/commands/dumpregisters/helpers"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/flows"
 	bfformat "github.com/9elements/converged-security-suite/v2/pkg/bootflow/lib/format"

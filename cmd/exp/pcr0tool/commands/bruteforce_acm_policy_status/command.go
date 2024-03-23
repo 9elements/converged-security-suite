@@ -11,8 +11,8 @@ import (
 	"hash"
 	"os"
 
-	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands"
-	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
+	"github.com/9elements/converged-security-suite/v2/cmd/exp/pcr0tool/commands"
+	"github.com/9elements/converged-security-suite/v2/cmd/exp/pcr0tool/commands/dumpregisters/helpers"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/actions/tpmactions"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/bootengine"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/datasources"
