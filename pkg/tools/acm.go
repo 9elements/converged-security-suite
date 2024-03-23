@@ -8,57 +8,59 @@ import (
 
 	"github.com/google/go-tpm/tpm2"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
-	//ACMChipsetTypeBios as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format
+	// ACMChipsetTypeBios as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format
 	ACMChipsetTypeBios uint8 = 0x00
-	//ACMChipsetTypeSinit as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format
+	// ACMChipsetTypeSinit as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format
 	ACMChipsetTypeSinit uint8 = 0x01
-	//ACMChipsetTypeBiosRevoc as defined in Document 315168-016 Chapter A.1 Table 10. Chipset AC Module Information Table
+	// ACMChipsetTypeBiosRevoc as defined in Document 315168-016 Chapter A.1 Table 10. Chipset AC Module Information Table
 	ACMChipsetTypeBiosRevoc uint8 = 0x08
-	//ACMChipsetTypeSinitRevoc as defined in Document 315168-016 Chapter A.1 Table 10. Chipset AC Module Information Table
+	// ACMChipsetTypeSinitRevoc as defined in Document 315168-016 Chapter A.1 Table 10. Chipset AC Module Information Table
 	ACMChipsetTypeSinitRevoc uint8 = 0x09
-	//ACMTypeChipset as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format
+	// ACMTypeChipset as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format
 	ACMTypeChipset fit.ACModuleType = 0x02
-	//ACMSubTypeReset FIXME
+	// ACMSubTypeReset FIXME
 	ACMSubTypeReset uint16 = 0x01
-	//ACMVendorIntel as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format
+	// ACMVendorIntel as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format
 	ACMVendorIntel fit.ACModuleVendor = 0x8086
 
-	//TPMExtPolicyIllegal as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
+	// TPMExtPolicyIllegal as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
 	TPMExtPolicyIllegal uint8 = 0x00
-	//TPMExtPolicyAlgAgile as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
+	// TPMExtPolicyAlgAgile as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
 	TPMExtPolicyAlgAgile uint8 = 0x01
-	//TPMExtPolicyEmbeddedAlgs as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
+	// TPMExtPolicyEmbeddedAlgs as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
 	TPMExtPolicyEmbeddedAlgs uint8 = 0x10
-	//TPMExtPolicyBoth as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
+	// TPMExtPolicyBoth as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
 	TPMExtPolicyBoth uint8 = 0x11
 
-	//TPMFamilyIllegal as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
+	// TPMFamilyIllegal as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
 	TPMFamilyIllegal uint16 = 0x0000
-	//TPMFamilyDTPM12 as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
+	// TPMFamilyDTPM12 as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
 	TPMFamilyDTPM12 uint16 = 0x0001
-	//TPMFamilyDTPM20 as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
+	// TPMFamilyDTPM20 as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
 	TPMFamilyDTPM20 uint16 = 0x0010
-	//TPMFamilyDTPMBoth combination out of TPMFamilyDTPM12 and TPMFamilyDTPM20
+	// TPMFamilyDTPMBoth combination out of TPMFamilyDTPM12 and TPMFamilyDTPM20
 	TPMFamilyDTPMBoth uint16 = 0x0011
-	//TPMFamilyPTT20 as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
+	// TPMFamilyPTT20 as defined in Document 315168-016 Chapter A.1 Table 16. TPM Capabilities Field
 	TPMFamilyPTT20 uint16 = 0x1000
 
-	//ACMUUIDV3 as defined in Document 315168-016 Chapter A.1 Table 10. Chipset AC Module Information Table
+	// ACMUUIDV3 as defined in Document 315168-016 Chapter A.1 Table 10. Chipset AC Module Information Table
 	ACMUUIDV3 string = "7fc03aaa-46a7-18db-ac2e-698f8d417f5a"
-	//ACMSizeOffset as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format
+	// ACMSizeOffset as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format
 	ACMSizeOffset int64 = 24
 
-	//ACMheaderLen as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format (Version 0.0)
+	// ACMheaderLen as defined in Document 315168-016 Chapter A.1 Table 8. Authenticated Code Module Format (Version 0.0)
 	ACMheaderLen uint32 = 161
 
-	//ACMModuleSubtypeSinitACM is an enum
+	// ACMModuleSubtypeSinitACM is an enum
 	ACMModuleSubtypeSinitACM fit.ACModuleSubType = 0
-	//ACMModuleSubtypeCapableOfExecuteAtReset is a flag and enum Based on EDK2 Silicon/Intel/Tools/FitGen/FitGen.c
+	// ACMModuleSubtypeCapableOfExecuteAtReset is a flag and enum Based on EDK2 Silicon/Intel/Tools/FitGen/FitGen.c
 	ACMModuleSubtypeCapableOfExecuteAtReset fit.ACModuleSubType = 1
-	//ACMModuleSubtypeAncModule is a flag Based on EDK2 Silicon/Intel/Tools/FitGen/FitGen.c
+	// ACMModuleSubtypeAncModule is a flag Based on EDK2 Silicon/Intel/Tools/FitGen/FitGen.c
 	ACMModuleSubtypeAncModule fit.ACModuleSubType = 2
 )
 
@@ -282,102 +284,102 @@ func LookupACMSize(header []byte) (int64, error) {
 
 // PrettyPrint prints a human readable representation of the ACMHeader
 func (a *ACM) PrettyPrintHeader() {
-	fmt.Println("----Authenticated Code Module----")
-	fmt.Println()
+	log.Info("----Authenticated Code Module----")
+	log.Infoln()
 	if a.Header.GetModuleVendor() == ACMVendorIntel {
-		fmt.Println("   Module Vendor: Intel")
+		log.Info("   Module Vendor: Intel")
 	} else {
-		fmt.Println("   Module Vendor: Unknown")
+		log.Info("   Module Vendor: Unknown")
 	}
 
 	if a.Header.GetModuleType() == ACMTypeChipset {
-		fmt.Println("   Module Type: ACM_TYPE_CHIPSET")
+		log.Info("   Module Type: ACM_TYPE_CHIPSET")
 	} else {
-		fmt.Println("   Module Type: UNKNOWN")
+		log.Info("   Module Type: UNKNOWN")
 	}
 
 	if uint16(a.Header.GetModuleSubType()) == ACMSubTypeReset {
-		fmt.Println("   Module Subtype: Execute at Reset")
+		log.Info("   Module Subtype: Execute at Reset")
 	} else if uint16(a.Header.GetModuleSubType()) == 0 {
-		fmt.Println("   Module Subtype: 0x0")
+		log.Info("   Module Subtype: 0x0")
 	} else {
-		fmt.Println("   Module Subtype: Unknown")
+		log.Info("   Module Subtype: Unknown")
 	}
 	flags := a.ParseACMFlags()
-	fmt.Println("   Flags:")
-	fmt.Printf("      Production: %t\n", flags.Production)
-	fmt.Printf("      Pre-Production:  %t\n", flags.PreProduction)
-	fmt.Printf("      Debug Signed:  %t\n", flags.DebugSigned)
-	fmt.Printf("   Module Date: 0x%02x\n", a.Header.GetDate())
-	fmt.Printf("   Module Size: 0x%x (%d)\n", a.Header.GetSize().Size(), a.Header.GetSize().Size())
+	log.Info("   Flags:")
+	log.Infof("      Production: %t", flags.Production)
+	log.Infof("      Pre-Production:  %t", flags.PreProduction)
+	log.Infof("      Debug Signed:  %t", flags.DebugSigned)
+	log.Infof("   Module Date: 0x%02x", a.Header.GetDate())
+	log.Infof("   Module Size: 0x%x (%d)", a.Header.GetSize().Size(), a.Header.GetSize().Size())
 
-	fmt.Printf("   Header Length: 0x%x (%d)\n", a.Header.GetHeaderLen(), a.Header.GetHeaderLen())
-	fmt.Printf("   Header Version: %d\n", a.Header.GetHeaderVersion())
-	fmt.Printf("   Chipset ID: 0x%02x\n", a.Header.GetChipsetID())
-	fmt.Printf("   Flags: 0x%02x\n", a.Header.GetFlags())
-	fmt.Printf("   TXT SVN: 0x%08x\n", a.Header.GetTXTSVN())
-	fmt.Printf("   SE SVN: 0x%08x\n", a.Header.GetSESVN())
-	fmt.Printf("   Code Control: 0x%02x\n", a.Header.GetCodeControl())
-	fmt.Printf("   Entry Point: 0x%08x:%08x\n", a.Header.GetSegSel(), a.Header.GetEntryPoint())
-	fmt.Printf("   Scratch Size: 0x%x (%d)\n", a.Header.GetScratchSize(), a.Header.GetScratchSize())
-	fmt.Println()
+	log.Infof("   Header Length: 0x%x (%d)", a.Header.GetHeaderLen(), a.Header.GetHeaderLen())
+	log.Infof("   Header Version: %d", a.Header.GetHeaderVersion())
+	log.Infof("   Chipset ID: 0x%02x", a.Header.GetChipsetID())
+	log.Infof("   Flags: 0x%02x", a.Header.GetFlags())
+	log.Infof("   TXT SVN: 0x%08x", a.Header.GetTXTSVN())
+	log.Infof("   SE SVN: 0x%08x", a.Header.GetSESVN())
+	log.Infof("   Code Control: 0x%02x", a.Header.GetCodeControl())
+	log.Infof("   Entry Point: 0x%08x:%08x", a.Header.GetSegSel(), a.Header.GetEntryPoint())
+	log.Infof("   Scratch Size: 0x%x (%d)", a.Header.GetScratchSize(), a.Header.GetScratchSize())
+	log.Infoln()
 }
 
 // PrettyPrint prints a human readable representation of the Chipsets
 func (c Chipsets) PrettyPrint() {
-	fmt.Println("   --Chipset List--")
-	fmt.Printf("      Entries: %d\n", c.Count)
+	log.Info("   --Chipset List--")
+	log.Infof("      Entries: %d", c.Count)
 	for idx, chipset := range c.IDList {
-		fmt.Printf("      Entry %d:\n", idx)
-		fmt.Printf("         Flags: 0x%02x\n", chipset.Flags)
-		fmt.Printf("         Vendor: 0x%02x\n", chipset.VendorID)
-		fmt.Printf("         Device: 0x%02x\n", chipset.DeviceID)
-		fmt.Printf("         Revision: 0x%02x\n", chipset.RevisionID)
+		log.Infof("      Entry %d:", idx)
+		log.Infof("         Flags: 0x%02x", chipset.Flags)
+		log.Infof("         Vendor: 0x%02x", chipset.VendorID)
+		log.Infof("         Device: 0x%02x", chipset.DeviceID)
+		log.Infof("         Revision: 0x%02x", chipset.RevisionID)
 	}
-	fmt.Println()
+	log.Infoln()
 }
 
 // PrettyPrint prints a human readable representation of the Processors
 func (p Processors) PrettyPrint() {
-	fmt.Println("   --Processor List--")
-	fmt.Printf("      Entries: %d\n", p.Count)
+	log.Info("   --Processor List--")
+	log.Infof("      Entries: %d", p.Count)
 	for idx, processor := range p.IDList {
-		fmt.Printf("      Entry %d:\n", idx)
-		fmt.Printf("         FMS: 0x%02x\n", processor.FMS)
-		fmt.Printf("         FMS Maks: 0x%02x\n", processor.FMSMask)
-		fmt.Printf("         Platform ID: 0x%02x\n", processor.PlatformID)
-		fmt.Printf("         Platform Mask: 0x%02x\n", processor.PlatformMask)
+		log.Infof("      Entry %d:", idx)
+		log.Infof("         FMS: 0x%02x", processor.FMS)
+		log.Infof("         FMS Maks: 0x%02x", processor.FMSMask)
+		log.Infof("         Platform ID: 0x%02x", processor.PlatformID)
+		log.Infof("         Platform Mask: 0x%02x", processor.PlatformMask)
 	}
-	fmt.Println()
+	log.Infoln()
 }
 
 // PrettyPrint prints a human readable representation of the TPMs
 func (t TPMs) PrettyPrint() {
-	fmt.Println("   --TPM Info List--")
-	fmt.Println("      Capabilities:")
-	fmt.Printf("         External Policy: %02x\n", t.Capabilities)
-	fmt.Printf("      Algorithms: %d\n", t.Count)
+	log.Info("   --TPM Info List--")
+	log.Info("      Capabilities:")
+	log.Infof("         External Policy: %02x", t.Capabilities)
+	log.Infof("      Algorithms: %d", t.Count)
 	for _, algo := range t.AlgID {
-		fmt.Printf("         %v\n", algo.String())
+		log.Infof("         %v", algo.String())
 	}
-	fmt.Println()
+	log.Infoln()
 }
 
 // PrettyPrint prints a human readable representation of the ACM
 func (a *ACM) PrettyPrint() {
 	a.PrettyPrintHeader()
-	fmt.Println("   --Info Table--")
+	log.Info("   --Info Table--")
 	switch a.Info.ChipsetACMType {
 	case ACMChipsetTypeBios:
-		fmt.Println("      Chipset ACM: BIOS")
+		log.Info("      Chipset ACM: BIOS")
 	case ACMChipsetTypeBiosRevoc:
-		fmt.Println("      Chipset ACM: BIOS Revocation")
+		log.Info("      Chipset ACM: BIOS Revocation")
 	case ACMChipsetTypeSinit:
-		fmt.Println("      Chipset ACM: SINIT")
+		log.Info("      Chipset ACM: SINIT")
 	case ACMChipsetTypeSinitRevoc:
-		fmt.Println("      Chipset ACM: SINIT Revocation")
+		log.Info("      Chipset ACM: SINIT Revocation")
 	default:
-		fmt.Println("      Chipset ACM: Unknown")
+		log.Info("      Chipset ACM: Unknown")
 	}
 	uuidStr := fmt.Sprintf("%08x-%04x-%04x-%04x-%02x%02x%02x%02x%02x%02x",
 		a.Info.UUID.Field1,
@@ -391,23 +393,23 @@ func (a *ACM) PrettyPrint() {
 		a.Info.UUID.Field5[4],
 		a.Info.UUID.Field5[5])
 	if uuidStr == ACMUUIDV3 {
-		fmt.Println("      UUID: ACM_UUID_V3")
-		fmt.Printf("      Version: %d\n", a.Info.Version)
-		fmt.Printf("      Length: 0x%x (%d)\n", a.Info.Length, a.Info.Length)
-		fmt.Printf("      Chipset ID List: 0x%02x\n", a.Info.ChipsetIDList)
-		fmt.Printf("      OS SINIT Data Version: 0x%02x\n", a.Info.OSSinitDataVersion)
-		fmt.Printf("      Min. MLE Header Version: 0x%08x\n", a.Info.MinMleHeaderVersion)
-		fmt.Printf("      Capabilities: 0x%08x\n", a.Info.TxtCaps)
-		fmt.Printf("      ACM Version: %d\n", a.Info.ACMVersion)
-		fmt.Printf("      ACM Revision: %s\n", a.Info.ACMRevision)
-		fmt.Printf("      Processor ID List: 0x%02x\n", a.Info.ProcessorIDList)
-		fmt.Printf("      TPM ID List: 0x%02x\n", a.Info.TPMInfoList)
-		fmt.Println()
+		log.Info("      UUID: ACM_UUID_V3")
+		log.Infof("      Version: %d", a.Info.Version)
+		log.Infof("      Length: 0x%x (%d)", a.Info.Length, a.Info.Length)
+		log.Infof("      Chipset ID List: 0x%02x", a.Info.ChipsetIDList)
+		log.Infof("      OS SINIT Data Version: 0x%02x", a.Info.OSSinitDataVersion)
+		log.Infof("      Min. MLE Header Version: 0x%08x", a.Info.MinMleHeaderVersion)
+		log.Infof("      Capabilities: 0x%08x", a.Info.TxtCaps)
+		log.Infof("      ACM Version: %d", a.Info.ACMVersion)
+		log.Infof("      ACM Revision: %s", a.Info.ACMRevision)
+		log.Infof("      Processor ID List: 0x%02x", a.Info.ProcessorIDList)
+		log.Infof("      TPM ID List: 0x%02x", a.Info.TPMInfoList)
+		log.Infoln()
 		a.Chipsets.PrettyPrint()
 		a.Processors.PrettyPrint()
 		a.TPMs.PrettyPrint()
 	} else {
-		fmt.Println("      UUID: ACM_UUID_V0")
-		fmt.Println()
+		log.Info("      UUID: ACM_UUID_V0")
+		log.Infoln()
 	}
 }

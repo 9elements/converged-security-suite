@@ -16,21 +16,17 @@ type context struct {
 	debug bool
 }
 
-type versionCmd struct {
-}
+type versionCmd struct{}
 
 type auxDeleteCmd struct {
 	Config string `arg:"" required:"" name:"config" default:"lcp.config" help:"Filename of LCP config file in JSON format"`
 	Out    string `flag:"" optional:"" name:"out" help:"Filename to write binary PS index LCP Policy into"`
 }
 
-type auxDefineCmd struct {
-}
+type auxDefineCmd struct{}
 
-type psDeleteCmd struct {
-}
-type psDefineCmd struct {
-}
+type psDeleteCmd struct{}
+type psDefineCmd struct{}
 type psUpdateCmd struct {
 	Config string `arg:"" required:"" name:"config" default:"lcp.config" help:"Filename of LCP config file in JSON format" type:"path"`
 	Out    string `flag:"" optional:"" name:"output" help:"Filename to write binary PS index LCP Policy into" type:"path"`
@@ -39,8 +35,7 @@ type platProvCmd struct {
 	Config string `arg:"" required:"" name:"config" default:"lcp.config" help:"Filename of LCP config file in JSON format" type:"path"`
 	Out    string `flag:"" optional:"" name:"output" help:"Filename to write binary PS index LCP Policy into" type:"path"`
 }
-type showCmd struct {
-}
+type showCmd struct{}
 
 var cli struct {
 	Debug                    bool `help:"Enable debug mode"`
@@ -120,6 +115,7 @@ func (a *auxDefineCmd) Run(ctx *context) error {
 	}
 	return nil
 }
+
 func (p *psDeleteCmd) Run(ctx *context) error {
 	// Delete PS index in TPM NVRAM
 	tpm, err := hwapi.NewTPM()
@@ -142,6 +138,7 @@ func (p *psDeleteCmd) Run(ctx *context) error {
 	}
 	return nil
 }
+
 func (p *psDefineCmd) Run(ctx *context) error {
 	// Define PS index in TPM NVRAM
 	tpm, err := hwapi.NewTPM()
@@ -171,6 +168,7 @@ func (p *psDefineCmd) Run(ctx *context) error {
 	}
 	return nil
 }
+
 func (p *psUpdateCmd) Run(ctx *context) error {
 	// Writes new LCP Policy to PS index in TPM NVRAM
 	tpm, err := hwapi.NewTPM()
@@ -202,6 +200,7 @@ func (p *psUpdateCmd) Run(ctx *context) error {
 	}
 	return nil
 }
+
 func (p *platProvCmd) Run(ctx *context) error {
 	// Provision PS & AUX index in TPM NVRAM with LCP Policy
 	tpm, err := hwapi.NewTPM()
@@ -228,7 +227,7 @@ func (p *platProvCmd) Run(ctx *context) error {
 		}
 		if len(p.Out) > 0 {
 			if err = writePSPolicy2file(lcp, p.Out); err != nil {
-				fmt.Printf("Couldn't write PS Policy2 into file: %v\n", err)
+				return fmt.Errorf("couldn't write PS Policy2 into file: %v", err)
 			}
 		}
 	default:
@@ -236,6 +235,7 @@ func (p *platProvCmd) Run(ctx *context) error {
 	}
 	return nil
 }
+
 func (s *showCmd) Run(ctx *context) error {
 	// Show PS & AUX index content from TPM NVRAM
 	tpm, err := hwapi.NewTPM()

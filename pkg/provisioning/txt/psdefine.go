@@ -5,6 +5,8 @@ import (
 	"io"
 
 	tpm2 "github.com/google/go-tpm/tpm2"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // DefinePSIndexTPM20 creates the PS index for TPM 2.0
@@ -23,7 +25,7 @@ func DefinePSIndexTPM20(rw io.ReadWriter, passHash []byte) error {
 	if err != nil {
 		return fmt.Errorf("NVDefineSpaceEx() failed: %v", err)
 	}
-	fmt.Println("PS index defined successfully")
+	log.Info("PS index defined successfully")
 	return nil
 }
 

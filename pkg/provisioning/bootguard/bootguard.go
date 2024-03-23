@@ -22,6 +22,8 @@ import (
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 	"github.com/linuxboot/fiano/pkg/uefi"
 	"github.com/tidwall/pretty"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Everything more secure than SHA-1
@@ -291,7 +293,7 @@ func (b *BootGuard) PrintBPM() {
 	case bgheader.Version20:
 		b.VData.CBNTbpm.Print()
 	default:
-		fmt.Println("PrintBPM: can't identify bootguard header")
+		log.Error("PrintBPM: can't identify bootguard header")
 	}
 }
 
@@ -303,7 +305,7 @@ func (b *BootGuard) PrintKM() {
 	case bgheader.Version20:
 		b.VData.CBNTkm.Print()
 	default:
-		fmt.Println("PrintKM: can't identify bootguard header")
+		log.Error("PrintKM: can't identify bootguard header")
 	}
 }
 
@@ -317,7 +319,7 @@ func (b *BootGuard) WriteKM() ([]byte, error) {
 	case bgheader.Version20:
 		_, err = b.VData.CBNTkm.WriteTo(buf)
 	default:
-		fmt.Println("WriteKM: can't identify bootguard header")
+		log.Error("WriteKM: can't identify bootguard header")
 	}
 	return buf.Bytes(), err
 }
@@ -332,7 +334,7 @@ func (b *BootGuard) WriteBPM() ([]byte, error) {
 	case bgheader.Version20:
 		_, err = b.VData.CBNTbpm.WriteTo(buf)
 	default:
-		fmt.Println("WriteBPM: can't identify bootguard header")
+		log.Error("WriteBPM: can't identify bootguard header")
 	}
 	return buf.Bytes(), err
 }
@@ -382,7 +384,7 @@ func (b *BootGuard) StitchKM(pubKey crypto.PublicKey, signature []byte) ([]byte,
 			return nil, err
 		}
 	default:
-		fmt.Println("StitchKM: can't identify bootguard header")
+		log.Error("StitchKM: can't identify bootguard header")
 	}
 	return b.WriteKM()
 }
@@ -411,7 +413,7 @@ func (b *BootGuard) StitchBPM(pubKey crypto.PublicKey, signature []byte) ([]byte
 			return nil, err
 		}
 	default:
-		fmt.Println("StitchBPM: can't identify bootguard header")
+		log.Error("StitchBPM: can't identify bootguard header")
 	}
 	return b.WriteBPM()
 }
@@ -449,7 +451,7 @@ func (b *BootGuard) SignKM(signAlgo string, privkey crypto.PrivateKey) ([]byte, 
 			return nil, err
 		}
 	default:
-		fmt.Println("SignKM: can't identify bootguard header")
+		log.Error("SignKM: can't identify bootguard header")
 	}
 	return b.WriteKM()
 }
@@ -493,7 +495,7 @@ func (b *BootGuard) SignBPM(signAlgo, hashAlgo string, privkey crypto.PrivateKey
 			return nil, err
 		}
 	default:
-		fmt.Println("SignBPM: can't identify bootguard header")
+		log.Error("SignBPM: can't identify bootguard header")
 	}
 	return b.WriteBPM()
 }
@@ -519,7 +521,7 @@ func (b *BootGuard) VerifyKM() error {
 			return err
 		}
 	default:
-		fmt.Println("VerifyKM: can't identify bootguard header")
+		log.Error("VerifyKM: can't identify bootguard header")
 	}
 	return nil
 }
@@ -545,7 +547,7 @@ func (b *BootGuard) VerifyBPM() error {
 			return err
 		}
 	default:
-		fmt.Println("VerifyBPM: can't identify bootguard header")
+		log.Error("VerifyBPM: can't identify bootguard header")
 	}
 	return nil
 }
@@ -679,7 +681,7 @@ func (b *BootGuard) GetBPMPubHash(pubkey crypto.PublicKey, hashAlgo string) erro
 		}
 		b.VData.CBNTkm.Hash = append(keyHashes, kH)
 	default:
-		fmt.Println("can't identify bootguard header")
+		log.Error("can't identify bootguard header")
 	}
 	return nil
 }
@@ -763,7 +765,7 @@ func (b *BootGuard) GetIBBsDigest(image []byte, hashAlgo string) (digest []byte,
 		}
 		digest = hash.Sum(nil)
 	default:
-		fmt.Println("can't identify bootguard header")
+		log.Error("can't identify bootguard header")
 	}
 	return digest, nil
 }
@@ -793,7 +795,7 @@ func (b *BootGuard) CreateIBBDigest(biosFilepath string) error {
 			copy(b.VData.CBNTbpm.SE[0].DigestList.List[iterator].HashBuffer, d)
 		}
 	default:
-		fmt.Println("can't identify bootguard header")
+		log.Error("can't identify bootguard header")
 	}
 	return nil
 }

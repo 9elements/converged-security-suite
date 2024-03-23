@@ -14,6 +14,7 @@ import (
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntkey"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/common/bgheader"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/linuxboot/fiano/pkg/uefi"
 
@@ -357,7 +358,7 @@ func (biosp *biosPrintCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s", table.String())
+	log.Infof("%s", table.String())
 	err = bootguard.PrintStructures(data)
 	if err != nil {
 		return err
@@ -1189,7 +1190,7 @@ func (p printFITCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s", table.String())
+	log.Infof("%s", table.String())
 	return nil
 }
 

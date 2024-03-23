@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -14,6 +13,7 @@ import (
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 
 	a "github.com/logrusorgru/aurora"
+	log "github.com/sirupsen/logrus"
 )
 
 type context struct {
@@ -22,14 +22,11 @@ type context struct {
 	logpath     string
 }
 
-type listCmd struct {
-}
+type listCmd struct{}
 
-type markdownCmd struct {
-}
+type markdownCmd struct{}
 
-type versionCmd struct {
-}
+type versionCmd struct{}
 
 type execTestsCmd struct {
 	Set         string `required:"" default:"all" help:"Select subset of tests. Options: all, uefi, txtready, tboot, cbnt, legacy"`
@@ -67,12 +64,12 @@ func (e *execTestsCmd) Run(ctx *context) error {
 
 	switch e.Set {
 	case "all":
-		fmt.Println("For more information about the documents and chapters, run: txt-suite -m")
+		log.Info("For more information about the documents and chapters, run: txt-suite -m")
 		ret = run("All", getTests(), preset, e.Interactive)
 	case "uefi":
 		ret = run("UEFI", test.TestsTXTUEFI, preset, e.Interactive)
 	case "txtready":
-		fmt.Println("For more information about the documents and chapters, run: txt-suite -m")
+		log.Info("For more information about the documents and chapters, run: txt-suite -m")
 		ret = run("TXT Ready", test.TestsTXTReady, preset, e.Interactive)
 	case "tboot":
 		ret = run("Tboot", test.TestsTXTTBoot, preset, e.Interactive)
@@ -92,7 +89,7 @@ func (e *execTestsCmd) Run(ctx *context) error {
 func (l *listCmd) Run(ctx *context) error {
 	tests := getTests()
 	for i := range tests {
-		fmt.Printf("Test No: %v, %v\n", i, tests[i].Name)
+		log.Infof("Test No: %v, %v", i, tests[i].Name)
 	}
 	return nil
 }
@@ -101,8 +98,8 @@ func (m *markdownCmd) Run(ctx *context) error {
 	var teststate string
 	tests := getTests()
 
-	fmt.Println("Id | Test | Implemented | Document | Chapter")
-	fmt.Println("------------|------------|------------|------------|------------")
+	log.Info("Id | Test | Implemented | Document | Chapter")
+	log.Info("------------|------------|------------|------------|------------")
 	for i := range tests {
 		if tests[i].Status == test.Implemented {
 			teststate = ":white_check_mark:"
@@ -115,7 +112,7 @@ func (m *markdownCmd) Run(ctx *context) error {
 		if docID != "" {
 			docID = "Document " + docID
 		}
-		fmt.Printf("%02d | %-48s | %-22s | %-28s | %-56s\n", i, tests[i].Name, teststate, docID, tests[i].SpecificationChapter)
+		log.Infof("%02d | %-48s | %-22s | %-28s | %-56s\n", i, tests[i].Name, teststate, docID, tests[i].SpecificationChapter)
 	}
 	return nil
 }
@@ -146,17 +143,12 @@ func getTests() []*test.Test {
 }
 
 func run(testGroup string, tests []*test.Test, preset *test.PreSet, interactive bool) bool {
-	var result = false
-	f := bufio.NewWriter(os.Stdout)
+	result := false
 
 	hwAPI := hwapi.GetAPI()
 
-	fmt.Printf("\n%s tests\n", a.Bold(a.Gray(20-1, testGroup).BgGray(4-1)))
-	var i int
-	for i = 0; i < len(testGroup)+6; i++ {
-		fmt.Print("_")
-	}
-	fmt.Println()
+	log.Infof("%s tests", a.Bold(a.Gray(20-1, testGroup).BgGray(4-1)))
+	log.Info("--------------------------------------------------")
 	for idx := range tests {
 		if len(testnos) > 0 {
 			// SearchInt returns an index where to "insert" idx
@@ -186,33 +178,32 @@ func run(testGroup string, tests []*test.Test, preset *test.PreSet, interactive 
 			}
 		}
 		data, _ := json.MarshalIndent(t, "", "")
-		os.WriteFile(logfile, data, 0664)
+		os.WriteFile(logfile, data, 0o664)
 	}
 
 	for index := range tests {
+		var s string
+
 		if tests[index].Status == test.NotImplemented {
 			continue
 		}
 		if tests[index].Result == test.ResultNotRun {
 			continue
 		}
-		fmt.Printf("%02d - ", index)
-		fmt.Printf("%-40s: ", a.Bold(tests[index].Name))
-		f.Flush()
+		s += fmt.Sprintf("%02d - ", index)
+		s += fmt.Sprintf("%-40s: ", a.Bold(tests[index].Name))
 
 		if tests[index].Result == test.ResultPass {
-			fmt.Printf("%-20s", a.Bold(a.Green(tests[index].Result)))
+			s += fmt.Sprintf("%-20s", a.Bold(a.Green(tests[index].Result)))
 		} else {
-			fmt.Printf("%-20s", a.Bold(a.Red(tests[index].Result)))
+			s += fmt.Sprintf("%-20s", a.Bold(a.Red(tests[index].Result)))
 		}
 		if tests[index].ErrorText != "" {
-			fmt.Printf(" (%s)", tests[index].ErrorText)
+			s += fmt.Sprintf(" (%s)", tests[index].ErrorText)
 		} else if len(tests[index].ErrorText) == 0 && tests[index].Result == test.ResultFail {
-			fmt.Print(" (No error text given)")
+			s += fmt.Sprintf(" (No error text given)")
 		}
-		fmt.Printf("\n")
-
-		f.Flush()
+		log.Infof("%s", s)
 	}
 
 	return result

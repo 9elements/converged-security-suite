@@ -12,20 +12,18 @@ import (
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 	"github.com/google/go-tpm/tpm"
 	"github.com/google/go-tpm/tpm2"
-	"golang.org/x/crypto/ssh/terminal"
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/term"
 )
 
-var (
-	tpm2LockedResult = "error code 0x22"
-)
+var tpm2LockedResult = "error code 0x22"
 
 func readPassphraseHashTPM20() ([]byte, error) {
-	fmt.Printf("Now, please type in the password (mandatory): ")
-	password, err := terminal.ReadPassword(0)
+	log.Info("Now, please type in the password (mandatory): ")
+	password, err := term.ReadPassword(0)
 	if err != nil {
 		return []byte{}, err
 	}
-	fmt.Println()
 	hash := sha256.Sum256([]byte(password))
 	return hash[:], nil
 }
@@ -37,7 +35,7 @@ func writePSPolicy2file(policy *tools.LCPPolicy2, filename string) error {
 	if err != nil {
 		return err
 	}
-	if err = os.WriteFile(filename, buf.Bytes(), 0600); err != nil {
+	if err = os.WriteFile(filename, buf.Bytes(), 0o600); err != nil {
 		return err
 	}
 	return nil

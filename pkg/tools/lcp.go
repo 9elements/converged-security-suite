@@ -6,11 +6,12 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"log"
 	"strconv"
 	"strings"
 
 	"github.com/google/go-tpm/tpm2"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // HashAlgMap exports map from crypto.Hash to LCPPol2Hash for parsing manual input to LCPPolicy2
@@ -109,49 +110,49 @@ var HashMaskMap = map[string]uint16{
 }
 
 const (
-	//LCPPolicyVersion2 as defined in Document 315168-016 Chapter 3.2.1 LCP Policy
+	// LCPPolicyVersion2 as defined in Document 315168-016 Chapter 3.2.1 LCP Policy
 	LCPPolicyVersion2 uint16 = 0x0204
-	//LCPPolicyVersion3 as defined in Document 315168-016 Chapter 3.2.1 LCP Policy
+	// LCPPolicyVersion3 as defined in Document 315168-016 Chapter 3.2.1 LCP Policy
 	LCPPolicyVersion3 uint16 = 0x0300
-	//LCPPolicyTypeAny as defined in Document 315168-016 Chapter D LCP Data Structures
+	// LCPPolicyTypeAny as defined in Document 315168-016 Chapter D LCP Data Structures
 	LCPPolicyTypeAny LCPPolicyType = 1
-	//LCPPolicyTypeList as defined in Document 315168-016 Chapter D LCP Data Structures
+	// LCPPolicyTypeList as defined in Document 315168-016 Chapter D LCP Data Structures
 	LCPPolicyTypeList LCPPolicyType = 0
-	//LCPMaxLists as defined in Document 315168-016 Chapter D LCP Data Structures
+	// LCPMaxLists as defined in Document 315168-016 Chapter D LCP Data Structures
 	LCPMaxLists uint = 8
-	//SHA1DigestSize as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	// SHA1DigestSize as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
 	SHA1DigestSize uint = 20
-	//SHA256DigestSize as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	// SHA256DigestSize as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
 	SHA256DigestSize uint = 32
-	//SHA384DigestSize as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	// SHA384DigestSize as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
 	SHA384DigestSize uint = 48
-	//SHA512DigestSize FIXME
+	// SHA512DigestSize FIXME
 	SHA512DigestSize uint = 64
-	//SM3DigestSize as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+	// SM3DigestSize as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
 	SM3DigestSize uint = 32
-	//LCPDataFileSignature as defined in Document 315168-016 Chapter D.2 LCP_POLICY_DATA
+	// LCPDataFileSignature as defined in Document 315168-016 Chapter D.2 LCP_POLICY_DATA
 	LCPDataFileSignature string = "Intel(R) TXT LCP_POLICY_DATA\x00\x00\x00\x00"
 
-	//LCPSignatureAlgNone FIXME
+	// LCPSignatureAlgNone FIXME
 	LCPSignatureAlgNone uint8 = 0
-	//LCPSignatureAlgRSAPKCS15 FIXME
+	// LCPSignatureAlgRSAPKCS15 FIXME
 	LCPSignatureAlgRSAPKCS15 uint8 = 1
 
-	//LCPPolicyElementMLE as defined in Document 315168-016 Chapter D.4.4 LCP_MLE_ELEMENT
+	// LCPPolicyElementMLE as defined in Document 315168-016 Chapter D.4.4 LCP_MLE_ELEMENT
 	LCPPolicyElementMLE uint32 = 0
-	//LCPPolicyElementPCONF as defined in Document 315168-016 Chapter D.4.5 LCP_PCONF_ELEMENT
+	// LCPPolicyElementPCONF as defined in Document 315168-016 Chapter D.4.5 LCP_PCONF_ELEMENT
 	LCPPolicyElementPCONF uint32 = 1
-	//LCPPolicyElementSBIOS FIXME
+	// LCPPolicyElementSBIOS FIXME
 	LCPPolicyElementSBIOS uint32 = 2
-	//LCPPolicyElementCustom as defined in Document 315168-016 Chapter D.4.6 LCP_CUSTOM_ELEMENT
+	// LCPPolicyElementCustom as defined in Document 315168-016 Chapter D.4.6 LCP_CUSTOM_ELEMENT
 	LCPPolicyElementCustom uint32 = 3
-	//LCPPolicyElementMLE2 as defined in Document 315168-016 Chapter D.4.7 LCP_MLE_ELEMENT2
+	// LCPPolicyElementMLE2 as defined in Document 315168-016 Chapter D.4.7 LCP_MLE_ELEMENT2
 	LCPPolicyElementMLE2 uint32 = 0x10
-	//LCPPolicyElementPCONF2 as defined in Document 315168-016 Chapter D.4.8 LCP_PCONF_ELEMENT2
+	// LCPPolicyElementPCONF2 as defined in Document 315168-016 Chapter D.4.8 LCP_PCONF_ELEMENT2
 	LCPPolicyElementPCONF2 uint32 = 0x11
-	//LCPPolicyElementSBIOS2 FIXME
+	// LCPPolicyElementSBIOS2 FIXME
 	LCPPolicyElementSBIOS2 uint32 = 0x12
-	//LCPPolicyElementSTM2 as defined in Document 315168-016 Chapter D.4.9 LCP_STM_ELEMENT2
+	// LCPPolicyElementSTM2 as defined in Document 315168-016 Chapter D.4.9 LCP_STM_ELEMENT2
 	LCPPolicyElementSTM2 uint32 = 0x14
 
 	// LCPPolHAlgSHA1 Document 315168-016 Chapter D.1 LCP_POLICY
@@ -159,11 +160,11 @@ const (
 
 	// LCPPolicyControlNPW as defined in Document 315168-013 Chapter 3.2.2 PolicyControl Field for LCP_POLTYPE_LIST
 	LCPPolicyControlNPW uint32 = 0x00000001
-	//LCPPolicyControlSinitCaps as defined in Document 315168-013 Chapter 3.2.2 PolicyControl Field for LCP_POLTYPE_LIST
+	// LCPPolicyControlSinitCaps as defined in Document 315168-013 Chapter 3.2.2 PolicyControl Field for LCP_POLTYPE_LIST
 	LCPPolicyControlSinitCaps uint32 = 0x00000002
-	//LCPPolicyControlOwnerEnforced as defined in Document 315168-013 Chapter 3.2.2 PolicyControl Field for LCP_POLTYPE_LIST
+	// LCPPolicyControlOwnerEnforced as defined in Document 315168-013 Chapter 3.2.2 PolicyControl Field for LCP_POLTYPE_LIST
 	LCPPolicyControlOwnerEnforced uint32 = 0x00000004
-	//LCPPolicyControlAuxDelete as defined in Document 315168-013 Chapter 3.3.2 LCP Policy 2
+	// LCPPolicyControlAuxDelete as defined in Document 315168-013 Chapter 3.3.2 LCP Policy 2
 	LCPPolicyControlAuxDelete uint32 = 0x80000000
 )
 
@@ -175,7 +176,7 @@ var PolicyControlMap = map[string]uint32{
 	"AuxDelete":     0x80000000,
 }
 
-//LCPHash holds one of the supported hashes
+// LCPHash holds one of the supported hashes
 type LCPHash struct {
 	Sha1   *[SHA1DigestSize]uint8
 	Sha256 *[SHA256DigestSize]uint8
@@ -184,7 +185,7 @@ type LCPHash struct {
 	SM3    *[SM3DigestSize]uint8
 }
 
-//LCPPolicyElement represents a policy element as defined in Document 315168-016 Chapter D.4 LCP_POLICY_ELEMENT
+// LCPPolicyElement represents a policy element as defined in Document 315168-016 Chapter D.4 LCP_POLICY_ELEMENT
 type LCPPolicyElement struct {
 	Size             uint32
 	Type             uint32
@@ -195,7 +196,7 @@ type LCPPolicyElement struct {
 	Custom           *LCPPolicyCustom
 }
 
-//LCPPolicyMLE represents a MLE policy element as defined in Document 315168-016 Chapter D.4.4 LCP_MLE_ELEMENT
+// LCPPolicyMLE represents a MLE policy element as defined in Document 315168-016 Chapter D.4.4 LCP_MLE_ELEMENT
 type LCPPolicyMLE struct {
 	SINITMinVersion uint8
 	HashAlg         uint8
@@ -203,7 +204,7 @@ type LCPPolicyMLE struct {
 	Hashes          [][20]byte
 }
 
-//LCPPolicySBIOS represents a SBIOS policy element
+// LCPPolicySBIOS represents a SBIOS policy element
 type LCPPolicySBIOS struct {
 	HashAlg      uint8
 	Reserved1    [3]uint8
@@ -213,13 +214,13 @@ type LCPPolicySBIOS struct {
 	Hashes       []LCPHash
 }
 
-//LCPPolicyPCONF represents a PCONF policy element
+// LCPPolicyPCONF represents a PCONF policy element
 type LCPPolicyPCONF struct {
 	NumPCRInfos uint16
 	PCRInfos    []TPMPCRInfoShort
 }
 
-//TPMPCRInfoShort rFIXME
+// TPMPCRInfoShort rFIXME
 type TPMPCRInfoShort struct {
 	// TPM_PCR_SELECTION
 	PCRSelect []int
@@ -229,13 +230,13 @@ type TPMPCRInfoShort struct {
 	DigestAtRelease [20]byte
 }
 
-//LCPPolicyCustom represents a custom policy element
+// LCPPolicyCustom represents a custom policy element
 type LCPPolicyCustom struct {
 	UUID LCPUUID
 	Data []byte
 }
 
-//LCPUUID represents an UUID
+// LCPUUID represents an UUID
 type LCPUUID struct {
 	data1 uint32
 	data2 uint16
@@ -244,7 +245,7 @@ type LCPUUID struct {
 	data5 [6]uint8
 }
 
-//LCPPolicyList2 as defined in Document 315168-016 Chapter D.3.2.1 LCP_POLICY_LIST2 Structure
+// LCPPolicyList2 as defined in Document 315168-016 Chapter D.3.2.1 LCP_POLICY_LIST2 Structure
 type LCPPolicyList2 struct {
 	Version           uint16
 	SignaturAlg       uint16
@@ -252,7 +253,7 @@ type LCPPolicyList2 struct {
 	PolicyElements    []LCPPolicyElement
 }
 
-//LCPSignature as defined in Document 315168-016 Chapter D.3.2.1 LCP_POLICY_LIST2 Structure
+// LCPSignature as defined in Document 315168-016 Chapter D.3.2.1 LCP_POLICY_LIST2 Structure
 type LCPSignature struct {
 	RevocationCounter uint16
 	PubkeySize        uint16
@@ -260,7 +261,7 @@ type LCPSignature struct {
 	SigBlock          []byte
 }
 
-//LCPPolicyList FIXME not in Document 315168-016
+// LCPPolicyList FIXME not in Document 315168-016
 type LCPPolicyList struct {
 	Version           uint16
 	Reserved          uint8
@@ -270,13 +271,13 @@ type LCPPolicyList struct {
 	Signature         *LCPSignature
 }
 
-//LCPList as defined in Document 315168-016 Chapter D.3.2.3 LCP_LIST
+// LCPList as defined in Document 315168-016 Chapter D.3.2.3 LCP_LIST
 type LCPList struct {
 	TPM12PolicyList LCPPolicyList
 	TPM20PolicyList LCPPolicyList2
 }
 
-//PolicyControl as defined in Document 315168-016 Chapter D.1.1 PolicyControl
+// PolicyControl as defined in Document 315168-016 Chapter D.1.1 PolicyControl
 type PolicyControl struct {
 	NPW           bool
 	OwnerEnforced bool
@@ -284,7 +285,7 @@ type PolicyControl struct {
 	SinitCaps     bool
 }
 
-//ApprovedHashAlgorithm as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+// ApprovedHashAlgorithm as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
 type ApprovedHashAlgorithm struct {
 	SHA1   bool
 	SHA256 bool
@@ -292,7 +293,7 @@ type ApprovedHashAlgorithm struct {
 	SM3    bool
 }
 
-//ApprovedSignatureAlogrithm as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+// ApprovedSignatureAlogrithm as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
 type ApprovedSignatureAlogrithm struct {
 	RSA2048SHA1     bool
 	RSA2048SHA256   bool
@@ -303,7 +304,7 @@ type ApprovedSignatureAlogrithm struct {
 	SM2SM2CurveSM3  bool
 }
 
-//LCPPolicy as defined in Document 315168-016 Chapter D.1.2 LCP_POLICY
+// LCPPolicy as defined in Document 315168-016 Chapter D.1.2 LCP_POLICY
 type LCPPolicy struct {
 	Version                uint16 // < 0x0204
 	HashAlg                uint8
@@ -319,7 +320,7 @@ type LCPPolicy struct {
 	PolicyHash             [20]byte
 }
 
-//LCPPolicy2 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
+// LCPPolicy2 as defined in Document 315168-016 Chapter D.1.3 LCP_POLICY2
 type LCPPolicy2 struct {
 	Version                uint16 // < 0x0302
 	HashAlg                tpm2.Algorithm
@@ -335,7 +336,7 @@ type LCPPolicy2 struct {
 	PolicyHash             [32]byte
 }
 
-//LCPPolicyData FIXME
+// LCPPolicyData FIXME
 type LCPPolicyData struct {
 	FileSignature [32]uint8
 	Reserved      [3]uint8
@@ -503,7 +504,7 @@ func parsePolicy2(policy []byte) (*LCPPolicy2, error) {
 	return &pol2, nil
 }
 
-//ParsePolicy generates one of LCPPolicy or LCPPolicy2
+// ParsePolicy generates one of LCPPolicy or LCPPolicy2
 func ParsePolicy(policy []byte) (*LCPPolicy, *LCPPolicy2, error) {
 	var version uint16
 	buf := bytes.NewReader(policy)
@@ -877,7 +878,6 @@ func parseLCPHash(buf *bytes.Reader, hash *LCPHash, alg uint8) error {
 }
 
 func parseLCPHash2(buf *bytes.Reader, hash *LCPHash, alg tpm2.Algorithm) error {
-
 	h, err := alg.Hash()
 	if err != nil {
 		return err
@@ -905,8 +905,8 @@ func parseLCPHash2(buf *bytes.Reader, hash *LCPHash, alg tpm2.Algorithm) error {
 		copy(tmp[:], hbyte[:])
 		hash.Sha512 = &tmp
 
-		//case tpm2.AlgSM3:
-		//copy(hash.sm3[:], hbyte[:h.Size()])
+		// case tpm2.AlgSM3:
+		// copy(hash.sm3[:], hbyte[:h.Size()])
 
 	default:
 		return fmt.Errorf("unsupported hash algorithm: %x", alg)
@@ -915,7 +915,7 @@ func parseLCPHash2(buf *bytes.Reader, hash *LCPHash, alg tpm2.Algorithm) error {
 	return nil
 }
 
-//ParsePolicyData parses a raw copy of the LCP policy
+// ParsePolicyData parses a raw copy of the LCP policy
 func ParsePolicyData(policyData []byte) (*LCPPolicyData, error) {
 	var polData LCPPolicyData
 
@@ -949,7 +949,7 @@ func ParsePolicyData(policyData []byte) (*LCPPolicyData, error) {
 	return &polData, nil
 }
 
-//PrettyPrint prints the LCPHash in a human readable format
+// PrettyPrint prints the LCPHash in a human readable format
 func (p *LCPHash) PrettyPrint() string {
 	if p.Sha1 != nil {
 		return fmt.Sprintf("%02x [SHA-1]", *p.Sha1)
@@ -966,9 +966,9 @@ func (p *LCPHash) PrettyPrint() string {
 	}
 }
 
-//PrettyPrint prints the LCPPolicyData in a human readable format
+// PrettyPrint prints the LCPPolicyData in a human readable format
 func (pd *LCPPolicyData) PrettyPrint() {
-	log.Printf("Launch Control Policy Data\n")
+	log.Infof("Launch Control Policy Data")
 
 	var fileSig string
 	if bytes.Equal(pd.FileSignature[:], []uint8(LCPDataFileSignature)) {
@@ -976,74 +976,74 @@ func (pd *LCPPolicyData) PrettyPrint() {
 	} else {
 		fileSig = "invalid"
 	}
-	log.Printf("File Signature % x (%s)\n", pd.FileSignature, fileSig)
+	log.Infof("File Signature % x (%s)", pd.FileSignature, fileSig)
 
-	log.Println("LCP Policy Lists:")
-	log.Printf("\tLists: %d\n", pd.NumLists)
+	log.Info("LCP Policy Lists:")
+	log.Infof("\tLists: %d", pd.NumLists)
 	for idx, pol := range pd.PolicyLists {
-		log.Printf("\tList %d:\n", idx)
-		log.Printf("\t\tVersion: 0x%04x\n", pol.TPM12PolicyList.Version)
-		log.Printf("\t\tReserved: % 02x\n", pol.TPM12PolicyList.Reserved)
-		log.Printf("\t\tSignature Algorithm: 0x%02x\n", pol.TPM12PolicyList.SignaturAlg)
-		log.Printf("\t\tEntries: %d bytes\n", pol.TPM12PolicyList.PolicyElementSize)
+		log.Infof("\tList %d:", idx)
+		log.Infof("\t\tVersion: 0x%04x", pol.TPM12PolicyList.Version)
+		log.Infof("\t\tReserved: % 02x", pol.TPM12PolicyList.Reserved)
+		log.Infof("\t\tSignature Algorithm: 0x%02x", pol.TPM12PolicyList.SignaturAlg)
+		log.Infof("\t\tEntries: %d bytes", pol.TPM12PolicyList.PolicyElementSize)
 
 		for jdx, ent := range pol.TPM12PolicyList.PolicyElements {
-			log.Printf("\t\tPolicy %d:\n", jdx)
-			log.Printf("\t\t\tSize: %d bytes\n", ent.Size)
-			log.Printf("\t\t\tType: %#v\n", ent.Type)
-			log.Printf("\t\t\tPolicyEltControl: %#v\n", ent.PolicyEltControl)
+			log.Infof("\t\tPolicy %d:", jdx)
+			log.Infof("\t\t\tSize: %d bytes", ent.Size)
+			log.Infof("\t\t\tType: %#v", ent.Type)
+			log.Infof("\t\t\tPolicyEltControl: %#v", ent.PolicyEltControl)
 
 			if ent.MLE != nil {
-				log.Printf("\t\t\tSINITMinVersion: %d\n", ent.MLE.SINITMinVersion)
-				log.Printf("\t\t\tHashAlg: 0x%04x\n", ent.MLE.HashAlg)
-				log.Printf("\t\t\tNumHashes: %d\n", ent.MLE.NumHashes)
+				log.Infof("\t\t\tSINITMinVersion: %d", ent.MLE.SINITMinVersion)
+				log.Infof("\t\t\tHashAlg: 0x%04x", ent.MLE.HashAlg)
+				log.Infof("\t\t\tNumHashes: %d", ent.MLE.NumHashes)
 
 				for kdx, h := range ent.MLE.Hashes {
-					log.Printf("\t\t\tHash %2d: %02x\n", kdx, h)
+					log.Infof("\t\t\tHash %2d: %02x", kdx, h)
 				}
 			} else if ent.SBIOS != nil {
-				log.Printf("\t\t\tHashAlg: 0x%04x\n", ent.SBIOS.HashAlg)
-				log.Printf("\t\t\tReserved1: % 02x\n", ent.SBIOS.Reserved1)
-				log.Printf("\t\t\tFallbackHash: %s\n", ent.SBIOS.FallbackHash.PrettyPrint())
-				log.Printf("\t\t\tReserved2: % 02x\n", ent.SBIOS.Reserved2)
-				log.Printf("\t\t\tNumHashes: %d\n", ent.SBIOS.NumHashes)
+				log.Infof("\t\t\tHashAlg: 0x%04x", ent.SBIOS.HashAlg)
+				log.Infof("\t\t\tReserved1: % 02x", ent.SBIOS.Reserved1)
+				log.Infof("\t\t\tFallbackHash: %s", ent.SBIOS.FallbackHash.PrettyPrint())
+				log.Infof("\t\t\tReserved2: % 02x", ent.SBIOS.Reserved2)
+				log.Infof("\t\t\tNumHashes: %d", ent.SBIOS.NumHashes)
 
 				for kdx, h := range ent.SBIOS.Hashes {
-					log.Printf("\t\t\tHash %2d: %s\n", kdx, h.PrettyPrint())
+					log.Infof("\t\t\tHash %2d: %s", kdx, h.PrettyPrint())
 				}
 			} else if ent.PCONF != nil {
-				log.Printf("\t\t\tNumPCRInfos: %d\n", ent.PCONF.NumPCRInfos)
+				log.Infof("\t\t\tNumPCRInfos: %d", ent.PCONF.NumPCRInfos)
 
 				for kdx, info := range ent.PCONF.PCRInfos {
-					log.Printf("\t\t\tPCR Info %d:\n", kdx)
-					log.Printf("\t\t\t\tPCR Select: %v\n", info.PCRSelect)
-					log.Printf("\t\t\t\tLocality: %d\n", info.LocalityAtRelease)
-					log.Printf("\t\t\t\tDigest: %02x\n", info.DigestAtRelease)
+					log.Infof("\t\t\tPCR Info %d:", kdx)
+					log.Infof("\t\t\t\tPCR Select: %v", info.PCRSelect)
+					log.Infof("\t\t\t\tLocality: %d", info.LocalityAtRelease)
+					log.Infof("\t\t\t\tDigest: %02x", info.DigestAtRelease)
 				}
 			} else if ent.Custom != nil {
-				log.Printf("\t\t\tUUID: %08x-%04x-%04x-%04x-%02x\n", ent.Custom.UUID.data1, ent.Custom.UUID.data2, ent.Custom.UUID.data3, ent.Custom.UUID.data4, ent.Custom.UUID.data5)
-				log.Printf("\t\t\tData: %02x\n", ent.Custom.Data)
+				log.Infof("\t\t\tUUID: %08x-%04x-%04x-%04x-%02x", ent.Custom.UUID.data1, ent.Custom.UUID.data2, ent.Custom.UUID.data3, ent.Custom.UUID.data4, ent.Custom.UUID.data5)
+				log.Infof("\t\t\tData: %02x", ent.Custom.Data)
 			} else {
-				log.Printf("\t\t\tError: Unknown Policy Element type\n")
+				log.Infof("\t\t\tError: Unknown Policy Element type")
 			}
 		}
 
 		if pol.TPM12PolicyList.Signature != nil {
-			log.Printf("\t\tSignature:\n")
-			log.Printf("\t\t\tRevocation Counter: %#v\n", pol.TPM12PolicyList.Signature.RevocationCounter)
-			log.Printf("\t\t\tPubkey Size: %d\n", pol.TPM12PolicyList.Signature.PubkeySize)
-			log.Printf("\t\t\tPubkey Value: %02x\n", pol.TPM12PolicyList.Signature.PubkeyValue)
-			log.Printf("\t\t\tSig Block: %02x\n", pol.TPM12PolicyList.Signature.SigBlock)
+			log.Infof("\t\tSignature:")
+			log.Infof("\t\t\tRevocation Counter: %#v", pol.TPM12PolicyList.Signature.RevocationCounter)
+			log.Infof("\t\t\tPubkey Size: %d", pol.TPM12PolicyList.Signature.PubkeySize)
+			log.Infof("\t\t\tPubkey Value: %02x", pol.TPM12PolicyList.Signature.PubkeyValue)
+			log.Infof("\t\t\tSig Block: %02x", pol.TPM12PolicyList.Signature.SigBlock)
 		} else {
-			log.Printf("\t\tSignature: (None)\n")
+			log.Infof("\t\tSignature: (None)")
 		}
 	}
 }
 
 // GenLCPPolicyV2 generates a LCPPolicyV2 structure with given hash algorithm
 func GenLCPPolicyV2(version uint16, hashAlg crypto.Hash, hash []byte, sinitmin uint8, pc PolicyControl,
-	apprHashes ApprovedHashAlgorithm, apprSigs ApprovedSignatureAlogrithm) (*LCPPolicy2, error) {
-
+	apprHashes ApprovedHashAlgorithm, apprSigs ApprovedSignatureAlogrithm,
+) (*LCPPolicy2, error) {
 	var v uint16
 	h, a := HashAlgMap[hashAlg]
 	if !a {
@@ -1187,8 +1187,8 @@ func (p *LCPPolicy2) PrettyPrint() {
 	s.WriteString("   LcpHashAlgMask: " + PrintLcpHashAlgMask(p.LcpHashAlgMask) + "\n")
 	s.WriteString("   LcpSignAlgMask: " + p.LcpSignAlgMask.String() + "\n")
 	s.WriteString("   PolicyHash: " + fmt.Sprintf("%v", p.PolicyHash) + "\n")
-	fmt.Printf("%s", s.String())
-	fmt.Println()
+	log.Infof("%s", s.String())
+	log.Infoln()
 }
 
 // PrintLcpHashAlgMask prints LcpHashAlgMask in human readable format

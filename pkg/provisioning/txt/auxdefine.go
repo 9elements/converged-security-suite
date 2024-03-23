@@ -5,6 +5,8 @@ import (
 	"io"
 
 	tpm2 "github.com/google/go-tpm/tpm2"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // DefineAUXIndexTPM20 defines the AUX index on TPM 2.0
@@ -18,7 +20,7 @@ func DefineAUXIndexTPM20(rw io.ReadWriter) error {
 	if err != nil {
 		return fmt.Errorf("NVDefineSpaceEx() failed: %v", err)
 	}
-	fmt.Println("AUX index defined successfully")
+	log.Info("AUX index defined successfully")
 	return nil
 }
 
