@@ -19,17 +19,17 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
             - name: Build txt-suite
-              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o txt-suite cmd/txt-suite/*.go
+              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o txt-suite cmd/core/txt-suite/*.go
             - name: Build txt-prov
-              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o txt-prov cmd/txt-prov/*.go
+              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o txt-prov cmd/core/txt-prov/*.go
             - name: Build bg-suite
-              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o bg-suite cmd/bg-suite/*.go
+              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o bg-suite cmd/core/bg-suite/*.go
             - name: Build bg-prov
-              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o bg-prov cmd/bg-prov/*.go
+              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o bg-prov cmd/core/bg-prov/*.go
             - name: Build pcr0tool
-              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o pcr0tool cmd/pcr0tool/*.go
+              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o pcr0tool cmd/exp/pcr0tool/*.go
             - name: Build amd-suite
-              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o amd-suite cmd/amd-suite/*.go
+              run: go build -ldflags '-X main.gitcommit=${GITHUB_SHA} -X main.gittag=${github.ref_name} -w -extldflags "-static"' -o amd-suite cmd/exp/amd-suite/*.go
             - name: Save artifacts
               uses: actions/upload-artifact@v4
               with:

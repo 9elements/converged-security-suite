@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/dumpregisters/helpers"
+	"github.com/9elements/converged-security-suite/v2/cmd/exp/pcr0tool/commands/dumpregisters/helpers"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 
 	"gopkg.in/yaml.v3"
@@ -70,7 +70,7 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 		if err != nil {
 			panic(fmt.Sprintf("failed to marshal registers into json, err: %v", err))
 		}
-		err = os.WriteFile(*cmd.outputFile, b, 0666)
+		err = os.WriteFile(*cmd.outputFile, b, 0o666)
 		if err != nil {
 			panic(fmt.Sprintf("failed to write data to file %s, err: %v", *cmd.outputFile, err))
 		}

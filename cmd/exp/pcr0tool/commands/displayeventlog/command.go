@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/9elements/converged-security-suite/v2/cmd/pcr0tool/commands/displayeventlog/format"
+	"github.com/9elements/converged-security-suite/v2/cmd/exp/pcr0tool/commands/displayeventlog/format"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 )
