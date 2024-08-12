@@ -8,7 +8,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 	tpm1 "github.com/google/go-tpm/tpm"
-	"github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/legacy/tpm2"
 	"github.com/marcoguerri/go-tpm-tcti/abrmd"
 )
 

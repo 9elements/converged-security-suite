@@ -16,7 +16,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
-	"github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/legacy/tpm2"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 	manifest "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 )
