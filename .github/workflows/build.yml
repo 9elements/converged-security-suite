@@ -77,7 +77,7 @@ jobs:
 
       - name: Check FIT
         run: |
-          ./artifacts/bg-prov fit-show ./firmware.bin >> fit.log
+          ./artifacts/bg-prov fit-show ./firmware.bin > fit.log 2>&1
 
       - name: Check FIT entries
         run: |
