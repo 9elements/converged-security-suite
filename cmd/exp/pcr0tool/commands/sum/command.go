@@ -26,7 +26,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 	"github.com/facebookincubator/go-belt/tool/logger"
-	"github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/legacy/tpm2"
 )
 
 func usageAndExit() {

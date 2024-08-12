@@ -7,7 +7,7 @@ import (
 	"io"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
-	"github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/legacy/tpm2"
 	"github.com/google/go-tpm/tpmutil"
 
 	log "github.com/sirupsen/logrus"

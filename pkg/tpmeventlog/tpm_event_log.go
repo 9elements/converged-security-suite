@@ -6,7 +6,7 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm/pcr"
 	"github.com/google/go-attestation/attest"
-	"github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/legacy/tpm2"
 )
 
 // TPMEventLog is a parsed EventLog.

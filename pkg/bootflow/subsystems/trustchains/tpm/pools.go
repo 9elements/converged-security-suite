@@ -4,7 +4,7 @@ import (
 	"hash"
 	"sync"
 
-	"github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/legacy/tpm2"
 )
 
 var hasherPools = [0xffff]sync.Pool{}

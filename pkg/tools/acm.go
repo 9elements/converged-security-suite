@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/legacy/tpm2"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 
 	log "github.com/sirupsen/logrus"

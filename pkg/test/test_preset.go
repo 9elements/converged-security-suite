@@ -7,7 +7,7 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
-	"github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/legacy/tpm2"
 )
 
 // PreSet set of pre-defined assumptions

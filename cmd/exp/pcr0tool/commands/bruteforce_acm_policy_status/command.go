@@ -28,7 +28,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bruteforcer"
 	"github.com/9elements/converged-security-suite/v2/pkg/registers"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi"
-	"github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/legacy/tpm2"
 )
 
 // Command is the implementation of `commands.Command`.

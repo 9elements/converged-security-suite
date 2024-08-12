@@ -25,7 +25,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tpmeventlog"
 	"github.com/facebookincubator/go-belt/tool/experimental/errmon"
 	"github.com/facebookincubator/go-belt/tool/logger"
-	"github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/legacy/tpm2"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 	"github.com/xaionaro-go/unhash/pkg/unhash"
 	"golang.org/x/exp/constraints"
