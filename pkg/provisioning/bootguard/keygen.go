@@ -102,6 +102,7 @@ func writePrivKeyToFile(k crypto.PrivateKey, f *os.File, password string) error 
 		return fmt.Errorf("unable to marshal the private key: %w", err)
 	}
 	bpemBlock := &pem.Block{
+		Type:  "PRIVATE KEY",
 		Bytes: b,
 	}
 	bpem := pem.EncodeToMemory(bpemBlock)
@@ -128,6 +129,7 @@ func writePubKeyToFile(k crypto.PublicKey, f *os.File) error {
 		return err
 	}
 	bpemBlock := &pem.Block{
+		Type:  "PUBLIC KEY",
 		Bytes: b,
 	}
 	bpem := pem.EncodeToMemory(bpemBlock)
