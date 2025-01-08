@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto"
 	"encoding/binary"
 	"fmt"
 	"os"
@@ -858,7 +859,7 @@ func (s *signKMCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	bKMSigned, err := bg.SignKM(s.SignAlgo, privkey)
+	bKMSigned, err := bg.SignKM(s.SignAlgo, privkey.(crypto.Signer))
 	if err != nil {
 		return err
 	}
