@@ -32,6 +32,7 @@ require (
 	github.com/xaionaro-go/bytesextra v0.0.0-20220103144954-846e454ddea9
 	github.com/xaionaro-go/unhash v0.0.0-20230427202706-0195a574c620
 	github.com/xaionaro-go/unsafetools v0.0.0-20210722164218-75ba48cf7b3c
+	go.uber.org/multierr v1.11.0
 	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df
 	golang.org/x/term v0.15.0
 	gopkg.in/yaml.v3 v3.0.1
