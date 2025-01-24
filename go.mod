@@ -20,7 +20,7 @@ require (
 	github.com/google/go-tpm v0.9.1
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/linuxboot/fiano v1.2.0
+	github.com/linuxboot/fiano v1.2.1-0.20250121191917-5620ca1697c5
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/marcoguerri/go-tpm-tcti v0.0.0-20210425104733-8e8c8fe68e60
 	github.com/sirupsen/logrus v1.9.3
@@ -59,5 +59,3 @@ require (
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )
-
-replace github.com/linuxboot/fiano => github.com/walterchris/fiano v0.0.0-20250116132301-19a8adc223f6
