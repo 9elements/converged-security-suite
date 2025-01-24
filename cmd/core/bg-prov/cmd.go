@@ -1190,7 +1190,7 @@ func (p printFITCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	log.Infof("%s", table.String())
+	log.Infof("\n%s", table.String())
 	return nil
 }
 
