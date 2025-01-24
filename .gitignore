@@ -1,8 +1,13 @@
+/amd-suite
 /txt-suite
 /txt-prov
 /bg-prov
+/bg-suite
 /vendor
-cmd/txt-prov/txt-prov
-cmd/txt-suite/test_log.json
-cmd/txt-suite/txt-suite
-cmd bg-prov/bg-prov
+cmd/core/txt-prov/txt-prov
+cmd/core/txt-suite/test_log.json
+cmd/core/txt-suite/txt-suite
+cmd/core/bg-prov/bg-prov
+cmd/core/bg-suite/bg-suite
+cmd/core/amd-suite/amd-suite
+cmd/exp/amd-suite/amd-suite
