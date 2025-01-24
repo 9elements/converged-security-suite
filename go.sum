@@ -508,6 +508,8 @@ github.com/letsencrypt/pkcs11key/v4 v4.0.0/go.mod h1:EFUvBDay26dErnNb70Nd0/VW3tJ
 github.com/lib/pq v1.1.1/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/lightstep/lightstep-tracer-common/golang/gogo v0.0.0-20190605223551-bc2310a04743/go.mod h1:qklhhLq1aX+mtWk9cPHPzaBjWImj5ULL6C7HFJtXQMM=
 github.com/lightstep/lightstep-tracer-go v0.18.1/go.mod h1:jlF1pusYV4pidLvZ+XD0UBX0ZE6WURAspgAczcDHrL4=
+github.com/linuxboot/fiano v1.2.1-0.20250121191917-5620ca1697c5 h1:J/nKXBQztbBv/RBRzdfTGRyJEN2nd7JyQZHisobpaPE=
+github.com/linuxboot/fiano v1.2.1-0.20250121191917-5620ca1697c5/go.mod h1:aB4kacPpV1iKDXueYEpSh4dQ5uRenDrUNnPBIaf2hvU=
 github.com/logrusorgru/aurora v2.0.3+incompatible h1:tOpm7WcpBTn4fjmVfgpQq0EfczGlG91VSDkswnjF5A8=
 github.com/logrusorgru/aurora v2.0.3+incompatible/go.mod h1:7rIyQOR62GCctdiQpZ/zOJlFyk6y+94wXzv6RNZgaR4=
 github.com/lyft/protoc-gen-validate v0.0.13/go.mod h1:XbGvPuh87YZc5TdIa2/I4pLk0QoUACkjt2znoq26NVQ=
@@ -742,8 +744,6 @@ github.com/ulikunitz/xz v0.5.11/go.mod h1:nbz6k7qbPmH4IRqmfOplQw/tblSgqTqBwxkY0o
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
 github.com/urfave/cli v1.22.4/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
-github.com/walterchris/fiano v0.0.0-20250116132301-19a8adc223f6 h1:mxgfI4+i6i80DayZL1mi7kdU2PXuo0GTmyGJlXDcCQU=
-github.com/walterchris/fiano v0.0.0-20250116132301-19a8adc223f6/go.mod h1:aB4kacPpV1iKDXueYEpSh4dQ5uRenDrUNnPBIaf2hvU=
 github.com/xaionaro-facebook/go-dmidecode v0.0.0-20220413144237-c42d5bef2498 h1:DungyLUCAeepf9LlCgBufekeSdeonRFkiMxzNIz2ZzM=
 github.com/xaionaro-facebook/go-dmidecode v0.0.0-20220413144237-c42d5bef2498/go.mod h1:II0+Quqf1lG4nq4udbG0Jn3uvbUlrCL4iccqrN5XRjY=
 github.com/xaionaro-go/bytesextra v0.0.0-20220103144954-846e454ddea9 h1:LZsotURuIwV1yjhoaTpbdZHf0/7QtWtvXH8VZ4zs/ug=
