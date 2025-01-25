@@ -24,6 +24,7 @@ import (
 	"github.com/tidwall/pretty"
 
 	log "github.com/sirupsen/logrus"
+	"go.uber.org/multierr"
 )
 
 // Everything more secure than SHA-1
@@ -97,7 +98,7 @@ func NewVData(vdata VersionedData) (*BootGuard, error) {
 		b.Version, _ = bgheader.DetectBGV(manifest)
 	}
 	if b.Version == 0 {
-		return nil, fmt.Errorf("NewVData: can't identify bootguard header")
+		return nil, fmt.Errorf("NewVData: can't identify BootGuard header")
 	}
 	b.VData = vdata
 	return &b, nil
@@ -127,7 +128,7 @@ func NewBPM(bpm io.ReadSeeker) (*BootGuard, error) {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("NewBPM: can't identify bootguard header")
+		return nil, fmt.Errorf("NewBPM: can't identify BootGuard header")
 	}
 	return &b, nil
 }
@@ -156,7 +157,7 @@ func NewKM(km io.ReadSeeker) (*BootGuard, error) {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("NewKM: can't identify bootguard header")
+		return nil, fmt.Errorf("NewKM: can't identify BootGuard header")
 	}
 	return &b, nil
 }
@@ -176,7 +177,7 @@ func NewBPMAndKM(bpm io.ReadSeeker, km io.ReadSeeker) (*BootGuard, error) {
 		return nil, err
 	}
 	if bpmV != kmV {
-		return nil, fmt.Errorf("km and bpm version number differ")
+		return nil, fmt.Errorf("Key Manifest and Boot Policy Manifest version number differ")
 	}
 	b.Version = bpmV
 	switch b.Version {
@@ -203,7 +204,7 @@ func NewBPMAndKM(bpm io.ReadSeeker, km io.ReadSeeker) (*BootGuard, error) {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("NewBPMAndKM: can't identify bootguard header")
+		return nil, fmt.Errorf("NewBPMAndKM: can't identify BootGuard header")
 	}
 	return &b, nil
 }
@@ -246,7 +247,7 @@ func NewBPMAndKMFromBIOS(biosFilepath string, jsonFilepath *os.File) (*BootGuard
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("NewBPMAndKMFromBIOS: can't identify bootguard header")
+		return nil, fmt.Errorf("NewBPMAndKMFromBIOS: can't identify BootGuard header")
 	}
 	data, err := json.Marshal(b.VData)
 	if err != nil {
@@ -268,11 +269,11 @@ func (b *BootGuard) ValidateBPM() error {
 	case bgheader.Version20:
 		return b.VData.CBNTbpm.Validate()
 	default:
-		return fmt.Errorf("ValidateBPM: can't identify bootguard header")
+		return fmt.Errorf("ValidateBPM: can't identify BootGuard header")
 	}
 }
 
-// ValidateKM reads from a binary source, parses into the key manifest structure
+// ValidateKM reads from a binary source, parses into the Key Manifest structure
 // and validates the structure
 func (b *BootGuard) ValidateKM() error {
 	switch b.Version {
@@ -281,7 +282,7 @@ func (b *BootGuard) ValidateKM() error {
 	case bgheader.Version20:
 		return b.VData.CBNTkm.Validate()
 	default:
-		return fmt.Errorf("ValidateKM: can't identify bootguard header")
+		return fmt.Errorf("ValidateKM: can't identify BootGuard header")
 	}
 }
 
@@ -293,11 +294,11 @@ func (b *BootGuard) PrintBPM() {
 	case bgheader.Version20:
 		b.VData.CBNTbpm.Print()
 	default:
-		log.Error("PrintBPM: can't identify bootguard header")
+		log.Error("PrintBPM: can't identify BootGuard header")
 	}
 }
 
-// PrintKM prints the key manifest in human readable
+// PrintKM prints the Key Manifest in human readable
 func (b *BootGuard) PrintKM() {
 	switch b.Version {
 	case bgheader.Version10:
@@ -305,11 +306,11 @@ func (b *BootGuard) PrintKM() {
 	case bgheader.Version20:
 		b.VData.CBNTkm.Print()
 	default:
-		log.Error("PrintKM: can't identify bootguard header")
+		log.Error("PrintKM: can't identify BootGuard header")
 	}
 }
 
-// WriteKM returns a key manifest as bytes in format defined in #575623.
+// WriteKM returns a Key Manifest as bytes in format defined in #575623.
 func (b *BootGuard) WriteKM() ([]byte, error) {
 	var err error
 	buf := new(bytes.Buffer)
@@ -319,7 +320,7 @@ func (b *BootGuard) WriteKM() ([]byte, error) {
 	case bgheader.Version20:
 		_, err = b.VData.CBNTkm.WriteTo(buf)
 	default:
-		log.Error("WriteKM: can't identify bootguard header")
+		log.Error("WriteKM: can't identify BootGuard header")
 	}
 	return buf.Bytes(), err
 }
@@ -334,7 +335,7 @@ func (b *BootGuard) WriteBPM() ([]byte, error) {
 	case bgheader.Version20:
 		_, err = b.VData.CBNTbpm.WriteTo(buf)
 	default:
-		log.Error("WriteBPM: can't identify bootguard header")
+		log.Error("WriteBPM: can't identify BootGuard header")
 	}
 	return buf.Bytes(), err
 }
@@ -364,7 +365,7 @@ func (b *BootGuard) ReadJSON(filepath string) error {
 	return nil
 }
 
-// StitchKM returns a key manifest manifest as byte slice
+// StitchKM returns a Key Manifest as byte slice
 func (b *BootGuard) StitchKM(pubKey crypto.PublicKey, signature []byte) ([]byte, error) {
 	switch b.Version {
 	case bgheader.Version10:
@@ -384,7 +385,7 @@ func (b *BootGuard) StitchKM(pubKey crypto.PublicKey, signature []byte) ([]byte,
 			return nil, err
 		}
 	default:
-		log.Error("StitchKM: can't identify bootguard header")
+		log.Error("StitchKM: can't identify BootGuard header")
 	}
 	return b.WriteKM()
 }
@@ -413,7 +414,7 @@ func (b *BootGuard) StitchBPM(pubKey crypto.PublicKey, signature []byte) ([]byte
 			return nil, err
 		}
 	default:
-		log.Error("StitchBPM: can't identify bootguard header")
+		log.Error("StitchBPM: can't identify BootGuard header")
 	}
 	return b.WriteBPM()
 }
@@ -451,7 +452,7 @@ func (b *BootGuard) SignKM(signAlgo string, privkey crypto.PrivateKey) ([]byte, 
 			return nil, err
 		}
 	default:
-		log.Error("SignKM: can't identify bootguard header")
+		log.Error("SignKM: can't identify BootGuard header")
 	}
 	return b.WriteKM()
 }
@@ -495,7 +496,7 @@ func (b *BootGuard) SignBPM(signAlgo, hashAlgo string, privkey crypto.PrivateKey
 			return nil, err
 		}
 	default:
-		log.Error("SignBPM: can't identify bootguard header")
+		log.Error("SignBPM: can't identify BootGuard header")
 	}
 	return b.WriteBPM()
 }
@@ -521,7 +522,7 @@ func (b *BootGuard) VerifyKM() error {
 			return err
 		}
 	default:
-		log.Error("VerifyKM: can't identify bootguard header")
+		log.Error("VerifyKM: can't identify BootGuard header")
 	}
 	return nil
 }
@@ -547,7 +548,7 @@ func (b *BootGuard) VerifyBPM() error {
 			return err
 		}
 	default:
-		log.Error("VerifyBPM: can't identify bootguard header")
+		log.Error("VerifyBPM: can't identify BootGuard header")
 	}
 	return nil
 }
@@ -623,7 +624,7 @@ func (b *BootGuard) CalculateNEMSize(image []byte, acm *tools.ACM) (uint16, erro
 		}
 		return uint16(cbntbootpolicy.NewSize4K(totalSize)), nil
 	default:
-		return 0, fmt.Errorf("CalculateNEMSize: can't identify bootguard header")
+		return 0, fmt.Errorf("CalculateNEMSize: can't identify BootGuard header")
 	}
 }
 
@@ -681,7 +682,7 @@ func (b *BootGuard) GetBPMPubHash(pubkey crypto.PublicKey, hashAlgo string) erro
 		}
 		b.VData.CBNTkm.Hash = append(keyHashes, kH)
 	default:
-		log.Error("can't identify bootguard header")
+		log.Error("can't identify BootGuard header")
 	}
 	return nil
 }
@@ -765,7 +766,7 @@ func (b *BootGuard) GetIBBsDigest(image []byte, hashAlgo string) (digest []byte,
 		}
 		digest = hash.Sum(nil)
 	default:
-		log.Error("can't identify bootguard header")
+		log.Error("can't identify BootGuard header")
 	}
 	return digest, nil
 }
@@ -795,61 +796,69 @@ func (b *BootGuard) CreateIBBDigest(biosFilepath string) error {
 			copy(b.VData.CBNTbpm.SE[0].DigestList.List[iterator].HashBuffer, d)
 		}
 	default:
-		log.Error("can't identify bootguard header")
+		log.Error("can't identify BootGuard header")
 	}
 	return nil
 }
 
 // BPMCryptoSecure verifies that BPM uses sane crypto algorithms
 func (b *BootGuard) BPMCryptoSecure() (bool, error) {
+	var errs error
 	switch b.Version {
 	case bgheader.Version10:
 		hash := b.VData.BGbpm.SE[0].Digest.HashAlg
 		if hash == bg.AlgSHA1 || hash.IsNull() {
-			return false, fmt.Errorf("signed IBB hash in BPM uses insecure hash algorithm SHA1/Null")
+			errs = multierr.Combine(errs, fmt.Errorf("signed IBB hash in BPM uses insecure hash algorithm SHA1 or has none"))
 		}
 		hash = b.VData.BGbpm.PMSE.Signature.HashAlg
 		if hash == bg.AlgSHA1 || hash.IsNull() {
-			return false, fmt.Errorf("BPM signature uses insecure hash algorithm SHA1/Null")
+			errs = multierr.Combine(errs, fmt.Errorf("BPM signature uses insecure hash algorithm SHA1 or has none"))
 		}
 	case bgheader.Version20:
 		for _, hash := range b.VData.CBNTbpm.SE[0].DigestList.List {
 			if hash.HashAlg == cbnt.AlgSHA1 || hash.HashAlg.IsNull() {
 				if b.VData.CBNTbpm.SE[0].DigestList.Size < 2 {
-					return false, fmt.Errorf("signed IBB hash list in BPM uses insecure hash algorithm SHA1/Null")
+					errs = multierr.Combine(errs, fmt.Errorf("signed IBB hash list in BPM uses insecure hash algorithm SHA1 or has none"))
 				}
 			}
 		}
 		hash := b.VData.CBNTbpm.PMSE.Signature.HashAlg
 		if hash == cbnt.AlgSHA1 || hash.IsNull() {
-			return false, fmt.Errorf("BPM signature uses insecure hash algorithm SHA1/Null")
+			errs = multierr.Combine(errs, fmt.Errorf("BPM signature uses insecure hash algorithm SHA1 or has none"))
 		}
+	}
+	if errs != nil {
+		return false, fmt.Errorf("%+v", errs)
 	}
 	return true, nil
 }
 
 // KMCryptoSecure verifies that KM uses sane crypto algorithms
 func (b *BootGuard) KMCryptoSecure() (bool, error) {
+	var errs error
 	switch b.Version {
 	case bgheader.Version10:
 		hash := b.VData.BGkm.KeyAndSignature.Signature.HashAlg
 		if hash == bg.AlgSHA1 || hash.IsNull() {
-			return false, fmt.Errorf("KM signature uses insecure hash algorithm SHA1/Null")
+			errs = multierr.Combine(errs, fmt.Errorf("Key Manifest signature uses insecure hash algorithm SHA1 or has none"))
 		}
 		hash = b.VData.BGkm.BPKey.HashAlg
 		if hash == bg.AlgSHA1 || hash.IsNull() {
-			return false, fmt.Errorf("signed BPM hash in KM uses insecure hash algorithm SHA1/Null")
+			errs = multierr.Combine(errs, fmt.Errorf("signed BPM hash in Key Manifest uses insecure hash algorithm SHA1 or has none"))
 		}
 	case bgheader.Version20:
 		hash := b.VData.CBNTkm.PubKeyHashAlg
 		if hash == cbnt.AlgSHA1 || hash.IsNull() {
-			return false, fmt.Errorf("KM signature uses insecure hash algorithm SHA1/Null")
+			errs = multierr.Combine(errs, fmt.Errorf("Key Manifest signature uses insecure hash algorithm SHA1 or has none"))
 		}
 		for _, hash := range b.VData.CBNTkm.Hash {
 			if hash.Digest.HashAlg == cbnt.AlgSHA1 || hash.Digest.HashAlg.IsNull() {
-				return false, fmt.Errorf("the KM hash %s uses insecure hash algorithm SHA1/Null", hash.Usage.String())
+				errs = multierr.Combine(errs, fmt.Errorf("Key Manifest hash %s uses insecure hash algorithm SHA1 or has none", hash.Usage.String()))
 			}
 		}
+	}
+	if errs != nil {
+		return false, fmt.Errorf("%+v", errs)
 	}
 	return true, nil
 }
@@ -870,7 +879,7 @@ func (b *BootGuard) KMHasBPMHash() (bool, error) {
 		}
 	}
 	if !bpmHashFound {
-		return false, fmt.Errorf("couldn't find BPM hash in KM")
+		return false, fmt.Errorf("couldn't find BPM hash in Key Manifest")
 	}
 	return true, nil
 }
@@ -881,14 +890,14 @@ func (b *BootGuard) BPMKeyMatchKMHash() (bool, error) {
 	case bgheader.Version10:
 		if b.VData.BGkm.BPKey.HashBufferTotalSize() > minHashTypeSize {
 			if err := b.VData.BGkm.ValidateBPMKey(b.VData.BGbpm.PMSE.KeySignature); err != nil {
-				return false, fmt.Errorf("couldn't verify bpm hash in km")
+				return false, fmt.Errorf("couldn't verify BPM hash in Key Manifest")
 			}
 		}
 	case bgheader.Version20:
 		for _, hash := range b.VData.CBNTkm.Hash {
 			if hash.Usage == cbntkey.UsageBPMSigningPKD {
 				if err := b.VData.CBNTkm.ValidateBPMKey(b.VData.CBNTbpm.PMSE.KeySignature); err != nil {
-					return false, fmt.Errorf("couldn't verify bpm hash in km")
+					return false, fmt.Errorf("couldn't verify BPM hash in Key Manifest")
 				}
 			}
 		}
@@ -898,69 +907,82 @@ func (b *BootGuard) BPMKeyMatchKMHash() (bool, error) {
 
 // StrictSaneBPMSecurityProps verifies that BPM contains security properties more strictly
 func (b *BootGuard) StrictSaneBPMSecurityProps() (bool, error) {
+	var errs error
+
 	switch b.Version {
 	case bgheader.Version10:
 		flags := b.VData.BGbpm.SE[0].Flags
 		if !flags.AuthorityMeasure() {
-			return false, fmt.Errorf("pcr-7 data should extended for OS security")
+			errs = multierr.Append(errs, fmt.Errorf("PCR-7 data should extended for OS security"))
 		}
 		if !flags.TPMFailureLeavesHierarchiesEnabled() {
-			return false, fmt.Errorf("tpm failure should lead to default measurements from PCR0 to PCR7")
+			errs = multierr.Append(errs, fmt.Errorf("TPM failure should lead to default measurements from PCR0 to PCR7"))
 		}
 	case bgheader.Version20:
 		bgFlags := b.VData.CBNTbpm.SE[0].Flags
 		if !bgFlags.AuthorityMeasure() {
-			return false, fmt.Errorf("pcr-7 data should extended for OS security")
+			errs = multierr.Append(errs, fmt.Errorf("PCR-7 data should extended for OS security"))
 		}
 		if !bgFlags.TPMFailureLeavesHierarchiesEnabled() {
-			return false, fmt.Errorf("tpm failure should lead to default measurements from PCR0 to PCR7")
+			errs = multierr.Append(errs, fmt.Errorf("TPM failure should lead to default measurements from PCR0 to PCR7"))
 		}
 		txtFlags := b.VData.CBNTbpm.TXTE.ControlFlags
 		if txtFlags.MemoryScrubbingPolicy() != cbntbootpolicy.MemoryScrubbingPolicySACM {
-			return false, fmt.Errorf("S-ACM memory scrubbing should be used over the BIOS")
+			errs = multierr.Append(errs, fmt.Errorf("S-ACM memory scrubbing should be used over the BIOS"))
 		}
 	}
-
+	if errs != nil {
+		return false, errs
+	}
 	return b.SaneBPMSecurityProps()
 }
 
 // SaneBPMSecurityProps verifies that BPM contains security properties set accordingly to spec
 func (b *BootGuard) SaneBPMSecurityProps() (bool, error) {
+	var errs error
+
 	switch b.Version {
 	case bgheader.Version10:
 		flags := b.VData.BGbpm.SE[0].Flags
 		if !flags.DMAProtection() {
-			return false, fmt.Errorf("dma protection should be enabled for bootguard")
+			errs = multierr.Combine(errs, fmt.Errorf("DMA protection should be enabled for BootGuard"))
 		}
 		if !flags.AuthorityMeasure() {
-			return false, fmt.Errorf("pcr-7 data should extended for OS security")
+			return false, fmt.Errorf("PCR-7 data should be extended for OS security")
 		}
 		if b.VData.BGbpm.SE[0].PBETValue.PBETValue() == 0 {
-			return false, fmt.Errorf("firmware shall not allowed to run infinitely after incident happened")
+			errs = multierr.Combine(errs, fmt.Errorf("firmware should not be allowed to run infinitely after incident happened"))
 		}
 		if len(b.VData.BGbpm.SE[0].IBBSegments) < 1 {
-			return false, fmt.Errorf("no ibb segments measured")
+			return false, fmt.Errorf("no IBB segments measured")
 		}
 	case bgheader.Version20:
 		bgFlags := b.VData.CBNTbpm.SE[0].Flags
 		if !bgFlags.DMAProtection() {
 			if b.VData.CBNTbpm.SE[0].DMAProtBase0 == 0 && b.VData.CBNTbpm.SE[0].VTdBAR == 0 {
-				return false, fmt.Errorf("dma protection should be enabled for bootguard")
+				errs = multierr.Combine(errs, fmt.Errorf("DMA protection should be enabled for BootGuard"))
 			}
 		}
 		if !bgFlags.AuthorityMeasure() {
-			return false, fmt.Errorf("pcr-7 data should extended for OS security")
+			return false, fmt.Errorf("PCR-7 data should be extended for OS security")
 		}
 		if b.VData.CBNTbpm.SE[0].PBETValue.PBETValue() == 0 {
-			return false, fmt.Errorf("firmware shall not allowed to run infinitely after incident happened")
+			errs = multierr.Combine(errs, fmt.Errorf("firmware should not be allowed to run infinitely after incident happened"))
+		}
+		pm := b.VData.BGbpm
+		if pm == nil {
+			errs = multierr.Combine(errs, fmt.Errorf("no BootGuard Boot Policy Manifest found"))
 		}
 		txtFlags := b.VData.CBNTbpm.TXTE.ControlFlags
 		if !txtFlags.IsSACMRequestedToExtendStaticPCRs() {
-			return false, fmt.Errorf("S-ACM shall always extend static PCRs")
+			errs = multierr.Combine(errs, fmt.Errorf("S-ACM shall always extend static PCRs"))
 		}
 		if len(b.VData.CBNTbpm.SE[0].IBBSegments) < 1 {
-			return false, fmt.Errorf("no ibb segments measured")
+			return false, fmt.Errorf("no IBB segments measured")
 		}
+	}
+	if errs != nil {
+		return false, fmt.Errorf("%+v", errs)
 	}
 	return true, nil
 }
@@ -974,11 +996,11 @@ func (b *BootGuard) IBBsMatchBPMDigest(image []byte) (bool, error) {
 	switch b.Version {
 	case bgheader.Version10:
 		if err := b.VData.BGbpm.ValidateIBB(firmware); err != nil {
-			return false, fmt.Errorf("bpm final ibb hash doesn't match selected measurements in image")
+			return false, fmt.Errorf("BPM final IBB hash doesn't match selected measurements in image")
 		}
 	case bgheader.Version20:
 		if err := b.VData.CBNTbpm.ValidateIBB(firmware); err != nil {
-			return false, fmt.Errorf("bpm final ibb hash doesn't match selected measurements in image")
+			return false, fmt.Errorf("BPM final IBB hash doesn't match selected measurements in image")
 		}
 	}
 	return true, nil
@@ -986,27 +1008,31 @@ func (b *BootGuard) IBBsMatchBPMDigest(image []byte) (bool, error) {
 
 // ValidateMEAgainstManifests validates during runtime ME configuation with BootGuard KM & BPM manifests
 func (b *BootGuard) ValidateMEAgainstManifests(fws *FirmwareStatus6) (bool, error) {
+	var errs error
 	switch b.Version {
 	case bgheader.Version10:
 		if fws.BPMSVN != uint32(b.VData.BGbpm.BPMSVN) {
-			return false, fmt.Errorf("bpm svn doesn't match me configuration")
+			errs = multierr.Combine(errs, fmt.Errorf("Boot Policy Manifest SVN doesn't match ME configuration"))
 		}
 		if fws.KMSVN != uint32(b.VData.BGkm.KMSVN) {
-			return false, fmt.Errorf("km svn doesn't match me configuration")
+			errs = multierr.Combine(errs, fmt.Errorf("Key Manifest SVN doesn't match ME configuration"))
 		}
 		if fws.KMID != uint32(b.VData.BGkm.KMID) {
-			return false, fmt.Errorf("km KMID doesn't match me configuration")
+			errs = multierr.Combine(errs, fmt.Errorf("Key Manifest ID doesn't match ME configuration"))
 		}
 	case bgheader.Version20:
 		if fws.BPMSVN > uint32(b.VData.CBNTbpm.BPMSVN) {
-			return false, fmt.Errorf("bpm svn doesn't match me configuration")
+			errs = multierr.Combine(errs, fmt.Errorf("Boot Policy Manifest SVN doesn't match ME configuration"))
 		}
 		if fws.KMSVN != uint32(b.VData.CBNTkm.KMSVN) {
-			return false, fmt.Errorf("km svn doesn't match me configuration")
+			errs = multierr.Combine(errs, fmt.Errorf("Key Manifest SVN doesn't match ME configuration"))
 		}
 		if fws.KMID != uint32(b.VData.CBNTkm.KMID) {
-			return false, fmt.Errorf("km KMID doesn't match me configuration")
+			errs = multierr.Combine(errs, fmt.Errorf("Key Manifest ID doesn't match ME configuration"))
 		}
+	}
+	if errs != nil {
+		return false, fmt.Errorf("%+v", errs)
 	}
 	return true, nil
 }
