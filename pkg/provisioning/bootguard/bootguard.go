@@ -419,7 +419,7 @@ func (b *BootGuard) StitchBPM(pubKey crypto.PublicKey, signature []byte) ([]byte
 }
 
 // SignKM signs an unsigned KM with signAlgo and private key as input
-func (b *BootGuard) SignKM(signAlgo string, privkey crypto.PrivateKey) ([]byte, error) {
+func (b *BootGuard) SignKM(signAlgo string, signer crypto.Signer) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	switch b.Version {
 	case bgheader.Version10:
@@ -433,7 +433,7 @@ func (b *BootGuard) SignKM(signAlgo string, privkey crypto.PrivateKey) ([]byte, 
 			return nil, err
 		}
 		unsignedKM := buf.Bytes()[:b.VData.BGkm.KeyAndSignatureOffset()]
-		if err := b.VData.BGkm.SetSignature(signAlgo, privkey.(crypto.Signer), unsignedKM); err != nil {
+		if err := b.VData.BGkm.SetSignature(signAlgo, signer, unsignedKM); err != nil {
 			return nil, err
 		}
 	case bgheader.Version20:
@@ -447,7 +447,7 @@ func (b *BootGuard) SignKM(signAlgo string, privkey crypto.PrivateKey) ([]byte, 
 			return nil, err
 		}
 		unsignedKM := buf.Bytes()[:b.VData.CBNTkm.KeyAndSignatureOffset()]
-		if err = b.VData.CBNTkm.SetSignature(signAlgo, b.VData.CBNTkm.PubKeyHashAlg, privkey.(crypto.Signer), unsignedKM); err != nil {
+		if err = b.VData.CBNTkm.SetSignature(signAlgo, b.VData.CBNTkm.PubKeyHashAlg, signer, unsignedKM); err != nil {
 			return nil, err
 		}
 	default:
