@@ -3,7 +3,7 @@ module github.com/9elements/converged-security-suite/v2
 go 1.24.0
 
 require (
-	github.com/9elements/go-linux-lowlevel-hw v1.0.2
+	github.com/9elements/go-linux-lowlevel-hw v1.0.3
 	github.com/alecthomas/kong v0.7.1
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/davecgh/go-spew v1.1.1
