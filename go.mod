@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.22.2
 
 require (
-	github.com/9elements/go-linux-lowlevel-hw v0.0.0-20240812193855-7e0a5df7e2d0
+	github.com/9elements/go-linux-lowlevel-hw v1.0.1
 	github.com/alecthomas/kong v0.7.1
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/davecgh/go-spew v1.1.1
