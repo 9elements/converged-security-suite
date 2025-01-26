@@ -21,12 +21,18 @@ Build Status
 
 Tooling & API
 -------------
+**Core Tooling**
 
-* [Intel TXT Test Suite](cmd/txt-suite) - Test Suite for Intel Trusted Execution Technology validation.
-* [Intel TXT Provisioning](cmd/txt-prov) - Provisioning of Trusted Platform Module for Intel Trusted Execution Technology usage.
-* [Intel BtG/CBnT Test Suite](cmd/bg-suite) - Test Suite for Intel Boot Guard validation.
-* [Intel BtG/CBnT Provisioning](cmd/bg-prov) - Provisioning of all BootGuard versions and Trusted Execution Technology (CBnT) usage.
-* [Intel/AMD pcr0tool](cmd/pcr0tool) - [PCR0](https://security.stackexchange.com/questions/127224/what-does-crtm-refer-to) diagnostics tool.
+* [Intel TXT Test Suite](cmd/core/txt-suite) - Test Suite for Intel Trusted Execution Technology validation.
+* [Intel TXT Provisioning](cmd/core/txt-prov) - Provisioning of Trusted Platform Module for Intel Trusted Execution Technology usage.
+* [Intel BtG/CBnT Test Suite](cmd/core/bg-suite) - Test Suite for Intel Boot Guard validation.
+* [Intel BtG/CBnT Provisioning](cmd/core/bg-prov) - Provisioning of all BootGuard versions and Trusted Execution Technology (CBnT) usage.
+* [AMD PSP Test Suite](cmd/core/amd-suite) - Test Suite for AMD Secure Processor validation incl. Secure Boot, AMD SEV and AMD SEV-SNP.
+
+**Experimental Tooling**
+
+* [Intel/AMD pcr0tool](cmd/exp/pcr0tool) - [PCR0](https://security.stackexchange.com/questions/127224/what-does-crtm-refer-to) diagnostics tool.
+* [AMD Suite](cmd/exp/amd-suite) - AMD Secure Processor Suite.
 
 Developer notes
 ---------------
