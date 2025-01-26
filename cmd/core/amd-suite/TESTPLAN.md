@@ -7,9 +7,9 @@ Id | Group | Test | Implemented | Reference | Notes
 13 | PSB | Platform Model ID is not zero | :x: | - | Should be non-zero
 14 | PSB | Read BIOS Key Revision is not zero | :x: | - | Should be non zero
 15 | PSB | AMD Key is disabled | :x: | - | If the AMD key is not disabled, the system will still boot AMD signed firmware
-16 | PSB | Secure Debug is disabled | :x: | - | -
+16 | PSB | Secure Debug is disabled | :x: | - | Should be disabled
 17 | PSB | Keys are fused | :x: | - | Test checks if the customer keys have been fused by reading `Customer Key Lock` from the `PSB_STATUS` register.
-18 | PSB | PSB Policy Hash | :x: | - | Check the PSB Policy Hash
+18 | PSB | PSB Policy Hash | :x: | - | Check the PSB Policy Hash and print it.
 19 | PSB | Revocation Status | :x: | - | Check the Revokation Status
 20 | SME | SME Support | :x: | - | Test checks `0x8000001f`
 21 | SME | SME Enabled | :x: | - | Test checks `MSR_AMD64_SYSCFG`
