@@ -1,10 +1,13 @@
 package main
 
 import (
+	"os"
+
 	"github.com/9elements/converged-security-suite/v2/pkg/log"
 	"github.com/alecthomas/kong"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
 	fianoLog "github.com/linuxboot/fiano/pkg/log"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -36,6 +39,9 @@ func main() {
 			Compact: true,
 			Summary: true,
 		}))
+
+	logrus.SetOutput(os.Stdout)
+
 	cbnt.StrictOrderCheck = cli.ManifestStrictOrderCheck
 	fianoLog.DefaultLogger = log.FianoLogger{}
 	err := ctx.Run(&context{})
