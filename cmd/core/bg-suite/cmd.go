@@ -34,7 +34,6 @@ type execTestsCmd struct {
 	Strict      bool   `required:"" default:"false" short:"s" help:"Enable strict mode. This enables more tests and checks."`
 	Interactive bool   `optional:"" short:"i" help:"Interactive mode. Errors will stop the testing."`
 	Config      string `optional:"" short:"c" help:"Path/Filename to config file."`
-	Log         string `optional:"" help:"Give a path/filename for test result output inJSON format. e.g.: /path/to/filename.json"`
 	Firmware    string `optional:"" short:"f" help:"Path/Filename to firmware to test with."`
 }
 
