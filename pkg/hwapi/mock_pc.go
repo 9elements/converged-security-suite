@@ -12,6 +12,12 @@ import (
 
 type pcmock struct {
 	ReadMemoryFunc func(uint64) byte
+	cpuidResponse  map[uint32]struct {
+		eax uint32
+		ebx uint32
+		ecx uint32
+		edx uint32
+	}
 }
 
 func (n pcmock) CPUBlacklistTXTSupport() bool {
@@ -41,19 +47,30 @@ func (n pcmock) HasMTRR() bool {
 func (n pcmock) ProcessorBrandName() string {
 	return ""
 }
+
 func (n pcmock) CPUSignature() uint32 {
 	return 0
 }
+
 func (n pcmock) CPUSignatureFull() (uint32, uint32, uint32, uint32) {
 	return 0, 0, 0, 0
 }
+
 func (n pcmock) CPULogCount() uint32 {
 	return 0
+}
+
+func (n pcmock) CPUID(leaf uint32, subleaf uint32) (uint32, uint32, uint32, uint32) {
+	if response, ok := n.cpuidResponse[leaf]; ok {
+		return response.eax, response.ebx, response.ecx, response.edx
+	}
+	return 0, 0, 0, 0
 }
 
 func (n pcmock) IsReservedInE820(start uint64, end uint64) (bool, error) {
 	return false, fmt.Errorf("not implemented")
 }
+
 func (n pcmock) UsableMemoryAbove4G() (size uint64, err error) {
 	return 0, fmt.Errorf("not implemented")
 }
@@ -101,6 +118,7 @@ func (n pcmock) AllowsVMXInSMX() (bool, error) {
 func (n pcmock) TXTLeavesAreEnabled() (bool, error) {
 	return false, fmt.Errorf("not implemented")
 }
+
 func (n pcmock) IA32DebugInterfaceEnabledOrLocked() (*hwapi.IA32Debug, error) {
 	return nil, fmt.Errorf("not implemented")
 }
@@ -153,10 +171,10 @@ func (n pcmock) ReadHostBridgeDPR() (hwapi.DMAProtectedRange, error) {
 	return hwapi.DMAProtectedRange{}, fmt.Errorf("not implemented")
 }
 
-//MockPCReadMemory emulates a x86_64 platform memory map
+// MockPCReadMemory emulates a x86_64 platform memory map
 func MockPCReadMemory(addr uint64) byte {
 	mem := map[uint64][]byte{
-		0xFED30000: []byte{
+		0xFED30000: {
 			0x01, 0xa7, 0x86, 0x80, 0x6b, 0xc8, 0x7b, 0x02, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -253,7 +271,6 @@ func MockPCReadMemory(addr uint64) byte {
 	}
 
 	return 0xff
-
 }
 
 func (n pcmock) ReadPhys(addr int64, data hwapi.UintN) error {
@@ -299,9 +316,11 @@ func (n pcmock) NVLocked(tpmCon *hwapi.TPM) (bool, error) {
 func (n pcmock) ReadNVPublic(tpmCon *hwapi.TPM, index uint32) ([]byte, error) {
 	return []byte{}, fmt.Errorf("not implemented")
 }
+
 func (n pcmock) NVReadValue(tpmCon *hwapi.TPM, index uint32, password string, size, offhandle uint32) ([]byte, error) {
 	return []byte{}, fmt.Errorf("not implemented")
 }
+
 func (n pcmock) ReadPCR(tpmCon *hwapi.TPM, pcr uint32) ([]byte, error) {
 	return []byte{}, fmt.Errorf("not implemented")
 }
@@ -342,9 +361,15 @@ func (n pcmock) PCIWriteConfigSpace(d hwapi.PCIDevice, off int, val interface{})
 	return fmt.Errorf("not implemented")
 }
 
-//GetPcMock returns APIInterfaces for mocking the hwapi used in unittests
+// GetPcMock returns APIInterfaces for mocking the hwapi used in unittests
 func GetPcMock(ReadMemoryFunc func(uint64) byte) hwapi.LowLevelHardwareInterfaces {
 	return pcmock{
-		ReadMemoryFunc,
+		ReadMemoryFunc: ReadMemoryFunc,
+		cpuidResponse: make(map[uint32]struct {
+			eax uint32
+			ebx uint32
+			ecx uint32
+			edx uint32
+		}),
 	}
 }
