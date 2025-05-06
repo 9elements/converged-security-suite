@@ -101,25 +101,29 @@ func run(testGroup string, tests []*test.Test, preset *test.PreSet) bool {
 	for index := range tests {
 		var s string
 
-		if tests[index].Status == test.NotImplemented {
-			continue
-		}
 		if tests[index].Result == test.ResultNotRun {
 			continue
 		}
 		s += fmt.Sprintf("%02d - ", index)
 		s += fmt.Sprintf("%-40s: ", a.Bold(tests[index].Name))
 
-		if tests[index].Result == test.ResultPass {
+		if tests[index].Status == test.NotImplemented {
+			s += fmt.Sprintf("%-20s", a.Bold(a.Yellow(tests[index].Status)))
+			log.Infof("%s", s)
+			continue
+		}
+
+		switch tests[index].Result {
+		case test.ResultPass:
 			s += fmt.Sprintf("%-20s", a.Bold(a.Green(tests[index].Result)))
-		} else {
+		default:
 			s += fmt.Sprintf("%-20s", a.Bold(a.Red(tests[index].Result)))
 			result = false
-		}
-		if tests[index].ErrorText != "" {
-			s += fmt.Sprintf(" (%s)", tests[index].ErrorText)
-		} else if len(tests[index].ErrorText) == 0 && tests[index].Result == test.ResultFail {
-			s += " (No error text given)"
+			if tests[index].ErrorText != "" {
+				s += fmt.Sprintf(" (%s)", tests[index].ErrorText)
+			} else if len(tests[index].ErrorText) == 0 && tests[index].Result == test.ResultFail {
+				s += " (No error text given)"
+			}
 		}
 		log.Infof("%s", s)
 
