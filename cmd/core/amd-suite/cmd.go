@@ -12,9 +12,7 @@ import (
 	a "github.com/logrusorgru/aurora"
 )
 
-type context struct {
-	logpath string
-}
+type context struct{}
 
 var cli struct {
 	ExecTests execTestsCmd `cmd:"" help:"Executes tests given by test set" short:"e"`
