@@ -73,7 +73,7 @@ Verify all downloaded dependencies run:
 To build the test suite run:
 
 ```
-<GO111MODULE=on> go build -o txt-suite cmd/txt-suite/*.go
+<GO111MODULE=on> go build -o txt-suite cmd/core/txt-suite/*.go
 ```
 
 Create a configuration file:
