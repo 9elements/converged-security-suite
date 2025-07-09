@@ -71,7 +71,7 @@ Verify all downloaded dependencies run:
 To build the test suite run:
 
 ```
-<GO111MODULE=on> go build -o pcr0tool cmd/pcr0tool/
+<GO111MODULE=on> go build -o pcr0tool cmd/exp/pcr0tool/
 ```
 
 ## Functions
