@@ -59,3 +59,5 @@ require (
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 )
+
+replace github.com/linuxboot/fiano => github.com/RiSKeD/fiano v0.0.0-20250725130044-792d7ab512a9
