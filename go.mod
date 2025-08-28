@@ -27,7 +27,7 @@ require (
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3
 	github.com/stretchr/testify v1.8.4
 	github.com/tidwall/pretty v1.2.1
-	github.com/ulikunitz/xz v0.5.11
+	github.com/ulikunitz/xz v0.5.14
 	github.com/xaionaro-facebook/go-dmidecode v0.0.0-20220413144237-c42d5bef2498
 	github.com/xaionaro-go/bytesextra v0.0.0-20220103144954-846e454ddea9
 	github.com/xaionaro-go/unhash v0.0.0-20230427202706-0195a574c620
