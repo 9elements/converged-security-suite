@@ -1,8 +1,6 @@
 module github.com/9elements/converged-security-suite/v2
 
-go 1.22
-
-toolchain go1.22.2
+go 1.24.0
 
 require (
 	github.com/9elements/go-linux-lowlevel-hw v0.0.0-20240812193855-7e0a5df7e2d0
@@ -33,7 +31,7 @@ require (
 	github.com/xaionaro-go/unhash v0.0.0-20230427202706-0195a574c620
 	github.com/xaionaro-go/unsafetools v0.0.0-20210722164218-75ba48cf7b3c
 	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df
-	golang.org/x/term v0.27.0
+	golang.org/x/term v0.37.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -54,8 +52,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/sync v0.18.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 )
