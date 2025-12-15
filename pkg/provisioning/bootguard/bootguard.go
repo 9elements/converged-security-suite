@@ -175,7 +175,7 @@ func NewBPMAndKM(bpm io.ReadSeeker, km io.ReadSeeker) (*BootGuard, error) {
 	if err != nil {
 		return nil, err
 	}
-	if bpmV != kmV {
+	if bpmV != kmV && bpmV <= bgheader.Version20 {
 		return nil, fmt.Errorf("km and bpm version number differ")
 	}
 	b.Version = bpmV
@@ -192,6 +192,8 @@ func NewBPMAndKM(bpm io.ReadSeeker, km io.ReadSeeker) (*BootGuard, error) {
 			return nil, err
 		}
 	case bgheader.Version20:
+		fallthrough
+	case bgheader.Version21:
 		b.VData.CBNTbpm = cbntbootpolicy.NewManifest()
 		b.VData.CBNTkm = cbntkey.NewManifest()
 		_, err := b.VData.CBNTbpm.ReadFrom(bpm)
@@ -266,6 +268,8 @@ func (b *BootGuard) ValidateBPM() error {
 	case bgheader.Version10:
 		return b.VData.BGbpm.Validate()
 	case bgheader.Version20:
+		fallthrough
+	case bgheader.Version21:
 		return b.VData.CBNTbpm.Validate()
 	default:
 		return fmt.Errorf("ValidateBPM: can't identify bootguard header")
