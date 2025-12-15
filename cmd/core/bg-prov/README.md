@@ -30,7 +30,7 @@ Verify all downloaded dependencies run:
 To build the test suite run:
 
 ```
-<GO111MODULE=on> go build -o bg-prov cmd/bg-prov/*.go
+<GO111MODULE=on> go build -o bg-prov cmd/core/bg-prov/*.go
 ```
 
 Commandline subcommands:

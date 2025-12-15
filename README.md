@@ -21,12 +21,18 @@ Build Status
 
 Tooling & API
 -------------
+**Core Tooling**
 
-* [Intel TXT Test Suite](cmd/txt-suite) - Test Suite for Intel Trusted Execution Technology validation.
-* [Intel TXT Provisioning](cmd/txt-prov) - Provisioning of Trusted Platform Module for Intel Trusted Execution Technology usage.
-* [Intel BtG/CBnT Test Suite](cmd/bg-suite) - Test Suite for Intel Boot Guard validation.
-* [Intel BtG/CBnT Provisioning](cmd/bg-prov) - Provisioning of all BootGuard versions and Trusted Execution Technology (CBnT) usage.
-* [Intel/AMD pcr0tool](cmd/pcr0tool) - [PCR0](https://security.stackexchange.com/questions/127224/what-does-crtm-refer-to) diagnostics tool.
+* [Intel TXT Test Suite](cmd/core/txt-suite) - Test Suite for Intel Trusted Execution Technology validation.
+* [Intel TXT Provisioning](cmd/core/txt-prov) - Provisioning of Trusted Platform Module for Intel Trusted Execution Technology usage.
+* [Intel BtG/CBnT Test Suite](cmd/core/bg-suite) - Test Suite for Intel Boot Guard validation.
+* [Intel BtG/CBnT Provisioning](cmd/core/bg-prov) - Provisioning of all BootGuard versions and Trusted Execution Technology (CBnT) usage.
+* [AMD PSP Test Suite](cmd/core/amd-suite) - Test Suite for AMD Secure Processor validation incl. Secure Boot, AMD SEV and AMD SEV-SNP.
+
+**Experimental Tooling**
+
+* [Intel/AMD pcr0tool](cmd/exp/pcr0tool) - [PCR0](https://security.stackexchange.com/questions/127224/what-does-crtm-refer-to) diagnostics tool.
+* [AMD Suite](cmd/exp/amd-suite) - AMD Secure Processor Suite.
 
 Developer notes
 ---------------
@@ -41,6 +47,8 @@ Funding
 <img src="https://nlnet.nl/logo/banner.svg" height="80">
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <img src="https://nlnet.nl/image/logos/NGIAssure_tag.svg" height="80">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<img src="https://nlnet.nl/image/logos/NGI0Entrust_tag.svg" height="80">
 </p>
 
-This project was partially funded through the [NGI Assure](https://nlnet.nl/assure) Fund, a fund established by [NLnet](https://nlnet.nl/) with financial support from the European Commission's [Next Generation Internet](https://ngi.eu/) programme, under the aegis of DG Communications Networks, Content and Technology under grant agreement No 957073.
+This project was partially funded through the [NGI Assure](https://nlnet.nl/assure) Fund and [NGI Zero Entrust](https://nlnet.nl/entrust) Funds, both established by [NLnet](https://nlnet.nl/) with financial support from the European Commission's [Next Generation Internet](https://ngi.eu/) initiative, under the aegis of DG Communications Networks, Content and Technology under grant agreements No 957073 and 101069594.
