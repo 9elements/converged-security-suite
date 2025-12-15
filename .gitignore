@@ -11,3 +11,9 @@ cmd/core/bg-prov/bg-prov
 cmd/core/bg-suite/bg-suite
 cmd/core/amd-suite/amd-suite
 cmd/exp/amd-suite/amd-suite
+
+# Task build output
+/bin/
+
+# GoReleaser output
+/dist/

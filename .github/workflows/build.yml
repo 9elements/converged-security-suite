@@ -43,6 +43,18 @@ jobs:
                     ./amd-suite
             
 
+    validate-goreleaser:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Validate GoReleaser config
+              uses: goreleaser/goreleaser-action@v6
+              with:
+                distribution: goreleaser
+                version: latest
+                args: check
+
     test:
         needs: build
         runs-on: ubuntu-latest
