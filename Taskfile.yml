@@ -1,0 +1,65 @@
+version: '3'
+
+vars:
+  GITCOMMIT:
+    sh: git rev-parse HEAD
+  GITTAG:
+    sh: git describe --tags --always --dirty
+  LDFLAGS: '-s -w -X main.gitcommit={{.GITCOMMIT}} -X main.gittag={{.GITTAG}}'
+
+tasks:
+  build:
+    desc: Build all binaries with version information
+    cmds:
+      - task: build:txt-suite
+      - task: build:txt-prov
+      - task: build:bg-suite
+      - task: build:bg-prov
+      - task: build:pcr0tool
+      - task: build:amd-suite
+
+  build:txt-suite:
+    desc: Build txt-suite
+    cmds:
+      - go build -ldflags "{{.LDFLAGS}}" -o bin/txt-suite ./cmd/core/txt-suite
+
+  build:txt-prov:
+    desc: Build txt-prov
+    cmds:
+      - go build -ldflags "{{.LDFLAGS}}" -o bin/txt-prov ./cmd/core/txt-prov
+
+  build:bg-suite:
+    desc: Build bg-suite
+    cmds:
+      - go build -ldflags "{{.LDFLAGS}}" -o bin/bg-suite ./cmd/core/bg-suite
+
+  build:bg-prov:
+    desc: Build bg-prov
+    cmds:
+      - go build -ldflags "{{.LDFLAGS}}" -o bin/bg-prov ./cmd/core/bg-prov
+
+  build:pcr0tool:
+    desc: Build pcr0tool
+    cmds:
+      - go build -ldflags "{{.LDFLAGS}}" -o bin/pcr0tool ./cmd/exp/pcr0tool
+
+  build:amd-suite:
+    desc: Build amd-suite
+    cmds:
+      - go build -ldflags "{{.LDFLAGS}}" -o bin/amd-suite ./cmd/exp/amd-suite
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -rf bin/ dist/
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test -v ./pkg/...
+
+  version:
+    desc: Show version information that would be embedded
+    cmds:
+      - echo "Git Tag - {{.GITTAG}}"
+      - echo "Git Commit - {{.GITCOMMIT}}"
