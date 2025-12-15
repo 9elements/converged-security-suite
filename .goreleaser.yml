@@ -1,0 +1,147 @@
+version: 2
+
+before:
+  hooks:
+    - go generate ./...
+
+builds:
+  # Core tools
+  - id: txt-suite
+    main: ./cmd/core/txt-suite
+    binary: txt-suite
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.gittag={{.Version}} -X main.gitcommit={{.Commit}}
+
+  - id: txt-prov
+    main: ./cmd/core/txt-prov
+    binary: txt-prov
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.gittag={{.Version}} -X main.gitcommit={{.Commit}}
+
+  - id: bg-suite
+    main: ./cmd/core/bg-suite
+    binary: bg-suite
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.gittag={{.Version}} -X main.gitcommit={{.Commit}}
+
+  - id: bg-prov
+    main: ./cmd/core/bg-prov
+    binary: bg-prov
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.gittag={{.Version}} -X main.gitcommit={{.Commit}}
+
+  # Experimental tools
+  - id: pcr0tool
+    main: ./cmd/exp/pcr0tool
+    binary: pcr0tool
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.gittag={{.Version}} -X main.gitcommit={{.Commit}}
+
+  - id: amd-suite
+    main: ./cmd/exp/amd-suite
+    binary: amd-suite
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.gittag={{.Version}} -X main.gitcommit={{.Commit}}
+
+archives:
+  - id: default
+    format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    files:
+      - LICENSE*
+      - README*
+      - CHANGELOG*
+      - docs/*
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: 'Features'
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: 'Bug fixes'
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: 'Enhancements'
+      regexp: '^.*?chore(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: Others
+      order: 999
+
+release:
+  github:
+    owner: 9elements
+    name: converged-security-suite
+  draft: false
+  prerelease: auto
+  name_template: "{{.ProjectName}} v{{.Version}}"
+  header: |
+    ## Converged Security Suite {{.Version}}
+
+    Release of the Converged Security Suite containing tools for Intel and AMD platform security features.
+
+    ### Downloads
+    Download the appropriate archive for your platform below.
