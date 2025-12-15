@@ -50,7 +50,7 @@ func (e *execTestsCmd) Run(ctx *context) error {
 	ret := false
 	data, err := os.ReadFile(e.Firmware)
 	if err != nil {
-		return fmt.Errorf("can't read firmware file")
+		return fmt.Errorf("can't read firmware file %v", e.Firmware)
 	}
 	preset := test.PreSet{
 		Firmware:           data,
