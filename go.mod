@@ -57,3 +57,8 @@ require (
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 )
+
+replace (
+	github.com/intel-go/cpuid => github.com/u-root/cpuid v0.0.0-20250320140348-cc5fe81d966c
+	github.com/lyft/protoc-gen-validate => github.com/envoyproxy/protoc-gen-validate v1.3.0
+)
