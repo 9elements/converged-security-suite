@@ -24,6 +24,9 @@ const (
 
 	// ResultPass indicates that the test succeeded.
 	ResultPass
+
+	// ResultNotImplemented indicates that the test is not implemented
+	ResultNotImplemented
 )
 
 func (t Result) String() string {
@@ -72,7 +75,7 @@ type Test struct {
 
 // Run implements the genereal test function and exposes it.
 func (t *Test) Run(hw hwapi.LowLevelHardwareInterfaces, preset *PreSet) bool {
-	var DepsPassed = true
+	DepsPassed := true
 	// Make sure all dependencies have run and passed
 	for idx := range t.dependencies {
 		if t.dependencies[idx].Status == NotImplemented {
@@ -138,7 +141,6 @@ func (t *Test) Run(hw hwapi.LowLevelHardwareInterfaces, preset *PreSet) bool {
 
 // RunTestsSilent Runs the specified tests and returns false on the first error encountered
 func RunTestsSilent(hw hwapi.LowLevelHardwareInterfaces, preset *PreSet, Tests []*Test) (bool, string, error) {
-
 	intErr := fmt.Errorf("internal error running test")
 
 	for i := range Tests {

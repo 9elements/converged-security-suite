@@ -1,29 +1,54 @@
+
+# Requirements
+
+Linux kernel options:
+```
+CONFIG_DEVMEM=y
+CONFIG_ARCH_HAS_DEVMEM_IS_ALLOWED=y
+# CONFIG_STRICT_DEVMEM is not set
+```
+# Test plan
+
 Id | Group | Test | Implemented | Reference | Notes
 ------------|------------|------------|------------|------------|------------
-00 | General | Detect Family and Model | :x: | - | This test detects which AMD family the test suite is executed on. If it can not detect the family, all other test will fail.
-10 | PSB | `PSB Status` Register contains zero value | :x: | - | A non-zero value indicates an error.
-11 | PSB | Platform Secure Boot is enabled | :x: | - | Read `FUSE_PLATFORM_SECURE_BOOT_EN` from `PSB_STATUS`.
-12 | PSB | Platform Vendor ID is not zero | :x: | - | Should be non-zero
-13 | PSB | Platform Model ID is not zero | :x: | - | Should be non-zero
-14 | PSB | Read BIOS Key Revision is not zero | :x: | - | Should be non zero
-15 | PSB | AMD Key is disabled | :x: | - | If the AMD key is not disabled, the system will still boot AMD signed firmware
-16 | PSB | Secure Debug is disabled | :x: | - | -
-17 | PSB | Keys are fused | :x: | - | Test checks if the customer keys have been fused by reading `Customer Key Lock` from the `PSB_STATUS` register.
-18 | PSB | PSB Policy Hash | :x: | - | Check the PSB Policy Hash
+00 | General | Detect Family and Model | :white_check_mark: | - | This test detects which AMD family the test suite is executed on. If it can not detect the family, all other test will fail.
+10 | PSB | `PSB Status` Register contains zero value | :white_check_mark: | - | A non-zero value indicates an error.
+11 | PSB | Platform Secure Boot is enabled | :white_check_mark: | - | Read `FUSE_PLATFORM_SECURE_BOOT_EN` from `PSB_STATUS`.
+12 | PSB | Platform Vendor ID is not zero | :white_check_mark: | - | Should be non-zero
+13 | PSB | Platform Model ID is not zero | :white_check_mark: | - | Should be non-zero
+14 | PSB | Read BIOS Key Revision is not zero | :white_check_mark: | - | Should be non zero
+15 | PSB | AMD Key is disabled | :white_check_mark: | - | If the AMD key is not disabled, the system will still boot AMD signed firmware
+16 | PSB | Secure Debug is disabled | :white_check_mark: | - | Should be disabled
+17 | PSB | Keys are fused | :white_check_mark: | - | Test checks if the customer keys have been fused by reading `Customer Key Lock` from the `PSB_STATUS` register.
+18 | PSB | PSB Policy Hash | :x: | - | Check the PSB Policy Hash and print it.
 19 | PSB | Revocation Status | :x: | - | Check the Revokation Status
-20 | SME | SME Support | :x: | - | Test checks `0x8000001f`
-21 | SME | SME Enabled | :x: | - | Test checks `MSR_AMD64_SYSCFG`
-22 | SME | SME Kernel Option Set | :x: | - | Only Informative
-23 | SME | SME Kernel Commandline | :x: | - | Only Informative
-24 | SME | Verify SME Functionality | :x: | - | Check if Memory Pages are marked for encryption
-30 | SEV | SEV Support | :x: | - | Test checks `0x8000001f`
-31 | SEV | SEV Enabled | :x: | - | Test checks `MSR_AMD64_SEV`
-32 | SEV | SEV Firmware Version Validation | :x: | - | Verify the SEV Firmware Version
-33 | SEV | SEV Guest Configuration Validation | :x: | - | Verify the Guest Configuration for a VM
-40 | SEV-SNP| SEV-SNP Support | :x: | - | -
+20 | SME | SME Support | :white_check_mark: | - | Test checks  CPUID `0x8000001f` bit 0
+21 | SME | SME Enabled | :white_check_mark: | - | Test checks `MSR_AMD64_SYSCFG`
+22 | SME | SME Kernel Option Set | :white_check_mark: | - | Test checks existance of `mem_encrypt` kernel commandline parameter.
+23 | SME | Verify SME Functionality | :white_check_mark: | - | Check if Memory Pages are marked for encryption
+24 | SME | TSME Support | :white_check_mark: | - | Test checks CPUID.0x8000001F[EAX].bit[13]
+25 | SME | TSME Enabled | :white_check_mark: | - | Test checks MSR 0xC0010010[18]
+30 | SEV | SEV Support | :white_check_mark: | - | Test checks `0x8000001f`
+31 | SEV | SEV Enabled in MSR | :white_check_mark: | - | Test checks `MSR_AMD64_SEV` (only inside VM environmet valid)
+32 | SEV | SEV Enabled in SysFS | :white_check_mark: | - | Test checks SysFS path `/sys/module/kvm_amd/parameters/sev`
+33 | SEV | SEV Supported simultanious keys | :x: | - |
+34 | SEV | SEV Firmware Version Validation | :x: | - | Verify the SEV Firmware Version. Note: `/sys/module/kvm_amd/srcversion` provides hash of module/sev_blob ?? ioctl(/dev/sev) ??
+35 | SEV | SEV Guest Configuration Validation | :x: | - | Verify the Guest Configuration for a VM
+36 | SEV | SEV-ES Support | :white_check_mark: | - | Test checks CPUID.0x8000001F[EAX].bit[3]
+37 | SEV | SEV-ES Enabled | :white_check_mark: | - | Test checks MSR 0xC0010131[1]
+40 | SEV-SNP| SEV-SNP Support | :white_check_mark: | - | -
 41 | SEV-SNP| SEV-SNP Enabled | :x: | - | -
 42 | SEV-SNP| SEV-SNP Debug Registers disabled | :x: | - | CPU Debug Registers can be enabled / disabled through `SEV_FEATURES`
 43 | SEV-SNP | Side-Channel Protection enabled | :x: | - | Taken from `15.36.17 Side-Channel Protection` (https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/programmer-references/24593.pdf)
 44 | SEV-SNP | SEV-SNP Firmware Version Validation | :x: | - | Firmware Version Validation
 45 | SEV-SNP | Measurement of SNP Protected VM Boot | :x: | - | Verify the integrity measurement taken during the SNP-protected VM boot process.
 46 | SEV-SNP | SNP Attestation Reporting | :x: | - | Check that the attestation reports generated by SEV-SNP are accurate and verifiable.
+
+# References
+
+- 1 [Linux Kernel Documentation - AMD Memory Encryption](https://docs.kernel.org/6.18/arch/x86/amd-memory-encryption.html)
+- 2 [AMD Secure Encrypted Virtualization (SEV)](https://www.amd.com/en/developer/sev.html)
+- 3 [AMD Programmers Guide Volume 2](https://docs.amd.com/v/u/en-US/24593_3.43)
+- 4 [AMD Programmers Guide Volume 3](https://docs.amd.com/v/u/en-US/24594_3.37)
+- 5 [Using SEV with AMD EPYC Processors (58207)](https://docs.amd.com/v/u/en-US/58207-using-sev-with-amd-epyc-processors)
+- 6 [Enabling AMD Security Features (SME, SEV and SEV-ES) on ThinkSystem Servers](https://lenovopress.lenovo.com/lp1894.pdf)
