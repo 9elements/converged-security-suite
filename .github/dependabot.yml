@@ -4,8 +4,18 @@ updates:
   directory: /
   schedule:
     interval: daily
+  groups:
+    actions-dependencies:
+      applies-to: version-updates
+      patterns:
+      - "*"
 
 - package-ecosystem: gomod
   directory: /
   schedule:
     interval: daily
+  groups:
+    go-dependencies:
+      applies-to: version-updates
+      patterns:
+      - "*"
