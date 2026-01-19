@@ -62,3 +62,5 @@ replace (
 	github.com/intel-go/cpuid => github.com/u-root/cpuid v0.0.0-20250320140348-cc5fe81d966c
 	github.com/lyft/protoc-gen-validate => github.com/envoyproxy/protoc-gen-validate v1.3.0
 )
+
+replace github.com/linuxboot/fiano => github.com/RiSKeD/fiano v0.0.0-20250725130044-792d7ab512a9
