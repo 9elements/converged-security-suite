@@ -111,7 +111,7 @@ func (t *Test) Run(hw hwapi.LowLevelHardwareInterfaces, preset *PreSet) bool {
 			}
 			t.Result = ResultFail
 		} else if testerror != nil && internalerror != nil {
-			t.ErrorText = testerror.Error() + ": " + internalerror.Error()
+			t.ErrorText = fmt.Sprintf("\n %v:\n %+v\n", testerror.Error(), internalerror)
 			if t.SpecificiationTitle != "" || t.SpecificationDocumentID != "" {
 				t.ErrorTextSpec = "Please have a look at "
 				if t.SpecificiationTitle != "" {

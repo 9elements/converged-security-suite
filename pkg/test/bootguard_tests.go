@@ -8,6 +8,7 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
+	"go.uber.org/multierr"
 )
 
 const (
@@ -29,7 +30,6 @@ var (
 		Name:                    "SACM meets sane BootGuard requirements",
 		Required:                true,
 		function:                BootGuardACM,
-		dependencies:            []*Test{&testbootguardfit},
 		Status:                  Implemented,
 		SpecificationChapter:    "Chapter A. Authenticated Code Modules",
 		SpecificiationTitle:     IntelTXTSpecificationTitle,
@@ -39,7 +39,6 @@ var (
 		Name:                    "Key Manifest meets sane BootGuard requirements",
 		Required:                true,
 		function:                BootGuardKM,
-		dependencies:            []*Test{&testbootguardfit},
 		Status:                  Implemented,
 		SpecificationChapter:    "",
 		SpecificiationTitle:     IntelBootGuardSpecificationTitle,
@@ -49,7 +48,6 @@ var (
 		Name:                    "Boot Policy Manifest meets sane BootGuard requirements",
 		Required:                true,
 		function:                BootGuardBPM,
-		dependencies:            []*Test{&testbootguardfit},
 		Status:                  Implemented,
 		SpecificationChapter:    "",
 		SpecificiationTitle:     IntelBootGuardSpecificationTitle,
@@ -59,7 +57,6 @@ var (
 		Name:                    "Verifies BPM and IBBs match firmware image",
 		Required:                true,
 		function:                BootGuardIBB,
-		dependencies:            []*Test{&testbootguardfit},
 		Status:                  Implemented,
 		SpecificationChapter:    "",
 		SpecificiationTitle:     IntelBootGuardSpecificationTitle,
@@ -225,19 +222,20 @@ func BootGuardBPM(hw hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, 
 			bpmReader = bytes.NewReader(entry.DataSegmentBytes)
 		}
 	}
+	var errs error
 	b, err := bootguard.NewBPMAndKM(bpmReader, kmReader)
 	if b == nil || err != nil {
-		return false, fmt.Errorf("couldn't parse KM and BPM"), err
+		errs = multierr.Combine(errs, fmt.Errorf("couldn't parse Key Manifest and Boot Policy Manifest\n"))
 	}
 	if err := b.ValidateBPM(); err != nil {
-		return false, fmt.Errorf("couldn't validate BPM"), err
+		errs = multierr.Combine(errs, fmt.Errorf("couldn't validate Boot Policy Manifest"))
 	}
 	if err := b.VerifyBPM(); err != nil {
-		return false, fmt.Errorf("couldn't verify BPM signature"), err
+		errs = multierr.Combine(errs, fmt.Errorf("couldn't verify Boot Policy Manifest signature"))
 	}
 	secure, err := b.BPMCryptoSecure()
 	if !secure || err != nil {
-		return false, fmt.Errorf("bpm crypto parameters are insecure"), err
+		errs = multierr.Combine(errs, fmt.Errorf("Boot Policy Manifest crypto parameters are insecure"))
 	}
 	if p.Strict {
 		secure, err = b.StrictSaneBPMSecurityProps()
@@ -245,11 +243,14 @@ func BootGuardBPM(hw hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, 
 		secure, err = b.SaneBPMSecurityProps()
 	}
 	if !secure || err != nil {
-		return false, fmt.Errorf("bpm hasn't sane security properties"), err
+		errs = multierr.Combine(errs, fmt.Errorf("Boot Policy Manifest doesn't have sane security properties: %v", err))
 	}
 	secure, err = b.BPMKeyMatchKMHash()
 	if !secure || err != nil {
-		return false, fmt.Errorf("bpm doesn't match km hash"), err
+		errs = multierr.Combine(errs, fmt.Errorf("Boot Policy Manifest doesn't match Key Manifest hash: %v", err))
+	}
+	if errs != nil {
+		return false, fmt.Errorf("Errors occurred"), fmt.Errorf("%+v", errs)
 	}
 	return true, nil, nil
 }
