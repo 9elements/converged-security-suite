@@ -985,27 +985,54 @@ func (b *BootGuard) IBBsMatchBPMDigest(image []byte) (bool, error) {
 }
 
 // ValidateMEAgainstManifests validates during runtime ME configuation with BootGuard KM & BPM manifests
-func (b *BootGuard) ValidateMEAgainstManifests(fws *FirmwareStatus6) (bool, error) {
+func (b *BootGuard) ValidateMEAgainstManifests(fws *FirmwareStatus) (bool, error) {
 	switch b.Version {
 	case bgheader.Version10:
-		if fws.BPMSVN != uint32(b.VData.BGbpm.BPMSVN) {
+		if fws.Status6v16.BPMSVN != uint32(b.VData.BGbpm.BPMSVN) {
 			return false, fmt.Errorf("bpm svn doesn't match me configuration")
 		}
-		if fws.KMSVN != uint32(b.VData.BGkm.KMSVN) {
+		if fws.Status6v16.KMSVN != uint32(b.VData.BGkm.KMSVN) {
 			return false, fmt.Errorf("km svn doesn't match me configuration")
 		}
-		if fws.KMID != uint32(b.VData.BGkm.KMID) {
+		if fws.Status6v16.KMID != uint32(b.VData.BGkm.KMID) {
 			return false, fmt.Errorf("km KMID doesn't match me configuration")
 		}
 	case bgheader.Version20:
-		if fws.BPMSVN > uint32(b.VData.CBNTbpm.BPMSVN) {
-			return false, fmt.Errorf("bpm svn doesn't match me configuration")
+		// We have to make 3 way distinction between ME versions
+		ver, err := tools.GetMEVersion()
+		if err != nil {
+			return false, err
 		}
-		if fws.KMSVN != uint32(b.VData.CBNTkm.KMSVN) {
-			return false, fmt.Errorf("km svn doesn't match me configuration")
-		}
-		if fws.KMID != uint32(b.VData.CBNTkm.KMID) {
-			return false, fmt.Errorf("km KMID doesn't match me configuration")
+		switch ver {
+		case tools.Version16:
+			if fws.Status6v16.BPMSVN > uint32(b.VData.CBNTbpm.BPMSVN) {
+				return false, fmt.Errorf("bpm svn doesn't match me configuration")
+			}
+			km, err := b.cbntKM()
+			if err != nil {
+				return false, err
+			}
+			if fws.Status6v16.KMSVN != uint32(km.KMSVN) {
+				return false, fmt.Errorf("km svn doesn't match me configuration")
+			}
+			if fws.Status6v16.KMID != uint32(km.KMID) {
+				return false, fmt.Errorf("km KMID doesn't match me configuration")
+			}
+		case tools.Version18, tools.Version21:
+			// 18.x/21.x do not expose SVNs of BPM and KM, nor KMID.
+			// We can still check few useful facts
+			if !fws.Status5v21.BgACMStatus {
+				return false, fmt.Errorf("acm is not active")
+			}
+			if fws.Status5v21.ErrorCode != 0 {
+				return false, fmt.Errorf("bg startup failed")
+			}
+			if !fws.Status5v21.BPMExecStatus {
+				return false, fmt.Errorf("bpm not executed")
+			}
+			if fws.Status5v21.BgStatus != 0x01 {
+				return false, fmt.Errorf("bg status is invalid")
+			}
 		}
 	}
 	return true, nil
