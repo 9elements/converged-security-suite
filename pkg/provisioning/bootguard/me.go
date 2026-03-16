@@ -56,7 +56,7 @@ func GetBGInfo(hw hwapi.LowLevelHardwareInterfaces) (*BGInfo, error) {
 }
 
 func StrictSaneBootGuardProvisioning(v bgheader.BootGuardVersion, fws *FirmwareStatus, bgi *BGInfo) (bool, error) {
-	if fws.Status6v16.ErrorEnforcementPolicy != EnforcementPolicyShutdownImmediately {
+	if fws.Status6.ErrorEnforcementPolicy != EnforcementPolicyShutdownImmediately {
 		return false, fmt.Errorf("enforcement policy isn't set to immediate shutdown")
 	}
 
@@ -72,20 +72,20 @@ func SaneMEBootGuardProvisioning(v bgheader.BootGuardVersion, fws *FirmwareStatu
 
 	switch ver {
 	case tools.Version16:
-		if fws.Status6v16.BypassBootPolicy {
+		if fws.Status6.BypassBootPolicy {
 			return false, fmt.Errorf("bypass boot policy is active")
 		}
-		if fws.Status6v16.BootPolicyInvalid {
+		if fws.Status6.BootPolicyInvalid {
 			return false, fmt.Errorf("boot policy is invalid")
 		}
-		if !fws.Status6v16.FPFLock {
+		if !fws.Status6.FPFLock {
 			return false, fmt.Errorf("FPF isn't locked")
 		}
-		if fws.Status6v16.ErrorEnforcementPolicy == EnforcementPolicyDoNothing ||
-			fws.Status6v16.ErrorEnforcementPolicy == EnforcementPolicyShutdownSomehow {
+		if fws.Status6.ErrorEnforcementPolicy == EnforcementPolicyDoNothing ||
+			fws.Status6.ErrorEnforcementPolicy == EnforcementPolicyShutdownSomehow {
 			return false, fmt.Errorf("enforcement policy is lazy and doesn't stop boot process")
 		}
-		if !fws.Status6v16.ProtectBIOSEnvironment {
+		if !fws.Status6.ProtectBIOSEnvironment {
 			return false, fmt.Errorf("protected bios enviroment is disabled")
 		}
 		if v == bgheader.Version20 && !bgi.ForceAnchorBoot {
@@ -97,32 +97,32 @@ func SaneMEBootGuardProvisioning(v bgheader.BootGuardVersion, fws *FirmwareStatu
 		if bgi.ModuleRevoked {
 			return false, fmt.Errorf("one of the the ACM, BPM and KM may be revoked")
 		}
-		if fws.Status6v16.BootGuardDisable {
+		if fws.Status6.BootGuardDisable {
 			return false, fmt.Errorf("boot guard is disabled")
 		}
 		if !bgi.BootGuardCapability {
 			return false, fmt.Errorf("missing boot guard microcode updates in FIT")
 		}
 	case tools.Version18, tools.Version21:
-		if !fws.Status6v21.FPFLock {
+		if !fws.Status6.FPFLock {
 			return false, fmt.Errorf("FPF is not locked")
 		}
-		if fws.Status1v21.MfgMode {
+		if fws.Status1.MfgMode {
 			return false, fmt.Errorf("debug mode is enabled")
 		}
-		if !fws.Status5v21.VLD {
+		if !fws.Status5.VLD {
 			return false, fmt.Errorf("bits that follow are invalid")
 		}
-		if fws.Status5v21.RCS {
+		if fws.Status5.RCS {
 			return false, fmt.Errorf("RCS does not come from ACM")
 		}
-		if !fws.Status5v21.CPUDebugDisabled {
+		if !fws.Status5.CPUDebugDisabled {
 			return false, fmt.Errorf("cpu debug is enabled")
 		}
-		if fws.Status1v21.WorkingState != 0x05 {
+		if fws.Status1.WorkingState != 0x05 {
 			return false, fmt.Errorf("invalid working state")
 		}
-		if fws.Status1v21.OperatingMode != 0 {
+		if fws.Status1.OperatingMode != 0 {
 			return false, fmt.Errorf("invalid operating mode")
 		}
 

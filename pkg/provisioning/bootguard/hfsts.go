@@ -12,53 +12,39 @@ var hfstsOffset = []int{0x40, 0x48, 0x60, 0x64, 0x68, 0x6c}
 
 type FirmwareStatus struct {
 	// ME 16
-	Status1v16 FirmwareStatus1v16
-	Status6v16 FirmwareStatus6v16
+	Status1 *FirmwareStatus1
+	Status6 *FirmwareStatus6
 	// ME 18/21
-	Status1v21 FirmwareStatus1v21
-	Status5v21 FirmwareStatus5v21
-	Status6v21 FirmwareStatus6v21
+	Status5 *FirmwareStatus5
 }
 
 func NewFirmwareStatus(hw hwapi.LowLevelHardwareInterfaces) (*FirmwareStatus, error) {
 	// ME 16
 	hwsts1v16, err := getHFSTS1(hw)
 	if err != nil {
-		return &FirmwareStatus{}, err
+		return nil, err
 	}
 
-	hwsts6v16, err := getHFSTS6(hw)
+	hwsts6, err := getHFSTS6(hw)
 	if err != nil {
-		return &FirmwareStatus{}, err
+		return nil, err
 	}
 
-	// ME 18/21
-	hwsts1v21, err := getHFSTS121(hw)
+	hwsts5, err := getHFSTS5(hw)
 	if err != nil {
-		return &FirmwareStatus{}, err
-	}
-	hwsts5v21, err := getHFSTS521(hw)
-	if err != nil {
-		return &FirmwareStatus{}, err
-	}
-
-	hwsts6v21, err := getHFSTS621(hw)
-	if err != nil {
-		return &FirmwareStatus{}, err
+		return nil, err
 	}
 
 	return &FirmwareStatus{
 		// ME 16
-		Status1v16: *hwsts1v16,
-		Status6v16: *hwsts6v16,
+		Status1: hwsts1v16,
+		Status6: hwsts6,
 		// ME 18/21
-		Status1v21: *hwsts1v21,
-		Status5v21: *hwsts5v21,
-		Status6v21: *hwsts6v21,
+		Status5: hwsts5,
 	}, nil
 }
 
-type FirmwareStatus1v16 struct {
+type FirmwareStatus1 struct {
 	WorkingState       uint32
 	MfgMode            bool
 	FPTBad             bool
@@ -75,7 +61,7 @@ type FirmwareStatus1v16 struct {
 	BISTResetRequest   bool
 }
 
-type FirmwareStatus6v16 struct {
+type FirmwareStatus6 struct {
 	ForceACMBootPolicy                bool
 	CPUDebugDisabled                  bool
 	BSPInitDisabled                   bool
@@ -97,13 +83,13 @@ type FirmwareStatus6v16 struct {
 	TXTSupported                      bool
 }
 
-func getHFSTS1(hw hwapi.LowLevelHardwareInterfaces) (*FirmwareStatus1v16, error) {
+func getHFSTS1(hw hwapi.LowLevelHardwareInterfaces) (*FirmwareStatus1, error) {
 	hfsts1, err := readHFSTSFromPCIConfigSpace(hw, 1)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read HFSTS6 from PCI config space: %v", err)
 	}
 
-	firmwareStatus := FirmwareStatus1v16{}
+	firmwareStatus := FirmwareStatus1{}
 
 	configSpace := binary.LittleEndian.Uint32(hfsts1)
 
@@ -125,13 +111,13 @@ func getHFSTS1(hw hwapi.LowLevelHardwareInterfaces) (*FirmwareStatus1v16, error)
 	return &firmwareStatus, nil
 }
 
-func getHFSTS6(hw hwapi.LowLevelHardwareInterfaces) (*FirmwareStatus6v16, error) {
+func getHFSTS6(hw hwapi.LowLevelHardwareInterfaces) (*FirmwareStatus6, error) {
 	hfsts6, err := readHFSTSFromPCIConfigSpace(hw, 6)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read HFSTS6 from PCI config space: %v", err)
 	}
 
-	firmwareStatus := FirmwareStatus6v16{}
+	firmwareStatus := FirmwareStatus6{}
 
 	configSpace := binary.LittleEndian.Uint32(hfsts6)
 	firmwareStatus.ForceACMBootPolicy = (configSpace>>0)&1 != 0
@@ -157,13 +143,7 @@ func getHFSTS6(hw hwapi.LowLevelHardwareInterfaces) (*FirmwareStatus6v16, error)
 	return &firmwareStatus, nil
 }
 
-type FirmwareStatus1v21 struct {
-	WorkingState  uint32
-	MfgMode       bool
-	OperatingMode uint32
-}
-
-type FirmwareStatus5v21 struct {
+type FirmwareStatus5 struct {
 	BgACMStatus      bool
 	VLD              bool
 	RCS              bool
@@ -175,33 +155,14 @@ type FirmwareStatus5v21 struct {
 	BgStatus         uint32
 }
 
-type FirmwareStatus6v21 struct {
-	FPFLock bool
-}
-
-func getHFSTS121(hw hwapi.LowLevelHardwareInterfaces) (*FirmwareStatus1v21, error) {
-	hfsts1, err := readHFSTSFromPCIConfigSpace(hw, 1)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't read HFSTS5 from PCI config space: %v", err)
-	}
-
-	firmwareStatus := FirmwareStatus1v21{}
-
-	configSpace := binary.LittleEndian.Uint32(hfsts1)
-	firmwareStatus.WorkingState = (configSpace >> 0) & 15
-	firmwareStatus.MfgMode = (configSpace>>4)&1 != 0
-	firmwareStatus.OperatingMode = (configSpace >> 16) & 15
-
-	return &firmwareStatus, nil
-}
-
-func getHFSTS521(hw hwapi.LowLevelHardwareInterfaces) (*FirmwareStatus5v21, error) {
+// ME 18/21
+func getHFSTS5(hw hwapi.LowLevelHardwareInterfaces) (*FirmwareStatus5, error) {
 	hfsts5, err := readHFSTSFromPCIConfigSpace(hw, 5)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read HFSTS5 from PCI config space: %v", err)
 	}
 
-	firmwareStatus := FirmwareStatus5v21{}
+	firmwareStatus := FirmwareStatus5{}
 
 	configSpace := binary.LittleEndian.Uint32(hfsts5)
 	firmwareStatus.BgACMStatus = (configSpace>>0)&1 != 0
@@ -213,20 +174,6 @@ func getHFSTS521(hw hwapi.LowLevelHardwareInterfaces) (*FirmwareStatus5v21, erro
 	firmwareStatus.BSPInitDisabled = (configSpace>>22)&1 != 0
 	firmwareStatus.BPMExecStatus = (configSpace>>23)&1 != 0
 	firmwareStatus.BgStatus = (configSpace >> 25) & 15
-
-	return &firmwareStatus, nil
-}
-
-func getHFSTS621(hw hwapi.LowLevelHardwareInterfaces) (*FirmwareStatus6v21, error) {
-	hfsts6, err := readHFSTSFromPCIConfigSpace(hw, 6)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't read HFSTS6 from PCI config space: %v", err)
-	}
-
-	firmwareStatus := FirmwareStatus6v21{}
-
-	configSpace := binary.LittleEndian.Uint32(hfsts6)
-	firmwareStatus.FPFLock = (configSpace>>30)&1 != 0
 
 	return &firmwareStatus, nil
 }
