@@ -51,6 +51,10 @@ func (n pcmock) CPULogCount() uint32 {
 	return 0
 }
 
+func (n pcmock) CPUID(uint32, uint32) (uint32, uint32, uint32, uint32) {
+	return 0, 0, 0, 0
+}
+
 func (n pcmock) IsReservedInE820(start uint64, end uint64) (bool, error) {
 	return false, fmt.Errorf("not implemented")
 }
@@ -70,7 +74,7 @@ func (n pcmock) AddressRangesIsDMAProtected(first, end uint64) (bool, error) {
 	return false, fmt.Errorf("not implemented")
 }
 
-func (n pcmock) ReadMSR(msr int64) []uint64 {
+func (n pcmock) ReadMSR(msr int64) uint64 {
 	panic("not implemented")
 }
 
@@ -153,7 +157,7 @@ func (n pcmock) ReadHostBridgeDPR() (hwapi.DMAProtectedRange, error) {
 	return hwapi.DMAProtectedRange{}, fmt.Errorf("not implemented")
 }
 
-//MockPCReadMemory emulates a x86_64 platform memory map
+// MockPCReadMemory emulates a x86_64 platform memory map
 func MockPCReadMemory(addr uint64) byte {
 	mem := map[uint64][]byte{
 		0xFED30000: []byte{
@@ -342,7 +346,7 @@ func (n pcmock) PCIWriteConfigSpace(d hwapi.PCIDevice, off int, val interface{})
 	return fmt.Errorf("not implemented")
 }
 
-//GetPcMock returns APIInterfaces for mocking the hwapi used in unittests
+// GetPcMock returns APIInterfaces for mocking the hwapi used in unittests
 func GetPcMock(ReadMemoryFunc func(uint64) byte) hwapi.LowLevelHardwareInterfaces {
 	return pcmock{
 		ReadMemoryFunc,

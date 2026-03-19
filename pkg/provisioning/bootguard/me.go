@@ -41,20 +41,17 @@ type BGInfo struct {
 // GetBGInfo reads Boot Guard msr during runtime
 func GetBGInfo(hw hwapi.LowLevelHardwareInterfaces) (*BGInfo, error) {
 	msr := hw.ReadMSR(BootGuardACMInfoMSR)
-	if msr == nil {
-		return nil, fmt.Errorf("can't read Boot Guard msr")
-	}
 	var bgi BGInfo
-	bgi.NEMEnabled = (msr[0]>>0)&1 != 0
-	bgi.TPMType = (msr[0] >> 1) & 3
-	bgi.TPMSuccess = (msr[0]>>3)&1 != 0
-	bgi.ForceAnchorBoot = (msr[0]>>4)&1 != 0
-	bgi.Measured = (msr[0]>>5)&1 != 0
-	bgi.Verified = (msr[0]>>6)&1 != 0
-	bgi.ModuleRevoked = (msr[0]>>7)&1 != 0
-	bgi.BootGuardCapability = (msr[0]>>32)&1 != 0
-	bgi.ServerTXTCapability = (msr[0]>>34)&1 != 0
-	bgi.NoResetSecretProtection = (msr[0]>>35)&1 != 0
+	bgi.NEMEnabled = (msr>>0)&1 != 0
+	bgi.TPMType = (msr >> 1) & 3
+	bgi.TPMSuccess = (msr>>3)&1 != 0
+	bgi.ForceAnchorBoot = (msr>>4)&1 != 0
+	bgi.Measured = (msr>>5)&1 != 0
+	bgi.Verified = (msr>>6)&1 != 0
+	bgi.ModuleRevoked = (msr>>7)&1 != 0
+	bgi.BootGuardCapability = (msr>>32)&1 != 0
+	bgi.ServerTXTCapability = (msr>>34)&1 != 0
+	bgi.NoResetSecretProtection = (msr>>35)&1 != 0
 	return &bgi, nil
 }
 

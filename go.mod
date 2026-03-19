@@ -1,9 +1,9 @@
 module github.com/9elements/converged-security-suite/v2
 
-go 1.24.0
+go 1.24.12
 
 require (
-	github.com/9elements/go-linux-lowlevel-hw v0.0.0-20240812193855-7e0a5df7e2d0
+	github.com/9elements/go-linux-lowlevel-hw v1.0.5-0.20260217195309-8b54f7428e51
 	github.com/alecthomas/kong v0.7.1
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/davecgh/go-spew v1.1.1
@@ -30,14 +30,14 @@ require (
 	github.com/xaionaro-go/bytesextra v0.0.0-20220103144954-846e454ddea9
 	github.com/xaionaro-go/unhash v0.0.0-20230427202706-0195a574c620
 	github.com/xaionaro-go/unsafetools v0.0.0-20210722164218-75ba48cf7b3c
-	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df
+	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
 	golang.org/x/term v0.37.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
 	github.com/DataDog/gostackparse v0.6.0 // indirect
-	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-ng/sort v0.0.0-20220617173827-2cc7cd04f7c7 // indirect
 	github.com/go-ng/xatomic v0.0.0-20230519181013-85c0ec87e55f // indirect
 	github.com/go-ng/xsort v0.0.0-20220617174223-1d146907bccc // indirect
@@ -48,10 +48,12 @@ require (
 	github.com/intel-go/cpuid v0.0.0-20220614022739-219e067757cb // indirect
 	github.com/jedib0t/go-pretty/v6 v6.4.6 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
+	github.com/micgor32/go-msr v0.0.0-20260216140510-4af4a85b8dc7 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
+	github.com/u-root/cpuid v0.0.0 // indirect
 	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
