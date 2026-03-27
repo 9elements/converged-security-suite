@@ -99,9 +99,9 @@ type ErroredSteps []*StepResult
 func (s ErroredSteps) Error() string {
 	var result strings.Builder
 	for _, step := range s {
-		result.WriteString(fmt.Sprintf("step %s:\n", step))
+		fmt.Fprintf(&result, "step %s:\n", step)
 		for _, issue := range step.Issues {
-			result.WriteString(fmt.Sprintf("\t%s: %v\n", issue.Coords, issue.Issue))
+			fmt.Fprintf(&result, "\t%s: %v\n", issue.Coords, issue.Issue)
 		}
 	}
 	return result.String()

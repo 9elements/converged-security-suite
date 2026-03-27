@@ -503,12 +503,12 @@ type MeasuredData struct {
 // String implements fmt.Stringer.
 func (d MeasuredData) String() string {
 	var result strings.Builder
-	result.WriteString(fmt.Sprintf("%s <- %v", typeMapKey(d.TrustChain).Name(), d.Data))
+	fmt.Fprintf(&result, "%s <- %v", typeMapKey(d.TrustChain).Name(), d.Data)
 	if d.DataSource != nil {
-		result.WriteString(fmt.Sprintf(" (%v)", d.DataSource))
+		fmt.Fprintf(&result, " (%v)", d.DataSource)
 	}
 	if d.Actor != nil {
-		result.WriteString(fmt.Sprintf(" [%T]", d.Actor))
+		fmt.Fprintf(&result, " [%T]", d.Actor)
 	}
 	return result.String()
 }

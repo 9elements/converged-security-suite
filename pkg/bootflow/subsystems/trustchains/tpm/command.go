@@ -89,7 +89,7 @@ func (s CommandLog) Commands() Commands {
 func (s CommandLog) String() string {
 	var result strings.Builder
 	for idx, e := range s {
-		result.WriteString(fmt.Sprintf("%d. %s\n", idx, format.NiceString(e)))
+		fmt.Fprintf(&result, "%d. %s\n", idx, format.NiceString(e))
 	}
 	return result.String()
 }
