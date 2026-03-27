@@ -240,7 +240,7 @@ func Ia32FeatureCtrl(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, 
 
 // SMXIsEnabled not implemented
 func SMXIsEnabled(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
-	return false, nil, fmt.Errorf("Unimplemented: no comment")
+	return false, nil, fmt.Errorf("unimplemented: no comment")
 }
 
 // Check CR4 wherther SMXE is set
