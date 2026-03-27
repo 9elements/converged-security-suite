@@ -178,7 +178,11 @@ func run(testGroup string, tests []*test.Test, preset *test.PreSet, interactive 
 			}
 		}
 		data, _ := json.MarshalIndent(t, "", "")
-		os.WriteFile(logfile, data, 0o664)
+		err := os.WriteFile(logfile, data, 0o664)
+		if err != nil {
+			log.Errorf("failed to write to file: %v\n", err)
+			return false
+		}
 	}
 
 	for index := range tests {

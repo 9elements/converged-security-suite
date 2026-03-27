@@ -62,7 +62,10 @@ func (a *auxDeleteCmd) Run(ctx *context) error {
 	if err != nil {
 		return err
 	}
-	defer tpm.Close()
+	defer func() {
+		err := tpm.Close()
+		fmt.Printf("warning: failed to close the file: %v\n", err)
+	}()
 
 	switch tpm.Version {
 	case hwapi.TPMVersion12:
