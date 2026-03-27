@@ -5,6 +5,7 @@ import (
 	"runtime"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
+	// TODO: replace with go-msr
 	"github.com/fearful-symmetry/gomsr"
 )
 
@@ -23,7 +24,10 @@ func readMSRFromCpu(msr int64, cpu int) (uint64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("MSR: Selected core %d doesn't exist (%w)", cpu, err)
 	}
-	defer msrCtx.Close()
+	defer func() {
+		err := msrCtx.Close()
+		fmt.Printf("warning: failed to close the file: %v\n", err)
+	}()
 
 	return msrCtx.Read(msr)
 }

@@ -1018,7 +1018,10 @@ func (b *BootGuard) CreateIBBSegments(seElement uint8, flags uint16, imagepath s
 	if err != nil {
 		return err
 	}
-	defer image.Close()
+	defer func() {
+		err := image.Close()
+		log.Warnf("failed to close the file: %v\n", err)
+	}()
 	stat, err := image.Stat()
 	if err != nil {
 		return err
@@ -1033,7 +1036,10 @@ func (b *BootGuard) CreateIBBSegments(seElement uint8, flags uint16, imagepath s
 	img, err := cbfs.NewImage(image)
 	if err != nil {
 		// To be sure the image file is closed before reading from it again
-		image.Close()
+		err := image.Close()
+		if err != nil {
+			return err
+		}
 		img, err := os.ReadFile(imagepath)
 		if err != nil {
 			return err

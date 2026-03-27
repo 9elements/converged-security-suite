@@ -7,8 +7,8 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/subsystems/trustchains/tpm/pcr"
 	"github.com/9elements/converged-security-suite/v2/pkg/errors"
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
-	tpm1 "github.com/google/go-tpm/tpm"
 	"github.com/google/go-tpm/legacy/tpm2"
+	tpm1 "github.com/google/go-tpm/tpm"
 	"github.com/marcoguerri/go-tpm-tcti/abrmd"
 )
 
@@ -33,7 +33,10 @@ func ReadPCRFromTPM(pcrIndex pcr.ID, alg tpm2.Algorithm) ([]byte, error) {
 	// Try abrmd first, if failure then try /dev/tpm{rm,}.
 	abrmdClient, err := abrmd.NewBroker()
 	if err == nil {
-		defer abrmdClient.Close()
+		defer func() {
+			err := abrmdClient.Close()
+			fmt.Printf("warning: failed to close the connection: %v\n", err)
+		}()
 		// abrmd is part of TPM2 tools, therefore we support on TPM2.0 here.
 		// If we have TPM1.2 then abrmdClient won't initialize.
 		pcrValue, err := tpm2.ReadPCR(abrmdClient, int(pcrIndex), alg)
@@ -51,7 +54,10 @@ func ReadPCRFromTPM(pcrIndex pcr.ID, alg tpm2.Algorithm) ([]byte, error) {
 		_ = mErr.Add(fmt.Errorf("unable to open TPM: %w", err))
 		return nil, mErr.ReturnValue()
 	}
-	defer tpm.Close()
+	defer func() {
+		err := tpm.Close()
+		fmt.Printf("warning: failed to close the socket: %v\n", err)
+	}()
 
 	// There's method tpm.ReadPCR, but we cannot use it because it does
 	// not allow to pick the hashing algorithm.

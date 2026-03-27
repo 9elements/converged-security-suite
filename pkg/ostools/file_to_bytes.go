@@ -15,7 +15,7 @@ func FileToBytes(filePath string) ([]byte, error) {
 		return nil, fmt.Errorf(`unable to open the image-file "%v": %w`,
 			filePath, err)
 	}
-	defer file.Close() // it was a read-only Open(), so we don't check the Close()
+	defer file.Close() //nolint:errcheck // it was a read-only Open(), so we don't check the Close()
 
 	// To consume less memory we use mmap() instead of reading the image
 	// into the memory. However these bytes are also parsed by
