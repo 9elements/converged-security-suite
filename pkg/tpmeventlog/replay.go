@@ -90,8 +90,8 @@ func Replay(eventLog *TPMEventLog, pcrIndex pcr.ID, hashAlgo TPMAlgorithm, logOu
 
 	// Replay the log
 	for _, event := range events {
-		switch {
-		case event.Type == EV_NO_ACTION:
+		switch event.Type {
+		case EV_NO_ACTION:
 			if len(result) != 0 {
 				return nil, ErrUnexpectedEventType{Event: *event, Reason: "already initialized"}
 			}
