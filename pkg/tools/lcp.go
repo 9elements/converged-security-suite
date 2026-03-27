@@ -25,11 +25,12 @@ var HashAlgMap = map[crypto.Hash]tpm2.Algorithm{
 type LCPPolicyType uint8
 
 func (pt LCPPolicyType) String() string {
-	if pt == 1 {
+	switch pt {
+	case 1:
 		return string("Any")
-	} else if pt == 0 {
+	case 0:
 		return string("List")
-	} else {
+	default:
 		return string("Unknown")
 	}
 }

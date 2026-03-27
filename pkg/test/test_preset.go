@@ -39,32 +39,32 @@ func ParsePreSet(filepath string) (*PreSet, error) {
 	if err != nil {
 		return nil, err
 	}
-	if config.TPM == "1.2" {
+	switch config.TPM {
+	case "1.2":
 		preset.TPM = hwapi.TPMVersion12
-	} else if config.TPM == "2.0" {
+	case "2.0":
 		preset.TPM = hwapi.TPMVersion20
-	} else {
-		return nil, fmt.Errorf("couldn't parse TPM option: %s", config.TPM)
 	}
-	if config.TXTMode == "auto" {
+	switch config.TXTMode {
+	case "auto":
 		preset.TXTMode = tools.AutoPromotion
-	} else if config.TXTMode == "signed" {
+	case "signed":
 		preset.TXTMode = tools.SignedPolicy
-	} else {
+	default:
 		return nil, fmt.Errorf("couldn't parse TXT mode option: %s", config.TXTMode)
 	}
-	if config.LCP2Hash == "SHA1" {
+	switch config.LCP2Hash {
+	case "SHA1":
 		preset.LCPHash = tpm2.AlgSHA1
-	} else if config.LCP2Hash == "SHA256" {
+	case "SHA256":
 		preset.LCPHash = tpm2.AlgSHA256
-	} else if config.LCP2Hash == "SHA384" {
+	case "SHA384":
 		preset.LCPHash = tpm2.AlgSHA384
-	} else if config.LCP2Hash == "SM3" {
+	case "SM3":
 		// SM3 is not implemented
-		// config.LCPHash = tpm2.AlgSM3
-	} else if config.LCP2Hash == "NULL" {
+	case "NULL":
 		preset.LCPHash = tpm2.AlgNull
-	} else {
+	default:
 		return nil, fmt.Errorf("couldn't parse LCP hash option: %s", config.LCP2Hash)
 	}
 	return &preset, nil
