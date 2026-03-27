@@ -190,7 +190,10 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 			ctx.tpmCommands[commandIdx].(*tpm.CommandExtend).Digest = newDigest[:]
 
 			ctx.tpm.Reset()
-			ctx.tpm.TPMExecute(context.Background(), ctx.tpmCommands, nil)
+			err := ctx.tpm.TPMExecute(context.Background(), ctx.tpmCommands, nil)
+			if err != nil {
+				panic(err)
+			}
 
 			// is it OK?
 			return bytes.Equal(ctx.tpm.PCRValues[0][tpm2.AlgSHA1], expectedHash)

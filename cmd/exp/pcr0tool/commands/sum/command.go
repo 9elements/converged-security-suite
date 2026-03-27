@@ -146,7 +146,10 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 		if err != nil {
 			panic(err)
 		}
-		defer eventLogFile.Close()
+		defer func() {
+			err := eventLogFile.Close()
+			logger.Errorf(ctx, "failed to close the file: %v\n", err)
+		}()
 
 		parsedEventLog, err := tpmeventlog.Parse(eventLogFile)
 		if err != nil {
@@ -423,7 +426,11 @@ func printReproducePCR0Result(
 			return
 		}
 	}
-	resultCommandLog.Commands().Apply(ctx, dummyTPM)
+	err := resultCommandLog.Commands().Apply(ctx, dummyTPM)
+	if err != nil {
+		logger.Error(ctx, err)
+		return
+	}
 	replayedPCR0, err := dummyTPM.PCRValues.Get(0, hashAlgo)
 	if err != nil {
 		logger.Error(ctx, err)
