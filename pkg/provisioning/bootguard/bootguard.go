@@ -1019,8 +1019,9 @@ func (b *BootGuard) CreateIBBSegments(seElement uint8, flags uint16, imagepath s
 		return err
 	}
 	defer func() {
-		err := image.Close()
-		log.Warnf("failed to close the file: %v\n", err)
+		if err := image.Close(); err != nil {
+			log.Warnf("failed to close the file: %v\n", err)
+		}
 	}()
 	stat, err := image.Stat()
 	if err != nil {

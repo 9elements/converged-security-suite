@@ -34,8 +34,9 @@ func ReadPCRFromTPM(pcrIndex pcr.ID, alg tpm2.Algorithm) ([]byte, error) {
 	abrmdClient, err := abrmd.NewBroker()
 	if err == nil {
 		defer func() {
-			err := abrmdClient.Close()
-			fmt.Printf("warning: failed to close the connection: %v\n", err)
+			if err := abrmdClient.Close(); err != nil {
+				fmt.Printf("warning: failed to close the connection: %v\n", err)
+			}
 		}()
 		// abrmd is part of TPM2 tools, therefore we support on TPM2.0 here.
 		// If we have TPM1.2 then abrmdClient won't initialize.
@@ -55,8 +56,9 @@ func ReadPCRFromTPM(pcrIndex pcr.ID, alg tpm2.Algorithm) ([]byte, error) {
 		return nil, mErr.ReturnValue()
 	}
 	defer func() {
-		err := tpm.Close()
-		fmt.Printf("warning: failed to close the socket: %v\n", err)
+		if err := tpm.Close(); err != nil {
+			fmt.Printf("warning: failed to close the socket: %v\n", err)
+		}
 	}()
 
 	// There's method tpm.ReadPCR, but we cannot use it because it does

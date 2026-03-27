@@ -147,8 +147,9 @@ func (cmd Command) Execute(ctx context.Context, args []string) {
 			panic(err)
 		}
 		defer func() {
-			err := eventLogFile.Close()
-			logger.Errorf(ctx, "failed to close the file: %v\n", err)
+			if err := eventLogFile.Close(); err != nil {
+				logger.Errorf(ctx, "failed to close the file: %v\n", err)
+			}
 		}()
 
 		parsedEventLog, err := tpmeventlog.Parse(eventLogFile)

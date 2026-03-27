@@ -105,8 +105,9 @@ func StitchFITEntries(biosFilename string, acm, bpm, km []byte) error {
 		return err
 	}
 	defer func() {
-		err := file.Close()
-		fmt.Printf("warning: failed to close the file: %v\n", err)
+		if err := file.Close(); err != nil {
+			fmt.Printf("warning: failed to close the file: %v\n", err)
+		}
 	}()
 	for _, entry := range fitEntries {
 		switch entry := entry.(type) {

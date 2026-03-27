@@ -25,8 +25,9 @@ func readMSRFromCpu(msr int64, cpu int) (uint64, error) {
 		return 0, fmt.Errorf("MSR: Selected core %d doesn't exist (%w)", cpu, err)
 	}
 	defer func() {
-		err := msrCtx.Close()
-		fmt.Printf("warning: failed to close the file: %v\n", err)
+		if err := msrCtx.Close(); err != nil {
+			fmt.Printf("warning: failed to close the file: %v\n", err)
+		}
 	}()
 
 	return msrCtx.Read(msr)

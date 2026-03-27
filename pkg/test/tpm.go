@@ -200,8 +200,9 @@ func TPMConnect(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error
 	tpmCon, err := txtAPI.NewTPM()
 	if err == nil && tpmCon != nil {
 		defer func() {
-			err := tpmCon.Close()
-			fmt.Printf("warning: failed to close the socket: %v\n", err)
+			if err := tpmCon.Close(); err != nil {
+				fmt.Printf("warning: failed to close the socket: %v\n", err)
+			}
 		}()
 		return true, nil, nil
 	}
@@ -215,8 +216,9 @@ func TPMIsPresent(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, err
 		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer func() {
-		err := tpmCon.Close()
-		fmt.Printf("warning: failed to close the socket: %v\n", err)
+		if err := tpmCon.Close(); err != nil {
+			fmt.Printf("warning: failed to close the socket: %v\n", err)
+		}
 	}()
 	if tpmCon.Version == p.TPM {
 		return true, nil, nil
@@ -231,8 +233,9 @@ func TPMNVRAMIsLocked(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool,
 		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer func() {
-		err := tpmCon.Close()
-		fmt.Printf("warning: failed to close the socket: %v\n", err)
+		if err := tpmCon.Close(); err != nil {
+			fmt.Printf("warning: failed to close the socket: %v\n", err)
+		}
 	}()
 	res, err := txtAPI.NVLocked(tpmCon)
 	return res, err, nil
@@ -251,8 +254,9 @@ func PSIndexConfig(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, er
 		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer func() {
-		err := tpmCon.Close()
-		fmt.Printf("warning: failed to close the socket: %v\n", err)
+		if err := tpmCon.Close(); err != nil {
+			fmt.Printf("warning: failed to close the socket: %v\n", err)
+		}
 	}()
 	switch tpmCon.Version {
 	case hwapi.TPMVersion12:
@@ -360,8 +364,9 @@ func AUXIndexConfig(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, e
 		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer func() {
-		err := tpmCon.Close()
-		fmt.Printf("warning: failed to close the socket: %v\n", err)
+		if err := tpmCon.Close(); err != nil {
+			fmt.Printf("warning: failed to close the socket: %v\n", err)
+		}
 	}()
 	switch tpmCon.Version {
 	case hwapi.TPMVersion12:
@@ -463,8 +468,9 @@ func AUXTPM2IndexCheckHash(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (
 		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer func() {
-		err := tpmCon.Close()
-		fmt.Printf("warning: failed to close the socket: %v\n", err)
+		if err := tpmCon.Close(); err != nil {
+			fmt.Printf("warning: failed to close the socket: %v\n", err)
+		}
 	}()
 	switch tpmCon.Version {
 	case hwapi.TPMVersion12:
@@ -527,8 +533,9 @@ func POIndexConfig(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, er
 		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer func() {
-		err := tpmCon.Close()
-		fmt.Printf("warning: failed to close the socket: %v\n", err)
+		if err := tpmCon.Close(); err != nil {
+			fmt.Printf("warning: failed to close the socket: %v\n", err)
+		}
 	}()
 	switch tpmCon.Version {
 	case hwapi.TPMVersion12:
@@ -669,8 +676,9 @@ func POIndexHasValidLCP(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (boo
 		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer func() {
-		err := tpmCon.Close()
-		fmt.Printf("warning: failed to close the socket: %v\n", err)
+		if err := tpmCon.Close(); err != nil {
+			fmt.Printf("warning: failed to close the socket: %v\n", err)
+		}
 	}()
 	switch tpmCon.Version {
 	case hwapi.TPMVersion12:
@@ -792,8 +800,9 @@ func PCR0IsSet(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error,
 		return false, fmt.Errorf("no TPM connection"), nil
 	}
 	defer func() {
-		err := tpmCon.Close()
-		fmt.Printf("warning: failed to close the socket: %v\n", err)
+		if err := tpmCon.Close(); err != nil {
+			fmt.Printf("warning: failed to close the socket: %v\n", err)
+		}
 	}()
 	pcr, err := txtAPI.ReadPCR(tpmCon, 0)
 	if err != nil {
@@ -817,8 +826,9 @@ func readPSLCPPolicy(txtAPI hwapi.LowLevelHardwareInterfaces) (*tools.LCPPolicy,
 		return nil, nil, fmt.Errorf("no TPM connection")
 	}
 	defer func() {
-		err := tpmCon.Close()
-		fmt.Printf("warning: failed to close the socket: %v\n", err)
+		if err := tpmCon.Close(); err != nil {
+			fmt.Printf("warning: failed to close the socket: %v\n", err)
+		}
 	}()
 	switch tpmCon.Version {
 	case hwapi.TPMVersion12:
