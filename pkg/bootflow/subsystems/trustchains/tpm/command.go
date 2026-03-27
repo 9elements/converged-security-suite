@@ -58,7 +58,7 @@ type CommandLogEntry struct {
 
 // String implements fmt.Stringer.
 func (entry CommandLogEntry) String() string {
-	return entry.Command.LogString()
+	return entry.LogString()
 }
 
 func newCommandLogEntry(

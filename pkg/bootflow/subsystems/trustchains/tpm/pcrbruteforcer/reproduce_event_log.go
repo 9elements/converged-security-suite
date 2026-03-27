@@ -380,7 +380,7 @@ func getACMPolicyStatusRefFromMeasurement(
 	// We assume this is a PCR0_DATA/PCR7_DATA measurement if it measures ACM_POLICY_STATUS registers
 	// (and no other registers but ACM_POLICY_STATUS).
 
-	refs := m.References.BySystemArtifact(txtPublicRegisters)
+	refs := m.BySystemArtifact(txtPublicRegisters)
 	if len(refs) != 1 {
 		return nil
 	}

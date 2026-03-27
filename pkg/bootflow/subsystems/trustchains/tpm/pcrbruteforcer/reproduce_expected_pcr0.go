@@ -548,7 +548,7 @@ func (j *orderBruteforcerJob) executeRecursive(
 }
 
 func isMeasurePCR0DATACmdLogEntry(logEntry *tpm.CommandLogEntry) bool {
-	_, ok := logEntry.CauseCoordinates.Step().(intelsteps.MeasurePCR0DATA)
+	_, ok := logEntry.Step().(intelsteps.MeasurePCR0DATA)
 	return ok
 }
 
@@ -589,7 +589,7 @@ func (j *reproduceExpectedPCR0Job) measurementsVerifyWithBruteForceACMPolicyStat
 		return nil, nil, fmt.Errorf("empty measurements slice, cannot compute PCR0")
 	}
 
-	_, ok := enabledMeasurements[0].CauseCoordinates.Step().(intelsteps.MeasurePCR0DATA)
+	_, ok := enabledMeasurements[0].Step().(intelsteps.MeasurePCR0DATA)
 	if !ok {
 		return nil, nil, fmt.Errorf("the first TPM command is not caused by a MeasurePCR0DATA step")
 	}

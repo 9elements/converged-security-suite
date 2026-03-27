@@ -394,7 +394,7 @@ func (b *BootGuard) StitchBPM(pubKey crypto.PublicKey, signature []byte) ([]byte
 	switch b.Version {
 	case bgheader.Version10:
 		b.VData.BGbpm.PMSE = *bgbootpolicy.NewSignature()
-		if err := b.VData.BGbpm.PMSE.KeySignature.FillSignature(0, pubKey, signature, bg.AlgNull); err != nil {
+		if err := b.VData.BGbpm.PMSE.FillSignature(0, pubKey, signature, bg.AlgNull); err != nil {
 			return nil, err
 		}
 
@@ -404,7 +404,7 @@ func (b *BootGuard) StitchBPM(pubKey crypto.PublicKey, signature []byte) ([]byte
 		}
 	case bgheader.Version20:
 		b.VData.CBNTbpm.PMSE = *cbntbootpolicy.NewSignature()
-		if err := b.VData.CBNTbpm.PMSE.KeySignature.FillSignature(0, pubKey, signature, cbnt.AlgNull); err != nil {
+		if err := b.VData.CBNTbpm.PMSE.FillSignature(0, pubKey, signature, cbnt.AlgNull); err != nil {
 			return nil, err
 		}
 

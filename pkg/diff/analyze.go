@@ -340,16 +340,16 @@ type interval struct {
 }
 
 func (item *interval) LowAtDimension(_ uint64) int64 {
-	return int64(item.Range.Offset)
+	return int64(item.Offset)
 }
 
 func (item *interval) HighAtDimension(_ uint64) int64 {
-	return int64(item.Range.Offset + item.Range.Length)
+	return int64(item.Offset + item.Length)
 }
 
 func (item *interval) OverlapsAtDimension(cmpIface augmentedtree.Interval, _ uint64) bool {
 	cmp := cmpIface.(*interval)
-	return item.Range.Intersect(cmp.Range)
+	return item.Intersect(cmp.Range)
 }
 
 func (item *interval) ID() uint64 {
@@ -394,7 +394,7 @@ func newNamesIntervalTree(m map[string]pkgbytes.Ranges) intervalTree {
 
 func (t *intervalTree) FindOverlapping(r pkgbytes.Range) []interface{} {
 	var result []interface{}
-	for _, item := range t.Tree.Query(&interval{
+	for _, item := range t.Query(&interval{
 		Range: r,
 	}) {
 		result = append(result, item.(*interval).Value)

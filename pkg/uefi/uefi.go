@@ -73,7 +73,7 @@ func ParseUEFIFirmwareBytes(imageBytes []byte) (*UEFI, error) {
 	if err != nil {
 		return nil, fmt.Errorf(`unable to parse the UEFI structure of the image: %w`, err)
 	}
-	uefi.Range.Length = uint64(len(uefi.Buf()))
+	uefi.Length = uint64(len(uefi.Buf()))
 
 	return uefi, nil
 }

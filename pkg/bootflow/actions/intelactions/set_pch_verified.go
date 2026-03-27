@@ -24,7 +24,7 @@ func SetPCHVerified(
 
 // Apply implements types.Action.
 func (s *SetPCHVerifiedT) Apply(ctx context.Context, state *types.State) error {
-	data, err := s.DataSource.Data(ctx, state)
+	data, err := s.Data(ctx, state)
 	if err != nil {
 		return fmt.Errorf("unable to extract the data: %w", err)
 	}

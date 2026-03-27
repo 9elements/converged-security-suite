@@ -67,7 +67,7 @@ func (v VolumeOfType) Data(ctx context.Context, s *types.State) (*types.Data, er
 
 			var volume *ffs.Node
 			for _, node := range nodes {
-				if node.Range.Offset == math.MaxUint64 {
+				if node.Offset == math.MaxUint64 {
 					continue
 				}
 				if _, ok := node.Firmware.(*uefi.FirmwareVolume); ok {

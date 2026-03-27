@@ -34,6 +34,6 @@ func acquireHasher(algo tpm2.Algorithm) (*hasher, error) {
 }
 
 func releaseHasher(hasher *hasher) {
-	hasher.Hash.Reset()
+	hasher.Reset()
 	hasherPools[hasher.Algo].Put(hasher)
 }
