@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/intel"
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 )
 
@@ -50,8 +51,9 @@ func (t Status) String() string {
 
 // Test exposes the structure in which information about TXT tests are held
 type Test struct {
-	Name     string
-	Required bool
+	Name        string
+	Required    bool
+	Description string
 	//testerror: If test fails and returns an testerror -> test failure
 	//internalerror: If test fails and returns an internalerror
 	//-> mostly api errors, but not directly testrelated problem.
@@ -68,6 +70,8 @@ type Test struct {
 	// The specification used in this test
 	SpecificiationTitle     string
 	SpecificationDocumentID string
+	// Only relevant for the runtime tests
+	SupportedVersion []intel.BgVersion
 }
 
 // Run implements the genereal test function and exposes it.
