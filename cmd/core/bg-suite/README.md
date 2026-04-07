@@ -11,6 +11,11 @@ Prerequisites for Usage
 -----------------------
 Supported OS: Any Linux distribution
 
+It is recommended to run this utility on the Intel platform for both, static
+and runtime tests. Otherwise, please ignore `BgVersion` field in the output `test_log.json` file.
+Additionally, runtime tests are only giving reliable results when executed on the platform running the
+firmware provided for the static tests.
+
 **1. Load the MSR kernel module.**
 
 Load the *msr* kernel module:
