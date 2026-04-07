@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage/accessor"
-	bootpolicy "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntbootpolicy"
+	bootpolicy "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/bootpolicy"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage/accessor"
-	key "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntkey"
+	key "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/keymanifest"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
