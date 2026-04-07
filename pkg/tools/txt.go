@@ -126,6 +126,18 @@ type TXTBiosMLEFlags struct {
 	IsClientState   bool
 }
 
+// TXTBootStatus holds the results of SACM read from TXT config space
+type TXTBootStatus struct {
+	TxtSuccess  bool
+	BgSuccess   bool
+	Bboot       bool
+	PFRSuccess  bool
+	BgFail      bool
+	BIOSTrusted bool
+	CPUError    bool
+	SACMSuccess bool
+}
+
 // FetchTXTRegs returns a raw copy of the TXT config space
 func FetchTXTRegs(txtAPI hwapi.LowLevelHardwareInterfaces) ([]byte, error) {
 	data := make([]byte, 0x1000)
@@ -448,16 +460,27 @@ func ReadACMPolicyStatusRaw(data []byte) (uint64, error) {
 }
 
 // ReadBootStatusRaw decodes the raw boot status register bits
-func ReadBootStatusRaw(data []byte) (uint64, error) {
+func ReadBootStatusRaw(data []byte) (TXTBootStatus, error) {
+	var ret TXTBootStatus
 	var u64 uint64
 	buf := bytes.NewReader(data)
 	_, err := buf.Seek(txtBootStatus, io.SeekStart)
 	if err != nil {
-		return 0, err
+		return ret, err
 	}
 	err = binary.Read(buf, binary.LittleEndian, &u64)
 	if err != nil {
-		return 0, err
+		return ret, err
 	}
-	return u64, nil
+
+	ret.TxtSuccess = (u64>>30)&1 != 0
+	ret.BgSuccess = (u64>>31)&1 != 0
+	ret.Bboot = (u64>>32)&1 != 0
+	ret.PFRSuccess = (u64>>33)&1 != 0
+	ret.BgFail = (u64>>48)&1 != 0
+	ret.BIOSTrusted = (u64>>59)&1 != 0
+	ret.CPUError = (u64>>62)&1 != 0
+	ret.SACMSuccess = (u64>>63)&1 != 0
+
+	return ret, nil
 }
