@@ -6,7 +6,7 @@ import (
 
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/systemartifacts/biosimage/accessor/intelbiosimage"
 	"github.com/9elements/converged-security-suite/v2/pkg/bootflow/types"
-	key "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntkey"
+	key "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/keymanifest"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 )
 
@@ -25,17 +25,32 @@ func (ValidKM) Check(ctx context.Context, s *types.State) bool {
 		return false
 	}
 
-	return validateKM(km, kmFIT) == nil
+	return validateKM(*km, kmFIT) == nil
 }
 
 // TODO: move this to linuxboot/fiano
 func validateKM(
-	km *key.Manifest,
+	km key.Manifest,
 	kmFIT *fit.EntryKeyManifestRecord,
 ) error {
-	if err := km.KeyAndSignature.Verify(kmFIT.DataSegmentBytes[:km.KeyManifestSignatureOffset]); err != nil {
-		return fmt.Errorf("unable to confirm KM signature: %w", err)
+	if kmBg, ok := km.(*key.BGManifest); ok {
+		off, err := kmBg.OffsetOf(5)
+		if err != nil {
+			return err
+		}
+		if err := kmBg.KeyAndSignature.Verify(kmFIT.DataSegmentBytes[:off]); err != nil {
+			return fmt.Errorf("unable to confirm KM signature: %w", err)
+		}
 	}
 
+	if kmCBnT, ok := km.(*key.CBnTManifest); ok {
+		off, err := kmCBnT.OffsetOf(8)
+		if err != nil {
+			return err
+		}
+		if err := kmCBnT.KeyAndSignature.Verify(kmFIT.DataSegmentBytes[:off]); err != nil {
+			return fmt.Errorf("unable to confirm KM signature: %w", err)
+		}
+	}
 	return nil
 }
