@@ -371,7 +371,11 @@ func HasBIOSPolicy(txtAPI hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, er
 
 func getFITDataSize(hdr fit.EntryHeaders, txtAPI hwapi.LowLevelHardwareInterfaces) uint64 {
 	firmware := newTXTAPIFirmwareReadSeeker(txtAPI)
-	result, err := fit.EntryDataSegmentSize(fit.NewEntry(&hdr, firmware), firmware)
+	fwSize, err := fit.FirmwareSizeUsedFromSeeker(firmware)
+	if err != nil {
+		panic(err)
+	}
+	result, err := fit.EntryDataSegmentSize(fit.NewEntry(&hdr, firmware, fwSize), firmware, fwSize)
 	if err != nil {
 		panic(err)
 	}
