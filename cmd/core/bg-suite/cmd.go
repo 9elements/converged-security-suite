@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/intel"
 	"github.com/9elements/converged-security-suite/v2/pkg/test"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	log "github.com/sirupsen/logrus"
@@ -48,6 +50,12 @@ var cli struct {
 
 func (e *execTestsCmd) Run(ctx *context) error {
 	ret := false
+	bgver := intel.RuntimeBGVersion()
+	log.Infof("Runtime BG/CBnT version: %s", bgver)
+	if bgver == intel.Unknown {
+		log.Warn("Unable to map CPU model to Boot Guard/CBnT generation")
+	}
+
 	data, err := os.ReadFile(e.Firmware)
 	if err != nil {
 		return fmt.Errorf("can't read firmware file")
@@ -59,7 +67,7 @@ func (e *execTestsCmd) Run(ctx *context) error {
 	}
 	switch e.Set {
 	case "all":
-		log.Info("For more information about the documents and chapters, run: bg-suite -m")
+		log.Info("For more information about the documents and chapters, run: bg-suite markdown")
 		ret = run("All", getTests(), &preset, e.Interactive)
 	case "static":
 		ret = run("Static", getStaticTest(), &preset, e.Interactive)
@@ -97,6 +105,10 @@ func (e *execTestsCmd) Run(ctx *context) error {
 func (l *listCmd) Run(ctx *context) error {
 	tests := getTests()
 	for i := range tests {
+		if tests[i].Description != "" {
+			log.Infof("Test No: %v, %v - %v", i, tests[i].Name, tests[i].Description)
+			continue
+		}
 		log.Infof("Test No: %v, %v", i, tests[i].Name)
 	}
 	return nil
@@ -106,8 +118,8 @@ func (m *markdownCmd) Run(ctx *context) error {
 	var teststate string
 	tests := getTests()
 
-	log.Info("Id | Test | Implemented | Document | Chapter")
-	log.Info("------------|------------|------------|------------|------------")
+	log.Info("Id | Test | Description | Implemented | Document | Chapter")
+	log.Info("------------|------------|------------|------------|------------|------------")
 
 	for i := range tests {
 		if tests[i].Status == test.Implemented {
@@ -121,7 +133,7 @@ func (m *markdownCmd) Run(ctx *context) error {
 		if docID != "" {
 			docID = "Document " + docID
 		}
-		log.Infof("%02d | %-48s | %-22s | %-28s | %-56s", i, tests[i].Name, teststate, docID, tests[i].SpecificationChapter)
+		log.Infof("%02d | %-48s | %-52s | %-22s | %-28s | %-56s", i, tests[i].Name, tests[i].Description, teststate, docID, tests[i].SpecificationChapter)
 	}
 	return nil
 }
@@ -133,7 +145,15 @@ func (v *versionCmd) Run(ctx *context) error {
 
 func getTests() []*test.Test {
 	var tests []*test.Test
+	bgver := intel.RuntimeBGVersion()
+
 	for i := range test.TestsBootGuard {
+		if strings.HasPrefix(test.TestsBootGuard[i].Name, "[RUNTIME]") {
+			if slices.Contains(test.TestsBootGuard[i].SupportedVersion, bgver) {
+				tests = append(tests, test.TestsBootGuard[i])
+			}
+			continue
+		}
 		tests = append(tests, test.TestsBootGuard[i])
 	}
 	return tests
@@ -151,9 +171,13 @@ func getStaticTest() []*test.Test {
 
 func getRuntimeTest() []*test.Test {
 	var tests []*test.Test
+	bgver := intel.RuntimeBGVersion()
+
 	for i := range test.TestsBootGuard {
 		if strings.HasPrefix(test.TestsBootGuard[i].Name, "[RUNTIME]") {
-			tests = append(tests, test.TestsBootGuard[i])
+			if slices.Contains(test.TestsBootGuard[i].SupportedVersion, bgver) {
+				tests = append(tests, test.TestsBootGuard[i])
+			}
 		}
 	}
 	return tests
@@ -188,9 +212,18 @@ func run(testGroup string, tests []*test.Test, preset *test.PreSet, interactive 
 
 	if !interactive {
 		var t []temptest
+		bgVersion := string(intel.RuntimeBGVersion())
 		for index := range tests {
 			if tests[index].Status != test.NotImplemented {
-				ttemp := temptest{index, tests[index].Name, tests[index].Result.String(), tests[index].ErrorText, tests[index].Status.String()}
+				ttemp := temptest{
+					Testnumber:  index,
+					Testname:    tests[index].Name,
+					Description: tests[index].Description,
+					BgVersion:   bgVersion,
+					Result:      tests[index].Result.String(),
+					Error:       tests[index].ErrorText,
+					Status:      tests[index].Status.String(),
+				}
 				t = append(t, ttemp)
 			}
 		}
