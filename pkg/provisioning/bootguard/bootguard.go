@@ -12,13 +12,10 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/9elements/converged-security-suite/v2/pkg/uefi/consts"
 	"github.com/linuxboot/fiano/pkg/cbfs"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/bg"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/bg/bgbootpolicy"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/bg/bgkey"
+
 	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntbootpolicy"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/cbntkey"
-	"github.com/linuxboot/fiano/pkg/intel/metadata/common/bgheader"
+	bootpolicy "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/bootpolicy"
+	keymanifest "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/keymanifest"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
 	"github.com/linuxboot/fiano/pkg/uefi"
 	"github.com/tidwall/pretty"
@@ -29,7 +26,7 @@ import (
 // Everything more secure than SHA-1
 const minHashTypeSize = 32
 
-func bgBPMReader(bpm *bgbootpolicy.Manifest) (*bytes.Reader, error) {
+func bpmReader(bpm bootpolicy.Manifest) (*bytes.Reader, error) {
 	if bpm == nil {
 		return nil, fmt.Errorf("manifest is nil")
 	}
@@ -41,31 +38,7 @@ func bgBPMReader(bpm *bgbootpolicy.Manifest) (*bytes.Reader, error) {
 	return bytes.NewReader(buf.Bytes()), nil
 }
 
-func bgKMReader(km *bgkey.Manifest) (*bytes.Reader, error) {
-	if km == nil {
-		return nil, fmt.Errorf("manifest is nil")
-	}
-	buf := new(bytes.Buffer)
-	_, err := km.WriteTo(buf)
-	if err != nil {
-		return nil, err
-	}
-	return bytes.NewReader(buf.Bytes()), nil
-}
-
-func cbntBPMReader(bpm *cbntbootpolicy.Manifest) (*bytes.Reader, error) {
-	if bpm == nil {
-		return nil, fmt.Errorf("manifest is nil")
-	}
-	buf := new(bytes.Buffer)
-	_, err := bpm.WriteTo(buf)
-	if err != nil {
-		return nil, err
-	}
-	return bytes.NewReader(buf.Bytes()), nil
-}
-
-func cbntKMReader(km *cbntkey.Manifest) (*bytes.Reader, error) {
+func kmReader(km keymanifest.Manifest) (*bytes.Reader, error) {
 	if km == nil {
 		return nil, fmt.Errorf("manifest is nil")
 	}
@@ -80,21 +53,21 @@ func cbntKMReader(km *cbntkey.Manifest) (*bytes.Reader, error) {
 func NewVData(vdata VersionedData) (*BootGuard, error) {
 	var b BootGuard
 	var err error
-	manifest, err := bgBPMReader(vdata.BGbpm)
+	manifest, err := bpmReader(vdata.BGbpm)
 	if err == nil {
-		b.Version, _ = bgheader.DetectBGV(manifest)
+		b.Version, _ = cbnt.DetectBGV(manifest)
 	}
-	manifest, err = bgKMReader(vdata.BGkm)
+	manifest, err = kmReader(vdata.BGkm)
 	if err == nil {
-		b.Version, _ = bgheader.DetectBGV(manifest)
+		b.Version, _ = cbnt.DetectBGV(manifest)
 	}
-	manifest, err = cbntBPMReader(vdata.CBNTbpm)
+	manifest, err = bpmReader(vdata.CBNTbpm)
 	if err == nil {
-		b.Version, _ = bgheader.DetectBGV(manifest)
+		b.Version, _ = cbnt.DetectBGV(manifest)
 	}
-	manifest, err = cbntKMReader(vdata.CBNTkm)
+	manifest, err = kmReader(vdata.CBNTkm)
 	if err == nil {
-		b.Version, _ = bgheader.DetectBGV(manifest)
+		b.Version, _ = cbnt.DetectBGV(manifest)
 	}
 	if b.Version == 0 {
 		return nil, fmt.Errorf("NewVData: can't identify bootguard header")
@@ -109,19 +82,37 @@ func NewBPM(bpm io.ReadSeeker) (*BootGuard, error) {
 		return nil, fmt.Errorf("manifest is nil")
 	}
 	var err error
-	b.Version, err = bgheader.DetectBGV(bpm)
+	b.Version, err = cbnt.DetectBGV(bpm)
 	if err != nil {
 		return nil, err
 	}
 	switch b.Version {
-	case bgheader.Version10:
-		b.VData.BGbpm = bgbootpolicy.NewManifest()
+	case cbnt.Version10:
+		bgbpm, err := bootpolicy.NewManifest(cbnt.Version10)
+		if err != nil {
+			return nil, err
+		}
+		ast, ok := bgbpm.(*bootpolicy.ManifestBG)
+		if !ok {
+			return nil, fmt.Errorf("could not assert BPM type")
+		}
+		b.VData.BGbpm = ast
+
 		_, err = b.VData.BGbpm.ReadFrom(bpm)
 		if err != nil && !errors.Is(err, io.EOF) {
 			return nil, err
 		}
-	case bgheader.Version20:
-		b.VData.CBNTbpm = cbntbootpolicy.NewManifest()
+	case cbnt.Version20, cbnt.Version21:
+		cbntbpm, err := bootpolicy.NewManifest(cbnt.Version20)
+		if err != nil {
+			return nil, err
+		}
+		ast, ok := cbntbpm.(*bootpolicy.ManifestCBnT)
+		if !ok {
+			return nil, fmt.Errorf("could not assert BPM type")
+		}
+		b.VData.CBNTbpm = ast
+
 		_, err = b.VData.CBNTbpm.ReadFrom(bpm)
 		if err != nil && !errors.Is(err, io.EOF) {
 			return nil, err
@@ -138,19 +129,37 @@ func NewKM(km io.ReadSeeker) (*BootGuard, error) {
 		return nil, fmt.Errorf("manifest is nil")
 	}
 	var err error
-	b.Version, err = bgheader.DetectBGV(km)
+	b.Version, err = cbnt.DetectBGV(km)
 	if err != nil {
 		return nil, err
 	}
 	switch b.Version {
-	case bgheader.Version10:
-		b.VData.BGkm = bgkey.NewManifest()
+	case cbnt.Version10:
+		bgkm, err := keymanifest.NewManifest(cbnt.Version10)
+		if err != nil {
+			return nil, err
+		}
+		ast, ok := bgkm.(*keymanifest.BGManifest)
+		if !ok {
+			return nil, fmt.Errorf("could not assert KM type")
+		}
+		b.VData.BGkm = ast
+
 		_, err = b.VData.BGkm.ReadFrom(km)
 		if err != nil && !errors.Is(err, io.EOF) {
 			return nil, err
 		}
-	case bgheader.Version20:
-		b.VData.CBNTkm = cbntkey.NewManifest()
+	case cbnt.Version20, cbnt.Version21:
+		cbntkm, err := keymanifest.NewManifest(b.Version)
+		if err != nil {
+			return nil, err
+		}
+		ast, ok := cbntkm.(*keymanifest.CBnTManifest)
+		if !ok {
+			return nil, fmt.Errorf("could not assert KM type")
+		}
+		b.VData.CBNTkm = ast
+
 		_, err = b.VData.CBNTkm.ReadFrom(km)
 		if err != nil && !errors.Is(err, io.EOF) {
 			return nil, err
@@ -166,24 +175,44 @@ func NewBPMAndKM(bpm io.ReadSeeker, km io.ReadSeeker) (*BootGuard, error) {
 	if bpm == nil || km == nil {
 		return nil, fmt.Errorf("either both or one manifest is nil")
 	}
-	var err error
-	bpmV, err := bgheader.DetectBGV(bpm)
+	bpmV, err := cbnt.DetectBGV(bpm)
 	if err != nil {
 		return nil, err
 	}
-	kmV, err := bgheader.DetectBGV(km)
+	kmV, err := cbnt.DetectBGV(km)
 	if err != nil {
 		return nil, err
 	}
-	if bpmV != kmV {
+	// This check is not valid for CBnT 2.1 since KM headers were
+	// not bumped at all. So the case where km header is 0x21 and
+	// bpm is 0x25 is fine.
+	if bpmV != kmV && bpmV <= cbnt.Version20 {
 		return nil, fmt.Errorf("km and bpm version number differ")
 	}
 	b.Version = bpmV
 	switch b.Version {
-	case bgheader.Version10:
-		b.VData.BGbpm = bgbootpolicy.NewManifest()
-		b.VData.BGkm = bgkey.NewManifest()
-		_, err := b.VData.BGbpm.ReadFrom(bpm)
+	case cbnt.Version10:
+		bgbpm, err := bootpolicy.NewManifest(cbnt.Version10)
+		if err != nil {
+			return nil, err
+		}
+		astbpm, ok := bgbpm.(*bootpolicy.ManifestBG)
+		if !ok {
+			return nil, fmt.Errorf("could not assert BPM type")
+		}
+		b.VData.BGbpm = astbpm
+
+		bgkm, err := keymanifest.NewManifest(cbnt.Version10)
+		if err != nil {
+			return nil, err
+		}
+		astkm, ok := bgkm.(*keymanifest.BGManifest)
+		if !ok {
+			return nil, fmt.Errorf("could not assert KM type")
+		}
+		b.VData.BGkm = astkm
+
+		_, err = b.VData.BGbpm.ReadFrom(bpm)
 		if err != nil && !errors.Is(err, io.EOF) {
 			return nil, err
 		}
@@ -191,10 +220,28 @@ func NewBPMAndKM(bpm io.ReadSeeker, km io.ReadSeeker) (*BootGuard, error) {
 		if err != nil && !errors.Is(err, io.EOF) {
 			return nil, err
 		}
-	case bgheader.Version20:
-		b.VData.CBNTbpm = cbntbootpolicy.NewManifest()
-		b.VData.CBNTkm = cbntkey.NewManifest()
-		_, err := b.VData.CBNTbpm.ReadFrom(bpm)
+	case cbnt.Version20, cbnt.Version21:
+		cbntbpm, err := bootpolicy.NewManifest(b.Version)
+		if err != nil {
+			return nil, err
+		}
+		astbpm, ok := cbntbpm.(*bootpolicy.ManifestCBnT)
+		if !ok {
+			return nil, fmt.Errorf("could not assert BPM type")
+		}
+		b.VData.CBNTbpm = astbpm
+
+		cbntkm, err := keymanifest.NewManifest(cbnt.Version20)
+		if err != nil {
+			return nil, err
+		}
+		astkm, ok := cbntkm.(*keymanifest.CBnTManifest)
+		if !ok {
+			return nil, fmt.Errorf("could not assert KM type")
+		}
+		b.VData.CBNTkm = astkm
+
+		_, err = b.VData.CBNTbpm.ReadFrom(bpm)
 		if err != nil && !errors.Is(err, io.EOF) {
 			return nil, err
 		}
@@ -218,15 +265,33 @@ func NewBPMAndKMFromBIOS(biosFilepath string, jsonFilepath *os.File) (*BootGuard
 		return nil, err
 	}
 	var b BootGuard
-	b.Version, err = bgheader.DetectBGV(bpmEntry.Reader())
+	b.Version, err = cbnt.DetectBGV(bpmEntry.Reader())
 	if err != nil {
 		return nil, err
 	}
 	switch b.Version {
-	case bgheader.Version10:
-		b.VData.BGbpm = bgbootpolicy.NewManifest()
-		b.VData.BGkm = bgkey.NewManifest()
-		_, err := b.VData.BGbpm.ReadFrom(bpmEntry.Reader())
+	case cbnt.Version10:
+		bgbpm, err := bootpolicy.NewManifest(cbnt.Version10)
+		if err != nil {
+			return nil, err
+		}
+		bpm, ok := bgbpm.(*bootpolicy.ManifestBG)
+		if !ok {
+			return nil, fmt.Errorf("could not assert BPM type")
+		}
+		b.VData.BGbpm = bpm
+
+		bgkm, err := keymanifest.NewManifest(cbnt.Version10)
+		if err != nil {
+			return nil, err
+		}
+		km, ok := bgkm.(*keymanifest.BGManifest)
+		if !ok {
+			return nil, fmt.Errorf("could not assert KM type")
+		}
+		b.VData.BGkm = km
+
+		_, err = b.VData.BGbpm.ReadFrom(bpmEntry.Reader())
 		if err != nil && !errors.Is(err, io.EOF) {
 			return nil, err
 		}
@@ -234,10 +299,28 @@ func NewBPMAndKMFromBIOS(biosFilepath string, jsonFilepath *os.File) (*BootGuard
 		if err != nil && !errors.Is(err, io.EOF) {
 			return nil, err
 		}
-	case bgheader.Version20:
-		b.VData.CBNTbpm = cbntbootpolicy.NewManifest()
-		b.VData.CBNTkm = cbntkey.NewManifest()
-		_, err := b.VData.CBNTbpm.ReadFrom(bpmEntry.Reader())
+	case cbnt.Version20, cbnt.Version21:
+		cbntbpm, err := bootpolicy.NewManifest(b.Version)
+		if err != nil {
+			return nil, err
+		}
+		bpm, ok := cbntbpm.(*bootpolicy.ManifestCBnT)
+		if !ok {
+			return nil, fmt.Errorf("could not assert BPM type")
+		}
+		b.VData.CBNTbpm = bpm
+
+		cbntkm, err := keymanifest.NewManifest(b.Version)
+		if err != nil {
+			return nil, err
+		}
+		km, ok := cbntkm.(*keymanifest.CBnTManifest)
+		if !ok {
+			return nil, fmt.Errorf("could not assert KM type")
+		}
+		b.VData.CBNTkm = km
+
+		_, err = b.VData.CBNTbpm.ReadFrom(bpmEntry.Reader())
 		if err != nil && !errors.Is(err, io.EOF) {
 			return nil, err
 		}
@@ -263,9 +346,9 @@ func NewBPMAndKMFromBIOS(biosFilepath string, jsonFilepath *os.File) (*BootGuard
 // and validates the structure
 func (b *BootGuard) ValidateBPM() error {
 	switch b.Version {
-	case bgheader.Version10:
+	case cbnt.Version10:
 		return b.VData.BGbpm.Validate()
-	case bgheader.Version20:
+	case cbnt.Version20, cbnt.Version21:
 		return b.VData.CBNTbpm.Validate()
 	default:
 		return fmt.Errorf("ValidateBPM: can't identify bootguard header")
@@ -276,9 +359,9 @@ func (b *BootGuard) ValidateBPM() error {
 // and validates the structure
 func (b *BootGuard) ValidateKM() error {
 	switch b.Version {
-	case bgheader.Version10:
+	case cbnt.Version10:
 		return b.VData.BGkm.Validate()
-	case bgheader.Version20:
+	case cbnt.Version20, cbnt.Version21:
 		return b.VData.CBNTkm.Validate()
 	default:
 		return fmt.Errorf("ValidateKM: can't identify bootguard header")
@@ -288,9 +371,9 @@ func (b *BootGuard) ValidateKM() error {
 // PrintBPM prints the boot policy manifest in human readable
 func (b *BootGuard) PrintBPM() {
 	switch b.Version {
-	case bgheader.Version10:
+	case cbnt.Version10:
 		b.VData.BGbpm.Print()
-	case bgheader.Version20:
+	case cbnt.Version20, cbnt.Version21:
 		b.VData.CBNTbpm.Print()
 	default:
 		log.Error("PrintBPM: can't identify bootguard header")
@@ -300,9 +383,9 @@ func (b *BootGuard) PrintBPM() {
 // PrintKM prints the key manifest in human readable
 func (b *BootGuard) PrintKM() {
 	switch b.Version {
-	case bgheader.Version10:
+	case cbnt.Version10:
 		b.VData.BGkm.Print()
-	case bgheader.Version20:
+	case cbnt.Version20, cbnt.Version21:
 		b.VData.CBNTkm.Print()
 	default:
 		log.Error("PrintKM: can't identify bootguard header")
@@ -314,9 +397,9 @@ func (b *BootGuard) WriteKM() ([]byte, error) {
 	var err error
 	buf := new(bytes.Buffer)
 	switch b.Version {
-	case bgheader.Version10:
+	case cbnt.Version10:
 		_, err = b.VData.BGkm.WriteTo(buf)
-	case bgheader.Version20:
+	case cbnt.Version20, cbnt.Version21:
 		_, err = b.VData.CBNTkm.WriteTo(buf)
 	default:
 		log.Error("WriteKM: can't identify bootguard header")
@@ -329,9 +412,9 @@ func (b *BootGuard) WriteBPM() ([]byte, error) {
 	var err error
 	buf := new(bytes.Buffer)
 	switch b.Version {
-	case bgheader.Version10:
+	case cbnt.Version10:
 		_, err = b.VData.BGbpm.WriteTo(buf)
-	case bgheader.Version20:
+	case cbnt.Version20, cbnt.Version21:
 		_, err = b.VData.CBNTbpm.WriteTo(buf)
 	default:
 		log.Error("WriteBPM: can't identify bootguard header")
@@ -367,15 +450,14 @@ func (b *BootGuard) ReadJSON(filepath string) error {
 // StitchKM returns a key manifest manifest as byte slice
 func (b *BootGuard) StitchKM(pubKey crypto.PublicKey, signature []byte) ([]byte, error) {
 	switch b.Version {
-	case bgheader.Version10:
+	case cbnt.Version10:
 		if err := b.VData.BGkm.KeyAndSignature.FillSignature(0, pubKey, signature, b.VData.BGkm.BPKey.HashAlg); err != nil {
 			return nil, err
 		}
-		b.VData.BGkm.RehashRecursive()
 		if err := b.VData.BGkm.Validate(); err != nil {
 			return nil, err
 		}
-	case bgheader.Version20:
+	case cbnt.Version20, cbnt.Version21:
 		if err := b.VData.CBNTkm.KeyAndSignature.FillSignature(0, pubKey, signature, b.VData.CBNTkm.PubKeyHashAlg); err != nil {
 			return nil, err
 		}
@@ -392,9 +474,14 @@ func (b *BootGuard) StitchKM(pubKey crypto.PublicKey, signature []byte) ([]byte,
 // StitchBPM returns a boot policy manifest as byte slice
 func (b *BootGuard) StitchBPM(pubKey crypto.PublicKey, signature []byte) ([]byte, error) {
 	switch b.Version {
-	case bgheader.Version10:
-		b.VData.BGbpm.PMSE = *bgbootpolicy.NewSignature()
-		if err := b.VData.BGbpm.PMSE.FillSignature(0, pubKey, signature, bg.AlgNull); err != nil {
+	case cbnt.Version10:
+		sig, err := bootpolicy.NewSignature(cbnt.Version10)
+		if err != nil {
+			return nil, err
+		}
+		b.VData.BGbpm.PMSE = *sig
+
+		if err := b.VData.BGbpm.PMSE.FillSignature(0, pubKey, signature, cbnt.AlgNull); err != nil {
 			return nil, err
 		}
 
@@ -402,8 +489,12 @@ func (b *BootGuard) StitchBPM(pubKey crypto.PublicKey, signature []byte) ([]byte
 		if err := b.VData.BGbpm.Validate(); err != nil {
 			return nil, err
 		}
-	case bgheader.Version20:
-		b.VData.CBNTbpm.PMSE = *cbntbootpolicy.NewSignature()
+	case cbnt.Version20, cbnt.Version21:
+		sig, err := bootpolicy.NewSignature(cbnt.Version20)
+		if err != nil {
+			return nil, err
+		}
+		b.VData.CBNTbpm.PMSE = *sig
 		if err := b.VData.CBNTbpm.PMSE.FillSignature(0, pubKey, signature, cbnt.AlgNull); err != nil {
 			return nil, err
 		}
@@ -422,21 +513,25 @@ func (b *BootGuard) StitchBPM(pubKey crypto.PublicKey, signature []byte) ([]byte
 func (b *BootGuard) SignKM(signAlgo string, signer crypto.Signer) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	switch b.Version {
-	case bgheader.Version10:
-		signAlgo, err := bg.GetAlgFromString(signAlgo)
+	case cbnt.Version10:
+		signAlgo, err := cbnt.GetAlgFromString(signAlgo)
 		if err != nil {
 			return nil, err
 		}
-		b.VData.BGkm.RehashRecursive()
 		_, err = b.VData.BGkm.WriteTo(buf)
 		if err != nil {
 			return nil, err
 		}
-		unsignedKM := buf.Bytes()[:b.VData.BGkm.KeyAndSignatureOffset()]
-		if err := b.VData.BGkm.SetSignature(signAlgo, signer, unsignedKM); err != nil {
+		off, err := b.VData.BGkm.OffsetOf(5)
+		if err != nil {
 			return nil, err
 		}
-	case bgheader.Version20:
+		unsignedKM := buf.Bytes()[:off]
+		// FIXME: second algo here is not needed in BG
+		if err := b.VData.BGkm.SetSignature(signAlgo, signAlgo, signer, unsignedKM); err != nil {
+			return nil, err
+		}
+	case cbnt.Version20, cbnt.Version21:
 		signAlgo, err := cbnt.GetAlgFromString(signAlgo)
 		if err != nil {
 			return nil, err
@@ -446,7 +541,11 @@ func (b *BootGuard) SignKM(signAlgo string, signer crypto.Signer) ([]byte, error
 		if err != nil {
 			return nil, err
 		}
-		unsignedKM := buf.Bytes()[:b.VData.CBNTkm.KeyAndSignatureOffset()]
+		v, err := b.VData.CBNTkm.OffsetOf(8)
+		if err != nil {
+			return nil, err
+		}
+		unsignedKM := buf.Bytes()[:v]
 		if err = b.VData.CBNTkm.SetSignature(signAlgo, b.VData.CBNTkm.PubKeyHashAlg, signer, unsignedKM); err != nil {
 			return nil, err
 		}
@@ -460,22 +559,30 @@ func (b *BootGuard) SignKM(signAlgo string, signer crypto.Signer) ([]byte, error
 func (b *BootGuard) SignBPM(signAlgo, hashAlgo string, privkey crypto.PrivateKey) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	switch b.Version {
-	case bgheader.Version10:
-		signAlgo, err := bg.GetAlgFromString(signAlgo)
+	case cbnt.Version10:
+		signAlgo, err := cbnt.GetAlgFromString(signAlgo)
 		if err != nil {
 			return nil, err
 		}
-		b.VData.BGbpm.PMSE = *bgbootpolicy.NewSignature()
+		sig, err := bootpolicy.NewSignature(cbnt.Version10)
+		if err != nil {
+			return nil, err
+		}
+		b.VData.BGbpm.PMSE = *sig
 		b.VData.BGbpm.RehashRecursive()
 		_, err = b.VData.BGbpm.WriteTo(buf)
 		if err != nil {
 			return nil, err
 		}
-		unsignedBPM := buf.Bytes()[:b.VData.BGbpm.PMSE.KeySignatureOffset()]
-		if err := b.VData.BGbpm.PMSE.SetSignature(signAlgo, privkey.(crypto.Signer), unsignedBPM); err != nil {
+		off, err := b.VData.BGbpm.PMSE.OffsetOf(1)
+		if err != nil {
 			return nil, err
 		}
-	case bgheader.Version20:
+		unsignedBPM := buf.Bytes()[:off]
+		if err := b.VData.BGbpm.PMSE.SetSignature(signAlgo, signAlgo, privkey.(crypto.Signer), unsignedBPM); err != nil {
+			return nil, err
+		}
+	case cbnt.Version20, cbnt.Version21:
 		signAlgo, err := cbnt.GetAlgFromString(signAlgo)
 		if err != nil {
 			return nil, err
@@ -484,7 +591,11 @@ func (b *BootGuard) SignBPM(signAlgo, hashAlgo string, privkey crypto.PrivateKey
 		if err != nil {
 			return nil, err
 		}
-		b.VData.CBNTbpm.PMSE = *cbntbootpolicy.NewSignature()
+		sig, err := bootpolicy.NewSignature(cbnt.Version20)
+		if err != nil {
+			return nil, err
+		}
+		b.VData.CBNTbpm.PMSE = *sig
 		b.VData.CBNTbpm.RehashRecursive()
 		_, err = b.VData.CBNTbpm.WriteTo(buf)
 		if err != nil {
@@ -504,20 +615,27 @@ func (b *BootGuard) SignBPM(signAlgo, hashAlgo string, privkey crypto.PrivateKey
 func (b *BootGuard) VerifyKM() error {
 	buf := new(bytes.Buffer)
 	switch b.Version {
-	case bgheader.Version10:
+	case cbnt.Version10:
 		_, err := b.VData.BGkm.WriteTo(buf)
 		if err != nil {
 			return err
 		}
-		if err := b.VData.BGkm.KeyAndSignature.Verify(buf.Bytes()[:b.VData.BGkm.KeyAndSignatureOffset()]); err != nil {
+		km := b.VData.BGkm
+		off, err := km.OffsetOf(5)
+		if err != nil {
 			return err
 		}
-	case bgheader.Version20:
+		if err := km.KeyAndSignature.Verify(buf.Bytes()[:off]); err != nil {
+			return err
+		}
+	case cbnt.Version20, cbnt.Version21:
 		_, err := b.VData.CBNTkm.WriteTo(buf)
 		if err != nil {
 			return err
 		}
-		if err := b.VData.CBNTkm.KeyAndSignature.Verify(buf.Bytes()[:b.VData.CBNTkm.KeyAndSignatureOffset()]); err != nil {
+
+		v, _ := b.VData.CBNTkm.OffsetOf(8)
+		if err := b.VData.CBNTkm.KeyAndSignature.Verify(buf.Bytes()[:v]); err != nil {
 			return err
 		}
 	default:
@@ -530,20 +648,25 @@ func (b *BootGuard) VerifyKM() error {
 func (b *BootGuard) VerifyBPM() error {
 	buf := new(bytes.Buffer)
 	switch b.Version {
-	case bgheader.Version10:
+	case cbnt.Version10:
 		_, err := b.VData.BGbpm.WriteTo(buf)
 		if err != nil {
 			return err
 		}
-		if err := b.VData.BGbpm.PMSE.Verify(buf.Bytes()[:b.VData.BGbpm.PMSEOffset()]); err != nil {
+		off, err := b.VData.BGbpm.OffsetOf(3)
+		if err != nil {
 			return err
 		}
-	case bgheader.Version20:
+		if err := b.VData.BGbpm.PMSE.Verify(buf.Bytes()[:off]); err != nil {
+			return err
+		}
+	case cbnt.Version20, cbnt.Version21:
 		_, err := b.VData.CBNTbpm.WriteTo(buf)
 		if err != nil {
 			return err
 		}
-		if err := b.VData.CBNTbpm.PMSE.Verify(buf.Bytes()[:b.VData.CBNTbpm.KeySignatureOffset]); err != nil {
+		off := uint64(b.VData.CBNTbpm.BPMHCBnT.KeySignatureOffset)
+		if err := b.VData.CBNTbpm.PMSE.Verify(buf.Bytes()[:off]); err != nil {
 			return err
 		}
 	default:
@@ -577,8 +700,8 @@ func (b *BootGuard) CalculateNEMSize(image []byte, acm *tools.ACM) (uint16, erro
 	totalSize += uint32(acm.Header.GetSize().Size())
 	totalSize += defaultStackAndDataSize
 	switch b.Version {
-	case bgheader.Version10:
-		totalSize += uint32((&bgbootpolicy.BPMH{}).TotalSize())
+	case cbnt.Version10:
+		totalSize += uint32((&bootpolicy.BPMHBG{}).TotalSize())
 		totalSize += uint32(b.VData.BGbpm.SE[0].TotalSize())
 		for _, ibb := range b.VData.BGbpm.SE[0].IBBSegments {
 			totalSize += ibb.Size
@@ -594,10 +717,10 @@ func (b *BootGuard) CalculateNEMSize(image []byte, acm *tools.ACM) (uint16, erro
 		if (totalSize % 4096) != 0 {
 			totalSize += 4096 - (totalSize % 4096)
 		}
-		return uint16(bgbootpolicy.NewSize4K(totalSize)), nil
-	case bgheader.Version20:
+		return uint16(bootpolicy.NewSize4K(totalSize)), nil
+	case cbnt.Version20, cbnt.Version21:
 		totalSize += uint32(b.VData.CBNTkm.KeyManifestSignatureOffset)
-		totalSize += uint32((&cbntbootpolicy.BPMH{}).TotalSize())
+		totalSize += uint32((&bootpolicy.BPMHCBnT{}).TotalSize())
 		for _, se := range b.VData.CBNTbpm.SE {
 			totalSize += uint32(se.ElementSize)
 			for _, ibb := range se.IBBSegments {
@@ -621,7 +744,7 @@ func (b *BootGuard) CalculateNEMSize(image []byte, acm *tools.ACM) (uint16, erro
 		if (totalSize % 4096) != 0 {
 			totalSize += 4096 - (totalSize % 4096)
 		}
-		return uint16(cbntbootpolicy.NewSize4K(totalSize)), nil
+		return uint16(bootpolicy.NewSize4K(totalSize)), nil
 	default:
 		return 0, fmt.Errorf("CalculateNEMSize: can't identify bootguard header")
 	}
@@ -636,26 +759,7 @@ func (b *BootGuard) GetBPMPubHash(pubkey crypto.PublicKey, hashAlgo string) erro
 		return err
 	}
 	switch b.Version {
-	case bgheader.Version10:
-		hashAlg, err := bg.GetAlgFromString(hashAlgo)
-		if err != nil {
-			return err
-		}
-		hash, err := hashAlg.Hash()
-		if err != nil {
-			return err
-		}
-		k := kAs.Data[4:]
-		if _, err := hash.Write(k); err != nil {
-			return err
-		}
-		data = hash.Sum(nil)
-		hStruc := bg.HashStructure{
-			HashAlg: bg.Algorithm(hashAlg),
-		}
-		hStruc.HashBuffer = data
-		b.VData.BGkm.BPKey = hStruc
-	case bgheader.Version20:
+	case cbnt.Version10:
 		hashAlg, err := cbnt.GetAlgFromString(hashAlgo)
 		if err != nil {
 			return err
@@ -669,14 +773,33 @@ func (b *BootGuard) GetBPMPubHash(pubkey crypto.PublicKey, hashAlgo string) erro
 			return err
 		}
 		data = hash.Sum(nil)
-		var keyHashes []cbntkey.Hash
+		hStruc := cbnt.HashStructure{
+			HashAlg: cbnt.Algorithm(hashAlg),
+		}
+		hStruc.HashBuffer = data
+		b.VData.BGkm.BPKey = hStruc
+	case cbnt.Version20, cbnt.Version21:
+		hashAlg, err := cbnt.GetAlgFromString(hashAlgo)
+		if err != nil {
+			return err
+		}
+		hash, err := hashAlg.Hash()
+		if err != nil {
+			return err
+		}
+		k := kAs.Data[4:]
+		if _, err := hash.Write(k); err != nil {
+			return err
+		}
+		data = hash.Sum(nil)
+		var keyHashes []keymanifest.Hash
 		hStruc := &cbnt.HashStructure{
 			HashAlg: cbnt.Algorithm(hashAlg),
 		}
 		hStruc.HashBuffer = data
 
-		kH := cbntkey.Hash{
-			Usage:  cbntkey.UsageBPMSigningPKD,
+		kH := keymanifest.Hash{
+			Usage:  keymanifest.UsageBPMSigningPKD,
 			Digest: *hStruc,
 		}
 		b.VData.CBNTkm.Hash = append(keyHashes, kH)
@@ -688,8 +811,8 @@ func (b *BootGuard) GetBPMPubHash(pubkey crypto.PublicKey, hashAlgo string) erro
 
 func (b *BootGuard) GetIBBsDigest(image []byte, hashAlgo string) (digest []byte, err error) {
 	switch b.Version {
-	case bgheader.Version10:
-		hashAlg, err := bg.GetAlgFromString(hashAlgo)
+	case cbnt.Version10:
+		hashAlg, err := cbnt.GetAlgFromString(hashAlgo)
 		if err != nil {
 			return nil, err
 		}
@@ -726,7 +849,7 @@ func (b *BootGuard) GetIBBsDigest(image []byte, hashAlgo string) (digest []byte,
 			}
 		}
 		digest = hash.Sum(nil)
-	case bgheader.Version20:
+	case cbnt.Version20, cbnt.Version21:
 		hashAlg, err := cbnt.GetAlgFromString(hashAlgo)
 		if err != nil {
 			return nil, err
@@ -777,7 +900,7 @@ func (b *BootGuard) CreateIBBDigest(biosFilepath string) error {
 		return fmt.Errorf("unable to read file '%s': %w", biosFilepath, err)
 	}
 	switch b.Version {
-	case bgheader.Version10:
+	case cbnt.Version10:
 		hashAlgo := b.VData.BGbpm.SE[0].Digest.HashAlg.String()
 		d, err := b.GetIBBsDigest(data, hashAlgo)
 		if err != nil {
@@ -785,7 +908,7 @@ func (b *BootGuard) CreateIBBDigest(biosFilepath string) error {
 		}
 		b.VData.BGbpm.SE[0].Digest.HashBuffer = make([]byte, len(d))
 		copy(b.VData.BGbpm.SE[0].Digest.HashBuffer, d)
-	case bgheader.Version20:
+	case cbnt.Version20, cbnt.Version21:
 		for iterator, item := range b.VData.CBNTbpm.SE[0].DigestList.List {
 			d, err := b.GetIBBsDigest(data, item.HashAlg.String())
 			if err != nil {
@@ -803,16 +926,16 @@ func (b *BootGuard) CreateIBBDigest(biosFilepath string) error {
 // BPMCryptoSecure verifies that BPM uses sane crypto algorithms
 func (b *BootGuard) BPMCryptoSecure() (bool, error) {
 	switch b.Version {
-	case bgheader.Version10:
+	case cbnt.Version10:
 		hash := b.VData.BGbpm.SE[0].Digest.HashAlg
-		if hash == bg.AlgSHA1 || hash.IsNull() {
+		if hash == cbnt.AlgSHA1 || hash.IsNull() {
 			return false, fmt.Errorf("signed IBB hash in BPM uses insecure hash algorithm SHA1/Null")
 		}
 		hash = b.VData.BGbpm.PMSE.Signature.HashAlg
-		if hash == bg.AlgSHA1 || hash.IsNull() {
+		if hash == cbnt.AlgSHA1 || hash.IsNull() {
 			return false, fmt.Errorf("BPM signature uses insecure hash algorithm SHA1/Null")
 		}
-	case bgheader.Version20:
+	case cbnt.Version20, cbnt.Version21:
 		for _, hash := range b.VData.CBNTbpm.SE[0].DigestList.List {
 			if hash.HashAlg == cbnt.AlgSHA1 || hash.HashAlg.IsNull() {
 				if b.VData.CBNTbpm.SE[0].DigestList.Size < 2 {
@@ -831,16 +954,16 @@ func (b *BootGuard) BPMCryptoSecure() (bool, error) {
 // KMCryptoSecure verifies that KM uses sane crypto algorithms
 func (b *BootGuard) KMCryptoSecure() (bool, error) {
 	switch b.Version {
-	case bgheader.Version10:
+	case cbnt.Version10:
 		hash := b.VData.BGkm.KeyAndSignature.Signature.HashAlg
-		if hash == bg.AlgSHA1 || hash.IsNull() {
+		if hash == cbnt.AlgSHA1 || hash.IsNull() {
 			return false, fmt.Errorf("KM signature uses insecure hash algorithm SHA1/Null")
 		}
 		hash = b.VData.BGkm.BPKey.HashAlg
-		if hash == bg.AlgSHA1 || hash.IsNull() {
+		if hash == cbnt.AlgSHA1 || hash.IsNull() {
 			return false, fmt.Errorf("signed BPM hash in KM uses insecure hash algorithm SHA1/Null")
 		}
-	case bgheader.Version20:
+	case cbnt.Version20, cbnt.Version21:
 		hash := b.VData.CBNTkm.PubKeyHashAlg
 		if hash == cbnt.AlgSHA1 || hash.IsNull() {
 			return false, fmt.Errorf("KM signature uses insecure hash algorithm SHA1/Null")
@@ -858,13 +981,17 @@ func (b *BootGuard) KMCryptoSecure() (bool, error) {
 func (b *BootGuard) KMHasBPMHash() (bool, error) {
 	var bpmHashFound bool
 	switch b.Version {
-	case bgheader.Version10:
-		if b.VData.BGkm.BPKey.HashBufferTotalSize() > minHashTypeSize {
+	case cbnt.Version10:
+		size, err := b.VData.BGkm.BPKey.SizeOf(1)
+		if err != nil {
+			return false, err
+		}
+		if size > minHashTypeSize {
 			bpmHashFound = true
 		}
-	case bgheader.Version20:
+	case cbnt.Version20, cbnt.Version21:
 		for _, hash := range b.VData.CBNTkm.Hash {
-			if hash.Usage == cbntkey.UsageBPMSigningPKD {
+			if hash.Usage == keymanifest.UsageBPMSigningPKD {
 				bpmHashFound = true
 			}
 		}
@@ -878,15 +1005,19 @@ func (b *BootGuard) KMHasBPMHash() (bool, error) {
 // BPMKeyMatchKMHash verifies that BPM pubkey hash matches KM hash of Boot Policy
 func (b *BootGuard) BPMKeyMatchKMHash() (bool, error) {
 	switch b.Version {
-	case bgheader.Version10:
-		if b.VData.BGkm.BPKey.HashBufferTotalSize() > minHashTypeSize {
+	case cbnt.Version10:
+		size, err := b.VData.BGkm.BPKey.SizeOf(1)
+		if err != nil {
+			return false, err
+		}
+		if size > minHashTypeSize {
 			if err := b.VData.BGkm.ValidateBPMKey(b.VData.BGbpm.PMSE.KeySignature); err != nil {
 				return false, fmt.Errorf("couldn't verify bpm hash in km")
 			}
 		}
-	case bgheader.Version20:
+	case cbnt.Version20, cbnt.Version21:
 		for _, hash := range b.VData.CBNTkm.Hash {
-			if hash.Usage == cbntkey.UsageBPMSigningPKD {
+			if hash.Usage == keymanifest.UsageBPMSigningPKD {
 				if err := b.VData.CBNTkm.ValidateBPMKey(b.VData.CBNTbpm.PMSE.KeySignature); err != nil {
 					return false, fmt.Errorf("couldn't verify bpm hash in km")
 				}
@@ -899,7 +1030,7 @@ func (b *BootGuard) BPMKeyMatchKMHash() (bool, error) {
 // StrictSaneBPMSecurityProps verifies that BPM contains security properties more strictly
 func (b *BootGuard) StrictSaneBPMSecurityProps() (bool, error) {
 	switch b.Version {
-	case bgheader.Version10:
+	case cbnt.Version10:
 		flags := b.VData.BGbpm.SE[0].Flags
 		if !flags.AuthorityMeasure() {
 			return false, fmt.Errorf("pcr-7 data should extended for OS security")
@@ -907,16 +1038,16 @@ func (b *BootGuard) StrictSaneBPMSecurityProps() (bool, error) {
 		if !flags.TPMFailureLeavesHierarchiesEnabled() {
 			return false, fmt.Errorf("tpm failure should lead to default measurements from PCR0 to PCR7")
 		}
-	case bgheader.Version20:
+	case cbnt.Version20, cbnt.Version21:
 		bgFlags := b.VData.CBNTbpm.SE[0].Flags
-		if !bgFlags.AuthorityMeasure() {
+		if !bgFlags.AuthorityMeasure() && b.Version != cbnt.Version21 {
 			return false, fmt.Errorf("pcr-7 data should extended for OS security")
 		}
 		if !bgFlags.TPMFailureLeavesHierarchiesEnabled() {
 			return false, fmt.Errorf("tpm failure should lead to default measurements from PCR0 to PCR7")
 		}
 		txtFlags := b.VData.CBNTbpm.TXTE.ControlFlags
-		if txtFlags.MemoryScrubbingPolicy() != cbntbootpolicy.MemoryScrubbingPolicySACM {
+		if txtFlags.MemoryScrubbingPolicy() != bootpolicy.MemoryScrubbingPolicySACM {
 			return false, fmt.Errorf("S-ACM memory scrubbing should be used over the BIOS")
 		}
 	}
@@ -927,7 +1058,7 @@ func (b *BootGuard) StrictSaneBPMSecurityProps() (bool, error) {
 // SaneBPMSecurityProps verifies that BPM contains security properties set accordingly to spec
 func (b *BootGuard) SaneBPMSecurityProps() (bool, error) {
 	switch b.Version {
-	case bgheader.Version10:
+	case cbnt.Version10:
 		flags := b.VData.BGbpm.SE[0].Flags
 		if !flags.DMAProtection() {
 			return false, fmt.Errorf("dma protection should be enabled for bootguard")
@@ -941,14 +1072,15 @@ func (b *BootGuard) SaneBPMSecurityProps() (bool, error) {
 		if len(b.VData.BGbpm.SE[0].IBBSegments) < 1 {
 			return false, fmt.Errorf("no ibb segments measured")
 		}
-	case bgheader.Version20:
+	case cbnt.Version20, cbnt.Version21:
 		bgFlags := b.VData.CBNTbpm.SE[0].Flags
 		if !bgFlags.DMAProtection() {
 			if b.VData.CBNTbpm.SE[0].DMAProtBase0 == 0 && b.VData.CBNTbpm.SE[0].VTdBAR == 0 {
 				return false, fmt.Errorf("dma protection should be enabled for bootguard")
 			}
 		}
-		if !bgFlags.AuthorityMeasure() {
+		// PCR7 is not available since MTL
+		if b.VData.CBNTbpm.BPMHCBnT.StructInfoCBNT.Version < 0x25 && !bgFlags.AuthorityMeasure() {
 			return false, fmt.Errorf("pcr-7 data should extended for OS security")
 		}
 		if b.VData.CBNTbpm.SE[0].PBETValue.PBETValue() == 0 {
@@ -972,39 +1104,39 @@ func (b *BootGuard) IBBsMatchBPMDigest(image []byte) (bool, error) {
 		return false, fmt.Errorf("can't parse firmware image")
 	}
 	switch b.Version {
-	case bgheader.Version10:
+	case cbnt.Version10:
 		if err := b.VData.BGbpm.ValidateIBB(firmware); err != nil {
-			return false, fmt.Errorf("bpm final ibb hash doesn't match selected measurements in image")
+			return false, fmt.Errorf("bpm final ibb hash doesn't match selected measurements in image: %w", err)
 		}
-	case bgheader.Version20:
+	case cbnt.Version20, cbnt.Version21:
 		if err := b.VData.CBNTbpm.ValidateIBB(firmware); err != nil {
-			return false, fmt.Errorf("bpm final ibb hash doesn't match selected measurements in image")
+			return false, fmt.Errorf("bpm final ibb hash doesn't match selected measurements in image: %w", err)
 		}
 	}
 	return true, nil
 }
 
 // ValidateMEAgainstManifests validates during runtime ME configuation with BootGuard KM & BPM manifests
-func (b *BootGuard) ValidateMEAgainstManifests(fws *FirmwareStatus6) (bool, error) {
+func (b *BootGuard) ValidateMEAgainstManifests(fws *FirmwareStatus) (bool, error) {
 	switch b.Version {
-	case bgheader.Version10:
-		if fws.BPMSVN != uint32(b.VData.BGbpm.BPMSVN) {
+	case cbnt.Version10:
+		if fws.Status6.BPMSVN != uint32(b.VData.BGbpm.BPMSVN) {
 			return false, fmt.Errorf("bpm svn doesn't match me configuration")
 		}
-		if fws.KMSVN != uint32(b.VData.BGkm.KMSVN) {
+		if fws.Status6.KMSVN != uint32(b.VData.BGkm.KMSVN) {
 			return false, fmt.Errorf("km svn doesn't match me configuration")
 		}
-		if fws.KMID != uint32(b.VData.BGkm.KMID) {
+		if fws.Status6.KMID != uint32(b.VData.BGkm.KMID) {
 			return false, fmt.Errorf("km KMID doesn't match me configuration")
 		}
-	case bgheader.Version20:
-		if fws.BPMSVN > uint32(b.VData.CBNTbpm.BPMSVN) {
+	case cbnt.Version20:
+		if fws.Status6.BPMSVN > uint32(b.VData.CBNTbpm.BPMSVN) {
 			return false, fmt.Errorf("bpm svn doesn't match me configuration")
 		}
-		if fws.KMSVN != uint32(b.VData.CBNTkm.KMSVN) {
+		if fws.Status6.KMSVN != uint32(b.VData.CBNTkm.KMSVN) {
 			return false, fmt.Errorf("km svn doesn't match me configuration")
 		}
-		if fws.KMID != uint32(b.VData.CBNTkm.KMID) {
+		if fws.Status6.KMID != uint32(b.VData.CBNTkm.KMID) {
 			return false, fmt.Errorf("km KMID doesn't match me configuration")
 		}
 	}
@@ -1092,15 +1224,15 @@ func (b *BootGuard) CreateIBBSegments(seElement uint8, flags uint16, imagepath s
 		}
 	}
 	switch b.Version {
-	case bgheader.Version10:
-		b.VData.BGbpm.SE[seElement].IBBSegments = make([]bgbootpolicy.IBBSegment, len(ibbElements))
+	case cbnt.Version10:
+		b.VData.BGbpm.SE[seElement].IBBSegments = make([]bootpolicy.IBBSegment, len(ibbElements))
 		for idx, ibb := range ibbElements {
 			b.VData.BGbpm.SE[seElement].IBBSegments[idx].Base = ibb.Base
 			b.VData.BGbpm.SE[seElement].IBBSegments[idx].Size = ibb.Size
 			b.VData.BGbpm.SE[seElement].IBBSegments[idx].Flags = ibb.Flags
 		}
-	case bgheader.Version20:
-		b.VData.CBNTbpm.SE[seElement].IBBSegments = make([]cbntbootpolicy.IBBSegment, len(ibbElements))
+	case cbnt.Version20, cbnt.Version21:
+		b.VData.CBNTbpm.SE[seElement].IBBSegments = make([]bootpolicy.IBBSegment, len(ibbElements))
 		for idx, ibb := range ibbElements {
 			b.VData.CBNTbpm.SE[seElement].IBBSegments[idx].Base = ibb.Base
 			b.VData.CBNTbpm.SE[seElement].IBBSegments[idx].Size = ibb.Size
