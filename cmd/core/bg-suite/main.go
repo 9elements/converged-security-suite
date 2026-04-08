@@ -23,11 +23,13 @@ var (
 )
 
 type temptest struct {
-	Testnumber int
-	Testname   string
-	Result     string
-	Error      string
-	Status     string
+	Testnumber  int
+	Testname    string
+	Description string
+	BgVersion   string
+	Result      string
+	Error       string
+	Status      string
 }
 
 func main() {
