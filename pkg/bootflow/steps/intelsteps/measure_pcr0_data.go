@@ -19,6 +19,8 @@ import (
 	"github.com/google/go-tpm/legacy/tpm2"
 	pkgbytes "github.com/linuxboot/fiano/pkg/bytes"
 	manifest "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt"
+	bootpolicy "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/bootpolicy"
+	key "github.com/linuxboot/fiano/pkg/intel/metadata/cbnt/keymanifest"
 )
 
 // MeasurePCR0DATA is a types.Step to measure the PCR0_DATA structure.
@@ -92,15 +94,55 @@ func (MeasurePCR0DATA) Actions(ctx context.Context, s *types.State) types.Action
 		}
 	}
 	kmAddr := keyManifestFITEntry.Headers.Address.Pointer()
-	pcr0DATA.kmSignature = types.Reference{
-		Artifact: intelFW.SystemArtifact(),
-		MappedRanges: types.MappedRanges{
-			AddressMapper: biosimage.PhysMemMapper{},
-			Ranges: []pkgbytes.Range{{
-				Offset: kmAddr + keyManifest.KeyAndSignatureOffset() + keyManifest.KeyAndSignature.SignatureOffset() + keyManifest.KeyAndSignature.Signature.DataOffset(),
-				Length: uint64(len(keyManifest.KeyAndSignature.Signature.Data)),
-			}},
-		},
+	switch km := (*keyManifest).(type) {
+	case *key.BGManifest:
+		keyAndSignatureOffset, err := km.OffsetOf(5)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get BG key manifest key-and-signature offset: %w", err))}
+		}
+		signatureOffset, err := km.KeyAndSignature.OffsetOf(2)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get BG key manifest signature offset: %w", err))}
+		}
+		signatureDataOffset, err := km.KeyAndSignature.Signature.OffsetOf(4)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get BG key manifest signature data offset: %w", err))}
+		}
+		pcr0DATA.kmSignature = types.Reference{
+			Artifact: intelFW.SystemArtifact(),
+			MappedRanges: types.MappedRanges{
+				AddressMapper: biosimage.PhysMemMapper{},
+				Ranges: []pkgbytes.Range{{
+					Offset: kmAddr + keyAndSignatureOffset + signatureOffset + signatureDataOffset,
+					Length: uint64(len(km.KeyAndSignature.Signature.Data)),
+				}},
+			},
+		}
+	case *key.CBnTManifest:
+		keyAndSignatureOffset, err := km.OffsetOf(8)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get CBnT key manifest key-and-signature offset: %w", err))}
+		}
+		signatureOffset, err := km.KeyAndSignature.OffsetOf(2)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get CBnT key manifest signature offset: %w", err))}
+		}
+		signatureDataOffset, err := km.KeyAndSignature.Signature.OffsetOf(4)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get CBnT key manifest signature data offset: %w", err))}
+		}
+		pcr0DATA.kmSignature = types.Reference{
+			Artifact: intelFW.SystemArtifact(),
+			MappedRanges: types.MappedRanges{
+				AddressMapper: biosimage.PhysMemMapper{},
+				Ranges: []pkgbytes.Range{{
+					Offset: kmAddr + keyAndSignatureOffset + signatureOffset + signatureDataOffset,
+					Length: uint64(len(km.KeyAndSignature.Signature.Data)),
+				}},
+			},
+		}
+	default:
+		return types.Actions{commonactions.Panic(fmt.Errorf("unsupported key manifest type: %T", km))}
 	}
 
 	bpManifest, bpManifestFITEntry, err := intelFW.BootPolicyManifest()
@@ -110,52 +152,134 @@ func (MeasurePCR0DATA) Actions(ctx context.Context, s *types.State) types.Action
 		}
 	}
 	bpmAddr := bpManifestFITEntry.Headers.Address.Pointer()
+	var (
+		ibbdigests         []manifest.HashStructure
+		firstDigestOffset  uint64
+		bpmSignatureOffset uint64
+		bpmSignatureLength uint64
+	)
+	switch bpm := (*bpManifest).(type) {
+	case *bootpolicy.ManifestBG:
+		pmseOffset, err := bpm.OffsetOf(3)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get BG boot policy manifest PMSE offset: %w", err))}
+		}
+		keySignatureOffset, err := bpm.PMSE.OffsetOf(1)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get BG boot policy manifest key signature offset: %w", err))}
+		}
+		signatureOffset, err := bpm.PMSE.KeySignature.OffsetOf(2)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get BG boot policy manifest signature offset: %w", err))}
+		}
+		signatureDataOffset, err := bpm.PMSE.Signature.OffsetOf(4)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get BG boot policy manifest signature data offset: %w", err))}
+		}
+		bpmSignatureOffset = pmseOffset + keySignatureOffset + signatureOffset + signatureDataOffset
+		bpmSignatureLength = uint64(len(bpm.PMSE.Signature.Data))
+
+		if len(bpm.SE) == 0 {
+			return types.Actions{commonactions.Panic(fmt.Errorf("IBBDigest list is empty"))}
+		}
+		seOffset, err := bpm.OffsetOf(1)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get BG boot policy manifest SE offset: %w", err))}
+		}
+		digestOffset, err := bpm.SE[0].OffsetOf(13)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get BG boot policy manifest digest offset: %w", err))}
+		}
+		ibbdigests = []manifest.HashStructure{bpm.SE[0].Digest}
+		firstDigestOffset = seOffset + digestOffset
+	case *bootpolicy.ManifestCBnT:
+		pmseOffset, err := bpm.OffsetOf(6)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get CBnT boot policy manifest PMSE offset: %w", err))}
+		}
+		keySignatureOffset, err := bpm.PMSE.OffsetOf(1)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get CBnT boot policy manifest key signature offset: %w", err))}
+		}
+		signatureOffset, err := bpm.PMSE.KeySignature.OffsetOf(2)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get CBnT boot policy manifest signature offset: %w", err))}
+		}
+		signatureDataOffset, err := bpm.PMSE.Signature.OffsetOf(4)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get CBnT boot policy manifest signature data offset: %w", err))}
+		}
+		bpmSignatureOffset = pmseOffset + keySignatureOffset + signatureOffset + signatureDataOffset
+		bpmSignatureLength = uint64(len(bpm.PMSE.Signature.Data))
+
+		if len(bpm.SE) == 0 {
+			return types.Actions{commonactions.Panic(fmt.Errorf("IBBDigest list is empty"))}
+		}
+		seOffset, err := bpm.OffsetOf(1)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get CBnT boot policy manifest SE offset: %w", err))}
+		}
+		digestListOffset, err := bpm.SE[0].OffsetOf(14)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get CBnT boot policy manifest digest-list offset: %w", err))}
+		}
+		digestArrayOffset, err := bpm.SE[0].DigestList.OffsetOf(1)
+		if err != nil {
+			return types.Actions{commonactions.Panic(fmt.Errorf("unable to get CBnT boot policy manifest digest-list array offset: %w", err))}
+		}
+		ibbdigests = bpm.SE[0].DigestList.List
+		// +2 skips the digest-list element count prefix (uint16) to point to the first digest.
+		firstDigestOffset = seOffset + digestListOffset + digestArrayOffset + 2
+	default:
+		return types.Actions{commonactions.Panic(fmt.Errorf("unsupported boot policy manifest type: %T", bpm))}
+	}
 	pcr0DATA.bpmSignature = types.Reference{
 		Artifact: intelFW.SystemArtifact(),
 		MappedRanges: types.MappedRanges{
 			AddressMapper: biosimage.PhysMemMapper{},
 			Ranges: []pkgbytes.Range{{
-				Offset: bpmAddr + uint64(bpManifest.KeySignatureOffset) + bpManifest.PMSE.SignatureOffset() + bpManifest.PMSE.Signature.DataOffset(),
-				Length: uint64(len(bpManifest.PMSE.Signature.Data)),
+				Offset: bpmAddr + bpmSignatureOffset,
+				Length: bpmSignatureLength,
 			}},
 		},
 	}
-
-	digests := bpManifest.SE[0].DigestList.List
-	if len(digests) == 0 {
+	if len(ibbdigests) == 0 {
 		return types.Actions{
 			commonactions.Panic(fmt.Errorf("IBBDigest list is empty")),
 		}
 	}
 
 	var actions types.Actions
-	offsetToTheFirstDigest := bpmAddr + bpManifest.SEOffset() +
-		bpManifest.SE[0].DigestListOffset() + (bpManifest.SE[0].DigestList.ListOffset() + 2)
 	for _, hashAlgo := range []manifest.Algorithm{
 		manifest.AlgSHA1,
 		manifest.AlgSHA256,
 	} {
 		pcr0DATA.hashAlgo = hashAlgo
-		// Note: +2 - skip array size field to get the first element
 		// find ibbDigest with the required algorithm
-		offsetToCurrentDigest := offsetToTheFirstDigest
+		offsetToCurrentDigest := firstDigestOffset
 		var found bool
-		for idx := range digests {
-			if digests[idx].HashAlg == hashAlgo {
+		for idx := range ibbdigests {
+			if ibbdigests[idx].HashAlg == hashAlgo {
+				hashBufferOffset, err := ibbdigests[idx].OffsetOf(1)
+				if err != nil {
+					actions = append(actions, commonactions.Panic(fmt.Errorf("unable to get IBB digest hash buffer offset: %w", err)))
+					break
+				}
 				pcr0DATA.ibbDigest = types.Reference{
 					Artifact: intelFW.SystemArtifact(),
 					MappedRanges: types.MappedRanges{
 						AddressMapper: biosimage.PhysMemMapper{},
 						Ranges: []pkgbytes.Range{{
-							Offset: offsetToCurrentDigest + (digests[idx].HashBufferOffset() + 2),
-							Length: uint64(len(digests[idx].HashBuffer)),
+							// +2 skips the HashBuffer size prefix (uint16).
+							Offset: bpmAddr + offsetToCurrentDigest + hashBufferOffset + 2,
+							Length: uint64(len(ibbdigests[idx].HashBuffer)),
 						}},
 					},
 				}
 				found = true
 				break
 			}
-			offsetToCurrentDigest += digests[idx].TotalSize()
+			offsetToCurrentDigest += ibbdigests[idx].TotalSize()
 		}
 
 		if found {
