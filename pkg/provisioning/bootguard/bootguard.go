@@ -52,22 +52,33 @@ func kmReader(km keymanifest.Manifest) (*bytes.Reader, error) {
 
 func NewVData(vdata VersionedData) (*BootGuard, error) {
 	var b BootGuard
-	var err error
-	manifest, err := bpmReader(vdata.BGbpm)
-	if err == nil {
-		b.Version, _ = cbnt.DetectBGV(manifest)
+
+	if vdata.BGbpm != nil && vdata.BGkm != nil {
+		// For BG 1.0 KM and BPM versions have to be the same.
+		// So we don't have to call DetectBGV twice.
+		manifest, err := bpmReader(vdata.BGbpm)
+		if err == nil {
+			b.Version, _ = cbnt.DetectBGV(manifest)
+		}
+
+		_, err = kmReader(vdata.BGkm)
+		if err != nil {
+			return nil, fmt.Errorf("NewVData: %v", err)
+		}
 	}
-	manifest, err = kmReader(vdata.BGkm)
-	if err == nil {
-		b.Version, _ = cbnt.DetectBGV(manifest)
-	}
-	manifest, err = bpmReader(vdata.CBNTbpm)
-	if err == nil {
-		b.Version, _ = cbnt.DetectBGV(manifest)
-	}
-	manifest, err = kmReader(vdata.CBNTkm)
-	if err == nil {
-		b.Version, _ = cbnt.DetectBGV(manifest)
+
+	if vdata.CBNTbpm != nil && vdata.CBNTkm != nil {
+		// for CBnT 2.0 KM and BPM will be the same, and for 2.1
+		// we only care about version as reported by BPM.
+		manifest, err := bpmReader(vdata.CBNTbpm)
+		if err == nil {
+			b.Version, _ = cbnt.DetectBGV(manifest)
+		}
+
+		_, err = kmReader(vdata.CBNTkm)
+		if err != nil {
+			return nil, fmt.Errorf("NewVData: %v", err)
+		}
 	}
 	if b.Version == 0 {
 		return nil, fmt.Errorf("NewVData: can't identify bootguard header")
