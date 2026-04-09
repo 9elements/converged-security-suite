@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/9elements/converged-security-suite/v2/pkg/intel"
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 	"github.com/google/go-tpm/legacy/tpm2"
@@ -13,16 +14,19 @@ func TestTest_Run(t *testing.T) {
 	type fields struct {
 		Name         string
 		Required     bool
+		Description  string
 		function     func(hwapi.LowLevelHardwareInterfaces, *PreSet) (bool, error, error)
 		Result       Result
 		dependencies []*Test
 		ErrorText    string
 		Status       Status
+		SuppVersion  []intel.BgVersion
 	}
 
 	BNotImplemented := Test{
 		"Test B",
 		true,
+		"This is Test B",
 		func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 			return true, nil, nil
 		},
@@ -34,11 +38,13 @@ func TestTest_Run(t *testing.T) {
 		"",
 		"",
 		"",
+		[]intel.BgVersion{intel.BootGuard},
 	}
 
 	BFailed := Test{
 		"Test B",
 		true,
+		"This is Test B",
 		func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 			return true, nil, nil
 		},
@@ -50,10 +56,12 @@ func TestTest_Run(t *testing.T) {
 		"",
 		"",
 		"",
+		[]intel.BgVersion{intel.BootGuard},
 	}
 	BNotRun := Test{
 		"Test B",
 		true,
+		"This is Test B",
 		func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 			return true, nil, nil
 		},
@@ -65,6 +73,7 @@ func TestTest_Run(t *testing.T) {
 		"",
 		"",
 		"",
+		[]intel.BgVersion{intel.CBnT20},
 	}
 
 	tests := []struct {
@@ -78,6 +87,7 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, ignores unimplemented Test B",
 				true,
+				"This is Test A",
 				func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 					return true, nil, nil
 				},
@@ -85,6 +95,7 @@ func TestTest_Run(t *testing.T) {
 				[]*Test{&BNotImplemented},
 				"",
 				Implemented,
+				[]intel.BgVersion{intel.BootGuard},
 			},
 			true,
 			ResultPass,
@@ -94,6 +105,7 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, fails on failed dependency Test B",
 				true,
+				"This is Test A",
 				func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 					return true, nil, nil
 				},
@@ -101,6 +113,7 @@ func TestTest_Run(t *testing.T) {
 				[]*Test{&BFailed},
 				"",
 				Implemented,
+				[]intel.BgVersion{intel.BootGuard},
 			},
 			false,
 			ResultDependencyFailed,
@@ -110,6 +123,7 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, runs dependency Test B",
 				true,
+				"This is Test A",
 				func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 					return BNotRun.Result == ResultPass, nil, nil
 				},
@@ -117,6 +131,7 @@ func TestTest_Run(t *testing.T) {
 				[]*Test{&BNotRun},
 				"",
 				Implemented,
+				[]intel.BgVersion{intel.BootGuard},
 			},
 			true,
 			ResultPass,
@@ -126,6 +141,7 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, multiple dependencies",
 				true,
+				"This is Test A",
 				func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 					return BNotRun.Result == ResultPass, nil, nil
 				},
@@ -133,6 +149,7 @@ func TestTest_Run(t *testing.T) {
 				[]*Test{&BNotRun, &BNotImplemented},
 				"",
 				Implemented,
+				[]intel.BgVersion{intel.BootGuard},
 			},
 			true,
 			ResultPass,
@@ -142,6 +159,7 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, returns internal error",
 				true,
+				"This is Test A",
 				func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 					return true, nil, fmt.Errorf("Internal error 24")
 				},
@@ -149,6 +167,7 @@ func TestTest_Run(t *testing.T) {
 				[]*Test{},
 				"",
 				Implemented,
+				[]intel.BgVersion{intel.BootGuard},
 			},
 			false,
 			ResultInternalError,
@@ -158,6 +177,7 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, returns error",
 				true,
+				"This is Test A",
 				func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 					return true, fmt.Errorf("error 1"), nil
 				},
@@ -165,6 +185,7 @@ func TestTest_Run(t *testing.T) {
 				[]*Test{},
 				"",
 				Implemented,
+				[]intel.BgVersion{intel.BootGuard},
 			},
 			false,
 			ResultFail,
@@ -174,6 +195,7 @@ func TestTest_Run(t *testing.T) {
 			fields{
 				"Test A, returns error, but is critical",
 				true,
+				"This is Test A",
 				func(a hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, error) {
 					return false, fmt.Errorf("error 1"), nil
 				},
@@ -181,6 +203,7 @@ func TestTest_Run(t *testing.T) {
 				[]*Test{},
 				"",
 				Implemented,
+				[]intel.BgVersion{intel.BootGuard},
 			},
 			false,
 			ResultFail,
