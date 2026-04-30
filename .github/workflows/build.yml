@@ -135,3 +135,97 @@ jobs:
                 --pbet=12 --ibbflags=1 --mchbar=123456 --vdtbar=120000 --dmabase0=130000 \
                 --dmasize0=2048 --entrypoint=140000 --ibbhash=SHA256 config.json
                 cat ./config.json | jq
+    RoundTripValidation:
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+            - name: Install dependencies
+              run: sudo apt update & sudo apt install openssl
+
+            - name: Download FW with BtG 1.0
+              run: |
+                wget "https://downloads.hpe.com/pub/softlib2/software1/pubfw-uefi/p736852486/v283550/U30_3.66_04_01_2026.signed.flash"
+                mv U30_3.66_04_01_2026.signed.flash firmware10.bin
+            - name: Download FW with CBnT 2.0
+              run: |
+                wget "https://download.asrock.com/BIOS/4677/W790%20WS(9.01)ROM.zip"
+                unzip W790\ WS\(9.01\)ROM.zip
+                mv W790-WS_9.01.ROM firmware20.bin
+            - name: Download Artifacts
+              uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+              with:
+                name: artifacts-amd64
+                path: ./artifacts
+
+            - name: Make artifacts executable
+              run: chmod +x ./artifacts/*
+
+            - name: Read 1.0 config
+              run: |
+                ./artifacts/bg-prov read-config config10.json ./firmware10.bin
+                ./artifacts/bg-prov bpm-export ./firmware10.bin bpm10.bin
+                ./artifacts/bg-prov km-export ./firmware10.bin km10.bin
+                sha256sum km10.bin > checksums
+                sha256sum bpm10.bin >> checksums
+                sha256sum km10.bin
+                sha256sum bpm10.bin
+                rm km10.bin bpm10.bin
+            - name: Extract pubkey from KM 1.0
+              run: |
+                KEY_DATA_B64=$(jq -r '."v1-keymanifest".kmKeySignature.ksKey.keyData' config10.json)
+                echo "$KEY_DATA_B64" | base64 -d > /tmp/keydata.bin
+                EXPONENT_HEX=$(dd if=/tmp/keydata.bin bs=1 count=4 2>/dev/null | od -An -tx1 | tr -d ' \n' | fold -w2 | tac | tr -d '\n')
+                MODULUS_HEX=$(dd if=/tmp/keydata.bin bs=1 skip=4 2>/dev/null | od -An -tx1 | tr -d ' \n' | fold -w2 | tac | tr -d '\n')
+                cat > /tmp/rsa_key.asn1 << EOF
+                asn1=SEQUENCE:rsa_key
+                [rsa_key]
+                n=INTEGER:0x${MODULUS_HEX}
+                e=INTEGER:0x${EXPONENT_HEX}
+                EOF
+                openssl asn1parse -genconf /tmp/rsa_key.asn1 -out /tmp/rsa_key.der -noout
+                openssl rsa -in /tmp/rsa_key.der \
+                  -inform DER \
+                  -RSAPublicKey_in \
+                  -pubout \
+                  -out km_pub10.pem
+                rm -f /tmp/keydata.bin /tmp/rsa_key.asn1 /tmp/rsa_key.der
+            - name: Generate 1.0 from config
+              run: |
+                ./artifacts/bg-prov bpm-gen-v-1 --config=config10.json bpm10.bin ./firmware10.bin
+                ./artifacts/bg-prov km-gen-v-1 --config=config10.json km10.bin km_pub10.pem
+                sha256sum -c checksums
+            - name: Read 2.0 config
+              run: |
+                ./artifacts/bg-prov read-config config20.json ./firmware20.bin
+                ./artifacts/bg-prov bpm-export ./firmware20.bin bpm20.bin
+                ./artifacts/bg-prov km-export ./firmware20.bin km20.bin
+                sha256sum km20.bin > checksums
+                sha256sum bpm20.bin >> checksums
+                rm km20.bin bpm20.bin
+            - name: Extract pubkey from KM 2.0
+              run: |
+                KEY_DATA_B64=$(jq -r '."v2-keymanifest".kmKeySignature.ksKey.keyData' config20.json)
+                echo "$KEY_DATA_B64" | base64 -d > /tmp/keydata.bin
+                EXPONENT_HEX=$(dd if=/tmp/keydata.bin bs=1 count=4 2>/dev/null | od -An -tx1 | tr -d ' \n' | fold -w2 | tac | tr -d '\n')
+                MODULUS_HEX=$(dd if=/tmp/keydata.bin bs=1 skip=4 2>/dev/null | od -An -tx1 | tr -d ' \n' | fold -w2 | tac | tr -d '\n')
+                cat > /tmp/rsa_key.asn1 << EOF
+                asn1=SEQUENCE:rsa_key
+                [rsa_key]
+                n=INTEGER:0x${MODULUS_HEX}
+                e=INTEGER:0x${EXPONENT_HEX}
+                EOF
+                openssl asn1parse -genconf /tmp/rsa_key.asn1 -out /tmp/rsa_key.der -noout
+                openssl rsa -in /tmp/rsa_key.der \
+                  -inform DER \
+                  -RSAPublicKey_in \
+                  -pubout \
+                  -out km_pub20.pem
+                rm -f /tmp/keydata.bin /tmp/rsa_key.asn1 /tmp/rsa_key.der
+            - name: Generate 2.0 from config
+              run: |
+                ./artifacts/bg-prov bpm-gen-v-2 --config=config20.json bpm20.bin ./firmware20.bin
+                ./artifacts/bg-prov km-gen-v-2 --config=config20.json km20.bin km_pub20.pem
+                sha256sum -c checksums
