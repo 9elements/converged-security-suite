@@ -1,6 +1,6 @@
 module github.com/9elements/converged-security-suite/v2
 
-go 1.24.12
+go 1.25.0
 
 require (
 	github.com/9elements/go-linux-lowlevel-hw v1.0.5-0.20260217195309-8b54f7428e51
@@ -18,13 +18,15 @@ require (
 	github.com/google/go-tpm v0.9.3
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/linuxboot/fiano v1.2.1-0.20250121191917-5620ca1697c5
+	github.com/linuxboot/fiano v1.2.1-0.20260430092818-8f28c11fe9e8
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/marcoguerri/go-tpm-tcti v0.0.0-20210425104733-8e8c8fe68e60
+	github.com/prometheus/procfs v0.11.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3
 	github.com/stretchr/testify v1.8.4
 	github.com/tidwall/pretty v1.2.1
+	github.com/u-root/cpuid v0.0.0
 	github.com/ulikunitz/xz v0.5.14
 	github.com/xaionaro-facebook/go-dmidecode v0.0.0-20220413144237-c42d5bef2498
 	github.com/xaionaro-go/bytesextra v0.0.0-20220103144954-846e454ddea9
@@ -45,7 +47,6 @@ require (
 	github.com/google/certificate-transparency-go v1.1.2 // indirect
 	github.com/google/go-tspi v0.3.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
-	github.com/intel-go/cpuid v0.0.0-20220614022739-219e067757cb // indirect
 	github.com/jedib0t/go-pretty/v6 v6.4.6 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/micgor32/go-msr v0.0.0-20260216140510-4af4a85b8dc7 // indirect
@@ -53,14 +54,14 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
-	github.com/u-root/cpuid v0.0.0 // indirect
 	golang.org/x/crypto v0.45.0 // indirect
-	golang.org/x/sync v0.18.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 )
 
 replace (
 	github.com/intel-go/cpuid => github.com/u-root/cpuid v0.0.0-20250320140348-cc5fe81d966c
 	github.com/lyft/protoc-gen-validate => github.com/envoyproxy/protoc-gen-validate v1.3.0
+	github.com/prometheus/procfs => github.com/micgor32/procfs v0.0.0-20260427172801-e86068ec7955
 )
