@@ -27,10 +27,18 @@ func GetMEVersion() (MEVersion, error) {
 		return 0, err
 	}
 
+	// There can be (theoretically) more than one MEI devices.
+	// We onlly need the version of one of it.
+	var fwVersion string
+	for _, dev := range *mei {
+		fwVersion = *dev.FWVersion
+		break
+	}
+
 	// There are always 4 lines in fw_version (no clue why) exposed in sysfs.
 	// So lets take the first line and then look for what is interesting for us,
 	// i.e. 0:N where N is one of the defined MEVersion's
-	fline := strings.Split(*mei.FWVersion, "\n")
+	fline := strings.Split(fwVersion, "\n")
 	felem := strings.Split(fline[0], ".")
 	pref := strings.Split(felem[0], ":")
 
