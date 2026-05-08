@@ -1039,31 +1039,32 @@ func (b *BootGuard) BPMKeyMatchKMHash() (bool, error) {
 }
 
 // StrictSaneBPMSecurityProps verifies that BPM contains security properties more strictly
-func (b *BootGuard) StrictSaneBPMSecurityProps() (bool, error) {
+func (b *BootGuard) StrictSaneBPMSecurityProps() (bool, []string, error) {
+	var warn []string
 	switch b.Version {
 	case cbnt.Version10:
 		flags := b.VData.BGbpm.SE[0].Flags
 		if !flags.AuthorityMeasure() {
-			return false, fmt.Errorf("pcr-7 data should extended for OS security")
+			return false, nil, fmt.Errorf("pcr-7 data should extended for OS security")
 		}
 		if !flags.TPMFailureLeavesHierarchiesEnabled() {
-			return false, fmt.Errorf("tpm failure should lead to default measurements from PCR0 to PCR7")
+			warn = append(warn, "tpm failure should lead to default measurements from PCR0 to PCR7")
 		}
 	case cbnt.Version20, cbnt.Version21:
 		bgFlags := b.VData.CBNTbpm.SE[0].Flags
 		if !bgFlags.AuthorityMeasure() && b.Version != cbnt.Version21 {
-			return false, fmt.Errorf("pcr-7 data should extended for OS security")
+			return false, nil, fmt.Errorf("pcr-7 data should extended for OS security")
 		}
 		if !bgFlags.TPMFailureLeavesHierarchiesEnabled() {
-			return false, fmt.Errorf("tpm failure should lead to default measurements from PCR0 to PCR7")
+			warn = append(warn, "tpm failure should lead to default measurements from PCR0 to PCR7")
 		}
 		txtFlags := b.VData.CBNTbpm.TXTE.ControlFlags
 		if txtFlags.MemoryScrubbingPolicy() != bootpolicy.MemoryScrubbingPolicySACM {
-			return false, fmt.Errorf("S-ACM memory scrubbing should be used over the BIOS")
+			warn = append(warn, "S-ACM memory scrubbing should be used over the BIOS")
 		}
 	}
-
-	return b.SaneBPMSecurityProps()
+	ret, err := b.SaneBPMSecurityProps()
+	return ret, warn, err
 }
 
 // SaneBPMSecurityProps verifies that BPM contains security properties set accordingly to spec

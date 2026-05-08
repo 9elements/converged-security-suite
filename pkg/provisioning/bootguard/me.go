@@ -243,6 +243,10 @@ func ValidTXTRegisters(hw hwapi.LowLevelHardwareInterfaces) (bool, error) {
 		return false, fmt.Errorf("verified boot is disabled")
 	}
 
+	if ((ACMStatusPolicy >> 15) & 0x1) != 1 {
+		return false, fmt.Errorf("TPM failed")
+	}
+
 	if !Bootstatus.BgSuccess {
 		return false, fmt.Errorf("BootGuard did not startup successfully")
 	}
