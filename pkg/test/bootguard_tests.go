@@ -9,6 +9,8 @@ import (
 	"github.com/9elements/converged-security-suite/v2/pkg/tools"
 	"github.com/9elements/go-linux-lowlevel-hw/pkg/hwapi"
 	"github.com/linuxboot/fiano/pkg/intel/metadata/fit"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -279,8 +281,15 @@ func BootGuardBPM(hw hwapi.LowLevelHardwareInterfaces, p *PreSet) (bool, error, 
 	if !secure || err != nil {
 		return false, fmt.Errorf("bpm crypto parameters are insecure"), err
 	}
+	var warn []string
 	if p.Strict {
-		secure, err = b.StrictSaneBPMSecurityProps()
+		secure, warn, err= b.StrictSaneBPMSecurityProps()
+		if warn != nil {
+			log.Warn("Strict BPM security properties:")
+			for _, w := range warn {
+				log.Warnf("%s", w)
+			}
+		}
 	} else {
 		secure, err = b.SaneBPMSecurityProps()
 	}
