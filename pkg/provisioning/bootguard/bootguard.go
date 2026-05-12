@@ -676,7 +676,7 @@ func (b *BootGuard) VerifyBPM() error {
 		if err != nil {
 			return err
 		}
-		off := uint64(b.VData.CBNTbpm.BPMHCBnT.KeySignatureOffset)
+		off := uint64(b.VData.CBNTbpm.KeySignatureOffset)
 		if err := b.VData.CBNTbpm.PMSE.Verify(buf.Bytes()[:off]); err != nil {
 			return err
 		}
@@ -1092,7 +1092,7 @@ func (b *BootGuard) SaneBPMSecurityProps() (bool, error) {
 			}
 		}
 		// PCR7 is not available since MTL
-		if b.VData.CBNTbpm.BPMHCBnT.StructInfoCBNT.Version < 0x25 && !bgFlags.AuthorityMeasure() {
+		if b.VData.CBNTbpm.Version < 0x25 && !bgFlags.AuthorityMeasure() {
 			return false, fmt.Errorf("pcr-7 data should extended for OS security")
 		}
 		if b.VData.CBNTbpm.SE[0].PBETValue.PBETValue() == 0 {

@@ -68,7 +68,7 @@ func validateBPM(
 			return err
 		}
 
-		if err := bpmCBnt.PMSE.KeySignature.Verify(bpmFIT.DataSegmentBytes[:off]); err != nil {
+		if err := bpmCBnt.PMSE.Verify(bpmFIT.DataSegmentBytes[:off]); err != nil {
 			return fmt.Errorf("unable to confirm KM signature: %w", err)
 		}
 
