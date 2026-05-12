@@ -22,7 +22,7 @@ type State struct {
 
 func typeMapKey(i interface{}) reflect.Type {
 	k := reflect.TypeOf(i)
-	for k.Kind() == reflect.Ptr {
+	for k.Kind() == reflect.Pointer {
 		k = k.Elem()
 	}
 	return k
@@ -97,7 +97,7 @@ func WithSubSystem[SS SubSystem](
 // IncludeSubSystem adds and enables a SubSystem, but each SubSystem type could
 // be added only once.
 func (state *State) IncludeSubSystem(subSystem SubSystem) {
-	if reflect.TypeOf(subSystem).Kind() != reflect.Ptr {
+	if reflect.TypeOf(subSystem).Kind() != reflect.Pointer {
 		panic(fmt.Sprintf("%T is not a modifiable type", subSystem))
 	}
 
@@ -143,7 +143,7 @@ func WithSystemArtifact[SA SystemArtifact](
 // IncludeSystemArtifact adds and enables a SystemArtifact, but each SystemArtifact type could
 // be added only once.
 func (state *State) IncludeSystemArtifact(systemArtifact SystemArtifact) {
-	if reflect.TypeOf(systemArtifact).Kind() != reflect.Ptr {
+	if reflect.TypeOf(systemArtifact).Kind() != reflect.Pointer {
 		panic(fmt.Sprintf("%T is not a modifiable type", systemArtifact))
 	}
 
