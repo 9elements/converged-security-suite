@@ -236,7 +236,7 @@ func ValidTXTRegisters(hw hwapi.LowLevelHardwareInterfaces) (bool, error) {
 	}
 
 	if ((ACMStatusPolicy >> 4) & 0x1) != 1 {
-		return false, fmt.Errorf("Measured boot is disabled")
+		return false, fmt.Errorf("measured boot is disabled")
 	}
 
 	if ((ACMStatusPolicy >> 5) & 0x1) != 1 {
