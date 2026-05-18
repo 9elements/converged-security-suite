@@ -181,33 +181,17 @@ jobs:
                 ./artifacts/bg-prov km-export ./firmware10.bin km10.bin
                 sha256sum km10.bin > checksums
                 sha256sum bpm10.bin >> checksums
-                sha256sum km10.bin
-                sha256sum bpm10.bin
                 rm km10.bin bpm10.bin
+
             - name: Extract pubkey from KM 1.0
-              run: |
-                KEY_DATA_B64=$(jq -r '."v1-keymanifest".kmKeySignature.ksKey.keyData' config10.json)
-                echo "$KEY_DATA_B64" | base64 -d > /tmp/keydata.bin
-                EXPONENT_HEX=$(dd if=/tmp/keydata.bin bs=1 count=4 2>/dev/null | od -An -tx1 | tr -d ' \n' | fold -w2 | tac | tr -d '\n')
-                MODULUS_HEX=$(dd if=/tmp/keydata.bin bs=1 skip=4 2>/dev/null | od -An -tx1 | tr -d ' \n' | fold -w2 | tac | tr -d '\n')
-                cat > /tmp/rsa_key.asn1 << EOF
-                asn1=SEQUENCE:rsa_key
-                [rsa_key]
-                n=INTEGER:0x${MODULUS_HEX}
-                e=INTEGER:0x${EXPONENT_HEX}
-                EOF
-                openssl asn1parse -genconf /tmp/rsa_key.asn1 -out /tmp/rsa_key.der -noout
-                openssl rsa -in /tmp/rsa_key.der \
-                  -inform DER \
-                  -RSAPublicKey_in \
-                  -pubout \
-                  -out km_pub10.pem
-                rm -f /tmp/keydata.bin /tmp/rsa_key.asn1 /tmp/rsa_key.der
+              run: .github/scripts/extract_km_pubkey.sh config10.json v1-keymanifest km_pub10.pem
+
             - name: Generate 1.0 from config
               run: |
                 ./artifacts/bg-prov bpm-gen-v-1 --config=config10.json bpm10.bin ./firmware10.bin
                 ./artifacts/bg-prov km-gen-v-1 --config=config10.json km10.bin km_pub10.pem
                 sha256sum -c checksums
+
             - name: Read 2.0 config
               run: |
                 ./artifacts/bg-prov read-config config20.json ./firmware20.bin
@@ -216,25 +200,10 @@ jobs:
                 sha256sum km20.bin > checksums
                 sha256sum bpm20.bin >> checksums
                 rm km20.bin bpm20.bin
+
             - name: Extract pubkey from KM 2.0
-              run: |
-                KEY_DATA_B64=$(jq -r '."v2-keymanifest".kmKeySignature.ksKey.keyData' config20.json)
-                echo "$KEY_DATA_B64" | base64 -d > /tmp/keydata.bin
-                EXPONENT_HEX=$(dd if=/tmp/keydata.bin bs=1 count=4 2>/dev/null | od -An -tx1 | tr -d ' \n' | fold -w2 | tac | tr -d '\n')
-                MODULUS_HEX=$(dd if=/tmp/keydata.bin bs=1 skip=4 2>/dev/null | od -An -tx1 | tr -d ' \n' | fold -w2 | tac | tr -d '\n')
-                cat > /tmp/rsa_key.asn1 << EOF
-                asn1=SEQUENCE:rsa_key
-                [rsa_key]
-                n=INTEGER:0x${MODULUS_HEX}
-                e=INTEGER:0x${EXPONENT_HEX}
-                EOF
-                openssl asn1parse -genconf /tmp/rsa_key.asn1 -out /tmp/rsa_key.der -noout
-                openssl rsa -in /tmp/rsa_key.der \
-                  -inform DER \
-                  -RSAPublicKey_in \
-                  -pubout \
-                  -out km_pub20.pem
-                rm -f /tmp/keydata.bin /tmp/rsa_key.asn1 /tmp/rsa_key.der
+              run: .github/scripts/extract_km_pubkey.sh config20.json v2-keymanifest km_pub20.pem
+
             - name: Generate 2.0 from config
               run: |
                 ./artifacts/bg-prov bpm-gen-v-2 --config=config20.json bpm20.bin ./firmware20.bin
