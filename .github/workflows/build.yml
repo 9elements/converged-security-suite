@@ -140,22 +140,33 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout repository
-              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+              uses: actions/checkout@v6.0.1
 
             - name: Install dependencies
               run: sudo apt update & sudo apt install openssl
 
+            - name: Cache firmware images
+              id: cache-firmware
+              uses: actions/cache@v4
+              with:
+                path: |
+                  firmware10.bin
+                  firmware20.bin
+                key: firmware-imgs
+
             - name: Download FW with BtG 1.0
+              if: steps.cache-firmware.outputs.cache-hit != 'true'
               run: |
                 wget "https://downloads.hpe.com/pub/softlib2/software1/pubfw-uefi/p736852486/v283550/U30_3.66_04_01_2026.signed.flash"
                 mv U30_3.66_04_01_2026.signed.flash firmware10.bin
             - name: Download FW with CBnT 2.0
+              if: steps.cache-firmware.outputs.cache-hit != 'true'
               run: |
                 wget "https://download.asrock.com/BIOS/4677/W790%20WS(9.01)ROM.zip"
                 unzip W790\ WS\(9.01\)ROM.zip
                 mv W790-WS_9.01.ROM firmware20.bin
             - name: Download Artifacts
-              uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+              uses: actions/download-artifact@v7.0.0
               with:
                 name: artifacts-amd64
                 path: ./artifacts
