@@ -821,86 +821,53 @@ func (b *BootGuard) GetBPMPubHash(pubkey crypto.PublicKey, hashAlgo string) erro
 }
 
 func (b *BootGuard) GetIBBsDigest(image []byte, hashAlgo string) (digest []byte, err error) {
+	var ibbs []bootpolicy.IBBSegment
 	switch b.Version {
 	case cbnt.Version10:
-		hashAlg, err := cbnt.GetAlgFromString(hashAlgo)
-		if err != nil {
-			return nil, err
-		}
-		hash, err := hashAlg.Hash()
-		if err != nil {
-			return nil, err
-		}
-		ibbs := b.VData.BGbpm.SE[0].IBBSegments
-		reader := bytes.NewReader(image)
-		ibbSegments := make([][]byte, len(ibbs))
-		for idx, ibb := range ibbs {
-			if ibb.Flags&(1<<0) != 0 {
-				continue
-			}
-			addr, err := tools.CalcImageOffset(image, uint64(ibb.Base))
-			if err != nil {
-				return nil, fmt.Errorf("unable to calculate the offset: %w", err)
-			}
-			_, err = reader.Seek(int64(addr), io.SeekStart)
-			if err != nil {
-				return nil, fmt.Errorf("got error from Seek: %w", err)
-			}
-			size := uint64(ibb.Size)
-			ibbSegments[idx] = make([]byte, size)
-			_, err = reader.Read(ibbSegments[idx])
-			if err != nil {
-				return nil, fmt.Errorf("unable to read the segment: %w", err)
-			}
-		}
-		for _, segment := range ibbSegments {
-			_, err = hash.Write(segment)
-			if err != nil {
-				return nil, err
-			}
-		}
-		digest = hash.Sum(nil)
+		ibbs = b.VData.BGbpm.SE[0].IBBSegments
 	case cbnt.Version20, cbnt.Version21:
-		hashAlg, err := cbnt.GetAlgFromString(hashAlgo)
-		if err != nil {
-			return nil, err
-		}
-		hash, err := hashAlg.Hash()
-		if err != nil {
-			return nil, err
-		}
-		ibbs := b.VData.CBNTbpm.SE[0].IBBSegments
-		reader := bytes.NewReader(image)
-		ibbSegments := make([][]byte, len(ibbs))
-		for idx, ibb := range ibbs {
-			if ibb.Flags&(1<<0) != 0 {
-				continue
-			}
-			addr, err := tools.CalcImageOffset(image, uint64(ibb.Base))
-			if err != nil {
-				return nil, fmt.Errorf("unable to calculate the offset: %w", err)
-			}
-			_, err = reader.Seek(int64(addr), io.SeekStart)
-			if err != nil {
-				return nil, fmt.Errorf("got error from Seek: %w", err)
-			}
-			size := uint64(ibb.Size)
-			ibbSegments[idx] = make([]byte, size)
-			_, err = reader.Read(ibbSegments[idx])
-			if err != nil {
-				return nil, fmt.Errorf("unable to read the segment: %w", err)
-			}
-		}
-		for _, segment := range ibbSegments {
-			_, err = hash.Write(segment)
-			if err != nil {
-				return nil, err
-			}
-		}
-		digest = hash.Sum(nil)
+		ibbs = b.VData.CBNTbpm.SE[0].IBBSegments
 	default:
-		log.Error("can't identify bootguard header")
+		return nil, fmt.Errorf("cannot identify bootguard header")
 	}
+	hashAlg, err := cbnt.GetAlgFromString(hashAlgo)
+	if err != nil {
+		return nil, err
+	}
+	hash, err := hashAlg.Hash()
+	if err != nil {
+		return nil, err
+	}
+	imgSize := uint64(len(image))
+	if ifdSize, ifdErr := bootpolicy.FlashSizeIFD(image); ifdErr == nil && ifdSize > 0 && ifdSize <= imgSize {
+		imgSize = ifdSize
+	}
+
+	reader := bytes.NewReader(image)
+	ibbSegments := make([][]byte, len(ibbs))
+	for idx, ibb := range ibbs {
+		if ibb.Flags&(1<<0) != 0 {
+			continue
+		}
+		addr := bootpolicy.CalculateOffsetFromPhysAddr(uint64(ibb.Base), imgSize)
+		_, err = reader.Seek(int64(addr), io.SeekStart)
+		if err != nil {
+			return nil, fmt.Errorf("got error from Seek: %w", err)
+		}
+		size := uint64(ibb.Size)
+		ibbSegments[idx] = make([]byte, size)
+		_, err = reader.Read(ibbSegments[idx])
+		if err != nil {
+			return nil, fmt.Errorf("unable to read the segment: %w", err)
+		}
+	}
+	for _, segment := range ibbSegments {
+		_, err = hash.Write(segment)
+		if err != nil {
+			return nil, err
+		}
+	}
+	digest = hash.Sum(nil)
 	return digest, nil
 }
 
