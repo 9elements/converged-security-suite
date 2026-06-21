@@ -21,7 +21,7 @@ require (
 	github.com/linuxboot/fiano v1.2.1-0.20260430092818-8f28c11fe9e8
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/marcoguerri/go-tpm-tcti v0.0.0-20210425104733-8e8c8fe68e60
-	github.com/prometheus/procfs v0.11.0
+	github.com/prometheus/procfs v0.20.2-0.20260621154709-2c1667adf09d
 	github.com/sirupsen/logrus v1.9.3
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3
 	github.com/stretchr/testify v1.8.4
@@ -55,13 +55,12 @@ require (
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
 	golang.org/x/crypto v0.45.0 // indirect
-	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sync v0.21.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 )
 
 replace (
 	github.com/intel-go/cpuid => github.com/u-root/cpuid v0.0.0-20250320140348-cc5fe81d966c
 	github.com/lyft/protoc-gen-validate => github.com/envoyproxy/protoc-gen-validate v1.3.0
-	github.com/prometheus/procfs => github.com/micgor32/procfs v0.0.0-20260427172801-e86068ec7955
 )
